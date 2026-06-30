@@ -60,6 +60,17 @@ Maintained by the project architect. The implementation engineer updates documen
 | [Stage 11 Demo](demo/stage-11-demo.md) | Android application walkthrough |
 | [Stage 12 Demo](demo/stage-12-demo.md) | End-to-end integration and validation walkthrough |
 
+### Showcase
+
+| Document | Description |
+|---|---|
+| [Project Showcase](showcase/project-showcase.md) | Full technical write-up: architecture, design decisions, AI engineering highlights |
+| [Project Timeline](showcase/project-timeline.md) | Stage-by-stage build history with purpose, outcome, and deliverables |
+| [Portfolio Summary](showcase/portfolio-summary.md) | Two-page recruiter-facing summary |
+| [Interview Guide](showcase/interview-guide.md) | 50 likely interview questions with answers and trade-off reasoning |
+| [Demo Script](showcase/demo-script.md) | 5/10/20-minute demo scripts with talking points and commands |
+| [Screenshots](showcase/screenshots/README.md) | Screenshot capture checklist |
+
 ### Troubleshooting
 
 | Document | Description |
@@ -89,6 +100,7 @@ docs/
   releases/       # Release notes and readiness reports
   reports/        # Stage completion summaries
   setup/          # Installation and quick-start guides
+  showcase/       # Recruiter-facing showcase: portfolio summary, timeline, interview guide, demo scripts
   README.md       # This index
   architecture-impact.md   # How stages built on each other
   repository-structure.md  # Directory ownership guide

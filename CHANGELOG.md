@@ -9,6 +9,10 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- `docs/showcase/` — project showcase, timeline, portfolio summary, 50-question interview guide, demo scripts (5/10/20-minute), and screenshot capture checklist.
+- README.md rewritten as a recruiter/contributor-facing project showcase: tagline, key capabilities, architecture diagrams for every pipeline, lessons learned, and an explicit out-of-scope section.
+
 ---
 
 ## [1.0.0] — 2026-07-01
