@@ -1,0 +1,85 @@
+name: Repository Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  structure:
+    name: Verify Repository Structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check required top-level files exist
+        run: |
+          required_files=(
+            "README.md"
+            "CHANGELOG.md"
+            "CONTRIBUTING.md"
+            "CODE_OF_CONDUCT.md"
+            "LICENSE"
+            ".editorconfig"
+            ".gitattributes"
+            ".gitignore"
+            ".claude/CLAUDE.md"
+          )
+          failed=0
+          for f in "${required_files[@]}"; do
+            if [ ! -f "$f" ]; then
+              echo "MISSING: $f"
+              failed=1
+            else
+              echo "OK: $f"
+            fi
+          done
+          exit $failed
+
+      - name: Check required directories exist
+        run: |
+          required_dirs=(
+            "docs/adr"
+            "docs/architecture"
+            "playbook"
+            "frontend"
+            "backend"
+            "ai"
+            "datasets/raw"
+            "datasets/processed"
+            "scripts"
+            "tools"
+          )
+          failed=0
+          for d in "${required_dirs[@]}"; do
+            if [ ! -d "$d" ]; then
+              echo "MISSING DIR: $d"
+              failed=1
+            else
+              echo "OK: $d"
+            fi
+          done
+          exit $failed
+
+  markdown:
+    name: Validate Markdown
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Markdown files are non-empty
+        run: |
+          failed=0
+          while IFS= read -r -d '' file; do
+            size=$(wc -c < "$file")
+            if [ "$size" -eq 0 ]; then
+              echo "EMPTY: $file"
+              failed=1
+            else
+              echo "OK: $file ($size bytes)"
+            fi
+          done < <(find . -name "*.md" -not -path "./.git/*" -print0)
+          exit $failed

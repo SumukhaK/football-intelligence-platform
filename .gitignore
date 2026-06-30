@@ -1,0 +1,89 @@
+# =============================================================================
+# Secrets and environment
+# =============================================================================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+
+# =============================================================================
+# Python
+# =============================================================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+.eggs/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+*.log
+
+# =============================================================================
+# Kotlin / Android / Gradle
+# =============================================================================
+.gradle/
+local.properties
+*.iml
+.idea/
+*.apk
+*.aab
+*.dex
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+google-services.json
+
+# =============================================================================
+# Datasets and models
+# =============================================================================
+datasets/raw/
+datasets/interim/
+datasets/external/
+ai/models/*.pkl
+ai/models/*.joblib
+ai/models/*.json
+ai/models/*.ubj
+*.csv
+*.parquet
+*.feather
+
+# Processed datasets are committed only when explicitly versioned
+datasets/processed/
+
+# =============================================================================
+# OS and editor
+# =============================================================================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# =============================================================================
+# Jupyter (not used in production, but guard against accidental commits)
+# =============================================================================
+.ipynb_checkpoints/
+*.ipynb
+
+# =============================================================================
+# Infrastructure
+# =============================================================================
+*.tfstate
+*.tfstate.backup
+.terraform/

@@ -1,0 +1,22 @@
+# CODEOWNERS
+# Each line maps a path pattern to one or more owners.
+# Owners are notified when a pull request touches matching files.
+# Last matching pattern wins.
+
+# Default owner for everything
+* @SumukhaK
+
+# Architecture and project instructions — high review bar
+.claude/       @SumukhaK
+docs/adr/      @SumukhaK
+docs/architecture/ @SumukhaK
+
+# AI layer
+ai/            @SumukhaK
+playbook/      @SumukhaK
+
+# Data
+datasets/      @SumukhaK
+
+# CI/CD
+.github/       @SumukhaK
