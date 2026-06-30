@@ -10,11 +10,13 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.main import create_app
+from backend.app.schemas.assistant import ChatResponse, SourceCitation
 from backend.app.schemas.explainability import (
     ExplanationResponse,
     FeatureContributionSchema,
 )
 from backend.app.schemas.prediction import PredictionResponse
+from backend.app.services.chat_service import ChatService
 from backend.app.services.explanation_service import ExplanationService
 from backend.app.services.prediction_service import PredictionService
 
@@ -90,6 +92,26 @@ def mock_explanation_service() -> MagicMock:
 
 
 @pytest.fixture()
+def mock_chat_service() -> MagicMock:
+    """Return a mock ChatService."""
+    svc = MagicMock(spec=ChatService)
+    svc.chat.return_value = ChatResponse(
+        answer="The XGBoost model achieved 56% accuracy on the test set.",
+        sources=[
+            SourceCitation(
+                source="model_card.md",
+                excerpt="Test accuracy: 56%.",
+                relevance_score=0.85,
+            )
+        ],
+        confidence=0.85,
+        model="llama3.2",
+        retrieved_count=3,
+    )
+    return svc
+
+
+@pytest.fixture()
 def mock_registry() -> MagicMock:
     """Return a mock ModelRegistry."""
     from model_registry.registry import (
@@ -121,6 +143,7 @@ def mock_registry() -> MagicMock:
 def client(
     mock_prediction_service: MagicMock,
     mock_explanation_service: MagicMock,
+    mock_chat_service: MagicMock,
     mock_registry: MagicMock,
 ) -> TestClient:
     """TestClient with AI services replaced by mocks."""
@@ -135,6 +158,7 @@ def client(
     )
     application.state.prediction_service = mock_prediction_service
     application.state.explanation_service = mock_explanation_service
+    application.state.chat_service = mock_chat_service
     application.state.registry = mock_registry
     return TestClient(application, raise_server_exceptions=False)
 

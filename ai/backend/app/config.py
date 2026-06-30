@@ -21,6 +21,13 @@ class Settings(BaseSettings):
     api_version: str = "0.1.0"
     log_level: str = "INFO"
 
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_chat_model: str = "llama3.2"
+    ollama_embed_model: str = "nomic-embed-text"
+    assistant_vector_store_path: Path = Path("assistant/vector_store")
+    assistant_knowledge_root: Path = Path(".")
+    assistant_top_k: int = 5
+
 
 _settings: Settings | None = None
 

@@ -41,7 +41,7 @@ def test_app_has_all_routes() -> None:
     application = create_app()
     schema = application.openapi()
     paths = set(schema.get("paths", {}).keys())
-    for expected in ("/health", "/model", "/predict", "/explain"):
+    for expected in ("/health", "/model", "/predict", "/explain", "/assistant/chat"):
         assert expected in paths, f"Missing route: {expected}"
 
 
