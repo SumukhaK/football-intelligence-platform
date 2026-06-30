@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
+from typing import cast
 
 import numpy as np
 import pytest
-from typing import cast
 
 from explainability.serializers import (
     FeatureContribution,

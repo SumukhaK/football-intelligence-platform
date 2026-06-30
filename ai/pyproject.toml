@@ -17,6 +17,8 @@ dependencies = [
     "matplotlib>=3.8.0",
     "shap>=0.46.0",
     "numba>=0.60.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
 ]
 
 [project.optional-dependencies]
@@ -51,6 +53,7 @@ packages = [
     "inference",
     "model_registry",
     "explainability",
+    "backend",
 ]
 
 [tool.ruff]
@@ -87,6 +90,7 @@ known-first-party = [
     "inference",
     "model_registry",
     "explainability",
+    "backend",
 ]
 
 [tool.black]
@@ -116,6 +120,7 @@ packages = [
     "inference",
     "model_registry",
     "explainability",
+    "backend",
 ]
 
 [tool.pytest.ini_options]
@@ -142,6 +147,7 @@ source = [
     "inference",
     "model_registry",
     "explainability",
+    "backend",
 ]
 omit = ["tests/*"]
 
