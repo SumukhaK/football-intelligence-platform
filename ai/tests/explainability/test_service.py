@@ -73,7 +73,7 @@ def test_service_confidence_is_max_prob(
     _service: ExplanationService,
     feature_df: pd.DataFrame,
 ) -> None:
-    """confidence must equal max(probability_home, probability_draw, probability_away)."""
+    """confidence must equal max(prob_home, prob_draw, prob_away)."""
     result = _service.explain(feature_df, "Arsenal", "Chelsea")
     expected = max(
         result.probability_home, result.probability_draw, result.probability_away

@@ -83,15 +83,15 @@ flowchart TD
         F --> I["Model Artifacts\nmodels/latest/model.joblib\nmodel_card.md · plots"]
     end
 
+        I --> J["Explainability — Stage 8\nSHAP TreeExplainer · ExplanationService\nlocal + global artifacts"]
+        J --> K["Backend API — Stage 9\nFastAPI · /predict · /explain\nOpenAPI · 43 tests"]
+    end
+
     subgraph FUTURE["Planned Stages"]
-        J["Explainability — Stage 8\nSHAP values per prediction"]
-        K["Backend API — Stage 9\nFastAPI · OpenAPI · SQLAlchemy"]
         L["AI Assistant — Stage 10\nOllama · RAG · prompt templates"]
         M["Android App — Stage 11\nCompose Multiplatform · MVVM"]
     end
 
-    I --> J
-    J --> K
     K --> L
     K --> M
 
@@ -129,7 +129,7 @@ Local development runs without cloud services. All external dependencies have lo
 | 6 | Feature Engineering | ✅ Complete | 42 pre-match features: ELO, rolling form, H2H, rest days, league position |
 | 7 | Model Training & Evaluation | ✅ Complete | XGBoost training pipeline, cross-validation, local model registry |
 | 8 | Explainable AI | ✅ Complete | SHAP TreeExplainer pipeline, ExplanationService, global/local artifacts |
-| 9 | Backend API | Planned | FastAPI service exposing predictions and assistant via OpenAPI |
+| 9 | Backend API | ✅ Complete | FastAPI service: /health, /model, /predict, /explain — 43 tests, OpenAPI docs |
 | 10 | Football Intelligence Assistant | Planned | RAG assistant using Ollama, grounded in processed data |
 | 11 | Android Application | Planned | Compose Multiplatform screens consuming the backend API |
 | 12 | Integration & Release | Planned | Structured evaluation, end-to-end testing, production readiness |

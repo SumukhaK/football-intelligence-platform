@@ -97,7 +97,10 @@ def _generate_local_explanations(
     feature_version: str,
     dataset_version: str,
 ) -> list[dict[str, Any]]:
-    """Generate local explanations for n_samples rows; return as JSON-serialisable list."""
+    """Generate local explanations for n_samples rows.
+
+    Returns a JSON-serialisable list.
+    """
     class_to_idx = {c: i for i, c in enumerate(classes)}
     explanations = []
     for i in range(n_samples):

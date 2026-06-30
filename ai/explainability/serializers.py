@@ -129,7 +129,7 @@ def global_summary_from_shap(
     feature_version: str,
     dataset_version: str,
 ) -> GlobalSummary:
-    """Build a GlobalSummary from full SHAP values (n_samples, n_features, n_classes)."""
+    """Build a GlobalSummary from SHAP values (n_samples, n_features, n_classes)."""
     mean_abs = np.abs(shap_values).mean(axis=(0, 2))
     mean_abs_dict = {
         name: float(v) for name, v in zip(feature_names, mean_abs, strict=True)
