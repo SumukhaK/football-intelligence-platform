@@ -10,20 +10,75 @@ Maintained by the project architect. The implementation engineer updates documen
 
 ---
 
-## Hierarchy
+## Index
+
+### Setup
+
+| Document | Description |
+|---|---|
+| [Quick Start Guide](setup/quick-start.md) | Clone, install, run the full pipeline and build Android from scratch |
+
+### Reference
+
+| Document | Description |
+|---|---|
+| [CLI Reference](reference/cli.md) | Every supported CLI command with options, examples, and expected output |
+| [Repository Structure](repository-structure.md) | Every top-level directory: purpose, what belongs, what does not |
+
+### Architecture
+
+| Document | Description |
+|---|---|
+| [Architecture Impact](architecture-impact.md) | How Stages 1–7 progressively built the architecture and what each stage enabled downstream |
+| [ADR Index](adr/README.md) | All Architectural Decision Records |
+
+### Stage Reports
+
+| Document | Stage | Status |
+|---|---|---|
+| [Stage 04 Summary](reports/stage-04-summary.md) | Data Acquisition Framework | ✅ Complete |
+| [Stage 05 Summary](reports/stage-05-summary.md) | Real Dataset Ingestion | ✅ Complete |
+| [Stage 06 Summary](reports/stage-06-summary.md) | Feature Engineering | ✅ Complete |
+| [Stage 07 Summary](reports/stage-07-summary.md) | Model Training & Evaluation | ✅ Complete |
+
+### Demos
+
+| Document | Description |
+|---|---|
+| [Demo Index](demo/README.md) | Overview of available demos |
+| [Stage 5 Demo](demo/stage-05-demo.md) | Live data ingestion walkthrough |
+| [Stage 6 Demo](demo/stage-06-demo.md) | Feature engineering walkthrough |
+| [Stage 7 Demo](demo/stage-07-demo.md) | Model training and evaluation walkthrough |
+
+### Troubleshooting
+
+| Document | Description |
+|---|---|
+| [Troubleshooting Guide](troubleshooting.md) | Common issues and fixes for Python, uv, Android, and CI |
+
+### Releases
+
+| Document | Description |
+|---|---|
+| [v0.1.0 Release Notes](releases/v0.1.0.md) | Full release notes for the first stable milestone |
+| [v0.1.0 Readiness Report](releases/v0.1.0-readiness.md) | Build, test, and CLI verification results |
+
+---
+
+## Directory Structure
 
 ```
 docs/
-  constitution/   # Immutable project principles and constraints
   adr/            # Architectural Decision Records
-  architecture/   # System diagrams and layer descriptions
-  ai/             # AI system design: RAG, evaluation, prompt strategy
-  backend/        # API contracts, service design, data models
-  frontend/       # Screen designs, navigation, ViewModel contracts
-  prompts/        # Prompt design notes (templates live in playbook/)
-  testing/        # Testing strategy and evaluation framework
-  roadmap/        # Stage plans and milestone definitions
-  decisions/      # Lightweight decision notes below ADR threshold
+  demo/           # Stage-by-stage demo scripts for technical interviews
+  reference/      # CLI command reference and API specifications
+  releases/       # Release notes and readiness reports
+  reports/        # Stage completion summaries
+  setup/          # Installation and quick-start guides
+  README.md       # This index
+  architecture-impact.md   # How stages built on each other
+  repository-structure.md  # Directory ownership guide
+  troubleshooting.md       # Common issues and fixes
 ```
 
 ---
