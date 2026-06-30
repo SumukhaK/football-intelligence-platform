@@ -270,7 +270,139 @@ uv run pytest tests/training/test_trainer.py
 uv run pytest -m integration
 ```
 
-Expected: `266 passed` (no integration tests selected).
+Expected: `426 passed` (no integration tests selected).
+
+---
+
+## SHAP Explainability
+
+### `python -m explainability.pipeline`
+
+Loads the trained model and feature matrix, computes SHAP values for all matches, and persists JSON artifacts and visualisation plots.
+
+**Usage:**
+```sh
+uv run python -m explainability.pipeline [OPTIONS]
+```
+
+**Options:**
+
+| Flag | Default | Description |
+|---|---|---|
+| `--model-path PATH` | `models/latest/model.joblib` | Path to the trained model bundle. |
+| `--feature-matrix PATH` | `datasets/features/feature_matrix.parquet` | Path to the feature matrix. |
+| `--output-dir DIR` | `explanations/` | Directory to write all artifacts. |
+| `--n-local N` | `10` | Number of per-sample local explanations to persist. |
+
+**Outputs:**
+
+| File | Description |
+|---|---|
+| `explanations/global_summary.json` | Mean \|SHAP\| per feature; top features by outcome class |
+| `explanations/local_explanations.json` | N per-sample explanations with full feature contributions |
+| `explanations/summary_plot.png` | Beeswarm plot — feature impact distribution across all samples |
+| `explanations/feature_importance.png` | Mean \|SHAP\| bar chart — global feature ranking |
+| `explanations/waterfall/sample_NNNN_<class>.png` | Waterfall plots (N samples × 3 classes) |
+| `explanations/force/sample_NNNN_<class>.png` | Force plots (N samples × 3 classes) |
+| `explanations/dependence/<feature>.png` | Top-5 feature dependence plots |
+
+**Exit codes:** `0` on success, `1` on any failure.
+
+---
+
+## Backend API
+
+### `uvicorn backend.app.main:app`
+
+Starts the FastAPI backend server.
+
+**Usage:**
+```sh
+# Development (auto-reload on file changes)
+uv run uvicorn backend.app.main:app --reload
+
+# Production
+uv run uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+```
+
+**Environment variables:**
+
+| Variable | Default | Description |
+|---|---|---|
+| `MODEL_PATH` | `models/latest/model.joblib` | Path to the trained model bundle |
+| `REGISTRY_PATH` | `models/registry.json` | Path to the model registry |
+| `LOG_LEVEL` | `info` | Logging level |
+| `API_VERSION` | `0.2.0` | API version string returned in `/health` |
+
+**Endpoints:**
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/health` | Service health, model loaded status, assistant availability |
+| `GET` | `/model` | Latest model version, training metrics, git commit |
+| `POST` | `/predict` | Match outcome prediction (H/D/A) with probabilities |
+| `POST` | `/explain` | Prediction + full SHAP feature contributions |
+| `POST` | `/assistant/chat` | RAG assistant chat (requires Ollama + built index) |
+| `GET` | `/docs` | Swagger UI — interactive API documentation |
+| `GET` | `/redoc` | ReDoc — alternative API documentation |
+
+**Sample health check:**
+```sh
+curl http://localhost:8000/health
+# {"status":"ok","model_loaded":true,"explanation_service_available":true,"assistant_available":true,"version":"0.2.0"}
+```
+
+**Sample prediction:**
+```sh
+curl -s -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"home_team": "Arsenal", "away_team": "Chelsea", "features": {}}' \
+  | python -m json.tool
+```
+
+**Sample explanation:**
+```sh
+curl -s -X POST http://localhost:8000/explain \
+  -H "Content-Type: application/json" \
+  -d '{"home_team": "Arsenal", "away_team": "Chelsea", "features": {}}' \
+  | python -m json.tool
+```
+
+---
+
+## AI Assistant Index
+
+### `python -m assistant.pipeline`
+
+Builds or loads the RAG knowledge index and optionally runs a sample query. Requires Ollama running with `nomic-embed-text` pulled.
+
+**Usage:**
+```sh
+# Build a fresh index from the knowledge base
+uv run python -m assistant.pipeline --rebuild
+
+# Load existing index and run a sample query
+uv run python -m assistant.pipeline
+```
+
+**Prerequisites:**
+```sh
+ollama pull nomic-embed-text
+ollama pull llama3.2
+```
+
+**Environment variables:**
+
+| Variable | Default | Description |
+|---|---|---|
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
+| `OLLAMA_CHAT_MODEL` | `llama3.2` | Chat generation model |
+| `OLLAMA_EMBED_MODEL` | `nomic-embed-text` | Embedding model |
+| `ASSISTANT_VECTOR_STORE_PATH` | `assistant/vector_store` | Persisted index path |
+| `ASSISTANT_TOP_K` | `5` | Top-K chunks to retrieve per query |
+
+**Outputs:**
+- `assistant/vector_store/` — persisted numpy vector store (embeddings + metadata)
 
 ---
 
@@ -298,12 +430,31 @@ Run from the `frontend/` directory.
 
 ## Full Pipeline (End-to-End)
 
-Run all three AI pipeline steps in sequence from `ai/`:
+Run the complete AI pipeline in sequence from `ai/`:
 
 ```sh
+# Data pipeline
 uv run python -m scripts.ingest_football_data && \
 uv run python -m feature_engineering.pipeline && \
-uv run python -m training.pipeline
+uv run python -m training.pipeline && \
+uv run python -m explainability.pipeline
+
+# Start the backend
+uv run uvicorn backend.app.main:app --reload
 ```
 
-Total expected time: approximately 5–10 seconds on a modern machine (excluding first-run dependency download).
+Total expected time: approximately 15–30 seconds on a modern machine (excluding first-run dependency download). Add ~2–5 minutes for the explainability pipeline on the first run (SHAP plot generation).
+
+### With AI Assistant (requires Ollama)
+
+```sh
+# Pull Ollama models (one-time)
+ollama pull nomic-embed-text
+ollama pull llama3.2
+
+# Build the knowledge index
+uv run python -m assistant.pipeline --rebuild
+
+# Start the backend (assistant loads automatically)
+uv run uvicorn backend.app.main:app --reload
+```

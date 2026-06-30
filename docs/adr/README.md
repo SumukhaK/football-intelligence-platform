@@ -86,3 +86,4 @@ ADRs are never deleted.
 | [001](001-use-xgboost-for-predictions.md) | Use XGBoost for match outcome prediction | Accepted |
 | [002](002-joblib-model-serialization.md) | Use joblib for model serialisation | Accepted |
 | [003](003-chronological-train-val-test-split.md) | Use chronological train/validation/test split | Accepted |
+| [004](004-shap-for-explainability.md) | Use SHAP TreeExplainer for model explainability | Accepted |
