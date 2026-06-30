@@ -1,0 +1,104 @@
+[project]
+name = "football-ai"
+version = "0.1.0"
+description = "Data engineering, machine learning, and RAG pipeline for the Football Intelligence Platform"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas>=2.2.0",
+    "numpy>=1.26.0",
+    "scikit-learn>=1.4.0",
+    "pydantic>=2.7.0",
+    "joblib>=1.4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-cov>=5.0.0",
+    "ruff>=0.4.0",
+    "black>=24.4.0",
+    "mypy>=1.10.0",
+    "pandas-stubs>=2.2.0",
+    "pre-commit>=3.7.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "ingestion",
+    "validation",
+    "preprocessing",
+    "feature_engineering",
+    "schemas",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+src = ["."]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "ingestion",
+    "validation",
+    "preprocessing",
+    "feature_engineering",
+    "schemas",
+]
+
+[tool.black]
+target-version = ["py312"]
+line-length = 88
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = false
+packages = [
+    "ingestion",
+    "validation",
+    "preprocessing",
+    "feature_engineering",
+    "schemas",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--tb=short -q"
+
+[tool.coverage.run]
+source = [
+    "ingestion",
+    "validation",
+    "preprocessing",
+    "feature_engineering",
+    "schemas",
+]
+omit = ["tests/*"]
+
+[[tool.mypy.overrides]]
+# scikit-learn does not ship type stubs or a py.typed marker
+module = "sklearn.*"
+ignore_missing_imports = true
+
+[tool.coverage.report]
+fail_under = 70
+show_missing = true
