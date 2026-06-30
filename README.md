@@ -87,6 +87,7 @@ flowchart TD
         J --> K["Backend API — Stage 9\nFastAPI · /predict · /explain\nOpenAPI · 43 tests"]
         K --> L["AI Assistant — Stage 10\nOllama · RAG · numpy vector store\nPOST /assistant/chat · 426 tests"]
         L --> M["Android App — Stage 11\nCompose Multiplatform · MVVM\n8 screens · Ktor · Koin"]
+        M --> N["Integration — Stage 12\n36 integration tests · performance benchmarks\nend-to-end validation"]
     end
 
     style AI fill:#1a1a2e,stroke:#4a9eff,color:#ffffff
@@ -124,8 +125,8 @@ Local development runs without cloud services. All external dependencies have lo
 | 8 | Explainable AI | ✅ Complete | SHAP TreeExplainer pipeline, ExplanationService, global/local artifacts |
 | 9 | Backend API | ✅ Complete | FastAPI service: /health, /model, /predict, /explain — 43 tests, OpenAPI docs |
 | 10 | Football Intelligence Assistant | ✅ Complete | RAG assistant: Ollama, numpy vector store, POST /assistant/chat — 426 tests |
-| 11 | Android Application | Planned | Compose Multiplatform screens consuming the backend API |
-| 12 | Integration & Release | Planned | Structured evaluation, end-to-end testing, production readiness |
+| 11 | Android Application | ✅ Complete | 8-screen Compose Multiplatform app consuming the backend API via Ktor |
+| 12 | Integration & Release | ✅ Complete | 36 integration tests, performance benchmarks, end-to-end validation |
 
 ---
 
