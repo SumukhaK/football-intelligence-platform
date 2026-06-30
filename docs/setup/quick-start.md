@@ -70,7 +70,7 @@ Confirm the AI workspace is clean before running any pipelines:
 uv run ruff check .          # Linting — should print: All checks passed!
 uv run black --check .       # Formatting — should print: N files would be left unchanged.
 uv run mypy .                # Type checking — should print: Success: no issues found in N source files
-uv run pytest                # Tests — should print: 266 passed
+uv run pytest                # Tests — should print: 462 passed
 ```
 
 All four checks must pass on a clean checkout.
@@ -318,7 +318,7 @@ After setup, verify the following:
 - [ ] `uv run ruff check .` — prints `All checks passed!`
 - [ ] `uv run black --check .` — prints `N files would be left unchanged.`
 - [ ] `uv run mypy .` — prints `Success: no issues found`
-- [ ] `uv run pytest` — prints `426 passed`
+- [ ] `uv run pytest` — prints `462 passed`
 - [ ] Data ingestion produces a `datasets/raw/` CSV
 - [ ] Feature engineering produces `datasets/features/feature_matrix.parquet`
 - [ ] Training produces `models/latest/model.joblib` and `models/latest/model_card.md`
