@@ -158,6 +158,65 @@ Test log-loss:  0.9493
 Run dir:        models/runs/<timestamp>
 ```
 
+### Step 4 — Generate SHAP Explanations
+
+Computes SHAP values for all 380 matches and writes JSON artifacts and visualisation plots.
+
+```sh
+uv run python -m explainability.pipeline
+```
+
+Expected output:
+
+```
+Model:          .../models/latest/model.joblib
+Feature matrix: .../datasets/features/feature_matrix.parquet
+Output:         .../explanations
+
+Samples:        380
+Features:       42
+Local explanations: 10
+Artifacts:      .../explanations
+```
+
+### Step 5 — Start the Backend
+
+Starts the FastAPI server exposing predictions, explanations, and (optionally) the AI assistant.
+
+```sh
+uv run uvicorn backend.app.main:app --reload
+```
+
+Expected log output:
+
+```
+INFO: Prediction model loaded: version=<timestamp>
+INFO: Explanation service loaded.
+INFO: Application startup complete.
+```
+
+Verify it is running:
+
+```sh
+curl http://localhost:8000/health
+# {"status":"ok","model_loaded":true,"explanation_service_available":true,"assistant_available":false,"version":"0.2.0"}
+```
+
+### Step 6 — Build the AI Assistant Index (optional — requires Ollama)
+
+The assistant requires [Ollama](https://ollama.com) running locally with two models pulled.
+
+```sh
+# Pull models (one-time, ~4 GB)
+ollama pull nomic-embed-text
+ollama pull llama3.2
+
+# Build the knowledge index
+uv run python -m assistant.pipeline --rebuild
+```
+
+Restart the backend after building the index — it will detect the index and enable the assistant endpoint.
+
 ---
 
 ## Build Android
@@ -198,6 +257,11 @@ After running the complete pipeline, the following files should exist:
 | `models/latest/config.json` | Training configuration |
 | `models/registry.json` | Local model registry |
 | `models/evaluation/evaluation_report.json` | Global evaluation report |
+| `ai/explanations/global_summary.json` | Mean \|SHAP\| per feature across all matches |
+| `ai/explanations/local_explanations.json` | 10 per-sample SHAP explanations |
+| `ai/explanations/summary_plot.png` | Beeswarm feature impact plot |
+| `ai/explanations/feature_importance.png` | Mean \|SHAP\| bar chart |
+| `ai/assistant/vector_store/` | Persisted RAG knowledge index (if built) |
 
 ---
 
@@ -254,8 +318,12 @@ After setup, verify the following:
 - [ ] `uv run ruff check .` — prints `All checks passed!`
 - [ ] `uv run black --check .` — prints `N files would be left unchanged.`
 - [ ] `uv run mypy .` — prints `Success: no issues found`
-- [ ] `uv run pytest` — prints `266 passed`
+- [ ] `uv run pytest` — prints `426 passed`
 - [ ] Data ingestion produces a `datasets/raw/` CSV
 - [ ] Feature engineering produces `datasets/features/feature_matrix.parquet`
 - [ ] Training produces `models/latest/model.joblib` and `models/latest/model_card.md`
+- [ ] SHAP pipeline produces `ai/explanations/global_summary.json` and plots
+- [ ] `curl http://localhost:8000/health` returns `{"status":"ok","model_loaded":true,...}`
+- [ ] `POST /predict` returns a predicted result with probabilities
+- [ ] `POST /explain` returns SHAP feature contributions
 - [ ] Android build prints `BUILD SUCCESSFUL`

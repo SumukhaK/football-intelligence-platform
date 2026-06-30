@@ -29,7 +29,7 @@ Maintained by the project architect. The implementation engineer updates documen
 
 | Document | Description |
 |---|---|
-| [Architecture Impact](architecture-impact.md) | How Stages 1–7 progressively built the architecture and what each stage enabled downstream |
+| [Architecture Impact](architecture-impact.md) | How Stages 1–10 progressively built the architecture and what each stage enabled downstream |
 | [ADR Index](adr/README.md) | All Architectural Decision Records |
 
 ### Stage Reports
@@ -40,15 +40,21 @@ Maintained by the project architect. The implementation engineer updates documen
 | [Stage 05 Summary](reports/stage-05-summary.md) | Real Dataset Ingestion | ✅ Complete |
 | [Stage 06 Summary](reports/stage-06-summary.md) | Feature Engineering | ✅ Complete |
 | [Stage 07 Summary](reports/stage-07-summary.md) | Model Training & Evaluation | ✅ Complete |
+| [Stage 08 Summary](reports/stage-08-summary.md) | Explainable AI (SHAP) | ✅ Complete |
+| [Stage 09 Summary](reports/stage-09-summary.md) | FastAPI Backend | ✅ Complete |
+| [Stage 10 Summary](reports/stage-10-summary.md) | Football Intelligence Assistant | ✅ Complete |
 
 ### Demos
 
 | Document | Description |
 |---|---|
-| [Demo Index](demo/README.md) | Overview of available demos |
+| [Demo Index](demo/README.md) | Overview of all available demos |
 | [Stage 5 Demo](demo/stage-05-demo.md) | Live data ingestion walkthrough |
 | [Stage 6 Demo](demo/stage-06-demo.md) | Feature engineering walkthrough |
 | [Stage 7 Demo](demo/stage-07-demo.md) | Model training and evaluation walkthrough |
+| [Stage 8 Demo](demo/stage-08-demo.md) | SHAP explainability walkthrough |
+| [Stage 9 Demo](demo/stage-09-demo.md) | FastAPI backend and REST API walkthrough |
+| [Stage 10 Demo](demo/stage-10-demo.md) | AI assistant and RAG pipeline walkthrough |
 
 ### Troubleshooting
 
@@ -60,6 +66,8 @@ Maintained by the project architect. The implementation engineer updates documen
 
 | Document | Description |
 |---|---|
+| [v0.2.0 Release Notes](releases/v0.2.0.md) | Full release notes for Stages 1–10 |
+| [v0.2.0 Readiness Report](releases/v0.2.0-readiness.md) | Build, test, API, and CLI verification results |
 | [v0.1.0 Release Notes](releases/v0.1.0.md) | Full release notes for the first stable milestone |
 | [v0.1.0 Readiness Report](releases/v0.1.0-readiness.md) | Build, test, and CLI verification results |
 

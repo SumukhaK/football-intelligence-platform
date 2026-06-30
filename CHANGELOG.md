@@ -11,6 +11,65 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.2.0] — 2026-06-30
+
+### Added
+
+#### Stage 8 — Explainable AI (SHAP)
+- `explainability/` package: `SHAPExplainer`, `ExplainerCache`, `ExplainabilityPipeline`, `ExplanationService`.
+- `shap.TreeExplainer` over the XGBoost booster with multi-class output normalisation to `(n_samples, n_features, n_classes)`.
+- `ExplainerCache` — class-level dict keyed by model version; avoids rebuilding the explainer per request.
+- `LocalExplanation` and `GlobalSummary` — frozen Pydantic models with predictions, probabilities, per-feature SHAP contributions, top-positive/negative features, and version metadata.
+- Generated artifacts: `global_summary.json`, `local_explanations.json`, `summary_plot.png`, `feature_importance.png`, `waterfall/` (10 samples × 3 classes), `force/` (10 samples × 3 classes), `dependence/` (top 5 features).
+- CLI: `uv run python -m explainability.pipeline` — runs on 380 matches, persists all artifacts to `ai/explanations/`.
+- ADR 004: SHAP TreeExplainer chosen over XGBoost native importance, LIME, and Captum.
+- 54 new tests across 8 modules (320 total at stage completion).
+
+#### Stage 9 — FastAPI Backend
+- FastAPI application at `ai/backend/` (shares the `ai/` uv workspace and venv).
+- Endpoints: `GET /health`, `GET /model`, `POST /predict`, `POST /explain`.
+- `pydantic-settings` config (`BackendSettings`) with `model_path` and `registry_path`.
+- FastAPI lifespan loads `PredictionService` and `ExplanationService` once at startup into `app.state`.
+- `Depends` dependency injection — no global state, no singletons.
+- Structured exception handling: `ModelNotAvailableError` → 503, `FeatureMissingError` → 422, unexpected → 500.
+- Request logging middleware recording method, path, status, and duration.
+- OpenAPI schema auto-generated; Swagger UI at `/docs`, ReDoc at `/redoc`.
+- 43 backend tests across 7 files (363 total at stage completion).
+- Start command: `uv run uvicorn backend.app.main:app --reload`
+
+#### Stage 10 — Football Intelligence Assistant
+- `assistant/` package with 8 sub-packages: `ingestion`, `chunking`, `embeddings`, `retrieval`, `prompting`, `generation`, `services`, plus `pipeline.py` facade.
+- `DocumentLoader` ingesting `.md` and `.json` knowledge files into `Document` objects.
+- `TextChunker` splitting documents into overlapping chunks with stable SHA-1 IDs.
+- `OllamaEmbedder` calling the Ollama embedding API (default: `nomic-embed-text`).
+- `VectorStore` backed by numpy arrays, persisted to disk; cosine similarity retrieval.
+- `OllamaGenerator` calling the Ollama chat API (default: `llama3.2`).
+- `AssistantService` orchestrating embed → retrieve → prompt → generate pipeline.
+- System prompt instructs the assistant to answer only from retrieved context, cite sources as `[source: <filename>]`, and admit when it lacks information.
+- Low-relevance chunks (< 0.50 cosine similarity) filtered before context assembly.
+- `AssistantPipeline` facade: `build_index()`, `load_index()`, `query()` — CLI-runnable with `--rebuild` flag.
+- Backend integration: `POST /assistant/chat` endpoint, `ChatService` adapter, `AssistantNotAvailableError` → 503, graceful startup when Ollama is absent.
+- `assistant_available` field on `/health` response.
+- 52 new assistant + backend tests; all Ollama calls mocked (426 total passing).
+- Index build command: `uv run python -m assistant.pipeline --rebuild`
+
+### Documentation
+- `docs/reports/stage-08-summary.md` — SHAP explainability stage report.
+- `docs/reports/stage-09-summary.md` — FastAPI backend stage report.
+- `docs/reports/stage-10-summary.md` — Football intelligence assistant stage report.
+- `docs/demo/stage-08-demo.md` — SHAP explainability demo guide.
+- `docs/demo/stage-09-demo.md` — FastAPI backend demo guide.
+- `docs/demo/stage-10-demo.md` — AI assistant demo guide.
+- `docs/adr/004-shap-for-explainability.md` — ADR for SHAP selection.
+- `docs/releases/v0.2.0.md` — Release notes.
+- `docs/releases/v0.2.0-readiness.md` — Release readiness report.
+- README Mermaid diagram updated to show completed Stages 8–10 and planned Stage 11.
+- ADR index updated to include ADR 004.
+
+[0.2.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v0.2.0
+
+---
+
 ## [0.1.0] — 2026-06-30
 
 ### Added
