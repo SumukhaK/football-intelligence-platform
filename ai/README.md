@@ -43,6 +43,7 @@ ai/
   evaluation/           # Evaluation harness for model and assistant quality (Stage 7)
   inference/            # Inference wrappers used by the backend (Stage 7)
   explainability/       # SHAP explainability pipeline (Stage 8)
+  assistant/            # RAG assistant: ingestion, chunking, embeddings, retrieval, generation
   rag/                  # Retrieval pipeline: indexing, search, context assembly (Stage 3)
   prompts/              # Prompt templates (source of truth is playbook/)
   datasets/             # Symlinks or references to datasets/processed/
@@ -194,6 +195,43 @@ uv run python -m feature_engineering.pipeline --input datasets/processed/footbal
 | `strength_of_schedule` | 4 | Rolling average opponent Elo (requires `elo_rating`) |
 
 All rolling features use `.shift(1)` before `.rolling()` to prevent data leakage.
+
+---
+
+## Assistant Package
+
+The `assistant/` package implements the RAG pipeline for the Football Intelligence
+Assistant (Stage 10). It is structured as a series of composable stages:
+
+```
+assistant/
+  ingestion/      # DocumentLoader — loads .md and .json knowledge files
+  chunking/       # TextChunker — splits documents into overlapping chunks
+  embeddings/     # Embedder protocol + OllamaEmbedder
+  retrieval/      # VectorStore (numpy, file-persisted) + cosine retrieve()
+  prompting/      # System prompt + build_messages()
+  generation/     # Generator protocol + OllamaGenerator
+  services/       # AssistantService — orchestrates the full pipeline
+  pipeline.py     # AssistantPipeline facade: build_index / load_index / query
+  configuration.py  # AssistantSettings (pydantic-settings)
+```
+
+### Building the index
+
+```sh
+ollama pull nomic-embed-text
+uv run python -m assistant.pipeline --rebuild
+```
+
+### Knowledge sources loaded
+
+- `ai/models/**/*.md` — model cards
+- `docs/adr/*.md` — architecture decision records
+- `docs/reports/*.md` — stage summaries
+- `docs/*.md` — project documentation
+- `ai/models/latest/evaluation_report.json` — model evaluation
+- `ai/explanations/global_summary.json` — SHAP global explanations
+- `datasets/features/feature_metadata.json` — feature descriptions
 
 ---
 

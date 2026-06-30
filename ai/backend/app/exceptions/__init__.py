@@ -14,6 +14,10 @@ class ModelNotAvailableError(Exception):
     """Raised when the prediction model has not been loaded."""
 
 
+class AssistantNotAvailableError(Exception):
+    """Raised when the assistant or its dependencies are not available."""
+
+
 class FeatureMissingError(Exception):
     """Raised when required feature columns are absent from the request."""
 
@@ -21,6 +25,15 @@ class FeatureMissingError(Exception):
         """Initialise with the list of missing column names."""
         self.missing = missing
         super().__init__(f"Missing feature columns: {missing}")
+
+
+def assistant_not_available_handler(_request: Request, exc: Exception) -> JSONResponse:
+    """Return a 503 when the assistant service is unavailable."""
+    logger.error("Assistant not available: %s", exc)
+    return JSONResponse(
+        status_code=503,
+        content={"error": "Assistant not available", "detail": str(exc)},
+    )
 
 
 def model_not_available_handler(_request: Request, exc: Exception) -> JSONResponse:

@@ -26,6 +26,9 @@ class HealthResponse(BaseModel):
     explainability_available: bool = Field(
         ..., description="True when the SHAP explainer is available."
     )
+    assistant_available: bool = Field(
+        ..., description="True when the RAG assistant is available."
+    )
     version: str = Field(..., description="API version string.", examples=["0.1.0"])
 
 

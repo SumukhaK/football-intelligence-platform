@@ -27,6 +27,12 @@ def test_health_explainability_available_true(client: TestClient) -> None:
     assert response.json()["explainability_available"] is True
 
 
+def test_health_assistant_available_true(client: TestClient) -> None:
+    """GET /health reports assistant_available=True when chat service is wired."""
+    response = client.get("/health")
+    assert response.json()["assistant_available"] is True
+
+
 def test_health_includes_version(client: TestClient) -> None:
     """GET /health includes a non-empty version string."""
     response = client.get("/health")
@@ -50,3 +56,4 @@ def test_health_no_model_loaded(tmp_path: Path) -> None:
     assert response.status_code == 200
     assert response.json()["model_loaded"] is False
     assert response.json()["explainability_available"] is False
+    assert response.json()["assistant_available"] is False
