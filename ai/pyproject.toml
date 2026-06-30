@@ -131,7 +131,7 @@ packages = [
 testpaths = ["tests"]
 addopts = "--tb=short -q"
 markers = [
-    "integration: tests that require network access (deselect with -m 'not integration')",
+    "integration: tests that require real model artifacts or network access (deselect with -m 'not integration')",
 ]
 
 [tool.coverage.run]

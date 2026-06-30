@@ -9,6 +9,28 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+#### Stage 11 — Compose Multiplatform Android Application
+- 8-screen Android app: Home, Match Prediction, Prediction Result, Explain Prediction, AI Assistant Chat, Model Information, Settings, About.
+- MVVM architecture: Composables in `commonMain`, ViewModels in `androidMain`, repositories returning `NetworkResult<T>`.
+- Ktor 2.3.12 HTTP client covering all 5 backend endpoints.
+- Koin 3.5.6 dependency injection; AndroidX Navigation Compose 2.8.3 routing.
+- `FootballTheme` with Material 3 light/dark colour scheme.
+- 9 repository unit tests across 4 feature modules (JUnit 5 + MockK).
+- `buildNeutralFeatures()` providing 44 neutral values for demo predictions (documented limitation).
+
+#### Stage 12 — End-to-End Integration & Production Readiness
+- 36 integration tests in `ai/tests/integration/` covering all 5 API endpoints with real model artifacts.
+- Prediction pipeline integration tests: model load, structured output, probability sanity, latency (<500 ms).
+- Explainability pipeline integration tests: SHAP values finite, positive/negative attribution verification, latency (<3 s).
+- API integration tests: health, model info, predict, explain, and assistant graceful-503 without Ollama.
+- Error recovery tests: 503 on missing model, 422 on bad input, 404/405 on wrong routes.
+- Full pytest suite: 462 tests passing (426 unit + 36 integration).
+- Performance benchmarks documented: prediction <100 ms, explanation <2 s, health <50 ms.
+- `docs/demo/stage-12-demo.md` — complete end-to-end demo guide with prerequisites, flows, and troubleshooting.
+- `docs/reports/stage-12-summary.md` — production readiness assessment.
+
 ---
 
 ## [0.2.0] — 2026-06-30
