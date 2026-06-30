@@ -66,6 +66,41 @@ The AI layer is separate from the backend. The backend exposes AI results via AP
 
 ---
 
+## System Data Flow
+
+```mermaid
+flowchart TD
+    A["⚽ Football Data Sources\nfootball-data.co.uk · FBref · Understat"] --> B
+
+    subgraph AI["AI Workspace (ai/)"]
+        B["Ingestion Pipeline\nDatasetDownloader · IngestionPipeline\nschema validation · versioned storage"] --> C
+        C["Canonical Dataset\ndatasets/processed/\nProcessedMatch · 380 matches"] --> D
+        D["Feature Engineering\n9 feature generators · FeatureRegistry\nKahn topology sort · leakage prevention"] --> E
+        E["Feature Matrix\ndatasets/features/feature_matrix.parquet\n42 pre-match features · 380 rows"] --> F
+        F["Model Training\nXGBoost · chronological 70/15/15 split\nearly stopping · TimeSeriesSplit CV"] --> G
+        G["Evaluation\naccuracy · F1 · log-loss · ROC AUC\nper-split + cross-validation"] --> H
+        H["Model Registry\nmodels/registry.json\ngit commit traceability"]
+        F --> I["Model Artifacts\nmodels/latest/model.joblib\nmodel_card.md · plots"]
+    end
+
+    subgraph FUTURE["Planned Stages"]
+        J["Explainability — Stage 8\nSHAP values per prediction"]
+        K["Backend API — Stage 9\nFastAPI · OpenAPI · SQLAlchemy"]
+        L["AI Assistant — Stage 10\nOllama · RAG · prompt templates"]
+        M["Android App — Stage 11\nCompose Multiplatform · MVVM"]
+    end
+
+    I --> J
+    J --> K
+    K --> L
+    K --> M
+
+    style AI fill:#1a1a2e,stroke:#4a9eff,color:#ffffff
+    style FUTURE fill:#1a2e1a,stroke:#4aff4a,color:#aaaaaa
+```
+
+---
+
 ## Development Workflow
 
 1. Receive a task referencing an architecture document or ADR.
