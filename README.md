@@ -84,14 +84,20 @@ Local development runs without cloud services. All external dependencies have lo
 
 ## Project Stages
 
-| Stage | Name | Description |
-|---|---|---|
-| 1 | Data Foundation | Ingest raw football data, validate schemas, build processed dataset |
-| 2 | Prediction Layer | Train XGBoost model, attach SHAP explanations to every prediction |
-| 3 | AI Assistant | Build RAG assistant using Ollama, ground all responses in data |
-| 4 | Backend API | Expose predictions and assistant via FastAPI with OpenAPI docs |
-| 5 | Frontend | Build Compose Multiplatform Android client with TDD ViewModels |
-| 6 | Evaluation | Structured evaluation of prediction accuracy and assistant quality |
+| Stage | Name | Status | Description |
+|---|---|---|---|
+| 1 | Repository Foundation | ✅ Complete | Directory structure, root files, GitHub templates, CI workflow |
+| 2 | Compose Foundation | ✅ Complete | Compose Multiplatform Android-first project with modular architecture |
+| 3 | AI Workspace | ✅ Complete | Python AI workspace bootstrapped with uv, Pydantic schemas, base tests |
+| 4 | Data Acquisition Framework | ✅ Complete | Extensible provider abstraction (football-data.co.uk, FBref, Understat) |
+| 5 | Real Dataset Ingestion | ✅ Complete | Premier League 2023/24 dataset ingested and validated (380 matches) |
+| 6 | Feature Engineering | ✅ Complete | 42 pre-match features: ELO, rolling form, H2H, rest days, league position |
+| 7 | Model Training & Evaluation | ✅ Complete | XGBoost training pipeline, cross-validation, local model registry |
+| 8 | Explainable AI | Planned | SHAP explanations for every prediction |
+| 9 | Backend API | Planned | FastAPI service exposing predictions and assistant via OpenAPI |
+| 10 | Football Intelligence Assistant | Planned | RAG assistant using Ollama, grounded in processed data |
+| 11 | Android Application | Planned | Compose Multiplatform screens consuming the backend API |
+| 12 | Integration & Release | Planned | Structured evaluation, end-to-end testing, production readiness |
 
 ---
 
