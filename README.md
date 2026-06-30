@@ -151,6 +151,43 @@ Dependencies flow downward. Feature modules never depend on each other.
 | `:core-common` | Infrastructure | Shared utilities, coroutine helpers, base error types |
 | `:core-testing` | Test | Test utilities, fakes, and base rules (never shipped) |
 
+## AI Workspace
+
+The `ai/` directory is a standalone Python project managed with [uv](https://github.com/astral-sh/uv).
+
+```sh
+cd ai
+
+# Install all dependencies (including dev tools)
+uv sync --extra dev
+
+# Run linting
+uv run ruff check .
+
+# Check formatting
+uv run black --check .
+
+# Run type checking
+uv run mypy .
+
+# Run tests
+uv run pytest
+```
+
+**Requires Python 3.12.** uv manages the virtual environment automatically; no manual `venv` activation is needed.
+
+| Package | Purpose |
+|---|---|
+| `ingestion/` | Pull raw football data into `datasets/raw/` |
+| `validation/` | Schema-validate data before it enters any pipeline |
+| `preprocessing/` | Clean and normalise validated data into `datasets/processed/` |
+| `feature_engineering/` | Compute model-ready features from preprocessed data |
+| `schemas/` | Pydantic schema definitions — the data contract |
+| `scripts/` | Operational CLI scripts (setup, pipeline triggers) |
+| `tests/` | Unit tests mirroring the source structure |
+
+---
+
 ## Build Instructions
 
 Requires JDK 17 or higher.
