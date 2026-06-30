@@ -1,0 +1,15 @@
+.gradle/
+.idea/
+local.properties
+*.iml
+build/
+captures/
+.cxx/
+.externalNativeBuild/
+
+# Keystore files
+*.jks
+*.keystore
+
+# Generated files
+**/generated/

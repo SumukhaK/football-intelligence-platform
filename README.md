@@ -109,6 +109,73 @@ The assistant never invents facts. Every response is grounded in retrieved data 
 
 ---
 
+## Frontend Module Graph
+
+```
+:app
+ ├── :feature-home
+ ├── :feature-prediction
+ ├── :feature-match
+ ├── :feature-team
+ ├── :feature-assistant
+ └── :feature-settings
+       └── (all features depend on)
+             ├── :core-ui
+             ├── :core-design-system
+             ├── :core-navigation
+             ├── :core-model
+             ├── :core-network
+             └── :core-common
+
+:core-testing  (test dependency only, never shipped)
+```
+
+Dependencies flow downward. Feature modules never depend on each other.
+
+## Frontend Module Responsibilities
+
+| Module | Layer | Purpose |
+|---|---|---|
+| `:app` | Presentation | Application entry point, DI assembly, root NavHost |
+| `:feature-home` | Presentation | Recent matches and upcoming fixtures |
+| `:feature-prediction` | Presentation | XGBoost prediction + SHAP explanation display |
+| `:feature-match` | Presentation | Match detail and statistics |
+| `:feature-team` | Presentation | Team profile and season stats |
+| `:feature-assistant` | Presentation | RAG-powered football intelligence chat |
+| `:feature-settings` | Presentation | User preferences and developer options |
+| `:core-ui` | Presentation | Shared stateless Compose components |
+| `:core-design-system` | Presentation | Material 3 tokens, theme, typography |
+| `:core-navigation` | Presentation | Route definitions and navigation contracts |
+| `:core-model` | Domain | Serializable domain types shared across layers |
+| `:core-network` | Infrastructure | Ktor client configuration and base network layer |
+| `:core-common` | Infrastructure | Shared utilities, coroutine helpers, base error types |
+| `:core-testing` | Test | Test utilities, fakes, and base rules (never shipped) |
+
+## Build Instructions
+
+Requires JDK 17 or higher.
+
+```sh
+cd frontend
+
+# Build debug APK
+./gradlew assembleDebug
+
+# Run all unit tests
+./gradlew testDebugUnitTest
+
+# Static analysis
+./gradlew detekt
+./gradlew spotlessCheck
+
+# Fix formatting
+./gradlew spotlessApply
+```
+
+All commands resolve dependencies automatically on first run.
+
+---
+
 ## Documentation Links
 
 - [Project Instructions](.claude/CLAUDE.md)
