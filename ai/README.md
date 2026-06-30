@@ -158,6 +158,44 @@ uv run pytest --cov --cov-report=term-missing
 
 ---
 
+## Feature Engineering Pipeline
+
+The feature engineering pipeline transforms a canonical `ProcessedMatch` CSV into a model-ready feature matrix.
+
+```sh
+# Run with auto-detected latest canonical dataset
+uv run python -m feature_engineering.pipeline
+
+# Run with an explicit input file
+uv run python -m feature_engineering.pipeline --input datasets/processed/football_data/match_results_v<version>.csv --output-dir datasets/features
+```
+
+**Output artefacts** written to `datasets/features/`:
+
+| File | Contents |
+|---|---|
+| `feature_matrix.parquet` | Full feature matrix (canonical columns + 32 engineered features) |
+| `feature_metadata.json` | Feature versions, row/column counts, pipeline version |
+| `feature_generation_report.json` | Per-feature timing, validation results, dataset statistics |
+
+**Feature modules** (9 total, executed in dependency order):
+
+| Feature | Output Columns | Method |
+|---|---|---|
+| `rolling_form` | 8 | Rolling win/point counts over last 5 and 10 matches |
+| `goal_statistics` | 12 | Rolling mean goals scored/conceded/diff |
+| `home_advantage` | 2 | Expanding home win % and points-per-game |
+| `away_form` | 2 | Expanding away win % and points-per-game |
+| `rest_days` | 2 | Days since each team's prior match |
+| `head_to_head` | 4 | Historical meetings, wins, draws between the two teams |
+| `league_position` | 6 | Position, points, and matches played at kick-off |
+| `elo_rating` | 2 | Dynamic Elo ratings (K=32, start=1500) recorded before each match |
+| `strength_of_schedule` | 4 | Rolling average opponent Elo (requires `elo_rating`) |
+
+All rolling features use `.shift(1)` before `.rolling()` to prevent data leakage.
+
+---
+
 ## Future Responsibilities
 
 - Multi-league data support.
