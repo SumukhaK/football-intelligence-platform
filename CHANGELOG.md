@@ -9,6 +9,10 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+---
+
+## [1.0.0] — 2026-07-01
+
 ### Added
 
 #### Stage 11 — Compose Multiplatform Android Application
@@ -30,6 +34,19 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Performance benchmarks documented: prediction <100 ms, explanation <2 s, health <50 ms.
 - `docs/demo/stage-12-demo.md` — complete end-to-end demo guide with prerequisites, flows, and troubleshooting.
 - `docs/reports/stage-12-summary.md` — production readiness assessment.
+- `docs/releases/v1.0.0.md` — final release notes.
+- `docs/releases/v1.0.0-readiness.md` — final release readiness report.
+
+### Documentation
+- `docs/reports/stage-11-summary.md` — Android application stage report.
+- `docs/reports/stage-12-summary.md` — end-to-end integration stage report.
+- `docs/demo/stage-11-demo.md` — Android application demo guide.
+- `docs/demo/stage-12-demo.md` — end-to-end integration demo guide.
+- Demo index updated to include Stages 11 and 12.
+- Docs index updated to include Stages 11 and 12 reports, demos, and release.
+- `CHANGELOG.md` updated with [1.0.0] entries for Stages 11–12.
+
+[1.0.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v1.0.0
 
 ---
 
