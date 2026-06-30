@@ -39,9 +39,10 @@ ai/
   metadata/             # DatasetMetadata model and MetadataBuilder
   scripts/              # Operational CLI scripts (setup, pipeline triggers)
   tests/                # Unit tests mirroring source structure
-  training/             # XGBoost training scripts (Stage 5)
-  evaluation/           # Evaluation harness for model and assistant quality (Stage 6)
-  inference/            # Inference wrappers used by the backend (Stage 5)
+  training/             # XGBoost training scripts (Stage 7)
+  evaluation/           # Evaluation harness for model and assistant quality (Stage 7)
+  inference/            # Inference wrappers used by the backend (Stage 7)
+  explainability/       # SHAP explainability pipeline (Stage 8)
   rag/                  # Retrieval pipeline: indexing, search, context assembly (Stage 3)
   prompts/              # Prompt templates (source of truth is playbook/)
   datasets/             # Symlinks or references to datasets/processed/

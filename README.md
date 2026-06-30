@@ -128,7 +128,7 @@ Local development runs without cloud services. All external dependencies have lo
 | 5 | Real Dataset Ingestion | ✅ Complete | Premier League 2023/24 dataset ingested and validated (380 matches) |
 | 6 | Feature Engineering | ✅ Complete | 42 pre-match features: ELO, rolling form, H2H, rest days, league position |
 | 7 | Model Training & Evaluation | ✅ Complete | XGBoost training pipeline, cross-validation, local model registry |
-| 8 | Explainable AI | Planned | SHAP explanations for every prediction |
+| 8 | Explainable AI | ✅ Complete | SHAP TreeExplainer pipeline, ExplanationService, global/local artifacts |
 | 9 | Backend API | Planned | FastAPI service exposing predictions and assistant via OpenAPI |
 | 10 | Football Intelligence Assistant | Planned | RAG assistant using Ollama, grounded in processed data |
 | 11 | Android Application | Planned | Compose Multiplatform screens consuming the backend API |
