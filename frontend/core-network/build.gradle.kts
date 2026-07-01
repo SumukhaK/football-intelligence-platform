@@ -10,6 +10,7 @@ android {
 kotlin {
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":core-model"))
             implementation(libs.bundles.ktor.client)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.napier)

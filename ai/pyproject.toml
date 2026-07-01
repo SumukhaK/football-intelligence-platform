@@ -6,10 +6,20 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "pandas>=2.2.0",
-    "numpy>=1.26.0",
+    "numpy>=1.26.0,<2.3.0",
     "scikit-learn>=1.4.0",
     "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
     "joblib>=1.4.0",
+    "httpx>=0.27.0",
+    "pyarrow>=24.0.0",
+    "xgboost>=2.0.0",
+    "matplotlib>=3.8.0",
+    "shap>=0.46.0",
+    "numba>=0.60.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "ollama>=0.2.0",
 ]
 
 [project.optional-dependencies]
@@ -29,11 +39,23 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = [
+    "config",
+    "shared",
+    "providers",
     "ingestion",
     "validation",
     "preprocessing",
     "feature_engineering",
     "schemas",
+    "metadata",
+    "scripts",
+    "training",
+    "evaluation",
+    "inference",
+    "model_registry",
+    "explainability",
+    "backend",
+    "assistant",
 ]
 
 [tool.ruff]
@@ -55,11 +77,23 @@ ignore = []
 
 [tool.ruff.lint.isort]
 known-first-party = [
+    "config",
+    "shared",
+    "providers",
     "ingestion",
     "validation",
     "preprocessing",
     "feature_engineering",
     "schemas",
+    "metadata",
+    "scripts",
+    "training",
+    "evaluation",
+    "inference",
+    "model_registry",
+    "explainability",
+    "backend",
+    "assistant",
 ]
 
 [tool.black]
@@ -71,32 +105,90 @@ python_version = "3.12"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
+disable_error_code = ["type-arg"]
 ignore_missing_imports = false
 packages = [
+    "config",
+    "shared",
+    "providers",
     "ingestion",
     "validation",
     "preprocessing",
     "feature_engineering",
     "schemas",
+    "metadata",
+    "scripts",
+    "training",
+    "evaluation",
+    "inference",
+    "model_registry",
+    "explainability",
+    "backend",
+    "assistant",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--tb=short -q"
+markers = [
+    "integration: tests that require real model artifacts or network access (deselect with -m 'not integration')",
+]
 
 [tool.coverage.run]
 source = [
+    "config",
+    "shared",
+    "providers",
     "ingestion",
     "validation",
     "preprocessing",
     "feature_engineering",
     "schemas",
+    "metadata",
+    "scripts",
+    "training",
+    "evaluation",
+    "inference",
+    "model_registry",
+    "explainability",
+    "backend",
+    "assistant",
 ]
 omit = ["tests/*"]
 
 [[tool.mypy.overrides]]
 # scikit-learn does not ship type stubs or a py.typed marker
 module = "sklearn.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# xgboost ships py.typed but has some Any-heavy internals
+module = "xgboost.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# matplotlib does not ship py.typed
+module = "matplotlib.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# joblib does not ship type stubs or a py.typed marker
+module = "joblib.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# shap does not ship type stubs or a py.typed marker
+module = "shap.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# numba does not ship type stubs
+module = "numba.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# ollama does not ship complete type stubs
+module = "ollama.*"
 ignore_missing_imports = true
 
 [tool.coverage.report]

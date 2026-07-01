@@ -1,4 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Football Intelligence</string>
+    <string name="home_title">Football Intelligence</string>
+    <string name="prediction_title">Match Prediction</string>
+    <string name="prediction_result_title">Prediction Result</string>
+    <string name="explain_title">Explanation</string>
+    <string name="assistant_title">AI Assistant</string>
+    <string name="settings_title">Settings</string>
+    <string name="model_info_title">Model Information</string>
+    <string name="about_title">About</string>
+    <string name="btn_predict">Predict Match Outcome</string>
+    <string name="btn_explain">Explain This Prediction</string>
+    <string name="btn_new_prediction">New Prediction</string>
+    <string name="btn_send">Send</string>
+    <string name="btn_retry">Retry</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_send_message">Send message</string>
+    <string name="cd_message_input">Message input</string>
+    <string name="status_online">Online</string>
+    <string name="status_offline">Offline</string>
+    <string name="error_something_went_wrong">Something went wrong</string>
 </resources>

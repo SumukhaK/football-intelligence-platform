@@ -1,0 +1,123 @@
+{
+  "pipeline_version": "1.0.0",
+  "generation_timestamp": "2026-06-30T11:52:12.568128Z",
+  "features_generated": [
+    {
+      "name": "rolling_form",
+      "version": "1.0.0",
+      "columns_produced": [
+        "home_form_wins_last5",
+        "home_form_wins_last10",
+        "home_form_points_last5",
+        "home_form_points_last10",
+        "away_form_wins_last5",
+        "away_form_wins_last10",
+        "away_form_points_last5",
+        "away_form_points_last10"
+      ],
+      "duration_seconds": 0.047
+    },
+    {
+      "name": "goal_statistics",
+      "version": "1.0.0",
+      "columns_produced": [
+        "home_goals_scored_last5",
+        "home_goals_scored_last10",
+        "home_goals_conceded_last5",
+        "home_goals_conceded_last10",
+        "home_goal_diff_last5",
+        "home_goal_diff_last10",
+        "away_goals_scored_last5",
+        "away_goals_scored_last10",
+        "away_goals_conceded_last5",
+        "away_goals_conceded_last10",
+        "away_goal_diff_last5",
+        "away_goal_diff_last10"
+      ],
+      "duration_seconds": 0.047
+    },
+    {
+      "name": "home_advantage",
+      "version": "1.0.0",
+      "columns_produced": [
+        "home_win_pct",
+        "home_ppg"
+      ],
+      "duration_seconds": 0.031
+    },
+    {
+      "name": "away_form",
+      "version": "1.0.0",
+      "columns_produced": [
+        "away_win_pct",
+        "away_ppg"
+      ],
+      "duration_seconds": 0.031
+    },
+    {
+      "name": "rest_days",
+      "version": "1.0.0",
+      "columns_produced": [
+        "home_rest_days",
+        "away_rest_days"
+      ],
+      "duration_seconds": 0.016
+    },
+    {
+      "name": "head_to_head",
+      "version": "1.0.0",
+      "columns_produced": [
+        "h2h_meetings",
+        "h2h_home_wins",
+        "h2h_away_wins",
+        "h2h_draws"
+      ],
+      "duration_seconds": 1.594
+    },
+    {
+      "name": "league_position",
+      "version": "1.0.0",
+      "columns_produced": [
+        "home_league_position",
+        "away_league_position",
+        "home_league_points",
+        "away_league_points",
+        "home_matches_played",
+        "away_matches_played"
+      ],
+      "duration_seconds": 0.031
+    },
+    {
+      "name": "elo_rating",
+      "version": "1.0.0",
+      "columns_produced": [
+        "home_elo_before",
+        "away_elo_before"
+      ],
+      "duration_seconds": 0.016
+    },
+    {
+      "name": "strength_of_schedule",
+      "version": "1.0.0",
+      "columns_produced": [
+        "home_avg_opp_elo_last5",
+        "home_avg_opp_elo_last10",
+        "away_avg_opp_elo_last5",
+        "away_avg_opp_elo_last10"
+      ],
+      "duration_seconds": 0.031
+    }
+  ],
+  "total_duration_seconds": 1.922,
+  "input_row_count": 380,
+  "output_row_count": 380,
+  "output_column_count": 67,
+  "validation_passed": true,
+  "validation_errors": [],
+  "validation_warnings": [],
+  "dataset_statistics": {
+    "total_nan_pct": 0.011216566005176875,
+    "row_count": 380.0,
+    "column_count": 67.0
+  }
+}

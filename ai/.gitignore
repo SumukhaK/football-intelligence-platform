@@ -18,7 +18,7 @@ htmlcov/
 
 # uv
 .venv/
-uv.lock
+# uv.lock is committed to guarantee reproducible builds
 
 # Models and data artefacts (never commit trained models or raw data)
 models/*.pkl
