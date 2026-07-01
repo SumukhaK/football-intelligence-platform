@@ -357,8 +357,6 @@ At the conclusion of Stage 1, the repository should include:
 - conventional commit guidance
 - repository health checks
 
-(Continues in Volume 1 – Part 2)
-
 ## Repository Structure
 
 The repository should adopt a modular layout from the first commit.
@@ -689,8 +687,6 @@ At the conclusion of Stage 2, the Android project should include:
 - ViewModel base classes
 - Testing infrastructure
 - Placeholder UI screens
-
-(Continues in Volume 1 – Part 3)
 
 ## Android Architecture
 
@@ -1070,8 +1066,6 @@ Each AI package should contain a short README describing:
 - future implementation plans
 
 These READMEs serve as contracts for future development.
-
-(Continues in Volume 1 – Part 4)
 
 ## Repository Standards
 
