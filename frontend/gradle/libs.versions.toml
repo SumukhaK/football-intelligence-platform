@@ -91,6 +91,7 @@ ktor-client = [
 ]
 testing-unit = [
     "junit5-api",
+    "junit5-engine",
     "junit5-params",
     "mockk",
     "turbine",
