@@ -33,8 +33,8 @@ class RestDaysFeature(BaseFeature):
         tv["match_date"] = pd.to_datetime(tv["match_date"])
 
         tv["season"] = tv["_original_idx"].map(df["season"])
-        tv["days_since_last"] = tv.groupby(["team", "season"])["match_date"].transform(
-            lambda x: x.diff().dt.days
+        tv["days_since_last"] = (
+            tv.groupby(["team", "season"])["match_date"].diff().dt.days
         )
 
         home_tv = tv[tv["is_home"]].set_index("_original_idx")
