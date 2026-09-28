@@ -93,3 +93,4 @@ ADRs are never deleted.
 | [008](008-server-side-match-features.md) | Compute match features on the server | Accepted |
 | [009](009-dixon-coles-goals-model.md) | Add a Dixon-Coles goals model for scoreline predictions | Proposed |
 | [010](010-compose-resources-for-ui-text.md) | Keep UI text in Compose Multiplatform resources | Accepted |
+| [011](011-draw-possible-tag.md) | Flag possible draws without changing the pick | Accepted |
