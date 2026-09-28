@@ -1,5 +1,31 @@
 # Multi-League Retraining: Model Comparison
 
+## Update: tuned model promoted (2026-09-28)
+
+Hyperparameters were chosen by season walk-forward CV on training seasons only
+(`python -m training.tuning`, 27 settings, folds validating on 2017/18 to
+2021/22). Best: max depth 3, learning rate 0.03, 400 trees (CV log loss 0.9897;
+the top ten settings are within 0.0006 of each other). With early stopping on
+2022/23 it stopped at iteration 212.
+
+| Log loss | Current (1 season) | Untuned | Tuned | Bookmaker |
+|---|---|---|---|---|
+| Current model's 57 test matches | 0.9493 | 0.8381 | **0.8076** | 0.7677 |
+| 2023/24 test, all leagues (1,752) | — | 0.9837 | **0.9748** | 0.9548 |
+| 2024/25–2025/26 holdout (3,504) | — | 1.0002 | **0.9949** | 0.9719 |
+
+Tuned minus current on the 57 matches: log loss −0.143 (95% interval −0.221 to
+−0.065), RPS −0.048 (−0.072 to −0.023). The promotion rule passes.
+
+The tuned settings were retrained with promotion as run `20260928_120015`
+(identical metrics to the unpromoted run `20260928_115926`). It is now in
+`models/latest` and the registry; `/model`, `/predict` and `/explain` serve it.
+The previous model remains at `models/runs/20260630_132617` for rollback.
+
+---
+
+## Untuned candidate (first comparison)
+
 **Date:** 2026-09-28
 **Candidate run:** `20260928_085217` (not promoted)
 **Data:** Top five leagues, 2000/01 to 2025/26, 46,709 matches (ADR 005)

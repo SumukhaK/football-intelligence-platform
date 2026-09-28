@@ -197,6 +197,27 @@ Outputs written to: datasets/features
 
 ## Model Training
 
+### `python -m training.tuning`
+
+Searches XGBoost hyperparameters by season walk-forward CV on training seasons only, so validation, test and holdout seasons stay unseen (ADR 007).
+
+**Usage:**
+```sh
+uv run python -m training.tuning --feature-matrix ../datasets/features/top5/feature_matrix.parquet   --val-seasons 2022/23 --test-seasons 2023/24 --holdout-seasons 2024/25 2025/26
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `--max-depths N ...` | `2 3 4` | Tree depths to try. |
+| `--learning-rates LR ...` | `0.03 0.05 0.1` | Learning rates to try. |
+| `--n-estimators N ...` | `100 200 400` | Tree counts to try. |
+| `--cv-folds N` | `5` | Number of final training seasons used as validation folds. |
+| `--output PATH` | `models/tuning/tuning_results.json` | Where to write ranked results. |
+
+Prints every setting ranked by mean CV log loss.
+
+---
+
 ### `python -m evaluation.compare_models`
 
 Scores a candidate run against the current model, bookmaker probabilities and training-set outcome frequencies (ADR 007), then applies the promotion rule. Nothing is promoted.
