@@ -138,3 +138,10 @@ def test_combine_with_history_rejects_overlapping_season() -> None:
     rows = pd.DataFrame([_canonical("2026-08-15", "2026/27", "A", "B", "D")])
     with pytest.raises(ValidationError, match="2026/27"):
         combine_with_history(rows, rows)
+
+
+def test_division_with_no_played_matches_is_empty(tmp_storage: DatasetStorage) -> None:
+    unplayed = _csv("E0,,Spurs,Fulham,,,,1.8,3.8,4.2")
+    df = _fetch(tmp_storage, FakeTransport(unplayed))
+    assert df.empty
+    assert "home_team" in df.columns

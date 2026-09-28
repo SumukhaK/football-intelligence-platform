@@ -138,3 +138,16 @@ def test_find_latest_dataset_falls_back_to_history(tmp_path: Path) -> None:
     assert "top5" in find_latest_dataset(tmp_path).name
     with pytest.raises(FileNotFoundError):
         find_latest_dataset(tmp_path / "missing")
+
+
+def test_past_fixture_accepts_that_seasons_teams(matches: pd.DataFrame) -> None:
+    builder = FixtureFeatureBuilder(matches)
+    features = builder.build(Fixture("A", "D", _COMP, date(2025, 3, 1)))
+    assert len(features) == 42
+
+
+def test_cache_is_bounded(matches: pd.DataFrame) -> None:
+    builder = FixtureFeatureBuilder(matches, max_cached=2)
+    for day in (15, 16, 17):
+        builder.build(Fixture("A", "B", _COMP, date(2026, 8, day)))
+    assert builder.cached_fixtures <= 2

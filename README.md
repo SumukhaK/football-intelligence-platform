@@ -55,10 +55,10 @@ flowchart TD
 
     subgraph AI["AI Workspace (ai/)"]
         B["Ingestion Pipeline\nDatasetDownloader · IngestionPipeline\nschema validation · versioned storage"] --> C
-        C["Canonical Dataset\ndatasets/processed/\nProcessedMatch · 380 matches"] --> D
+        C["Canonical Dataset\ndatasets/processed/\nProcessedMatch · 46,709 matches\ntop 5 leagues · 2000/01–2025/26"] --> D
         D["Feature Engineering\n9 feature generators · FeatureRegistry\nKahn topology sort · leakage prevention"] --> E
-        E["Feature Matrix\ndatasets/features/feature_matrix.parquet\n42 pre-match features · 380 rows"] --> F
-        F["Model Training\nXGBoost · chronological 70/15/15 split\nearly stopping · TimeSeriesSplit CV"] --> G
+        E["Feature Matrix\ndatasets/features/feature_matrix.parquet\n42 pre-match features · 46,709 rows"] --> F
+        F["Model Training\nXGBoost · season-based split\nearly stopping · season walk-forward CV"] --> G
         G["Evaluation\naccuracy · F1 · log-loss · ROC AUC"] --> H
         H["Model Registry\nmodels/registry.json\ngit commit traceability"]
         F --> I["Model Artifacts\nmodels/latest/model.joblib"]
@@ -114,10 +114,10 @@ The `ai/` workspace is a single Python project (managed with [uv](https://github
 ```mermaid
 flowchart LR
     A[Raw CSV\nfootball-data.co.uk] --> B[DatasetValidator\n9 quality rules]
-    B --> C[ProcessedMatch\n380 matches, Parquet]
+    B --> C[ProcessedMatch\n46,709 matches, 5 leagues]
     C --> D[FeatureRegistry\n9 generators, Kahn sort]
-    D --> E[Feature Matrix\n42 features × 380 rows]
-    E --> F[XGBoost Training\nchronological split]
+    D --> E[Feature Matrix\n42 features × 46,709 rows]
+    E --> F[XGBoost Training\nseason-based split]
     F --> G[Model Registry\nJSON + git commit]
 ```
 
@@ -140,15 +140,15 @@ The AI layer is decoupled from the backend — the backend calls into AI service
 
 ```mermaid
 flowchart TD
-    A[Feature Matrix\n42 features, 380 matches] --> B[Chronological Split\n70 / 15 / 15]
+    A[Feature Matrix\n42 features, 46,709 matches] --> B[Season Split\ntrain 2000/01–2021/22 · val 2022/23 · test 2023/24]
     B --> C[XGBoost multi:softprob\nearly stopping]
-    C --> D[TimeSeriesSplit CV\n5 folds]
+    C --> D[Season walk-forward CV\n5 folds]
     D --> E[Evaluation\naccuracy · F1 · log-loss · ROC AUC]
     E --> F[Model Registry\nversioned, git-traced]
     F --> G[models/latest/\nmodel.joblib + model_card.md]
 ```
 
-The 70/15/15 split is chronological, not random — see [ADR 003](docs/adr/003-chronological-train-val-test-split.md) for why this matters for a time-series prediction problem. Result: **56.1% test accuracy, 0.625 ROC AUC (OvR)** on a 3-class problem (random baseline: 33.3%).
+Whole seasons are assigned to train, validation and test, so the model never trains on the future; see [ADR 007](docs/adr/007-season-based-split-and-evaluation.md). 2024/25 and 2025/26 are held back as an out-of-time check. Hyperparameters are chosen by season cross-validation on training seasons only (`training.tuning`). Result on the 2023/24 test season across all five leagues: **52.5% accuracy, log loss 0.976** on a 3-class problem (random baseline: 33.3%; bookmakers 55.0% and 0.955). Details: [model comparison report](docs/reports/multi-league-retraining-comparison.md).
 
 ## Explainability Pipeline
 
@@ -226,10 +226,10 @@ A recorded walkthrough is not yet linked here. See [docs/showcase/demo-script.md
 cd ai
 uv sync --extra dev
 
-uv run python -m scripts.ingest_football_data
-uv run python -m feature_engineering.pipeline
-uv run python -m training.pipeline
-uv run python -m explainability.pipeline
+uv run python -m scripts.backfill_football_data --base-dir ../datasets --confirm
+uv run python -m feature_engineering.pipeline --input ../datasets/processed/football_data/match_results_top5_v<ts>.csv --output-dir ../datasets/features/top5
+uv run python -m training.pipeline --feature-matrix ../datasets/features/top5/feature_matrix.parquet --split-strategy season --val-seasons 2022/23 --test-seasons 2023/24 --holdout-seasons 2024/25 2025/26 --max-depth 3 --learning-rate 0.03 --n-estimators 400
+uv run python -m explainability.pipeline --feature-matrix ../datasets/features/top5/feature_matrix.parquet
 ```
 
 ### Running the Backend
@@ -367,7 +367,7 @@ MIT License. See [LICENSE](LICENSE).
 
 ## Acknowledgements
 
-- [football-data.co.uk](https://www.football-data.co.uk/) for the Premier League 2023/24 match data.
+- [football-data.co.uk](https://www.football-data.co.uk/) for Premier League, Bundesliga, La Liga, Serie A and Ligue 1 results, 2000/01 onwards.
 - [Ollama](https://ollama.com) for local LLM serving (`llama3.2`, `nomic-embed-text`).
 - [SHAP](https://github.com/shap/shap) for the `TreeExplainer` implementation underpinning all explainability features.
 - [XGBoost](https://xgboost.readthedocs.io/), [JetBrains Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/), and [FastAPI](https://fastapi.tiangolo.com/) as the core frameworks this project is built on.
