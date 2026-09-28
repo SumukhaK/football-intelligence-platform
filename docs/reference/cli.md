@@ -197,6 +197,26 @@ Outputs written to: datasets/features
 
 ## Model Training
 
+### `python -m evaluation.compare_models`
+
+Scores a candidate run against the current model, bookmaker probabilities and training-set outcome frequencies (ADR 007), then applies the promotion rule. Nothing is promoted.
+
+**Usage:**
+```sh
+uv run python -m evaluation.compare_models --candidate-run models/runs/<version>   [--feature-matrix PATH] [--current-model PATH] [--current-feature-matrix PATH]
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `--candidate-run DIR` | required | Run directory with `model.joblib` and `config.json` from a season-split run. |
+| `--feature-matrix PATH` | `../datasets/features/top5/feature_matrix.parquet` | Feature matrix the candidate was trained on. |
+| `--current-model PATH` | `models/latest/model.joblib` | The model currently served. |
+| `--current-feature-matrix PATH` | `../datasets/features/feature_matrix.parquet` | Feature matrix the current model was trained on. |
+
+**Outputs:** `comparison.json` and `comparison.md` in the candidate run directory: log loss, RPS, Brier and accuracy per league for the test and holdout seasons, a paired bootstrap of candidate minus current on the current model's own test matches, and the promotion verdict.
+
+---
+
 ### `python -m training.pipeline`
 
 Loads the feature matrix, performs a chronological 70/15/15 split, trains an XGBoost classifier with early stopping, runs cross-validation, evaluates on all splits, generates a model card, and registers the run.
@@ -216,11 +236,19 @@ uv run python -m training.pipeline [OPTIONS]
 | `--learning-rate LR` | `0.1` | XGBoost learning rate (eta). |
 | `--max-depth DEPTH` | `6` | Maximum tree depth. |
 | `--seed SEED` | `42` | Random seed for reproducibility. |
+| `--split-strategy {chronological,season}` | `chronological` | `season` assigns whole seasons (ADR 007) and uses season walk-forward CV. |
+| `--val-seasons S ...` | — | Validation seasons for `season`, e.g. `2022/23`. Training uses every earlier season. |
+| `--test-seasons S ...` | — | Test seasons for `season`. |
+| `--holdout-seasons S ...` | — | Seasons never used in training or model selection. |
+| `--no-promote` | off | Write only `models/runs/<version>/`; leave `models/latest/`, the global report and the registry untouched. |
 
 **Examples:**
 ```sh
 # Default configuration
 uv run python -m training.pipeline
+
+# Five-league season split, without replacing the served model
+uv run python -m training.pipeline   --feature-matrix ../datasets/features/top5/feature_matrix.parquet   --split-strategy season --val-seasons 2022/23 --test-seasons 2023/24   --holdout-seasons 2024/25 2025/26 --no-promote
 
 # Custom hyperparameters
 uv run python -m training.pipeline \

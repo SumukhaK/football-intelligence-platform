@@ -13,14 +13,19 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from evaluation.cross_validation import CVSummary, run_cross_validation
+from evaluation.cross_validation import (
+    CVSummary,
+    run_cross_validation,
+    run_season_cross_validation,
+)
 from evaluation.metrics import compute_confusion_matrix, compute_metrics
 from evaluation.plots import save_confusion_matrix, save_feature_importance
 from evaluation.reports import CVReport, EvaluationReport, FoldResult, SplitMetrics
 from training.configuration import TrainingConfig
+from training.model_card import describe_dataset, write_model_card
 from training.persistence import load_json, save_config, save_json, save_model
 from training.registry import register_model
-from training.splitter import ChronologicalSplitter, DataSplit, get_feature_columns
+from training.splitter import DataSplit, get_feature_columns, make_splitter
 from training.trainer import ModelTrainer, TrainedModel
 
 _DEFAULT_FEATURE_MATRIX = "datasets/features/feature_matrix.parquet"
@@ -85,95 +90,6 @@ def _build_cv_report(summary: CVSummary) -> CVReport:
     )
 
 
-def _generate_model_card(
-    model: TrainedModel,
-    report: EvaluationReport,
-    version: str,
-    output_path: Path,
-) -> None:
-    """Write a model_card.md describing the trained model."""
-    tm = report.test_metrics
-    cv = report.cv_report
-    cv_acc = f"{cv.mean_accuracy:.4f} | {cv.std_accuracy:.4f}"
-    cv_f1 = f"{cv.mean_f1:.4f} | {cv.std_f1:.4f}"
-    cv_ll = f"{cv.mean_log_loss:.4f} | {cv.std_log_loss:.4f}"
-    card = f"""# Model Card — Football Match Outcome Predictor
-
-## Model Name
-`football-outcome-xgboost-{version}`
-
-## Purpose
-Multi-class classification: Home win (H), Draw (D), or Away win (A).
-
-## Intended Use
-- Input to the Football Intelligence Platform prediction API.
-- Research and demonstration of AI engineering practices.
-- Not intended for gambling or commercial deployment.
-
-## Training Dataset
-- Source: Premier League 2023/24 (380 matches)
-- Dataset version: {report.model_version}
-- Feature matrix: 42 pre-match engineered features
-- Post-match statistics are excluded to prevent data leakage.
-
-## Feature Set
-- Rolling form (wins, points over last 5 and 10 matches)
-- Goal statistics (scored, conceded, difference)
-- Home advantage and away form (expanding window)
-- Rest days since last match
-- Head-to-head history
-- League position, points, matches played at kick-off
-- Elo ratings (K=32, start=1500)
-- Strength of schedule (rolling opponent Elo)
-
-## Training Configuration
-- Algorithm: XGBoost (multi:softprob)
-- Best iteration: {model.best_iteration}
-- Classes: {", ".join(model.classes)}
-- Training rows: {report.n_train}
-- Validation rows: {report.n_val}
-- Test rows: {report.n_test}
-
-## Evaluation Metrics (Test Set)
-| Metric | Value |
-|---|---|
-| Accuracy | {tm.accuracy:.4f} |
-| F1 (weighted) | {tm.f1_weighted:.4f} |
-| Log Loss | {tm.log_loss:.4f} |
-| ROC AUC (OvR) | {tm.roc_auc_ovr:.4f} |
-
-## Cross-Validation (TimeSeriesSplit, {cv.n_folds} folds)
-| Metric | Mean | Std |
-|---|---|---|
-| Accuracy | {cv_acc} |
-| F1 (weighted) | {cv_f1} |
-| Log Loss | {cv_ll} |
-
-
-## Known Limitations
-- Trained on a single season of Premier League data (380 matches).
-- First-match NaN values for rolling features are imputed with training-set medians.
-- Elo ratings reset on every pipeline run; no cross-season persistence.
-- League-context features are EPL-specific; performance on other leagues is untested.
-
-## Failure Cases
-- New teams not seen during training will receive 1500 Elo (starting default).
-- Unusual rest patterns (mid-season breaks, COVID fixtures) may skew rest-day features.
-
-## Ethical Considerations
-- This model predicts sporting outcomes. Do not use it to influence betting markets.
-- Predictions carry uncertainty. Do not present them as certainties.
-
-## Future Improvements
-- Multi-season training data to improve generalisation.
-- SHAP explainability (Stage 8).
-- Hyperparameter optimisation via Bayesian search.
-- Player-level features (injuries, suspensions).
-"""
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(card, encoding="utf-8")
-
-
 def _persist_run(
     *,
     model: TrainedModel,
@@ -221,6 +137,39 @@ def _persist_run(
     )
 
 
+def _promote_run(
+    *,
+    run_dir: Path,
+    models_dir: Path,
+    report: EvaluationReport,
+    config: TrainingConfig,
+    version: str,
+    source_version: str,
+) -> None:
+    """Copy a run to latest/, write the global report and register it."""
+    latest_dir = models_dir / "latest"
+    if latest_dir.exists():
+        shutil.rmtree(latest_dir)
+    shutil.copytree(run_dir, latest_dir)
+
+    eval_dir = models_dir / "evaluation"
+    eval_dir.mkdir(parents=True, exist_ok=True)
+    save_json(json.loads(report.model_dump_json()), eval_dir / "evaluation_report.json")
+
+    register_model(
+        version=version,
+        run_dir=run_dir,
+        config=config,
+        test_metrics={
+            k: v
+            for k, v in json.loads(report.test_metrics.model_dump_json()).items()
+            if isinstance(v, float)
+        },
+        registry_path=models_dir / "registry.json",
+        source_dataset_version=source_version,
+    )
+
+
 class TrainingPipeline:
     """Orchestrates the end-to-end training, evaluation, and registration flow."""
 
@@ -228,23 +177,26 @@ class TrainingPipeline:
         """Initialise with an optional config; defaults to TrainingConfig()."""
         self._config = config or TrainingConfig()
 
-    def run(self, cwd: Path) -> dict[str, Any]:
-        """Execute the full pipeline and return a summary of key results."""
+    def run(self, cwd: Path, promote: bool = True) -> dict[str, Any]:
+        """Execute the full pipeline and return a summary of key results.
+
+        With ``promote=False`` the run is written only to ``runs/<version>``:
+        ``latest/``, the global evaluation report and the registry, which the
+        backend serves from, are left untouched.
+        """
         config = self._config
         version = _make_version()
 
         feature_matrix_path = cwd / config.feature_matrix_path
         models_dir = cwd / config.models_dir
         run_dir = models_dir / "runs" / version
-        latest_dir = models_dir / "latest"
-        eval_dir = models_dir / "evaluation"
 
         # Step 1 — Load
         df = pd.read_parquet(feature_matrix_path)
         feature_cols = get_feature_columns(df, config)
 
         # Step 2 — Split
-        split = ChronologicalSplitter().split(df, feature_cols, config)
+        split = make_splitter(config).split(df, feature_cols, config)
 
         # Step 3 — Train
         trainer = ModelTrainer()
@@ -253,7 +205,11 @@ class TrainingPipeline:
         # Step 4 — Cross-validation (on train+val, time-ordered)
         X_cv = pd.concat([split.X_train, split.X_val])
         y_cv = pd.concat([split.y_train, split.y_val])
-        cv_summary = run_cross_validation(X_cv, y_cv, config)
+        if config.split_strategy == "season":
+            seasons = df.loc[X_cv.index, config.season_column]
+            cv_summary = run_season_cross_validation(X_cv, y_cv, seasons, config)
+        else:
+            cv_summary = run_cross_validation(X_cv, y_cv, config)
 
         # Step 5 — Evaluate all splits
         y_train_pred, y_train_prob = trainer.predict(model, split.X_train)
@@ -296,34 +252,26 @@ class TrainingPipeline:
             y_test_pred=y_test_pred,
         )
 
-        # Step 8 — Copy to latest/
-        if latest_dir.exists():
-            shutil.rmtree(latest_dir)
-        shutil.copytree(run_dir, latest_dir)
-
-        # Step 9 — Global evaluation report
-        eval_dir.mkdir(parents=True, exist_ok=True)
-        save_json(
-            json.loads(report.model_dump_json()), eval_dir / "evaluation_report.json"
-        )
-
-        # Step 10 — Model card
-        _generate_model_card(model, report, version, latest_dir / "model_card.md")
-
-        # Step 11 — Register
-        source_version = _extract_dataset_version(feature_matrix_path)
-        register_model(
+        # Step 8 — Model card in the run directory
+        write_model_card(
+            model=model,
+            report=report,
             version=version,
-            run_dir=run_dir,
+            dataset=describe_dataset(df, config),
             config=config,
-            test_metrics={
-                k: v
-                for k, v in json.loads(report.test_metrics.model_dump_json()).items()
-                if isinstance(v, float)
-            },
-            registry_path=models_dir / "registry.json",
-            source_dataset_version=source_version,
+            output_path=run_dir / "model_card.md",
         )
+
+        # Step 9 — Promote: latest/, global report and registry
+        if promote:
+            _promote_run(
+                run_dir=run_dir,
+                models_dir=models_dir,
+                report=report,
+                config=config,
+                version=version,
+                source_version=_extract_dataset_version(feature_matrix_path),
+            )
 
         return {
             "version": version,
@@ -333,6 +281,7 @@ class TrainingPipeline:
             "best_iteration": model.best_iteration,
             "n_features": len(feature_cols),
             "run_dir": str(run_dir),
+            "promoted": promote,
         }
 
 
@@ -363,6 +312,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--learning-rate", type=float, default=0.1)
     parser.add_argument("--max-depth", type=int, default=6)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--split-strategy", choices=["chronological", "season"], default=None
+    )
+    parser.add_argument("--val-seasons", nargs="+", metavar="SEASON")
+    parser.add_argument("--test-seasons", nargs="+", metavar="SEASON")
+    parser.add_argument("--holdout-seasons", nargs="+", metavar="SEASON")
+    parser.add_argument(
+        "--no-promote",
+        action="store_true",
+        help="Write the run only; leave latest/ and the registry untouched.",
+    )
     args = parser.parse_args(argv)
 
     overrides: dict[str, Any] = {
@@ -374,6 +334,13 @@ def main(argv: list[str] | None = None) -> int:
     }
     if args.feature_matrix:
         overrides["feature_matrix_path"] = args.feature_matrix
+    optional = {
+        "split_strategy": args.split_strategy,
+        "val_seasons": args.val_seasons,
+        "test_seasons": args.test_seasons,
+        "holdout_seasons": args.holdout_seasons,
+    }
+    overrides.update({k: v for k, v in optional.items() if v is not None})
 
     config = TrainingConfig(**overrides)
     cwd = Path.cwd()
@@ -389,7 +356,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         pipeline = TrainingPipeline(config)
-        result = pipeline.run(cwd)
+        result = pipeline.run(cwd, promote=not args.no_promote)
     except Exception as exc:  # noqa: BLE001
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
@@ -401,6 +368,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Test F1:        {result['test_f1']:.4f}")
     print(f"Test log-loss:  {result['test_log_loss']:.4f}")
     print(f"Run dir:        {result['run_dir']}")
+    print(f"Promoted:       {'yes' if result['promoted'] else 'no'}")
     return 0
 
 
