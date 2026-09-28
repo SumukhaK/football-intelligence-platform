@@ -1,6 +1,6 @@
 {
   "pipeline_version": "1.1.0",
-  "generation_timestamp": "2026-09-28T07:26:22.576650Z",
+  "generation_timestamp": "2026-09-28T12:31:25.690132Z",
   "source_dataset_version": "20260928_071043",
   "feature_names": [
     "home_form_wins_last5",
@@ -54,7 +54,7 @@
     "rest_days": "1.1.0",
     "head_to_head": "1.0.1",
     "league_position": "1.1.0",
-    "elo_rating": "1.1.0",
+    "elo_rating": "1.2.0",
     "strength_of_schedule": "1.0.0"
   },
   "row_count": 46709,
