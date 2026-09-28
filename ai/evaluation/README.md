@@ -9,6 +9,7 @@ Metrics, cross-validation, plots, and structured report models for the XGBoost p
 | `metrics.py` | `compute_metrics`, `compute_confusion_matrix` — sklearn wrappers |
 | `cross_validation.py` | `run_cross_validation` — TimeSeriesSplit CV, returns `CVSummary` |
 | `plots.py` | Headless Matplotlib plots (confusion matrix, feature importance) |
+| `draw_analysis.py` | Draw calibration and draw-rule trade-off per season block (CLI; see `docs/reports/draw-handling.md`) |
 | `reports.py` | Frozen Pydantic models: `SplitMetrics`, `CVReport`, `EvaluationReport` |
 
 ## Matplotlib backend
