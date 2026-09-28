@@ -46,6 +46,12 @@ Maintained by the project architect. The implementation engineer updates documen
 | [Stage 11 Summary](reports/stage-11-summary.md) | Android Application | ✅ Complete |
 | [Stage 12 Summary](reports/stage-12-summary.md) | End-to-End Integration | ✅ Complete |
 
+### Plans
+
+| Document | Description |
+|---|---|
+| [Multi-League Retraining Plan](plans/multi-league-retraining-plan.md) | Goal, data profile and phased plan for retraining on top-5 league data |
+
 ### Demos
 
 | Document | Description |
