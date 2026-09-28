@@ -73,6 +73,21 @@ def test_division_to_competition_championship() -> None:
     assert DIVISION_TO_COMPETITION["E1"] == "Championship"
 
 
+@pytest.mark.parametrize(
+    ("division", "competition"),
+    [
+        ("D1", "Bundesliga"),
+        ("SP1", "La Liga"),
+        ("I1", "Serie A"),
+        ("F1", "Ligue 1"),
+    ],
+)
+def test_division_to_competition_top_five_leagues(
+    division: str, competition: str
+) -> None:
+    assert DIVISION_TO_COMPETITION[division] == competition
+
+
 # ---------------------------------------------------------------------------
 # RawMatch
 # ---------------------------------------------------------------------------

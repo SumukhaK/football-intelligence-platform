@@ -125,3 +125,100 @@ class TestDatasetStorageVersionListing:
         assert v1 in versions
         assert v2 in versions
         assert versions == sorted(versions)
+
+
+class TestDatasetStorageRawPartitions:
+    def test_save_and_load_raw_partition(
+        self,
+        tmp_storage: DatasetStorage,
+        provider_id: ProviderId,
+        dataset_name: DatasetName,
+        raw_content: bytes,
+    ) -> None:
+        path = tmp_storage.save_raw_partition(
+            raw_content, provider_id, dataset_name, "E0_2324"
+        )
+        assert path.name == "E0_2324.csv"
+        assert path.parent.name == dataset_name
+        assert (
+            tmp_storage.load_raw_partition(provider_id, dataset_name, "E0_2324")
+            == raw_content
+        )
+
+    def test_has_raw_partition(
+        self,
+        tmp_storage: DatasetStorage,
+        provider_id: ProviderId,
+        dataset_name: DatasetName,
+        raw_content: bytes,
+    ) -> None:
+        assert not tmp_storage.has_raw_partition(provider_id, dataset_name, "D1_0001")
+        tmp_storage.save_raw_partition(
+            raw_content, provider_id, dataset_name, "D1_0001"
+        )
+        assert tmp_storage.has_raw_partition(provider_id, dataset_name, "D1_0001")
+
+    def test_saving_identical_partition_twice_is_a_no_op(
+        self,
+        tmp_storage: DatasetStorage,
+        provider_id: ProviderId,
+        dataset_name: DatasetName,
+        raw_content: bytes,
+    ) -> None:
+        first = tmp_storage.save_raw_partition(
+            raw_content, provider_id, dataset_name, "E0_2324"
+        )
+        second = tmp_storage.save_raw_partition(
+            raw_content, provider_id, dataset_name, "E0_2324"
+        )
+        assert first == second
+
+    def test_overwriting_partition_with_different_content_raises(
+        self,
+        tmp_storage: DatasetStorage,
+        provider_id: ProviderId,
+        dataset_name: DatasetName,
+        raw_content: bytes,
+    ) -> None:
+        tmp_storage.save_raw_partition(
+            raw_content, provider_id, dataset_name, "E0_2324"
+        )
+        with pytest.raises(StorageError, match="immutable"):
+            tmp_storage.save_raw_partition(
+                raw_content + b"extra\n", provider_id, dataset_name, "E0_2324"
+            )
+
+    def test_load_missing_partition_raises(
+        self,
+        tmp_storage: DatasetStorage,
+        provider_id: ProviderId,
+        dataset_name: DatasetName,
+    ) -> None:
+        with pytest.raises(StorageError):
+            tmp_storage.load_raw_partition(provider_id, dataset_name, "E0_9999")
+
+    def test_partitions_do_not_appear_in_version_listing(
+        self,
+        tmp_storage: DatasetStorage,
+        provider_id: ProviderId,
+        dataset_name: DatasetName,
+        raw_content: bytes,
+    ) -> None:
+        tmp_storage.save_raw_partition(
+            raw_content, provider_id, dataset_name, "E0_2324"
+        )
+        assert tmp_storage.list_versions(provider_id, dataset_name) == []
+
+
+class TestDatasetStorageReport:
+    def test_save_report_writes_json_next_to_processed_file(
+        self,
+        tmp_storage: DatasetStorage,
+        provider_id: ProviderId,
+        version: DatasetVersion,
+    ) -> None:
+        name = DatasetName("match_results_top5")
+        path = tmp_storage.save_report({"rows": 3}, provider_id, name, version)
+        assert path.name == f"match_results_top5_v{version}_report.json"
+        assert path.parent.name == provider_id
+        assert '"rows": 3' in path.read_text(encoding="utf-8")

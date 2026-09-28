@@ -17,6 +17,51 @@ uv sync --extra dev   # install all runtime + dev dependencies
 
 ## Data Ingestion
 
+### `python -m scripts.backfill_football_data`
+
+Backfills many seasons for the top five leagues (ADR 005), checks every season's integrity (ADR 006), and writes one combined dataset. Runs as a dry run unless `--confirm` is given.
+
+**Usage:**
+```sh
+uv run python -m scripts.backfill_football_data [OPTIONS]
+```
+
+**Options:**
+
+| Flag | Default | Description |
+|---|---|---|
+| `--divisions DIV ...` | `E0 D1 SP1 I1 F1` | Division codes to include. |
+| `--first-season CODE` | `0001` | First season code, `0001` = 2000/01. |
+| `--last-season CODE` | `2526` | Last season code, inclusive. |
+| `--base-dir DIR` | `datasets/` | Override the datasets base directory. |
+| `--confirm` | off | Download missing files and build the dataset. Without it, only the plan is printed. |
+
+**Examples:**
+```sh
+# See what would be downloaded
+uv run python -m scripts.backfill_football_data --base-dir ../datasets
+
+# Download and build all five leagues, 2000/01 to 2025/26
+uv run python -m scripts.backfill_football_data --base-dir ../datasets --confirm
+```
+
+**Behaviour:**
+- Season files already in `raw/football_data/match_results/` are reused, never re-downloaded or overwritten.
+- Every season must pass the integrity checks: expected team count, each fixture played once, result consistent with goals, dates inside the season window. Ligue 1 2019/20 is whitelisted at 279 matches.
+- More than 0.5% unparseable rows in any season fails the run.
+
+**Outputs:**
+
+| File | Location | Description |
+|---|---|---|
+| Raw CSVs | `datasets/raw/football_data/match_results/<DIV>_<season>.csv` | One immutable file per division season |
+| Processed CSV | `datasets/processed/football_data/match_results_top5_v<ts>.csv` | All seasons, canonical `ProcessedMatch` schema, sorted by date |
+| Report JSON | `datasets/processed/football_data/match_results_top5_v<ts>_report.json` | Per-season URL, checksum, row counts, errors and warnings. Written even when checks fail |
+
+**Exit codes:** `0` on success or dry run, `1` on any failure.
+
+---
+
 ### `python -m scripts.ingest_football_data`
 
 Downloads match data from football-data.co.uk, validates it against the `ProcessedMatch` schema, and writes three output files.

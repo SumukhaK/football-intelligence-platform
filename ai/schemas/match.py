@@ -23,6 +23,10 @@ DIVISION_TO_COMPETITION: dict[str, str] = {
     "E2": "League One",
     "E3": "League Two",
     "EC": "Conference National",
+    "D1": "Bundesliga",
+    "SP1": "La Liga",
+    "I1": "Serie A",
+    "F1": "Ligue 1",
 }
 
 

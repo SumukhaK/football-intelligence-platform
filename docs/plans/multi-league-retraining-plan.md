@@ -275,7 +275,7 @@ licence and download date, and the model card lists every data source.
 |---|---|---|
 | 0. Profile | **Done 2026-09-28** (§2). Still to do: confirm each Kaggle page's licence, and copy the approved zips into `datasets/raw/kaggle/<slug>/` with checksums | Licences confirmed |
 | 1. ADRs | **Done 2026-09-28.** ADR 005 top-five leagues and sources; ADR 006 team canonicalisation and dedup; ADR 007 season-based split (supersedes ADR 003's mechanism); CLAUDE.md non-goal amended | Accepted |
-| 2. History backfill | Extend the football-data provider to `E0, D1, SP1, I1, F1`; ingest 2000/01–2025/26; add multi-season, multi-league merge | Per-league season integrity checks pass |
+| 2. History backfill | **Done 2026-09-28.** 130 season files, 46,709 matches, all integrity checks pass. Extend the football-data provider to `E0, D1, SP1, I1, F1`; ingest 2000/01–2025/26; add multi-season, multi-league merge | Per-league season integrity checks pass |
 | 3. Kaggle adapters | One adapter per approved source, with tests, alias table, rejects file | Cleaning and schema tests pass |
 | 4. Merge and dedup | Unified processed dataset plus merge/conflict report | Zero unresolved conflicts |
 | 5. Feature fixes | Season-aware league position, rest-day cap, Elo carryover, deterministic sort; tests first | Feature validation passes, existing single-season output unchanged |

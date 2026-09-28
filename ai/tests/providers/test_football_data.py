@@ -3,6 +3,7 @@
 import pytest
 
 from providers.football_data import FootballDataProvider
+from schemas.match import DIVISION_TO_COMPETITION
 from shared.exceptions import DatasetNotFoundError, IngestionError
 from shared.types import DatasetName
 
@@ -35,6 +36,21 @@ class TestFootballDataProvider:
         )
         assert "2223" in url
         assert "E1" in url
+
+    @pytest.mark.parametrize("division", ["D1", "SP1", "I1", "F1"])
+    def test_build_url_top_five_league_divisions(
+        self, provider: FootballDataProvider, division: str
+    ) -> None:
+        url = provider.build_url(
+            DatasetName("match_results"), season="0001", division=division
+        )
+        assert url.endswith(f"/0001/{division}.csv")
+
+    def test_every_known_competition_division_is_downloadable(
+        self, provider: FootballDataProvider
+    ) -> None:
+        for division in DIVISION_TO_COMPETITION:
+            provider.build_url(DatasetName("match_results"), division=division)
 
     def test_build_url_invalid_division(self, provider: FootballDataProvider) -> None:
         with pytest.raises(DatasetNotFoundError):
@@ -80,6 +96,37 @@ class TestFootballDataProvider:
         # Original provider-native names must not survive normalisation
         assert "HomeTeam" not in df.columns
         assert "FTHG" not in df.columns
+
+    def test_parse_ignores_empty_trailing_fields(
+        self, provider: FootballDataProvider
+    ) -> None:
+        # Some older season files pad rows with extra empty fields
+        csv_padded = (
+            b"Div,Date,HomeTeam,AwayTeam,FTHG,FTAG,FTR\n"
+            b"E0,03/04/04,Newcastle,Everton,4,2,H\n"
+            b"E0,03/04/04,Tottenham,Chelsea,0,1,A,,,,\n"
+        )
+        df = provider.parse(csv_padded, DatasetName("match_results"))
+        assert len(df) == 2
+        assert list(df.columns) == [
+            "Div",
+            "Date",
+            "HomeTeam",
+            "AwayTeam",
+            "FTHG",
+            "FTAG",
+            "FTR",
+        ]
+
+    def test_parse_rejects_extra_non_empty_fields(
+        self, provider: FootballDataProvider
+    ) -> None:
+        csv_ragged = (
+            b"Div,Date,HomeTeam,AwayTeam,FTHG,FTAG,FTR\n"
+            b"E0,03/04/04,Tottenham,Chelsea,0,1,A,,surprise\n"
+        )
+        with pytest.raises(IngestionError, match="line 2"):
+            provider.parse(csv_ragged, DatasetName("match_results"))
 
     def test_parse_drops_empty_trailing_rows(
         self, provider: FootballDataProvider
