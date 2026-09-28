@@ -2,9 +2,14 @@ package com.footballintelligence.feature.prediction
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import com.footballintelligence.core.model.ExpectedGoals
 import com.footballintelligence.core.model.ExplanationResult
 import com.footballintelligence.core.model.FeatureContribution
+import com.footballintelligence.core.model.GoalMarkets
+import com.footballintelligence.core.model.Insights
+import com.footballintelligence.core.model.OutcomeProbabilities
 import com.footballintelligence.core.model.PredictionResult
+import com.footballintelligence.core.model.ScoreProbability
 import com.footballintelligence.core.ui.PreviewSurface
 
 private val sampleTeams = listOf("Arsenal", "Chelsea", "Coventry City", "Liverpool")
@@ -85,16 +90,58 @@ private fun TeamSelectionLoadingPreview() = TeamSelection(TeamsUiState.Loading)
 @Composable
 private fun TeamSelectionErrorPreview() = TeamSelection(TeamsUiState.Error("Could not load the team list."))
 
+private val sampleInsights = Insights(
+    homeTeam = "Arsenal",
+    awayTeam = "Chelsea",
+    modelVersion = "dc-2026-09-28",
+    fittedBefore = "2026-09-28",
+    expectedGoals = ExpectedGoals(home = 1.95, away = 0.98),
+    topScores = listOf(
+        ScoreProbability(1, 1, 0.112),
+        ScoreProbability(2, 0, 0.102),
+        ScoreProbability(2, 1, 0.099),
+        ScoreProbability(1, 0, 0.095),
+        ScoreProbability(3, 0, 0.066),
+    ),
+    markets = GoalMarkets(0.544, 0.799, 0.560, 0.336, 0.376, 0.143),
+    outcome = OutcomeProbabilities(home = 0.590, draw = 0.235, away = 0.175),
+    reasons = listOf(
+        "Arsenal concede 31% fewer goals than an average side in this league",
+        "Arsenal score 23% more goals than an average side in this league",
+    ),
+)
+
 @Composable
-private fun Result(state: PredictionInputUiState) {
+private fun Result(
+    state: PredictionInputUiState,
+    insights: InsightsUiState = InsightsUiState.Success(sampleInsights),
+) {
     PreviewSurface {
-        PredictionResultScreen(uiState = state, onExplain = {}, onNewPrediction = {}, onBack = {})
+        PredictionResultScreen(
+            uiState = state,
+            insightsState = insights,
+            onExplain = {},
+            onNewPrediction = {},
+            onBack = {},
+        )
     }
 }
 
+@Preview(heightDp = 1600)
+@Composable
+private fun ResultWithInsightsPreview() = Result(PredictionInputUiState.Success(samplePrediction))
+
 @Preview
 @Composable
-private fun ResultPreview() = Result(PredictionInputUiState.Success(samplePrediction))
+private fun InsightsLoadingPreview() = PreviewSurface { InsightsSection(InsightsUiState.Loading) }
+
+@Preview
+@Composable
+private fun InsightsErrorPreview() = PreviewSurface { InsightsSection(InsightsUiState.Error("HTTP 503")) }
+
+@Preview
+@Composable
+private fun ResultPreview() = Result(PredictionInputUiState.Success(samplePrediction), InsightsUiState.Idle)
 
 @Preview
 @Composable

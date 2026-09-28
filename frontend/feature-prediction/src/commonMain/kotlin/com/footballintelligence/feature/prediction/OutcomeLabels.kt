@@ -16,7 +16,14 @@ internal fun outcomeLabel(code: String, homeTeam: String, awayTeam: String): Str
     else -> code
 }
 
+/** A number with one decimal place, such as expected goals. */
+internal fun oneDecimal(value: Double): String {
+    val tenths = (value * TENTHS).roundToInt()
+    return "${tenths / TENTHS}.${tenths % TENTHS}"
+}
+
 /** A probability between 0 and 1 as a whole percentage. */
 internal fun percentOf(probability: Double): Int = (probability * PERCENT).roundToInt()
 
 private const val PERCENT = 100
+private const val TENTHS = 10
