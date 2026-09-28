@@ -66,7 +66,9 @@ fun AboutScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                "An AI-first football analytics application demonstrating practical AI engineering through data pipelines, machine learning, explainable predictions, and a grounded football intelligence assistant.",
+                "An AI-first football analytics application demonstrating practical AI " +
+                    "engineering through data pipelines, machine learning, explainable " +
+                    "predictions, and a grounded football intelligence assistant.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

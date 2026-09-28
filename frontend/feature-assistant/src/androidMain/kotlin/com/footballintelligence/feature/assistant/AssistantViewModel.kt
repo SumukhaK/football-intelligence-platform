@@ -54,7 +54,7 @@ class AssistantViewModel(
                 }
                 is NetworkResult.Error -> {
                     val errorCode = result.code
-                    if (errorCode == 503) {
+                    if (errorCode == HTTP_SERVICE_UNAVAILABLE) {
                         _state.value = AssistantUiState.Unavailable(result.message)
                     } else {
                         val errorMessage = ChatMessage(
@@ -71,3 +71,6 @@ class AssistantViewModel(
         }
     }
 }
+
+/** The backend returns 503 when the assistant (Ollama or its index) is down. */
+private const val HTTP_SERVICE_UNAVAILABLE = 503

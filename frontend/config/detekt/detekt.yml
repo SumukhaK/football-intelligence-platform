@@ -1,0 +1,30 @@
+# Detekt settings for the Compose Multiplatform app. Built on detekt's default
+# config (buildUponDefaultConfig), with the usual Compose adjustments: composable
+# functions are PascalCase, and layout code is full of dp sizes and colours.
+
+build:
+  maxIssues: 0
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated:
+      - Composable
+
+style:
+  MagicNumber:
+    ignorePropertyDeclaration: true
+    ignoreAnnotated:
+      - Composable
+      - Preview
+    excludes:
+      - '**/test/**'
+      - '**/commonTest/**'
+      - '**/androidUnitTest/**'
+
+complexity:
+  LongMethod:
+    ignoreAnnotated:
+      - Composable
+  LongParameterList:
+    ignoreAnnotated:
+      - Composable
