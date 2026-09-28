@@ -218,6 +218,28 @@ Prints every setting ranked by mean CV log loss.
 
 ---
 
+### `python -m evaluation.in_season_cli`
+
+Scores the served model on every played match of a season in progress. Each match is predicted from features built only from earlier matches; the model is not retrained. Dry run unless `--confirm` is given.
+
+```sh
+uv run python -m evaluation.in_season_cli --season 2627 --confirm
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `--season CODE` | `2627` | Season in progress. |
+| `--divisions DIV ...` | `E0 D1 SP1 I1 F1` | Leagues to score. |
+| `--history PATH` | newest `match_results_top5_v*.csv` | Completed-season history. |
+| `--model PATH` | `models/latest/model.joblib` | Model to score. |
+| `--base-dir DIR` | `../datasets` | Datasets base directory. |
+| `--output-dir DIR` | `models/backtests/<season>_<date>` | Where outputs go. |
+| `--confirm` | off | Download and score. |
+
+Raw snapshots are stored once per division per day under `raw/football_data/match_results_in_progress/`. Outputs: `report.md`, `report.json` and `predictions.csv` (one line per match with probabilities, pick and result).
+
+---
+
 ### `python -m evaluation.compare_models`
 
 Scores a candidate run against the current model, bookmaker probabilities and training-set outcome frequencies (ADR 007), then applies the promotion rule. Nothing is promoted.

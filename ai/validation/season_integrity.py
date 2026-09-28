@@ -38,6 +38,30 @@ def check_season_integrity(
     return result
 
 
+def check_partial_season(
+    df: pd.DataFrame, division: str, season_code: str
+) -> ValidationResult:
+    """Validate a season still in progress: no match or schedule counts.
+
+    Duplicate fixtures, results that disagree with the score and dates outside
+    the season window still fail, and the league may not have more teams than
+    its size.
+    """
+    result = ValidationResult()
+    label = f"{division} {season_code}"
+    teams = set(df["home_team"]) | set(df["away_team"])
+    expected = expected_team_count(division, season_code)
+    if len(teams) > expected:
+        result.add_error(f"{label}: {len(teams)} teams, expected at most {expected}")
+    duplicated = df.duplicated(["home_team", "away_team"], keep=False)
+    if duplicated.any():
+        pairs = df.loc[duplicated, ["home_team", "away_team"]].drop_duplicates()
+        result.add_error(f"{label}: duplicate fixtures {pairs.values.tolist()}")
+    _check_results(df, label, result)
+    _check_dates(df, season_code, label, result)
+    return result
+
+
 def _check_team_count(
     df: pd.DataFrame, division: str, season: str, label: str, result: ValidationResult
 ) -> None:
