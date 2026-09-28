@@ -76,8 +76,9 @@ class TestLeaguePositionPerSeason:
 class TestRestDaysPerSeason:
     def test_first_match_of_new_season_is_nan(self, two_seasons: pd.DataFrame) -> None:
         result = RestDaysFeature().compute(two_seasons)
-        assert math.isnan(result.loc[4, "home_rest_days"])
-        assert math.isnan(result.loc[5, "home_rest_days"])
+        rest = result["home_rest_days"]
+        assert math.isnan(float(rest.iloc[4]))
+        assert math.isnan(float(rest.iloc[5]))
 
     def test_rest_days_within_season_unchanged(self, two_seasons: pd.DataFrame) -> None:
         result = RestDaysFeature().compute(two_seasons)
@@ -91,7 +92,7 @@ class TestEloAcrossSeasons:
         feature = EloRatingFeature()
         season_one = feature.compute(two_seasons.iloc[:4])
         end_ratings = feature.final_ratings(two_seasons.iloc[:4])
-        assert season_one.loc[2, "away_elo_before"] > 1500
+        assert float(season_one["away_elo_before"].iloc[2]) > 1500
         a_end = end_ratings[("EPL", "A")]
         result = feature.compute(two_seasons)
         expected = 1500 + (a_end - 1500) * (2 / 3)
@@ -143,4 +144,4 @@ class TestHeadToHeadAcrossSeasons:
 
     def test_first_meeting_has_no_history(self, two_seasons: pd.DataFrame) -> None:
         result = HeadToHeadFeature().compute(two_seasons)
-        assert result.loc[4].tolist() == [0, 0, 0, 0]
+        assert result.iloc[4].to_list() == [0, 0, 0, 0]
