@@ -20,12 +20,14 @@ Service status.
   "explainability_available": true,
   "assistant_available": false,
   "fixture_features_available": true,
+  "insights_available": true,
   "version": "0.1.0"
 }
 ```
 
 `fixture_features_available` is true when match history is loaded, so
-requests may omit `features` (ADR 008).
+requests may omit `features` (ADR 008). `insights_available` is true when the
+goals model was fitted at startup, so `POST /insights` works.
 
 ## GET /model
 
@@ -113,6 +115,61 @@ Same request and errors as `/predict`. Adds SHAP attributions in
 Labels live in `ai/explainability/feature_labels.py`; every model feature has
 one, and a test enforces it.
 
+## POST /insights
+
+The goals model's view of a fixture (ADR 009): the five most likely scores,
+expected goals, goal markets, team strengths and plain-language reasons. The
+server fits a Dixon-Coles model on its match history at startup, using matches
+before that day. Probabilities are likelihoods, not betting advice. The headline
+home/draw/away pick still comes from `POST /predict`.
+
+Request:
+
+```json
+{ "home_team": "Arsenal", "away_team": "Chelsea" }
+```
+
+Response (abridged):
+
+```json
+{
+  "home_team": "Arsenal",
+  "away_team": "Chelsea",
+  "model_version": "dc-2026-09-28",
+  "fitted_before": "2026-09-28",
+  "expected_goals": { "home": 1.95, "away": 0.98 },
+  "top_scores": [
+    { "home": 1, "away": 1, "probability": 0.112 },
+    { "home": 2, "away": 0, "probability": 0.102 }
+  ],
+  "markets": {
+    "btts": 0.544, "over_1_5": 0.799, "over_2_5": 0.560, "over_3_5": 0.336,
+    "home_clean_sheet": 0.376, "away_clean_sheet": 0.143
+  },
+  "outcome": { "home": 0.590, "draw": 0.235, "away": 0.175 },
+  "strengths": {
+    "home_attack": 1.23, "home_defence": 0.69,
+    "away_attack": 1.13, "away_defence": 1.06
+  },
+  "reasons": [
+    "Arsenal concede 31% fewer goals than an average side in this league",
+    "Arsenal score 23% more goals than an average side in this league",
+    "Chelsea score 13% more goals than an average side in this league"
+  ]
+}
+```
+
+`strengths` are multiples of a league-average side: attack above 1 scores
+more, and defence below 1 concedes fewer. `home_clean_sheet` is the chance the
+away side does not score.
+
+Errors:
+
+| Status | `error` | When |
+|---|---|---|
+| 422 | `Unknown team` | A team did not play in the latest season. Includes `team`. |
+| 503 | `Insights not available` | The goals model could not be fitted at startup. |
+
 ## POST /assistant/chat
 
 Retrieval-augmented answers about the project's data and models. Returns 503
@@ -130,5 +187,6 @@ The server loads the newest `match_results_live_v*.csv` from
 uv run python -m scripts.refresh_live_dataset --confirm
 ```
 
-Then restart the backend. Configure the directory with `MATCHES_DIR` and the
+Then restart the backend; the restart also refits the goals model on the new
+results. Configure the directory with `MATCHES_DIR` and the
 competition with `SERVED_COMPETITION`.
