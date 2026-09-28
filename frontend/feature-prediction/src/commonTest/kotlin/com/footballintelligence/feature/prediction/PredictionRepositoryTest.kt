@@ -49,6 +49,14 @@ class PredictionRepositoryTest {
     }
 
     @Test
+    fun `insights delegates to api`() = runTest {
+        coEvery { api.getInsights(request) } returns NetworkResult.Error("503")
+        val response = repository.insights(request)
+        assertTrue(response is NetworkResult.Error)
+        coVerify(exactly = 1) { api.getInsights(request) }
+    }
+
+    @Test
     fun `explain delegates to api`() = runTest {
         coEvery { api.explain(request) } returns NetworkResult.Error("503")
         repository.explain(request)
