@@ -35,7 +35,10 @@ from feature_engineering.validators import (
     validate_feature_matrix,
 )
 
-_VERSION_RE = re.compile(r"match_results_v([^.]+)\.csv$")
+_VERSION_RE = re.compile(r"_v(\d{8}_\d{6})\.csv$")
+# Same-day matches are ordered by competition and home team so reruns are
+# deterministic whatever the input file order.
+_SORT_KEYS = ["match_date", "competition", "home_team"]
 _DEFAULT_INPUT_GLOB = "datasets/processed/football_data/match_results_v*.csv"
 _DEFAULT_OUTPUT_DIR = "datasets/features"
 
@@ -58,7 +61,8 @@ def build_default_registry() -> FeatureRegistry:
 def _extract_source_version(input_path: Path) -> str:
     """Extract version string from a canonical CSV filename.
 
-    For example: ``match_results_v20260630_090657.csv`` → ``"20260630_090657"``.
+    For example: ``match_results_v20260630_090657.csv`` or
+    ``match_results_top5_v20260630_090657.csv`` → ``"20260630_090657"``.
     Falls back to ``"unknown"`` if the filename does not match the expected pattern.
     """
     match = _VERSION_RE.search(input_path.name)
@@ -121,7 +125,7 @@ class FeaturePipeline:
 
         # Step 1: Load and sort
         df = pd.read_csv(input_path)
-        df = df.sort_values("match_date", ascending=True).reset_index(drop=True)
+        df = df.sort_values(_SORT_KEYS, kind="stable").reset_index(drop=True)
         input_row_count = len(df)
 
         # Step 2: Validate input

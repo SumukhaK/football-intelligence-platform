@@ -278,7 +278,7 @@ licence and download date, and the model card lists every data source.
 | 2. History backfill | **Done 2026-09-28.** 130 season files, 46,709 matches, all integrity checks pass. Extend the football-data provider to `E0, D1, SP1, I1, F1`; ingest 2000/01–2025/26; add multi-season, multi-league merge | Per-league season integrity checks pass |
 | 3. Kaggle adapters | One adapter per approved source, with tests, alias table, rejects file | Cleaning and schema tests pass |
 | 4. Merge and dedup | Unified processed dataset plus merge/conflict report | Zero unresolved conflicts |
-| 5. Feature fixes | Season-aware league position, rest-day cap, Elo carryover, deterministic sort; tests first | Feature validation passes, existing single-season output unchanged |
+| 5. Feature fixes | **Done 2026-09-28.** Season-aware league position (snapshotted per match day), per-season rest days, per-league Elo with season carryover, one-pass head-to-head, deterministic sort. Five-league matrix: 46,709 rows. Runs before phases 3–4, since the baseline needs only football-data.co.uk | Feature validation passes; 2023/24 output unchanged except league position (same-day fix) |
 | 6. Retrain and evaluate | Season split, walk-forward CV, baselines, ablations, updated model card | Promotion rule in §6 |
 | 7. Optional new features | Rolling xG (if B has it), FIFA ratings as-of (if C is approved), European-fixture fatigue (C/D) | Each must improve log loss in ablation |
 

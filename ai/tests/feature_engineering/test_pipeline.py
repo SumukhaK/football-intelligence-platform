@@ -8,7 +8,11 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from feature_engineering.pipeline import FeaturePipeline, build_default_registry
+from feature_engineering.pipeline import (
+    FeaturePipeline,
+    _extract_source_version,
+    build_default_registry,
+)
 
 # ---------------------------------------------------------------------------
 # build_default_registry tests
@@ -227,3 +231,34 @@ def test_pipeline_feature_matrix_columns_match_all_output_columns(
     output_cols = set(df_out.columns)
     for col in all_feature_cols:
         assert col in output_cols, f"Feature column '{col}' missing from output parquet"
+
+
+def test_pipeline_output_order_is_independent_of_input_order(
+    sample_matches: pd.DataFrame, tmp_path: Path
+) -> None:
+    """Same-day matches are ordered by competition then home team, not file order."""
+    forward = tmp_path / "forward.csv"
+    reverse = tmp_path / "reverse.csv"
+    sample_matches.to_csv(forward, index=False)
+    sample_matches.iloc[::-1].to_csv(reverse, index=False)
+
+    FeaturePipeline().run(input_path=forward, output_dir=tmp_path / "a")
+    FeaturePipeline().run(input_path=reverse, output_dir=tmp_path / "b")
+
+    a = pd.read_parquet(tmp_path / "a" / "feature_matrix.parquet")
+    b = pd.read_parquet(tmp_path / "b" / "feature_matrix.parquet")
+    pd.testing.assert_frame_equal(a, b)
+    same_day = a[a["match_date"] == "2023-08-12"]
+    assert same_day["home_team"].tolist() == ["Arsenal", "Liverpool"]
+
+
+@pytest.mark.parametrize(
+    ("filename", "version"),
+    [
+        ("match_results_v20260630_115204.csv", "20260630_115204"),
+        ("match_results_top5_v20260928_071043.csv", "20260928_071043"),
+        ("custom.csv", "unknown"),
+    ],
+)
+def test_source_version_is_read_from_filename(filename: str, version: str) -> None:
+    assert _extract_source_version(Path(filename)) == version

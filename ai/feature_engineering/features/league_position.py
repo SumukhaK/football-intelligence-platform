@@ -1,8 +1,14 @@
-"""League position features: running points table standings before each match."""
+"""League position features: running points table standings before each match.
+
+Each (competition, season) keeps its own table, so standings reset every season
+and leagues never share a table. Standings are taken at the start of each
+match date, so simultaneous kick-offs never see each other's results.
+"""
 
 from __future__ import annotations
 
 from collections import defaultdict
+from typing import Any
 
 import pandas as pd
 
@@ -18,7 +24,7 @@ class LeaguePositionFeature(BaseFeature):
 
     @property
     def version(self) -> str:
-        return "1.0.0"
+        return "1.1.0"
 
     @property
     def output_columns(self) -> list[str]:
@@ -44,64 +50,52 @@ class LeaguePositionFeature(BaseFeature):
     def compute(self, df: pd.DataFrame) -> pd.DataFrame:
         """Compute league standing features using an iterative points table.
 
-        Records standings BEFORE updating with each match's result, so the
-        current match is not included in its own position calculation.
+        Standings are snapshotted at the start of each match date: every match
+        on a date sees the table before any of that day's results, so the
+        output does not depend on the order of same-day rows.
         """
-        points_table: dict[str, int] = defaultdict(int)
-        played_table: dict[str, int] = defaultdict(int)
+        points_tables: dict[tuple[str, str], dict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
+        played_tables: dict[tuple[str, str], dict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
+        records: dict[object, tuple[int, int, int, int, int, int]] = {}
 
-        home_positions: list[int | None] = []
-        away_positions: list[int | None] = []
-        home_points_list: list[int] = []
-        away_points_list: list[int] = []
-        home_played_list: list[int] = []
-        away_played_list: list[int] = []
-
-        for _, row in df.iterrows():
-            home = row["home_team"]
-            away = row["away_team"]
-
-            # Record position BEFORE this match updates the table
-            home_pts = points_table[home]
-            away_pts = points_table[away]
-            home_played = played_table[home]
-            away_played = played_table[away]
-
-            if points_table:
-                home_pos = self._position_from_points(home, points_table)
-                away_pos = self._position_from_points(away, points_table)
-            else:
-                home_pos = 1
-                away_pos = 1
-
-            home_positions.append(home_pos)
-            away_positions.append(away_pos)
-            home_points_list.append(home_pts)
-            away_points_list.append(away_pts)
-            home_played_list.append(home_played)
-            away_played_list.append(away_played)
-
-            # Update table with this match's result
-            result = row["result"]
-            if result == "H":
-                points_table[home] += 3
-            elif result == "D":
-                points_table[home] += 1
-                points_table[away] += 1
-            else:  # "A"
-                points_table[away] += 3
-
-            played_table[home] += 1
-            played_table[away] += 1
+        for _, day in df.groupby("match_date", sort=True):
+            for idx, row in zip(day.index, day.itertuples(index=False), strict=True):
+                key = (str(row.competition), str(row.season))
+                points, played = points_tables[key], played_tables[key]
+                home, away = str(row.home_team), str(row.away_team)
+                home_pts, away_pts = points[home], points[away]
+                records[idx] = (
+                    self._position_from_points(home, points),
+                    self._position_from_points(away, points),
+                    home_pts,
+                    away_pts,
+                    played[home],
+                    played[away],
+                )
+            for row in day.itertuples(index=False):
+                key = (str(row.competition), str(row.season))
+                _apply_result(points_tables[key], played_tables[key], row)
 
         return pd.DataFrame(
-            {
-                "home_league_position": home_positions,
-                "away_league_position": away_positions,
-                "home_league_points": home_points_list,
-                "away_league_points": away_points_list,
-                "home_matches_played": home_played_list,
-                "away_matches_played": away_played_list,
-            },
+            [records[idx] for idx in df.index],
             index=df.index,
+            columns=self.output_columns,
         )
+
+
+def _apply_result(points: dict[str, int], played: dict[str, int], row: Any) -> None:
+    """Add one match's points and appearances to a league table."""
+    home, away = str(row.home_team), str(row.away_team)
+    if row.result == "H":
+        points[home] += 3
+    elif row.result == "D":
+        points[home] += 1
+        points[away] += 1
+    else:  # "A"
+        points[away] += 3
+    played[home] += 1
+    played[away] += 1

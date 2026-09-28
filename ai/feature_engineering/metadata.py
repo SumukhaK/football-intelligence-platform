@@ -6,7 +6,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-PIPELINE_VERSION = "1.0.0"
+PIPELINE_VERSION = "1.1.0"
 
 
 class FeatureMetadata(BaseModel, frozen=True):

@@ -95,6 +95,17 @@ class BaseFeature(ABC):
 
 All rolling statistics use `.shift(1)` before `.rolling(n)` so each row only observes data from prior matches. First-match rows yield `NaN` for rolling features.
 
+### Multi-Season and Multi-League Data (pipeline 1.1.0)
+
+The pipeline accepts many seasons and leagues in one input file (ADR 005):
+
+- Rows are sorted by `match_date`, `competition`, `home_team` with a stable sort, so output never depends on input file order.
+- `league_position` keeps one table per `(competition, season)` and snapshots standings at the start of each match date, so simultaneous kick-offs never see each other's results.
+- `rest_days` counts days since the team's previous match in the same season; the first match of each season is `NaN` rather than a summer-length gap.
+- `elo_rating` keeps a separate pool per competition. At each new season continuing teams regress a third of the way to 1500, and promoted teams inherit the average rating of the teams they replaced.
+- `head_to_head` counts meetings across all seasons in a single pass.
+- Rolling form, goal statistics and home/away form windows run across season boundaries on purpose, so early-season rows still reflect recent form.
+
 ### build_team_match_view()
 
 Expands the match DataFrame to one row per `(match, team)` — doubling the row count — so per-team rolling stats can be computed with simple `groupby('team').transform(...)` calls. The `_original_idx` column maps back to the original DataFrame index.
