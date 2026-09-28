@@ -96,8 +96,9 @@ private fun PredictionInputContent(
     onPredict: (homeTeam: String, awayTeam: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var homeTeam by rememberSaveable { mutableStateOf(teams.first()) }
-    var awayTeam by rememberSaveable { mutableStateOf(teams.getOrElse(1) { teams.first() }) }
+    // Keyed on the list so a reloaded team list never leaves a stale selection.
+    var homeTeam by rememberSaveable(teams) { mutableStateOf(teams[0]) }
+    var awayTeam by rememberSaveable(teams) { mutableStateOf(teams[1]) }
 
     Column(
         modifier = modifier

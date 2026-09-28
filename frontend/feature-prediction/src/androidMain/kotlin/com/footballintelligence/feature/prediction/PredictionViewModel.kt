@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.footballintelligence.core.model.NetworkResult
 import com.footballintelligence.core.model.PredictionRequest
+import com.footballintelligence.core.model.TeamsResponse
 import com.footballintelligence.feature.prediction.repository.PredictionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,8 +36,7 @@ class PredictionViewModel(
         _teamsState.value = TeamsUiState.Loading
         viewModelScope.launch {
             _teamsState.value = when (val result = repository.teams()) {
-                is NetworkResult.Success ->
-                    TeamsUiState.Success(result.data.season, result.data.teams)
+                is NetworkResult.Success -> result.data.toUiState()
                 is NetworkResult.Error -> TeamsUiState.Error(result.message)
                 is NetworkResult.Loading -> TeamsUiState.Loading
             }
@@ -80,3 +80,11 @@ class PredictionViewModel(
         _explanationState.value = ExplanationUiState.Idle
     }
 }
+
+/** A team list needs at least two teams to pick a fixture from. */
+private fun TeamsResponse.toUiState(): TeamsUiState =
+    if (teams.size < 2) {
+        TeamsUiState.Error("No teams available for $competition $season")
+    } else {
+        TeamsUiState.Success(season, teams)
+    }

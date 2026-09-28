@@ -65,6 +65,17 @@ class PredictionViewModelTest {
     }
 
     @Test
+    fun `an empty team list is an error, not a crash`() {
+        coEvery { repository.teams() } returns
+            NetworkResult.Success(TeamsResponse("Premier League", "2026/27", emptyList()))
+        val viewModel = PredictionViewModel(repository)
+        assertEquals(
+            TeamsUiState.Error("No teams available for Premier League 2026/27"),
+            viewModel.teamsState.value,
+        )
+    }
+
+    @Test
     fun `retrying teams after an error loads them`() {
         coEvery { repository.teams() } returnsMany listOf(
             NetworkResult.Error("HTTP 503"),
