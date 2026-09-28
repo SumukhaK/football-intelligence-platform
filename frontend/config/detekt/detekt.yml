@@ -11,6 +11,10 @@ naming:
       - Composable
 
 style:
+  # Previews are private and only called by Android Studio's preview renderer.
+  UnusedPrivateMember:
+    ignoreAnnotated:
+      - Preview
   MagicNumber:
     ignorePropertyDeclaration: true
     ignoreAnnotated:
@@ -22,6 +26,9 @@ style:
       - '**/androidUnitTest/**'
 
 complexity:
+  TooManyFunctions:
+    ignoreAnnotatedFunctions:
+      - Preview
   LongMethod:
     ignoreAnnotated:
       - Composable
