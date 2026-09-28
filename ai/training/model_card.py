@@ -33,24 +33,7 @@ def describe_split(config: TrainingConfig) -> str:
     )
 
 
-def write_model_card(
-    *,
-    model: TrainedModel,
-    report: EvaluationReport,
-    version: str,
-    dataset: str,
-    config: TrainingConfig,
-    output_path: Path,
-) -> None:
-    """Write a model_card.md describing the trained model."""
-    tm = report.test_metrics
-    cv = report.cv_report
-    cv_kind = (
-        "season walk-forward"
-        if config.split_strategy == "season"
-        else ("TimeSeriesSplit")
-    )
-    card = f"""# Model Card — Football Match Outcome Predictor
+_CARD_TEMPLATE = """# Model Card — Football Match Outcome Predictor
 
 ## Model Name
 `football-outcome-xgboost-{version}`
@@ -65,8 +48,8 @@ Multi-class classification: Home win (H), Draw (D), or Away win (A).
 
 ## Training Dataset
 - Source: {dataset}
-- Split: {describe_split(config)}
-- Feature matrix: {report.n_features} pre-match engineered features
+- Split: {split}
+- Feature matrix: {n_features} pre-match engineered features
 - Post-match statistics and betting odds are excluded to prevent data leakage.
 
 ## Feature Set
@@ -81,26 +64,26 @@ Multi-class classification: Home win (H), Draw (D), or Away win (A).
 
 ## Training Configuration
 - Algorithm: XGBoost (multi:softprob)
-- Best iteration: {model.best_iteration}
-- Classes: {", ".join(model.classes)}
-- Training rows: {report.n_train}
-- Validation rows: {report.n_val}
-- Test rows: {report.n_test}
+- Best iteration: {best_iteration}
+- Classes: {classes}
+- Training rows: {n_train}
+- Validation rows: {n_val}
+- Test rows: {n_test}
 
 ## Evaluation Metrics (Test Set)
 | Metric | Value |
 |---|---|
-| Accuracy | {tm.accuracy:.4f} |
-| F1 (weighted) | {tm.f1_weighted:.4f} |
-| Log Loss | {tm.log_loss:.4f} |
-| ROC AUC (OvR) | {tm.roc_auc_ovr:.4f} |
+| Accuracy | {test_accuracy:.4f} |
+| F1 (weighted) | {test_f1:.4f} |
+| Log Loss | {test_log_loss:.4f} |
+| ROC AUC (OvR) | {test_roc_auc:.4f} |
 
-## Cross-Validation ({cv_kind}, {cv.n_folds} folds)
+## Cross-Validation ({cv_kind}, {cv_folds} folds)
 | Metric | Mean | Std |
 |---|---|---|
-| Accuracy | {cv.mean_accuracy:.4f} | {cv.std_accuracy:.4f} |
-| F1 (weighted) | {cv.mean_f1:.4f} | {cv.std_f1:.4f} |
-| Log Loss | {cv.mean_log_loss:.4f} | {cv.std_log_loss:.4f} |
+| Accuracy | {cv_accuracy:.4f} | {cv_accuracy_std:.4f} |
+| F1 (weighted) | {cv_f1:.4f} | {cv_f1_std:.4f} |
+| Log Loss | {cv_log_loss:.4f} | {cv_log_loss_std:.4f} |
 
 ## Known Limitations
 - First-match NaN values for rolling features are imputed with training-set medians.
@@ -114,5 +97,45 @@ Multi-class classification: Home win (H), Draw (D), or Away win (A).
 - This model predicts sporting outcomes. Do not use it to influence betting markets.
 - Predictions carry uncertainty. Do not present them as certainties.
 """
+
+
+def write_model_card(
+    *,
+    model: TrainedModel,
+    report: EvaluationReport,
+    version: str,
+    dataset: str,
+    config: TrainingConfig,
+    output_path: Path,
+) -> None:
+    """Write a model_card.md describing the trained model."""
+    tm, cv = report.test_metrics, report.cv_report
+    card = _CARD_TEMPLATE.format(
+        version=version,
+        dataset=dataset,
+        split=describe_split(config),
+        n_features=report.n_features,
+        best_iteration=model.best_iteration,
+        classes=", ".join(model.classes),
+        n_train=report.n_train,
+        n_val=report.n_val,
+        n_test=report.n_test,
+        test_accuracy=tm.accuracy,
+        test_f1=tm.f1_weighted,
+        test_log_loss=tm.log_loss,
+        test_roc_auc=tm.roc_auc_ovr,
+        cv_kind=(
+            "season walk-forward"
+            if config.split_strategy == "season"
+            else ("TimeSeriesSplit")
+        ),
+        cv_folds=cv.n_folds,
+        cv_accuracy=cv.mean_accuracy,
+        cv_accuracy_std=cv.std_accuracy,
+        cv_f1=cv.mean_f1,
+        cv_f1_std=cv.std_f1,
+        cv_log_loss=cv.mean_log_loss,
+        cv_log_loss_std=cv.std_log_loss,
+    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(card, encoding="utf-8")
