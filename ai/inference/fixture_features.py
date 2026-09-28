@@ -64,8 +64,8 @@ def find_latest_dataset(directory: Path) -> Path:
 class FixtureFeatureBuilder:
     """Computes model features for fixtures from canonical match history."""
 
-    def __init__(self, matches: pd.DataFrame) -> None:
-        """Index canonical matches by competition."""
+    def __init__(self, matches: pd.DataFrame, max_cached: int = 4096) -> None:
+        """Index canonical matches by competition; cache up to ``max_cached``."""
         registry = build_default_registry()
         self._pipeline = FeaturePipeline(registry)
         self._columns = [c for f in registry.get_ordered() for c in f.output_columns]
@@ -75,6 +75,7 @@ class FixtureFeatureBuilder:
             for comp, group in frame.groupby("competition")
         }
         self._cache: dict[Fixture, dict[str, float]] = {}
+        self._max_cached = max_cached
 
     @classmethod
     def from_directory(cls, directory: Path) -> FixtureFeatureBuilder:
@@ -87,26 +88,44 @@ class FixtureFeatureBuilder:
         Raises:
             KeyError: If the competition is not in the data.
         """
+        season = str(self._by_competition[competition]["season"].max())
+        return season, self._season_teams(competition, season)
+
+    @property
+    def cached_fixtures(self) -> int:
+        """Return how many fixtures' features are cached."""
+        return len(self._cache)
+
+    def _season_teams(self, competition: str, season: str) -> list[str]:
+        """Return the teams that played in one season, sorted by name."""
         df = self._by_competition[competition]
-        season = str(df["season"].max())
-        latest = df[df["season"] == season]
-        names = set(latest["home_team"]) | set(latest["away_team"])
-        return season, sorted(str(n) for n in names)
+        rows = df[df["season"] == season]
+        names = set(rows["home_team"]) | set(rows["away_team"])
+        return sorted(str(n) for n in names)
+
+    def _known_teams(self, fixture: Fixture) -> tuple[str, list[str]]:
+        """Teams valid for a fixture: its own season if played, else the latest."""
+        season = season_for_date(fixture.match_date)
+        teams = self._season_teams(fixture.competition, season)
+        return (season, teams) if teams else self.teams(fixture.competition)
 
     def build(self, fixture: Fixture) -> dict[str, float]:
         """Return every feature column for ``fixture``; missing values are NaN.
 
         Raises:
             KeyError: If the competition is not in the data.
-            UnknownTeamError: If either team is not in the latest season.
+            UnknownTeamError: If either team did not play in the fixture's
+                season (or, for a season with no results yet, the latest one).
         """
         if fixture in self._cache:
             return self._cache[fixture]
-        season, known = self.teams(fixture.competition)
+        season, known = self._known_teams(fixture)
         for team in (fixture.home_team, fixture.away_team):
             if team not in known:
                 raise UnknownTeamError(team, fixture.competition, season)
         features = self._compute(fixture)
+        if len(self._cache) >= self._max_cached:
+            self._cache.clear()
         self._cache[fixture] = features
         return features
 

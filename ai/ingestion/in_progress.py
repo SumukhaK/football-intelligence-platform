@@ -15,7 +15,7 @@ import pandas as pd
 from ingestion.downloader import HttpTransport
 from ingestion.storage import DatasetStorage
 from providers.base import BaseProvider
-from schemas.match import MatchNormalizer
+from schemas.match import MatchNormalizer, ProcessedMatch
 from shared.exceptions import IngestionError, ValidationError
 from shared.types import DatasetName
 from validation.season_integrity import check_partial_season
@@ -23,6 +23,7 @@ from validation.season_integrity import check_partial_season
 IN_PROGRESS_DATASET = DatasetName("match_results_in_progress")
 _SOURCE_DATASET = DatasetName("match_results")
 _PLAYED = ["home_goals_ft", "away_goals_ft", "result_ft"]
+_CANONICAL_COLUMNS = list(ProcessedMatch.model_fields)
 
 
 def fetch_in_progress(
@@ -77,6 +78,9 @@ def _canonical(
     label = f"{division} {season_code}"
     normalised = provider.normalise_columns(provider.parse(content, _SOURCE_DATASET))
     played = normalised.dropna(subset=_PLAYED)
+    if played.empty:
+        # Early in a season a league may not have played yet.
+        return pd.DataFrame(columns=_CANONICAL_COLUMNS)
     frame, failed = MatchNormalizer().normalise_dataframe(
         played, season_code=season_code, division=division
     )
