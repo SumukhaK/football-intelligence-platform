@@ -4,17 +4,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.footballintelligence.core.model.NetworkResult
 import com.footballintelligence.core.model.PredictionRequest
-import com.footballintelligence.core.model.buildNeutralFeatures
 import com.footballintelligence.feature.prediction.repository.PredictionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/** ViewModel for the prediction and explanation flow. */
+/** ViewModel for team selection, prediction and explanation. */
 class PredictionViewModel(
     private val repository: PredictionRepository,
 ) : ViewModel() {
+
+    private val _teamsState = MutableStateFlow<TeamsUiState>(TeamsUiState.Loading)
+    val teamsState: StateFlow<TeamsUiState> = _teamsState.asStateFlow()
 
     private val _predictionState =
         MutableStateFlow<PredictionInputUiState>(PredictionInputUiState.Idle)
@@ -24,13 +26,27 @@ class PredictionViewModel(
         MutableStateFlow<ExplanationUiState>(ExplanationUiState.Idle)
     val explanationState: StateFlow<ExplanationUiState> = _explanationState.asStateFlow()
 
+    init {
+        loadTeams()
+    }
+
+    /** Loads the current season's teams from the backend. */
+    fun loadTeams() {
+        _teamsState.value = TeamsUiState.Loading
+        viewModelScope.launch {
+            _teamsState.value = when (val result = repository.teams()) {
+                is NetworkResult.Success ->
+                    TeamsUiState.Success(result.data.season, result.data.teams)
+                is NetworkResult.Error -> TeamsUiState.Error(result.message)
+                is NetworkResult.Loading -> TeamsUiState.Loading
+            }
+        }
+    }
+
+    /** Requests a prediction; the backend computes the match features. */
     fun predict(homeTeam: String, awayTeam: String) {
         _predictionState.value = PredictionInputUiState.Loading
-        val request = PredictionRequest(
-            homeTeam = homeTeam,
-            awayTeam = awayTeam,
-            features = buildNeutralFeatures(),
-        )
+        val request = PredictionRequest(homeTeam = homeTeam, awayTeam = awayTeam)
         viewModelScope.launch {
             _predictionState.value = when (val result = repository.predict(request)) {
                 is NetworkResult.Success -> PredictionInputUiState.Success(result.data)
@@ -40,6 +56,7 @@ class PredictionViewModel(
         }
     }
 
+    /** Requests a SHAP explanation for the current prediction's teams. */
     fun explain() {
         val current = _predictionState.value
         if (current !is PredictionInputUiState.Success) return
@@ -47,7 +64,6 @@ class PredictionViewModel(
         val request = PredictionRequest(
             homeTeam = current.result.homeTeam,
             awayTeam = current.result.awayTeam,
-            features = buildNeutralFeatures(),
         )
         viewModelScope.launch {
             _explanationState.value = when (val result = repository.explain(request)) {
@@ -58,6 +74,7 @@ class PredictionViewModel(
         }
     }
 
+    /** Clears the current prediction and explanation. */
     fun resetPrediction() {
         _predictionState.value = PredictionInputUiState.Idle
         _explanationState.value = ExplanationUiState.Idle

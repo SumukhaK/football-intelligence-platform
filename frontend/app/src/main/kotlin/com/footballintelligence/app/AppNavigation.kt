@@ -43,9 +43,12 @@ fun AppNavigation(navController: NavHostController) {
         composable(Screen.Prediction.route) {
             val vm: PredictionViewModel = koinViewModel()
             val state by vm.predictionState.collectAsState()
+            val teamsState by vm.teamsState.collectAsState()
             PredictionScreen(
                 uiState = state,
+                teamsState = teamsState,
                 onPredict = vm::predict,
+                onRetryTeams = vm::loadTeams,
                 onNavigateToResult = {
                     navController.navigate(Screen.PredictionResult.route)
                 },

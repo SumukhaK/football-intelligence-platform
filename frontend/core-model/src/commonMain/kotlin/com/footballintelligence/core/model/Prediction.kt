@@ -3,12 +3,16 @@ package com.footballintelligence.core.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/** Request body for POST /predict and POST /explain. */
+/**
+ * Request body for POST /predict and POST /explain.
+ *
+ * Only the teams are sent; the server computes match features from results
+ * played before today (ADR 008).
+ */
 @Serializable
 data class PredictionRequest(
     @SerialName("home_team") val homeTeam: String,
     @SerialName("away_team") val awayTeam: String,
-    val features: Map<String, Double>,
 )
 
 /** Response from POST /predict. */
