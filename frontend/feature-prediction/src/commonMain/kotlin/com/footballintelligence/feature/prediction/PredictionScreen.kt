@@ -20,6 +20,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -72,7 +73,8 @@ fun PredictionScreen(
                 modifier = Modifier.padding(padding),
             )
             is PredictionInputUiState.Success -> {
-                onNavigateToResult()
+                // Navigate once per result, not on every recomposition.
+                LaunchedEffect(uiState.result) { onNavigateToResult() }
                 LoadingView(Modifier.padding(padding))
             }
             is PredictionInputUiState.Idle -> when (teamsState) {

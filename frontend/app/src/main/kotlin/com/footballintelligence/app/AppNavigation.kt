@@ -1,5 +1,6 @@
 package com.footballintelligence.app
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -61,17 +62,21 @@ fun AppNavigation(navController: NavHostController) {
                 viewModelStoreOwner = navController.getBackStackEntry(Screen.Prediction.route),
             )
             val state by vm.predictionState.collectAsState()
+            // Leaving the result must clear it; otherwise the team selection
+            // screen still holds a finished prediction and shows a spinner.
+            val backToTeamSelection: () -> Unit = {
+                vm.resetPrediction()
+                navController.popBackStack(Screen.Prediction.route, inclusive = false)
+            }
+            BackHandler(onBack = backToTeamSelection)
             PredictionResultScreen(
                 uiState = state,
                 onExplain = {
                     vm.explain()
                     navController.navigate(Screen.ExplainPrediction.route)
                 },
-                onNewPrediction = {
-                    vm.resetPrediction()
-                    navController.popBackStack(Screen.Prediction.route, inclusive = false)
-                },
-                onBack = { navController.popBackStack() },
+                onNewPrediction = backToTeamSelection,
+                onBack = backToTeamSelection,
             )
         }
 
