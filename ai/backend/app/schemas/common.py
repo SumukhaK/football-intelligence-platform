@@ -36,6 +36,10 @@ class HealthResponse(BaseModel):
             "so requests may omit features."
         ),
     )
+    insights_available: bool = Field(
+        default=False,
+        description="True when the goals model is fitted, so POST /insights works.",
+    )
     version: str = Field(..., description="API version string.", examples=["0.1.0"])
 
 

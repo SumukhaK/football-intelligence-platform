@@ -14,11 +14,13 @@ from backend.app.exceptions import (
     AssistantNotAvailableError,
     FeatureMissingError,
     FixtureFeaturesNotAvailableError,
+    InsightsNotAvailableError,
     ModelNotAvailableError,
     UnknownTeamError,
     assistant_not_available_handler,
     feature_missing_handler,
     fixture_features_not_available_handler,
+    insights_not_available_handler,
     model_not_available_handler,
     unexpected_error_handler,
     unknown_team_handler,
@@ -27,6 +29,7 @@ from backend.app.routers import (
     assistant,
     explainability,
     health,
+    insights,
     model,
     prediction,
     teams,
@@ -47,6 +50,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.registry = None
     app.state.chat_service = None
     app.state.fixture_feature_service = _load_fixture_features(
+        settings.matches_dir, settings.served_competition
+    )
+    app.state.insights_service = _load_insights(
         settings.matches_dir, settings.served_competition
     )
 
@@ -163,6 +169,19 @@ def _load_fixture_features(directory: Path, competition: str) -> object | None:
         return None
 
 
+def _load_insights(directory: Path, competition: str) -> object | None:
+    """Fit the goals model from match history; None if that fails."""
+    try:
+        from backend.app.services.insights_service import load_insights_service
+
+        service = load_insights_service(directory, competition)
+        logger.info("Goals model fitted: %s", service.model_version)
+        return service
+    except Exception as exc:  # noqa: BLE001 — /insights answers 503 instead
+        logger.warning("Goals model not fitted from %s: %s", directory, exc)
+        return None
+
+
 def create_app() -> FastAPI:
     """Construct and return the FastAPI application."""
     settings = get_settings()
@@ -189,6 +208,7 @@ def create_app() -> FastAPI:
         FixtureFeaturesNotAvailableError, fixture_features_not_available_handler
     )
     app.add_exception_handler(UnknownTeamError, unknown_team_handler)
+    app.add_exception_handler(InsightsNotAvailableError, insights_not_available_handler)
     app.add_exception_handler(Exception, unexpected_error_handler)
 
     app.include_router(health.router)
@@ -196,6 +216,7 @@ def create_app() -> FastAPI:
     app.include_router(prediction.router)
     app.include_router(explainability.router)
     app.include_router(teams.router)
+    app.include_router(insights.router)
     app.include_router(assistant.router)
 
     return app

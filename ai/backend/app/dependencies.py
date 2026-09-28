@@ -13,10 +13,12 @@ from fastapi import Depends, Request
 
 from backend.app.exceptions import (
     FixtureFeaturesNotAvailableError,
+    InsightsNotAvailableError,
     ModelNotAvailableError,
 )
 from backend.app.services.explanation_service import ExplanationService
 from backend.app.services.fixture_feature_service import FixtureFeatureService
+from backend.app.services.insights_service import InsightsService
 from backend.app.services.prediction_service import PredictionService
 
 
@@ -73,6 +75,21 @@ def get_fixture_feature_service(request: Request) -> FixtureFeatureService:
     return service
 
 
+def get_insights_service(request: Request) -> InsightsService:
+    """Return the InsightsService fitted at startup.
+
+    Raises InsightsNotAvailableError if the goals model could not be fitted.
+    """
+    service: InsightsService | None = getattr(
+        request.app.state, "insights_service", None
+    )
+    if service is None:
+        raise InsightsNotAvailableError(
+            "Goals model is not fitted. Check MATCHES_DIR in configuration."
+        )
+    return service
+
+
 PredictionServiceDep = Annotated[PredictionService, Depends(get_prediction_service)]
 ExplanationServiceDep = Annotated[ExplanationService, Depends(get_explanation_service)]
 OptionalFixtureFeatureServiceDep = Annotated[
@@ -81,3 +98,4 @@ OptionalFixtureFeatureServiceDep = Annotated[
 FixtureFeatureServiceDep = Annotated[
     FixtureFeatureService, Depends(get_fixture_feature_service)
 ]
+InsightsServiceDep = Annotated[InsightsService, Depends(get_insights_service)]
