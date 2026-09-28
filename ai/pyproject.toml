@@ -8,6 +8,7 @@ dependencies = [
     "pandas>=2.2.0",
     "numpy>=1.26.0,<2.3.0",
     "scikit-learn>=1.4.0",
+    "scipy>=1.13.0",
     "pydantic>=2.7.0",
     "pydantic-settings>=2.3.0",
     "joblib>=1.4.0",
@@ -169,6 +170,11 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 # matplotlib does not ship py.typed
 module = "matplotlib.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# scipy does not ship type stubs (scipy-stubs is a separate project)
+module = "scipy.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
