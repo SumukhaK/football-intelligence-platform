@@ -102,3 +102,6 @@ Thumbs.db
 *.tfstate
 *.tfstate.backup
 .terraform/
+
+# Kotlin compiler caches
+.kotlin/
