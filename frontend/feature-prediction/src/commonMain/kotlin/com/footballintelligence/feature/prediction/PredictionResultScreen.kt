@@ -1,5 +1,6 @@
 package com.footballintelligence.feature.prediction
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -20,6 +22,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.footballintelligence.core.model.PredictionResult
 import com.footballintelligence.core.ui.BackButton
@@ -29,6 +32,8 @@ import com.footballintelligence.feature.prediction.resources.Res
 import com.footballintelligence.feature.prediction.resources.action_explain
 import com.footballintelligence.feature.prediction.resources.action_new_prediction
 import com.footballintelligence.feature.prediction.resources.confidence
+import com.footballintelligence.feature.prediction.resources.draw_possible
+import com.footballintelligence.feature.prediction.resources.draw_possible_detail
 import com.footballintelligence.feature.prediction.resources.fixture
 import com.footballintelligence.feature.prediction.resources.model_version
 import com.footballintelligence.feature.prediction.resources.no_prediction
@@ -115,6 +120,9 @@ private fun ResultContent(
                     style = MaterialTheme.typography.displaySmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
+                if (result.drawPossible) {
+                    DrawPossibleTag()
+                }
                 Text(
                     stringResource(Res.string.confidence, percentOf(result.confidence)),
                     style = MaterialTheme.typography.bodyLarge,
@@ -172,6 +180,26 @@ private fun ProbabilityRow(label: String, probability: Double) {
         LinearProgressIndicator(
             progress = { probability.toFloat() },
             modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Composable
+private fun DrawPossibleTag() {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = stringResource(Res.string.draw_possible),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onTertiaryContainer,
+            modifier = Modifier
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.tertiaryContainer)
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+        )
+        Text(
+            text = stringResource(Res.string.draw_possible_detail),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
         )
     }
 }

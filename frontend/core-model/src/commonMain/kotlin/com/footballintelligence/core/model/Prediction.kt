@@ -15,7 +15,12 @@ data class PredictionRequest(
     @SerialName("away_team") val awayTeam: String,
 )
 
-/** Response from POST /predict. */
+/**
+ * Response from POST /predict.
+ *
+ * [drawPossible] flags matches whose draw chance is high enough to mention; it
+ * never changes [predictedResult] (ADR 011). Older servers omit it.
+ */
 @Serializable
 data class PredictionResult(
     @SerialName("home_team") val homeTeam: String,
@@ -26,4 +31,5 @@ data class PredictionResult(
     @SerialName("probability_away") val probabilityAway: Double,
     val confidence: Double,
     @SerialName("model_version") val modelVersion: String,
+    @SerialName("draw_possible") val drawPossible: Boolean = false,
 )
