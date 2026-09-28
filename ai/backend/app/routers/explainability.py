@@ -6,9 +6,13 @@ import logging
 
 from fastapi import APIRouter
 
-from backend.app.dependencies import ExplanationServiceDep
+from backend.app.dependencies import (
+    ExplanationServiceDep,
+    OptionalFixtureFeatureServiceDep,
+)
 from backend.app.schemas.explainability import ExplanationResponse
 from backend.app.schemas.prediction import PredictionRequest
+from backend.app.services.fixture_feature_service import resolve_features
 
 logger = logging.getLogger(__name__)
 
@@ -20,31 +24,33 @@ router = APIRouter(tags=["Explainability"])
     response_model=ExplanationResponse,
     summary="Explain match prediction with SHAP",
     description=(
-        "Given a pre-computed feature vector for a match, "
+        "Given the two teams (or a pre-computed feature vector), "
         "returns the predicted outcome together with SHAP feature attributions: "
         "top positive contributors, top negative contributors, "
         "and the full contribution list sorted by magnitude."
     ),
     responses={
-        422: {"description": "Missing required feature columns."},
-        503: {"description": "Explainability service not loaded."},
+        422: {"description": "Unknown team, or supplied features incomplete."},
+        503: {"description": "Explainer not loaded, or match history not loaded."},
     },
 )
 def explain(
     request: PredictionRequest,
     service: ExplanationServiceDep,
+    fixtures: OptionalFixtureFeatureServiceDep,
 ) -> ExplanationResponse:
     """Compute SHAP values and return a structured explanation."""
+    features = resolve_features(request, fixtures)
     logger.info(
         "explain: home=%s away=%s n_features=%d",
         request.home_team,
         request.away_team,
-        len(request.features),
+        len(features),
     )
     response = service.explain(
         home_team=request.home_team,
         away_team=request.away_team,
-        features=request.features,
+        features=features,
     )
     logger.info(
         "explain: result=%s confidence=%.3f n_contributions=%d",

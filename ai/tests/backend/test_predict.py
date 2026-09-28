@@ -84,12 +84,15 @@ def test_predict_422_missing_home_team(
     assert response.status_code == 422
 
 
-def test_predict_422_missing_features(client: TestClient) -> None:
-    """POST /predict returns 422 when features dict is absent."""
+def test_predict_503_without_features_when_history_not_loaded(
+    client: TestClient,
+) -> None:
+    """POST /predict without features needs match history (ADR 008)."""
     response = client.post(
         "/predict", json={"home_team": "Arsenal", "away_team": "Chelsea"}
     )
-    assert response.status_code == 422
+    assert response.status_code == 503
+    assert response.json()["error"] == "Match features not available"
 
 
 def test_predict_422_empty_home_team(

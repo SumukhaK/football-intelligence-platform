@@ -27,6 +27,42 @@ class FeatureMissingError(Exception):
         super().__init__(f"Missing feature columns: {missing}")
 
 
+class FixtureFeaturesNotAvailableError(Exception):
+    """Raised when features are needed but no match history is loaded."""
+
+
+class UnknownTeamError(Exception):
+    """Raised when a requested team is not in the served competition's season."""
+
+    def __init__(self, team: str, competition: str, season: str) -> None:
+        """Record the unknown team and where it was looked up."""
+        self.team = team
+        self.competition = competition
+        self.season = season
+        super().__init__(f"'{team}' did not play in {competition} {season}")
+
+
+def fixture_features_not_available_handler(
+    _request: Request, exc: Exception
+) -> JSONResponse:
+    """Return a 503 when features must be computed but history is not loaded."""
+    logger.error("Fixture features not available: %s", exc)
+    return JSONResponse(
+        status_code=503,
+        content={"error": "Match features not available", "detail": str(exc)},
+    )
+
+
+def unknown_team_handler(_request: Request, exc: Exception) -> JSONResponse:
+    """Return a 422 naming the team that is not in the served season."""
+    assert isinstance(exc, UnknownTeamError)
+    logger.warning("Unknown team: %s", exc)
+    return JSONResponse(
+        status_code=422,
+        content={"error": "Unknown team", "detail": str(exc), "team": exc.team},
+    )
+
+
 def assistant_not_available_handler(_request: Request, exc: Exception) -> JSONResponse:
     """Return a 503 when the assistant service is unavailable."""
     logger.error("Assistant not available: %s", exc)

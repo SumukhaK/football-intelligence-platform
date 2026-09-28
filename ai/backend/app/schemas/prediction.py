@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from pydantic import BaseModel, Field
 
 
 class PredictionRequest(BaseModel):
     """Input for POST /predict and POST /explain.
 
-    The caller must supply the pre-computed feature vector for the match.
-    Feature names must match those expected by the loaded model.
+    Send just the two teams and the server computes the match features from
+    results played before ``match_date`` (ADR 008). A caller may instead send
+    its own pre-computed ``features``; names must match the loaded model's.
     """
 
     home_team: str = Field(
@@ -24,14 +27,22 @@ class PredictionRequest(BaseModel):
         description="Name of the away team.",
         examples=["Chelsea"],
     )
-    features: dict[str, float] = Field(
-        ...,
+    features: dict[str, float] | None = Field(
+        default=None,
         description=(
-            "Pre-computed match feature vector. "
-            "Keys are feature names; values are numeric feature values. "
-            "All model-required features must be present."
+            "Optional pre-computed feature vector. When omitted, the server "
+            "computes all model features from match history. When given, "
+            "every model-required feature must be present."
         ),
-        examples=[{"home_elo": 1550.0, "away_elo": 1480.0, "elo_diff": 70.0}],
+        examples=[{"home_elo_before": 1550.0, "away_elo_before": 1480.0}],
+    )
+    match_date: date | None = Field(
+        default=None,
+        description=(
+            "Date of the fixture; only matches before it are used. "
+            "Defaults to today. Ignored when features are supplied."
+        ),
+        examples=["2026-10-03"],
     )
 
     model_config = {
@@ -39,13 +50,7 @@ class PredictionRequest(BaseModel):
             "example": {
                 "home_team": "Arsenal",
                 "away_team": "Chelsea",
-                "features": {
-                    "home_elo": 1550.0,
-                    "away_elo": 1480.0,
-                    "elo_diff": 70.0,
-                    "home_form_wins_last5": 0.6,
-                    "away_form_wins_last5": 0.4,
-                },
+                "match_date": "2026-10-03",
             }
         }
     }

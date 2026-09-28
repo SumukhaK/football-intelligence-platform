@@ -18,6 +18,8 @@ class Settings(BaseSettings):
 
     model_path: Path = Path("../ai/models/latest/model.joblib")
     registry_path: Path = Path("../ai/models/registry.json")
+    matches_dir: Path = Path("../datasets/processed/football_data")
+    served_competition: str = "Premier League"
     api_version: str = "0.1.0"
     log_level: str = "INFO"
 

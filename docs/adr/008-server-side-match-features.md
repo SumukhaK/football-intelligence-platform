@@ -1,6 +1,6 @@
 # ADR 008 — Compute Match Features on the Server
 
-**Status:** Proposed
+**Status:** Accepted
 
 **Supersedes:** —
 **Superseded by:** —
@@ -45,13 +45,24 @@ the same feature pipeline as training.
 6. **Scope.** Premier League only, as ADR 005 requires; other leagues need their
    own ADR.
 
-## Open question
+## Decisions made during implementation
 
-Data currently ends with 2025/26. A fixture today falls in 2026/27, so every
-prediction is treated as the first match of a new season: form and Elo carry
-over, but the league table and rest days start empty. Including the in-progress
-2026/27 season would make predictions current, but the backfill's integrity
-checks (ADR 006) require complete seasons and would need a partial-season mode.
+- **In-progress season included.** `scripts.refresh_live_dataset` appends the
+  current season's played matches (partial-season checks, ADR 006) to the
+  completed history as `match_results_live_v<timestamp>.csv`. The backend loads
+  the newest live dataset, falling back to the completed history.
+- **Per-request computation, benchmarked first.** Baseline for the full
+  pipeline on 46,959 matches was 31 s, 26 s of it in league position. After
+  rewriting league position and rest days (identical output), the full
+  pipeline takes about 3.8 s. One Premier League fixture takes about 0.9 s,
+  and repeat requests are served from a per-fixture cache.
+- **Elo season rules made backward-looking.** An equivalence test showed that
+  promoted teams' ratings differed between training and serving, because the
+  old rule needed the new season's full team list. Promoted teams now start
+  at the mean final rating of the previous season's three lowest-rated teams.
+  The model was retrained and re-evaluated (log loss 0.976 on 2023/24, 0.996
+  on the holdout, previously 0.975 and 0.995) and promoted as
+  `20260928_123224`.
 
 ## Consequences
 

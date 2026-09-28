@@ -11,8 +11,12 @@ from typing import Annotated
 
 from fastapi import Depends, Request
 
-from backend.app.exceptions import ModelNotAvailableError
+from backend.app.exceptions import (
+    FixtureFeaturesNotAvailableError,
+    ModelNotAvailableError,
+)
 from backend.app.services.explanation_service import ExplanationService
+from backend.app.services.fixture_feature_service import FixtureFeatureService
 from backend.app.services.prediction_service import PredictionService
 
 
@@ -46,5 +50,34 @@ def get_explanation_service(request: Request) -> ExplanationService:
     return service
 
 
+def get_optional_fixture_feature_service(
+    request: Request,
+) -> FixtureFeatureService | None:
+    """Return the FixtureFeatureService, or None when history is not loaded."""
+    service: FixtureFeatureService | None = getattr(
+        request.app.state, "fixture_feature_service", None
+    )
+    return service
+
+
+def get_fixture_feature_service(request: Request) -> FixtureFeatureService:
+    """Return the FixtureFeatureService loaded at startup.
+
+    Raises FixtureFeaturesNotAvailableError if match history was not loaded.
+    """
+    service = get_optional_fixture_feature_service(request)
+    if service is None:
+        raise FixtureFeaturesNotAvailableError(
+            "Match history is not loaded. Check MATCHES_DIR in configuration."
+        )
+    return service
+
+
 PredictionServiceDep = Annotated[PredictionService, Depends(get_prediction_service)]
 ExplanationServiceDep = Annotated[ExplanationService, Depends(get_explanation_service)]
+OptionalFixtureFeatureServiceDep = Annotated[
+    FixtureFeatureService | None, Depends(get_optional_fixture_feature_service)
+]
+FixtureFeatureServiceDep = Annotated[
+    FixtureFeatureService, Depends(get_fixture_feature_service)
+]
