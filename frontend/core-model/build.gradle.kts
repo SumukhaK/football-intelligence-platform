@@ -15,6 +15,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.junit5.api)
+            implementation(libs.junit5.engine)
             implementation(libs.junit5.params)
         }
     }
