@@ -40,6 +40,7 @@ def make_prediction_response(
         probability_draw=prob_draw,
         probability_away=prob_away,
         confidence=prob_home,
+        draw_possible=prob_draw >= 0.28,
         model_version="test-v1",
     )
 

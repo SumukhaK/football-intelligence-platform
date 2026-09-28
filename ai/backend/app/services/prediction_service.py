@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
+from backend.app.config import DEFAULT_DRAW_POSSIBLE_THRESHOLD
 from backend.app.exceptions import FeatureMissingError
 from backend.app.schemas.prediction import PredictionRequest, PredictionResponse
 
@@ -11,10 +12,16 @@ from backend.app.schemas.prediction import PredictionRequest, PredictionResponse
 class PredictionService:
     """Wraps the AI MatchPredictor for use in FastAPI route handlers."""
 
-    def __init__(self, predictor: object, model_version: str) -> None:
-        """Initialise with an AI MatchPredictor and the active model version tag."""
+    def __init__(
+        self,
+        predictor: object,
+        model_version: str,
+        draw_possible_threshold: float = DEFAULT_DRAW_POSSIBLE_THRESHOLD,
+    ) -> None:
+        """Initialise with a MatchPredictor, model version and draw-tag threshold."""
         self._predictor = predictor
         self._model_version = model_version
+        self._draw_possible_threshold = draw_possible_threshold
 
     def predict(self, request: PredictionRequest) -> PredictionResponse:
         """Run inference and return a structured prediction response.
@@ -44,6 +51,7 @@ class PredictionService:
             probability_draw=result.probability_draw,
             probability_away=result.probability_away,
             confidence=confidence,
+            draw_possible=result.probability_draw >= self._draw_possible_threshold,
             model_version=self._model_version,
         )
 

@@ -68,6 +68,32 @@ def test_prediction_service_confidence_is_max_prob() -> None:
     assert response.confidence == pytest.approx(0.55)
 
 
+@pytest.mark.parametrize(
+    ("prob_draw", "expected"),
+    [(0.27, False), (0.28, True), (0.31, True)],
+)
+def test_prediction_service_flags_possible_draws(
+    prob_draw: float, expected: bool
+) -> None:
+    """draw_possible is set when the draw probability reaches the threshold."""
+    from backend.app.services.prediction_service import PredictionService
+
+    mock_predictor = MagicMock()
+    mock_predictor.predict.return_value = _make_ai_prediction(
+        prob_home=0.40, prob_draw=prob_draw, prob_away=0.60 - prob_draw
+    )
+    svc = PredictionService(
+        mock_predictor, model_version="v1", draw_possible_threshold=0.28
+    )
+    response = svc.predict(
+        PredictionRequest(
+            home_team="Arsenal", away_team="Chelsea", features={"home_elo": 1.0}
+        )
+    )
+    assert response.draw_possible is expected
+    assert response.predicted_result == "H"
+
+
 def test_prediction_service_raises_feature_missing() -> None:
     """PredictionService.predict() raises FeatureMissingError on ValueError."""
     from backend.app.services.prediction_service import PredictionService

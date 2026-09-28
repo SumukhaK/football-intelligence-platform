@@ -6,6 +6,9 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Tuned on 2022/23 in docs/reports/draw-handling.md (ADR 011).
+DEFAULT_DRAW_POSSIBLE_THRESHOLD = 0.28
+
 
 class Settings(BaseSettings):
     """Runtime configuration for the Football Intelligence backend."""
@@ -20,6 +23,7 @@ class Settings(BaseSettings):
     registry_path: Path = Path("../ai/models/registry.json")
     matches_dir: Path = Path("../datasets/processed/football_data")
     served_competition: str = "Premier League"
+    draw_possible_threshold: float = DEFAULT_DRAW_POSSIBLE_THRESHOLD
     api_version: str = "0.1.0"
     log_level: str = "INFO"
 

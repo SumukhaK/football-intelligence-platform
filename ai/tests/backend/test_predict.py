@@ -39,6 +39,7 @@ def test_predict_response_fields(
     assert "probability_draw" in data
     assert "probability_away" in data
     assert "confidence" in data
+    assert "draw_possible" in data
     assert "model_version" in data
 
 

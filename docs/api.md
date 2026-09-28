@@ -76,9 +76,15 @@ Response:
   "probability_draw": 0.277,
   "probability_away": 0.330,
   "confidence": 0.393,
+  "draw_possible": false,
   "model_version": "20260928_123224"
 }
 ```
+
+`draw_possible` is true when `probability_draw` is at least 0.28, the
+`DRAW_POSSIBLE_THRESHOLD` setting. About 3 in 10 matches are flagged, and those
+end level more often than the rest. It does not change `predicted_result`
+(ADR 011, [draw report](reports/draw-handling.md)).
 
 Errors:
 
