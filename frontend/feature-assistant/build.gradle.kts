@@ -20,9 +20,11 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
+            implementation(compose.components.resources)
             implementation(libs.kotlinx.coroutines.core)
         }
         androidMain.dependencies {
+            implementation(compose.preview)
             implementation(libs.koin.android)
             implementation(libs.bundles.lifecycle.compose)
         }
@@ -31,4 +33,12 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
         }
     }
+}
+
+compose.resources {
+    packageOfResClass = "com.footballintelligence.feature.assistant.resources"
+}
+
+dependencies {
+    debugImplementation(compose.uiTooling)
 }

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="section_analytics">Analytics</string>
+    <string name="model_info_title">Model Information</string>
+    <string name="model_info_summary">Version, metrics, and training details</string>
+    <string name="cd_open_model_info">Open model information</string>
+    <string name="about_title">About</string>
+    <string name="about_summary">App version and project information</string>
+    <string name="cd_open_about">Open about screen</string>
+
+    <!-- About -->
+    <string name="app_name">Football Intelligence</string>
+    <string name="app_version">Version %1$s</string>
+    <string name="app_description">An AI-first football analytics application demonstrating practical AI engineering through data pipelines, machine learning, explainable predictions, and a grounded football intelligence assistant.</string>
+    <string name="section_stack">Technology Stack</string>
+    <string name="stack_model_label">ML Model</string>
+    <string name="stack_model_value">XGBoost with SHAP explanations</string>
+    <string name="stack_assistant_label">AI Assistant</string>
+    <string name="stack_assistant_value">Ollama RAG (llama3.2 + nomic-embed-text)</string>
+    <string name="stack_backend_label">Backend</string>
+    <string name="stack_backend_value">FastAPI · Python 3.12</string>
+    <string name="stack_database_label">Database</string>
+    <string name="stack_database_value">SQLite / NumPy vector store</string>
+    <string name="stack_android_label">Android</string>
+    <string name="stack_android_value">Compose Multiplatform · Kotlin</string>
+    <string name="stack_networking_label">Networking</string>
+    <string name="stack_networking_value">Ktor · Kotlinx Serialization</string>
+    <string name="stack_di_label">DI</string>
+    <string name="stack_di_value">Koin</string>
+    <string name="section_dataset">Dataset</string>
+    <string name="dataset_leagues_label">Leagues</string>
+    <string name="dataset_leagues_value">Premier League, Bundesliga, La Liga, Serie A, Ligue 1</string>
+    <string name="dataset_matches_label">Matches</string>
+    <string name="dataset_matches_value">46,709 (2000/01 to 2025/26)</string>
+    <string name="dataset_features_label">Features</string>
+    <string name="dataset_features_value">42 engineered pre-match features</string>
+
+    <!-- Model information -->
+    <string name="section_registry">Registry</string>
+    <string name="model_version">Model Version</string>
+    <string name="dataset_version">Dataset Version</string>
+    <string name="training_timestamp">Training Timestamp</string>
+    <string name="git_commit">Git Commit</string>
+    <string name="section_metrics">Evaluation Metrics</string>
+</resources>

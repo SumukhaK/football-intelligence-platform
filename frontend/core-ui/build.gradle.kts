@@ -15,9 +15,22 @@ kotlin {
             implementation(compose.material3)
             implementation(compose.ui)
             implementation(libs.coil.compose)
+            implementation(compose.components.resources)
+        }
+        androidMain.dependencies {
+            implementation(compose.preview)
+            implementation(project(":core-design-system"))
         }
         commonTest.dependencies {
             implementation(libs.junit5.api)
         }
     }
+}
+
+compose.resources {
+    packageOfResClass = "com.footballintelligence.core.ui.resources"
+}
+
+dependencies {
+    debugImplementation(compose.uiTooling)
 }

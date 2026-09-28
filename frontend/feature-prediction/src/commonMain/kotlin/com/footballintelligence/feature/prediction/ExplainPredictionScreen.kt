@@ -8,14 +8,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -29,12 +25,28 @@ import com.footballintelligence.core.model.FeatureContribution
 import com.footballintelligence.core.model.Impact
 import com.footballintelligence.core.model.impact
 import com.footballintelligence.core.model.label
-import com.footballintelligence.core.model.toOutcomeLabel
 import com.footballintelligence.core.model.valueText
+import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
+import com.footballintelligence.feature.prediction.resources.Res
+import com.footballintelligence.feature.prediction.resources.against_subtitle
+import com.footballintelligence.feature.prediction.resources.against_title
+import com.footballintelligence.feature.prediction.resources.confidence
+import com.footballintelligence.feature.prediction.resources.dataset_and_model
+import com.footballintelligence.feature.prediction.resources.explanation_title
+import com.footballintelligence.feature.prediction.resources.fixture
+import com.footballintelligence.feature.prediction.resources.impact_big
+import com.footballintelligence.feature.prediction.resources.impact_medium
+import com.footballintelligence.feature.prediction.resources.impact_small
+import com.footballintelligence.feature.prediction.resources.leans_subtitle
+import com.footballintelligence.feature.prediction.resources.leans_title
+import com.footballintelligence.feature.prediction.resources.no_explanation
+import com.footballintelligence.feature.prediction.resources.nothing_notable
+import com.footballintelligence.feature.prediction.resources.prediction_label
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.abs
-import kotlin.math.roundToInt
 
 /** Displays SHAP feature contributions explaining the prediction. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,12 +59,8 @@ fun ExplainPredictionScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Explanation") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+                title = { Text(stringResource(Res.string.explanation_title)) },
+                navigationIcon = { BackButton(onClick = onBack) },
             )
         },
         modifier = modifier,
@@ -64,7 +72,7 @@ fun ExplainPredictionScreen(
                 modifier = Modifier.padding(padding),
             )
             is ExplanationUiState.Idle -> ErrorView(
-                message = "No explanation loaded.",
+                message = stringResource(Res.string.no_explanation),
                 modifier = Modifier.padding(padding),
             )
             is ExplanationUiState.Success -> ExplanationContent(
@@ -98,19 +106,22 @@ private fun ExplanationContent(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
-                    "${result.homeTeam} vs ${result.awayTeam}",
+                    stringResource(Res.string.fixture, result.homeTeam, result.awayTeam),
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Text(
-                    "Prediction: ${result.predictedResult.toOutcomeLabel(result.homeTeam, result.awayTeam)}",
+                    stringResource(
+                        Res.string.prediction_label,
+                        outcomeLabel(result.predictedResult, result.homeTeam, result.awayTeam),
+                    ),
                     style = MaterialTheme.typography.bodyLarge,
                 )
                 Text(
-                    "Confidence: ${(result.confidence * 100).roundToInt()}%",
+                    stringResource(Res.string.confidence, percentOf(result.confidence)),
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
-                    "Dataset: ${result.datasetVersion} · Model: ${result.modelVersion}",
+                    stringResource(Res.string.dataset_and_model, result.datasetVersion, result.modelVersion),
                     style = MaterialTheme.typography.labelSmall,
                 )
             }
@@ -119,16 +130,16 @@ private fun ExplanationContent(
         val strongest = result.allContributions.maxOfOrNull { abs(it.shapValue) } ?: 0.0
 
         FeatureSection(
-            title = "Why the model leans this way",
-            subtitle = "Factors that pushed toward this prediction",
+            title = stringResource(Res.string.leans_title),
+            subtitle = stringResource(Res.string.leans_subtitle),
             features = result.topPositiveFeatures,
             strongest = strongest,
             isPositive = true,
         )
 
         FeatureSection(
-            title = "What counts against it",
-            subtitle = "Factors that pushed away from this prediction",
+            title = stringResource(Res.string.against_title),
+            subtitle = stringResource(Res.string.against_subtitle),
             features = result.topNegativeFeatures,
             strongest = strongest,
             isPositive = false,
@@ -161,7 +172,7 @@ private fun FeatureSection(
             }
             if (features.isEmpty()) {
                 Text(
-                    "Nothing notable here.",
+                    stringResource(Res.string.nothing_notable),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -189,15 +200,15 @@ private fun FeatureRow(feature: FeatureContribution, strongest: Double, isPositi
             )
         }
         Text(
-            text = impactText(feature.impact(strongest)),
+            text = stringResource(impactText(feature.impact(strongest))),
             style = MaterialTheme.typography.bodyMedium,
             color = color,
         )
     }
 }
 
-private fun impactText(impact: Impact): String = when (impact) {
-    Impact.BIG -> "Big impact"
-    Impact.MEDIUM -> "Medium impact"
-    Impact.SMALL -> "Small impact"
+private fun impactText(impact: Impact): StringResource = when (impact) {
+    Impact.BIG -> Res.string.impact_big
+    Impact.MEDIUM -> Res.string.impact_medium
+    Impact.SMALL -> Res.string.impact_small
 }

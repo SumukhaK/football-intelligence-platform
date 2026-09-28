@@ -27,11 +27,3 @@ data class PredictionResult(
     val confidence: Double,
     @SerialName("model_version") val modelVersion: String,
 )
-
-/** Human-readable label for a predicted outcome code (H/D/A). */
-fun String.toOutcomeLabel(homeTeam: String, awayTeam: String): String = when (this) {
-    "H" -> "$homeTeam Win"
-    "D" -> "Draw"
-    "A" -> "$awayTeam Win"
-    else -> this
-}

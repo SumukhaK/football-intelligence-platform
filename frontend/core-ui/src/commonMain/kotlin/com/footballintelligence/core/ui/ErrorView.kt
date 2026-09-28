@@ -14,6 +14,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.footballintelligence.core.ui.resources.Res
+import com.footballintelligence.core.ui.resources.action_retry
+import com.footballintelligence.core.ui.resources.error_title
+import org.jetbrains.compose.resources.stringResource
 
 /** Full-screen error state with optional retry action. */
 @Composable
@@ -30,7 +34,7 @@ fun ErrorView(
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = "Something went wrong",
+            text = stringResource(Res.string.error_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.error,
         )
@@ -44,7 +48,7 @@ fun ErrorView(
         if (onRetry != null) {
             Spacer(Modifier.height(16.dp))
             Button(onClick = onRetry) {
-                Text("Retry")
+                Text(stringResource(Res.string.action_retry))
             }
         }
     }

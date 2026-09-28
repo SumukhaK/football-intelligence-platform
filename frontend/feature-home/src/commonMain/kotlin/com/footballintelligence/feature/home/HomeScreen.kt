@@ -34,6 +34,30 @@ import com.footballintelligence.core.model.HealthStatus
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
 import com.footballintelligence.core.ui.StatusChip
+import com.footballintelligence.feature.home.resources.Res
+import com.footballintelligence.feature.home.resources.api_version
+import com.footballintelligence.feature.home.resources.backend_status
+import com.footballintelligence.feature.home.resources.card_assistant_action
+import com.footballintelligence.feature.home.resources.card_assistant_description
+import com.footballintelligence.feature.home.resources.card_assistant_title
+import com.footballintelligence.feature.home.resources.card_prediction_action
+import com.footballintelligence.feature.home.resources.card_prediction_description
+import com.footballintelligence.feature.home.resources.card_prediction_title
+import com.footballintelligence.feature.home.resources.card_settings_action
+import com.footballintelligence.feature.home.resources.card_settings_description
+import com.footballintelligence.feature.home.resources.card_settings_title
+import com.footballintelligence.feature.home.resources.cd_assistant_offline
+import com.footballintelligence.feature.home.resources.cd_assistant_online
+import com.footballintelligence.feature.home.resources.cd_explainer_offline
+import com.footballintelligence.feature.home.resources.cd_explainer_online
+import com.footballintelligence.feature.home.resources.cd_prediction_api_offline
+import com.footballintelligence.feature.home.resources.cd_prediction_api_online
+import com.footballintelligence.feature.home.resources.home_title
+import com.footballintelligence.feature.home.resources.status_assistant
+import com.footballintelligence.feature.home.resources.status_explainer
+import com.footballintelligence.feature.home.resources.status_prediction_api
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 /** Home screen: shows backend status and navigation cards. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,7 +73,7 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Football Intelligence") },
+                title = { Text(stringResource(Res.string.home_title)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
@@ -95,26 +119,26 @@ private fun HomeContent(
         Spacer(Modifier.height(4.dp))
         FeatureCard(
             icon = Icons.Default.SportsSoccer,
-            title = "Match Prediction",
-            description = "Predict Premier League match outcomes using the XGBoost model with SHAP explanations.",
+            title = stringResource(Res.string.card_prediction_title),
+            description = stringResource(Res.string.card_prediction_description),
             enabled = health.modelLoaded,
-            buttonLabel = "Predict a Match",
+            buttonLabel = stringResource(Res.string.card_prediction_action),
             onClick = onPredictClick,
         )
         FeatureCard(
             icon = Icons.Default.Psychology,
-            title = "AI Assistant",
-            description = "Ask questions about the model, predictions, and football analytics.",
+            title = stringResource(Res.string.card_assistant_title),
+            description = stringResource(Res.string.card_assistant_description),
             enabled = health.assistantAvailable,
-            buttonLabel = "Open Assistant",
+            buttonLabel = stringResource(Res.string.card_assistant_action),
             onClick = onAssistantClick,
         )
         FeatureCard(
             icon = Icons.Default.Settings,
-            title = "Settings & Model Info",
-            description = "View model details, metrics, and configure the app.",
+            title = stringResource(Res.string.card_settings_title),
+            description = stringResource(Res.string.card_settings_description),
             enabled = true,
-            buttonLabel = "Open Settings",
+            buttonLabel = stringResource(Res.string.card_settings_action),
             onClick = onSettingsClick,
         )
     }
@@ -132,35 +156,47 @@ private fun BackendStatusCard(health: HealthStatus) {
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text("Backend Status", style = MaterialTheme.typography.titleSmall)
-            StatusChip(
-                label = "Prediction API",
+            Text(stringResource(Res.string.backend_status), style = MaterialTheme.typography.titleSmall)
+            BackendStatusChip(
+                label = Res.string.status_prediction_api,
                 available = health.modelLoaded,
-                modifier = Modifier.semantics {
-                    contentDescription = if (health.modelLoaded) "Prediction API online" else "Prediction API offline"
-                },
+                onlineDescription = Res.string.cd_prediction_api_online,
+                offlineDescription = Res.string.cd_prediction_api_offline,
             )
-            StatusChip(
-                label = "SHAP Explainer",
+            BackendStatusChip(
+                label = Res.string.status_explainer,
                 available = health.explainabilityAvailable,
-                modifier = Modifier.semantics {
-                    contentDescription = if (health.explainabilityAvailable) "Explainer online" else "Explainer offline"
-                },
+                onlineDescription = Res.string.cd_explainer_online,
+                offlineDescription = Res.string.cd_explainer_offline,
             )
-            StatusChip(
-                label = "AI Assistant",
+            BackendStatusChip(
+                label = Res.string.status_assistant,
                 available = health.assistantAvailable,
-                modifier = Modifier.semantics {
-                    contentDescription = if (health.assistantAvailable) "Assistant online" else "Assistant offline"
-                },
+                onlineDescription = Res.string.cd_assistant_online,
+                offlineDescription = Res.string.cd_assistant_offline,
             )
             Text(
-                text = "API v${health.version}",
+                text = stringResource(Res.string.api_version, health.version),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
+}
+
+@Composable
+private fun BackendStatusChip(
+    label: StringResource,
+    available: Boolean,
+    onlineDescription: StringResource,
+    offlineDescription: StringResource,
+) {
+    val description = stringResource(if (available) onlineDescription else offlineDescription)
+    StatusChip(
+        label = stringResource(label),
+        available = available,
+        modifier = Modifier.semantics { contentDescription = description },
+    )
 }
 
 @Composable

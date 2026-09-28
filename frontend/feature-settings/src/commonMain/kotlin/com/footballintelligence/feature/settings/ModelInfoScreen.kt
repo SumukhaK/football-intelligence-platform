@@ -7,13 +7,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -22,8 +18,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.footballintelligence.core.model.ModelInfo
+import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
+import com.footballintelligence.feature.settings.resources.Res
+import com.footballintelligence.feature.settings.resources.dataset_version
+import com.footballintelligence.feature.settings.resources.git_commit
+import com.footballintelligence.feature.settings.resources.model_info_title
+import com.footballintelligence.feature.settings.resources.model_version
+import com.footballintelligence.feature.settings.resources.section_metrics
+import com.footballintelligence.feature.settings.resources.section_registry
+import com.footballintelligence.feature.settings.resources.training_timestamp
+import org.jetbrains.compose.resources.stringResource
 
 /** Displays model version, training metadata, and evaluation metrics. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,12 +43,8 @@ fun ModelInfoScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Model Information") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+                title = { Text(stringResource(Res.string.model_info_title)) },
+                navigationIcon = { BackButton(onClick = onBack) },
             )
         },
         modifier = modifier,
@@ -71,16 +73,16 @@ private fun ModelInfoContent(info: ModelInfo, modifier: Modifier = Modifier) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        InfoCard(title = "Registry") {
-            InfoRow("Model Version", info.modelVersion)
-            InfoRow("Dataset Version", info.datasetVersion)
-            InfoRow("Training Timestamp", info.trainingTimestamp.take(19).replace("T", " "))
+        InfoCard(title = stringResource(Res.string.section_registry)) {
+            InfoRow(stringResource(Res.string.model_version), info.modelVersion)
+            InfoRow(stringResource(Res.string.dataset_version), info.datasetVersion)
+            InfoRow(stringResource(Res.string.training_timestamp), info.trainingTimestamp.take(19).replace("T", " "))
             info.gitCommit?.let { commit ->
-                InfoRow("Git Commit", commit.take(8))
+                InfoRow(stringResource(Res.string.git_commit), commit.take(8))
             }
         }
         if (info.metrics.isNotEmpty()) {
-            InfoCard(title = "Evaluation Metrics") {
+            InfoCard(title = stringResource(Res.string.section_metrics)) {
                 info.metrics.entries.forEach { (key, value) ->
                     InfoRow(
                         label = key.replace('_', ' '),

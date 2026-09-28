@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Team selection -->
+    <string name="prediction_title">Match Prediction</string>
+    <string name="select_teams">Select Teams</string>
+    <string name="season_note">Premier League %1$s. Predictions use every result played so far.</string>
+    <string name="home_team">Home Team</string>
+    <string name="away_team">Away Team</string>
+    <string name="versus">vs</string>
+    <string name="action_predict">Predict Match Outcome</string>
+    <string name="cd_predict">Predict match outcome</string>
+    <string name="cd_team_dropdown">%1$s dropdown: %2$s</string>
+    <string name="teams_must_differ">Home and away teams must be different.</string>
+
+    <!-- Result -->
+    <string name="result_title">Prediction Result</string>
+    <string name="fixture">%1$s vs %2$s</string>
+    <string name="outcome_team_win">%1$s Win</string>
+    <string name="outcome_draw">Draw</string>
+    <string name="confidence">Confidence: %1$s%</string>
+    <string name="model_version">Model: %1$s</string>
+    <string name="probabilities">Probabilities</string>
+    <string name="percent">%1$s%</string>
+    <string name="action_explain">Explain This Prediction</string>
+    <string name="action_new_prediction">New Prediction</string>
+    <string name="no_prediction">No prediction available.</string>
+
+    <!-- Explanation -->
+    <string name="explanation_title">Explanation</string>
+    <string name="no_explanation">No explanation loaded.</string>
+    <string name="prediction_label">Prediction: %1$s</string>
+    <string name="dataset_and_model">Dataset: %1$s · Model: %2$s</string>
+    <string name="leans_title">Why the model leans this way</string>
+    <string name="leans_subtitle">Factors that pushed toward this prediction</string>
+    <string name="against_title">What counts against it</string>
+    <string name="against_subtitle">Factors that pushed away from this prediction</string>
+    <string name="nothing_notable">Nothing notable here.</string>
+    <string name="impact_big">Big impact</string>
+    <string name="impact_medium">Medium impact</string>
+    <string name="impact_small">Small impact</string>
+</resources>
