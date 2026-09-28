@@ -91,11 +91,21 @@ Errors:
 
 ## POST /explain
 
-Same request and errors as `/predict`. Adds SHAP attributions:
-`top_positive_features`, `top_negative_features` and `all_contributions`, each
-item giving `feature_name`, `feature_value` (after imputation) and
-`shap_value`, plus `model_version`, `feature_version`, `dataset_version` and
-`explanation_timestamp`.
+Same request and errors as `/predict`. Adds SHAP attributions in
+`top_positive_features`, `top_negative_features` and `all_contributions`, plus
+`model_version`, `feature_version`, `dataset_version` and
+`explanation_timestamp`. Each item has:
+
+| Field | Example | Description |
+|---|---|---|
+| `feature_name` | `home_elo_before` | Model feature identifier |
+| `feature_value` | `1617.748` | Value used by the model, after imputation |
+| `shap_value` | `0.337` | Push toward (positive) or away from the predicted outcome |
+| `display_name` | `Arsenal team strength rating` | Fan-friendly label with team names filled in |
+| `display_value` | `1618` | Fan-friendly value: counts ("9 of 10"), rates ("68%"), positions ("10th"), days ("7 days") |
+
+Labels live in `ai/explainability/feature_labels.py`; every model feature has
+one, and a test enforces it.
 
 ## POST /assistant/chat
 

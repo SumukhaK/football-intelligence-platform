@@ -145,3 +145,27 @@ def test_explanation_service_raises_feature_missing() -> None:
     svc = ExplanationService(mock_ai, model_version="v1", dataset_version="2023-24")
     with pytest.raises(FeatureMissingError):
         svc.explain("Arsenal", "Chelsea", {})
+
+
+def test_explanation_contributions_carry_fan_friendly_text() -> None:
+    """Each contribution gets a display name and value a fan can read."""
+    from backend.app.services.explanation_service import ExplanationService
+
+    explanation = _make_ai_explanation()
+    contrib = MagicMock()
+    contrib.feature_name = "home_elo_before"
+    contrib.feature_value = 1617.748
+    contrib.shap_value = 0.34
+    explanation.top_positive_features = [contrib]
+    explanation.all_contributions = [contrib]
+    mock_ai = MagicMock()
+    mock_ai.explain.return_value = explanation
+    svc = ExplanationService(mock_ai, model_version="v1", dataset_version="2023-24")
+
+    response = svc.explain("Arsenal", "Chelsea", {"home_elo_before": 1617.748})
+
+    top = response.top_positive_features[0]
+    assert top.feature_name == "home_elo_before"
+    assert top.display_name == "Arsenal team strength rating"
+    assert top.display_value == "1618"
+    assert response.all_contributions[0].display_name == top.display_name

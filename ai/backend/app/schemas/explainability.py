@@ -15,6 +15,16 @@ class FeatureContributionSchema(BaseModel):
     shap_value: float = Field(
         ..., description="SHAP value (positive = pushes toward predicted class)."
     )
+    display_name: str = Field(
+        default="",
+        description="Fan-friendly label, e.g. 'Arsenal team strength rating'.",
+        examples=["Arsenal team strength rating"],
+    )
+    display_value: str = Field(
+        default="",
+        description="Fan-friendly value, e.g. '1618', '68%', '9 of 10', '3rd'.",
+        examples=["1618"],
+    )
 
 
 class ExplanationResponse(BaseModel):
