@@ -85,5 +85,8 @@ ADRs are never deleted.
 |---|---|---|
 | [001](001-use-xgboost-for-predictions.md) | Use XGBoost for match outcome prediction | Accepted |
 | [002](002-joblib-model-serialization.md) | Use joblib for model serialisation | Accepted |
-| [003](003-chronological-train-val-test-split.md) | Use chronological train/validation/test split | Accepted |
+| [003](003-chronological-train-val-test-split.md) | Use chronological train/validation/test split | Deprecated (see 007) |
 | [004](004-shap-for-explainability.md) | Use SHAP TreeExplainer for model explainability | Accepted |
+| [005](005-top-five-leagues-multi-source-data.md) | Expand training data to the top five leagues from multiple sources | Accepted |
+| [006](006-team-canonicalisation-and-match-dedup.md) | Canonical team names and match deduplication | Accepted |
+| [007](007-season-based-split-and-evaluation.md) | Season-based split and evaluation protocol | Accepted |

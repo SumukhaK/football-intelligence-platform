@@ -22,7 +22,7 @@ Build an AI-first football analytics application that demonstrates practical AI 
 - Fine-tuning or LoRA training of any language model.
 - Multi-cloud deployment or Kubernetes orchestration.
 - Social features, user accounts, or authentication in early stages.
-- Covering football leagues beyond the initial scoped dataset.
+- Covering football leagues beyond the scoped dataset: the Premier League, Bundesliga, La Liga, Serie A and Ligue 1 (see ADR 005).
 - Becoming a production SaaS product.
 
 ---

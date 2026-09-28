@@ -1,6 +1,8 @@
 # ADR 003 — Chronological Train/Val/Test Split
 
-**Status:** Accepted
+**Status:** Deprecated
+
+**Superseded by:** [007](007-season-based-split-and-evaluation.md) (split mechanism only; the no-random-split principle still applies)
 
 ## Context
 

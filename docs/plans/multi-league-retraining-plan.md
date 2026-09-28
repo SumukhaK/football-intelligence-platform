@@ -274,7 +274,7 @@ licence and download date, and the model card lists every data source.
 | Phase | Deliverable | Gate |
 |---|---|---|
 | 0. Profile | **Done 2026-09-28** (§2). Still to do: confirm each Kaggle page's licence, and copy the approved zips into `datasets/raw/kaggle/<slug>/` with checksums | Licences confirmed |
-| 1. ADRs | ADR 005 multi-source ingestion and provenance; ADR 006 team canonicalisation; ADR 007 season-based split (supersedes part of ADR 003) | Accepted |
+| 1. ADRs | **Done 2026-09-28.** ADR 005 top-five leagues and sources; ADR 006 team canonicalisation and dedup; ADR 007 season-based split (supersedes ADR 003's mechanism); CLAUDE.md non-goal amended | Accepted |
 | 2. History backfill | Extend the football-data provider to `E0, D1, SP1, I1, F1`; ingest 2000/01–2025/26; add multi-season, multi-league merge | Per-league season integrity checks pass |
 | 3. Kaggle adapters | One adapter per approved source, with tests, alias table, rejects file | Cleaning and schema tests pass |
 | 4. Merge and dedup | Unified processed dataset plus merge/conflict report | Zero unresolved conflicts |
