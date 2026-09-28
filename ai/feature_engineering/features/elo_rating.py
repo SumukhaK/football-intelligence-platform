@@ -2,12 +2,18 @@
 
 Each competition is a separate rating pool, because clubs in different leagues
 never meet in this data and their ratings are not comparable. Ratings carry
-over between seasons: at each new season, continuing teams regress a third of
-the way back to the starting rating, and promoted teams inherit the average
-end-of-season rating of the teams they replaced.
+over between seasons. A team's first match of a new season uses its previous
+season's final rating regressed a third of the way back to 1500; a team that
+was not in the previous season (promoted) starts at the average final rating
+of the previous season's three lowest-rated teams.
+
+Both rules only look backwards, so the rating for a fixture is the same
+whether or not the rest of the new season's teams are known yet (ADR 008).
 """
 
 from __future__ import annotations
+
+from dataclasses import dataclass, field
 
 import pandas as pd
 
@@ -16,6 +22,8 @@ from feature_engineering.base import BaseFeature
 _K = 32
 _START_ELO = 1500.0
 _SEASON_REGRESSION = 1.0 / 3.0
+# Promoted teams start at the mean final rating of this many lowest-rated teams.
+_PROMOTED_REFERENCE_TEAMS = 3
 
 _ACTUAL_SCORES: dict[str, tuple[float, float]] = {
     "H": (1.0, 0.0),
@@ -35,7 +43,7 @@ class EloRatingFeature(BaseFeature):
 
     @property
     def version(self) -> str:
-        return "1.1.0"
+        return "1.2.0"
 
     @property
     def output_columns(self) -> list[str]:
@@ -62,60 +70,61 @@ class EloRatingFeature(BaseFeature):
         self, df: pd.DataFrame
     ) -> tuple[list[tuple[float, float]], dict[RatingKey, float]]:
         """Replay every match in order, returning pre-match pairs and final ratings."""
-        season_teams = _teams_by_season(df)
         ratings: dict[RatingKey, float] = {}
-        current_season: dict[str, str] = {}
+        pools: dict[str, _Pool] = {}
         before: list[tuple[float, float]] = []
 
         for row in df.itertuples(index=False):
             comp, season = str(row.competition), str(row.season)
-            previous = current_season.get(comp)
-            if previous is not None and previous != season:
-                _start_new_season(
-                    ratings,
-                    comp,
-                    season_teams[(comp, previous)],
-                    season_teams[(comp, season)],
-                )
-            current_season[comp] = season
-
-            home, away = (comp, str(row.home_team)), (comp, str(row.away_team))
-            home_elo = ratings.setdefault(home, _START_ELO)
-            away_elo = ratings.setdefault(away, _START_ELO)
+            pool = pools.setdefault(comp, _Pool(season=season))
+            if season != pool.season:
+                pool.start_season(season, ratings, comp)
+            home, away = str(row.home_team), str(row.away_team)
+            home_elo = pool.rating_for(home, ratings, comp)
+            away_elo = pool.rating_for(away, ratings, comp)
             before.append((home_elo, away_elo))
 
             expected_home = self._expected_score(home_elo, away_elo)
             actual_home, actual_away = _ACTUAL_SCORES[str(row.result)]
-            ratings[home] = home_elo + _K * (actual_home - expected_home)
-            ratings[away] = away_elo + _K * (actual_away - (1.0 - expected_home))
+            ratings[(comp, home)] = home_elo + _K * (actual_home - expected_home)
+            ratings[(comp, away)] = away_elo + _K * (
+                actual_away - (1.0 - expected_home)
+            )
         return before, ratings
 
 
-def _teams_by_season(df: pd.DataFrame) -> dict[RatingKey, set[str]]:
-    """Return the set of teams in each (competition, season)."""
-    teams: dict[RatingKey, set[str]] = {}
-    for side in ("home_team", "away_team"):
-        for row in df[["competition", "season", side]].itertuples(index=False):
-            key = (str(row[0]), str(row[1]))
-            teams.setdefault(key, set()).add(str(row[2]))
-    return teams
+@dataclass
+class _Pool:
+    """Season state for one competition's rating pool."""
 
+    season: str
+    played: set[str] = field(default_factory=set)
+    previous_end: dict[str, float] = field(default_factory=dict)
+    promoted_start: float = _START_ELO
 
-def _start_new_season(
-    ratings: dict[RatingKey, float],
-    comp: str,
-    old_teams: set[str],
-    new_teams: set[str],
-) -> None:
-    """Regress continuing teams and seed promoted teams for a new season."""
-    departed = [
-        ratings[(comp, t)] for t in old_teams - new_teams if (comp, t) in ratings
-    ]
-    promoted_start = sum(departed) / len(departed) if departed else _START_ELO
-    for team in old_teams & new_teams:
+    def start_season(
+        self, season: str, ratings: dict[RatingKey, float], comp: str
+    ) -> None:
+        """Freeze last season's final ratings and move to ``season``."""
+        self.previous_end = {t: ratings[(comp, t)] for t in self.played}
+        lowest = sorted(self.previous_end.values())[:_PROMOTED_REFERENCE_TEAMS]
+        self.promoted_start = sum(lowest) / len(lowest) if lowest else _START_ELO
+        self.season, self.played = season, set()
+
+    def rating_for(
+        self, team: str, ratings: dict[RatingKey, float], comp: str
+    ) -> float:
+        """Return a team's pre-match rating, seeding it on its first appearance."""
         key = (comp, team)
-        ratings[key] = _START_ELO + (ratings[key] - _START_ELO) * (
-            1.0 - _SEASON_REGRESSION
-        )
-    for team in new_teams - old_teams:
-        ratings[(comp, team)] = promoted_start
+        if team not in self.played:
+            self.played.add(team)
+            if team in self.previous_end:
+                end = self.previous_end[team]
+                ratings[key] = _START_ELO + (end - _START_ELO) * (
+                    1.0 - _SEASON_REGRESSION
+                )
+            elif self.previous_end:
+                ratings[key] = self.promoted_start
+            else:
+                ratings.setdefault(key, _START_ELO)
+        return ratings[key]
