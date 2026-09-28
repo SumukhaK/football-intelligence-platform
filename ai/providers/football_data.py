@@ -46,6 +46,10 @@ _COLUMN_MAP: dict[str, str] = {
     "B365H": "odds_b365_home",
     "B365D": "odds_b365_draw",
     "B365A": "odds_b365_away",
+    # Market-average over/under 2.5 goals odds, present from 2019/20 onwards.
+    # Evaluation benchmark only (ADR 009); never a model input.
+    "Avg>2.5": "odds_avg_over_2_5",
+    "Avg<2.5": "odds_avg_under_2_5",
 }
 
 _BASE_URL = "https://www.football-data.co.uk/mmz4281"

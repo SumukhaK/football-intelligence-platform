@@ -95,6 +95,8 @@ class RawMatch(BaseModel):
     odds_b365_home: float | None = None
     odds_b365_draw: float | None = None
     odds_b365_away: float | None = None
+    odds_avg_over_2_5: float | None = None
+    odds_avg_under_2_5: float | None = None
 
 
 class ProcessedMatch(BaseModel):
@@ -132,6 +134,10 @@ class ProcessedMatch(BaseModel):
     home_odds: float | None = Field(default=None, gt=0)
     draw_odds: float | None = Field(default=None, gt=0)
     away_odds: float | None = Field(default=None, gt=0)
+
+    # Benchmark for the goals model only (ADR 009); excluded from training.
+    over_2_5_odds: float | None = Field(default=None, gt=0)
+    under_2_5_odds: float | None = Field(default=None, gt=0)
 
 
 def _int_or_none(val: Any) -> int | None:
@@ -195,6 +201,8 @@ class MatchNormalizer:
             home_odds=_float_or_none(row.get("odds_b365_home")),
             draw_odds=_float_or_none(row.get("odds_b365_draw")),
             away_odds=_float_or_none(row.get("odds_b365_away")),
+            over_2_5_odds=_float_or_none(row.get("odds_avg_over_2_5")),
+            under_2_5_odds=_float_or_none(row.get("odds_avg_under_2_5")),
         )
 
     def normalise_dataframe(
