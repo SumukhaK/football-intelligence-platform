@@ -25,7 +25,7 @@ Known weak spot: the model never picks a draw as the most likely result, while 2
 
 | # | Work | Why this order | Size |
 |---|---|---|---|
-| W1 | **End-to-end app test** on the emulator (Pixel 7, API 35 is installed) | Nobody has tapped predict → result → explain; the final merge needs it | S |
+| W1 | **End-to-end app test** on the emulator. **Done 2026-09-28** on a Pixel 6 Pro API 31: it found and fixed debug cleartext HTTP (PR #27); predict → result → explain now works | Nobody had tapped predict → result → explain | S |
 | W2 | **CI green**: add detekt and spotless to Gradle, fix what they flag | Frontend CI jobs fail on main; the final merge should be green | M |
 | W3 | **Result screen foundations**: Compose resources for strings, previews, a three-way probability bar and a "Draw likely" tag | W4 and W5 both redesign this screen; doing strings and previews once avoids churn | M |
 | W4 | **Draw handling**, phases A–B from the draw plan | Clearest accuracy gap; cheap | M |
@@ -171,4 +171,4 @@ Dependency: `scipy` is already installed through scikit-learn. It becomes an exp
 ## 5. Decisions needed
 
 1. **Draw rule objective.** Catch about a third of draws, costing at most one point of accuracy **(recommended)**; or maximum accuracy with the tag only.
-2. **Headline H/D/A pick.** Keep XGBoost and use the goals model for extras **(recommended)**; or blend them if the blend scores better.
+2. **Headline H/D/A pick.** **Decided 2026-09-28:** XGBoost keeps the headline pick; the goals model feeds the extras only.
