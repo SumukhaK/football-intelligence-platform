@@ -17,6 +17,25 @@ uv sync --extra dev   # install all runtime + dev dependencies
 
 ## Data Ingestion
 
+### `python -m scripts.refresh_live_dataset`
+
+Appends the played matches of the season in progress to the newest completed-season dataset and writes `processed/football_data/match_results_live_v<timestamp>.csv`, which the backend loads at startup (ADR 008). Dry run unless `--confirm` is given.
+
+```sh
+uv run python -m scripts.refresh_live_dataset --confirm
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `--season CODE` | `2627` | Season in progress. |
+| `--divisions DIV ...` | `E0 D1 SP1 I1 F1` | Leagues to include. |
+| `--base-dir DIR` | `../datasets` | Datasets base directory. |
+| `--confirm` | off | Download and write. |
+
+Raw snapshots are stored once per division per day under `raw/football_data/match_results_in_progress/`. Restart the backend afterwards.
+
+---
+
 ### `python -m scripts.backfill_football_data`
 
 Backfills many seasons for the top five leagues (ADR 005), checks every season's integrity (ADR 006), and writes one combined dataset. Runs as a dry run unless `--confirm` is given.

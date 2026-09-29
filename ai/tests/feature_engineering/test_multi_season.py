@@ -98,13 +98,22 @@ class TestEloAcrossSeasons:
         expected = 1500 + (a_end - 1500) * (2 / 3)
         assert result.loc[4, "home_elo_before"] == pytest.approx(expected)
 
-    def test_promoted_team_inherits_departed_team_rating(
+    def test_promoted_team_starts_at_mean_of_three_lowest_ratings(
         self, two_seasons: pd.DataFrame
     ) -> None:
         feature = EloRatingFeature()
-        d_end = feature.final_ratings(two_seasons.iloc[:4])[("EPL", "D")]
+        ends = feature.final_ratings(two_seasons.iloc[:4])
+        lowest = sorted(ends.values())[:3]
         result = feature.compute(two_seasons)
-        assert result.loc[4, "away_elo_before"] == pytest.approx(d_end)
+        assert result.loc[4, "away_elo_before"] == pytest.approx(sum(lowest) / 3)
+
+    def test_promoted_rating_does_not_need_the_rest_of_the_season(
+        self, two_seasons: pd.DataFrame
+    ) -> None:
+        feature = EloRatingFeature()
+        full = feature.compute(two_seasons)
+        first_fixture_only = feature.compute(two_seasons.iloc[:5])
+        assert first_fixture_only.iloc[4].to_list() == full.iloc[4].to_list()
 
     def test_competitions_are_separate_pools(self) -> None:
         df = pd.DataFrame(

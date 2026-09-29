@@ -90,3 +90,4 @@ ADRs are never deleted.
 | [005](005-top-five-leagues-multi-source-data.md) | Expand training data to the top five leagues from multiple sources | Accepted |
 | [006](006-team-canonicalisation-and-match-dedup.md) | Canonical team names and match deduplication | Accepted |
 | [007](007-season-based-split-and-evaluation.md) | Season-based split and evaluation protocol | Accepted |
+| [008](008-server-side-match-features.md) | Compute match features on the server | Accepted |

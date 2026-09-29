@@ -54,37 +54,64 @@ class LeaguePositionFeature(BaseFeature):
         on a date sees the table before any of that day's results, so the
         output does not depend on the order of same-day rows.
         """
-        points_tables: dict[tuple[str, str], dict[str, int]] = defaultdict(
-            lambda: defaultdict(int)
-        )
-        played_tables: dict[tuple[str, str], dict[str, int]] = defaultdict(
-            lambda: defaultdict(int)
-        )
+        tables = _Tables()
         records: dict[object, tuple[int, int, int, int, int, int]] = {}
+        pending: list[Any] = []
+        current_date: object = None
 
-        for _, day in df.groupby("match_date", sort=True):
-            for idx, row in zip(day.index, day.itertuples(index=False), strict=True):
-                key = (str(row.competition), str(row.season))
-                points, played = points_tables[key], played_tables[key]
-                home, away = str(row.home_team), str(row.away_team)
-                home_pts, away_pts = points[home], points[away]
-                records[idx] = (
-                    self._position_from_points(home, points),
-                    self._position_from_points(away, points),
-                    home_pts,
-                    away_pts,
-                    played[home],
-                    played[away],
-                )
-            for row in day.itertuples(index=False):
-                key = (str(row.competition), str(row.season))
-                _apply_result(points_tables[key], played_tables[key], row)
+        ordered = df.sort_values("match_date", kind="stable")
+        for idx, row in zip(
+            ordered.index, ordered.itertuples(index=False), strict=True
+        ):
+            if row.match_date != current_date:
+                for done in pending:
+                    tables.apply(done)
+                pending, current_date = [], row.match_date
+            records[idx] = self._standings(row, tables)
+            pending.append(row)
 
         return pd.DataFrame(
             [records[idx] for idx in df.index],
             index=df.index,
             columns=self.output_columns,
         )
+
+    def _standings(
+        self, row: Any, tables: _Tables
+    ) -> tuple[int, int, int, int, int, int]:
+        """Return both teams' position, points and games played before ``row``."""
+        points, played = tables.for_row(row)
+        home, away = str(row.home_team), str(row.away_team)
+        home_pts, away_pts = points[home], points[away]
+        return (
+            self._position_from_points(home, points),
+            self._position_from_points(away, points),
+            home_pts,
+            away_pts,
+            played[home],
+            played[away],
+        )
+
+
+class _Tables:
+    """Points and games-played tables, one per (competition, season)."""
+
+    def __init__(self) -> None:
+        self._points: dict[tuple[str, str], dict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
+        self._played: dict[tuple[str, str], dict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
+
+    def for_row(self, row: Any) -> tuple[dict[str, int], dict[str, int]]:
+        """Return the points and played tables for a row's competition season."""
+        key = (str(row.competition), str(row.season))
+        return self._points[key], self._played[key]
+
+    def apply(self, row: Any) -> None:
+        """Add a finished match to its competition season's tables."""
+        _apply_result(*self.for_row(row), row)
 
 
 def _apply_result(points: dict[str, int], played: dict[str, int], row: Any) -> None:

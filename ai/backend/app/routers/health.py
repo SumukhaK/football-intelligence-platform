@@ -26,10 +26,12 @@ def health(request: Request) -> HealthResponse:
     model_loaded = getattr(request.app.state, "prediction_service", None) is not None
     expl_available = getattr(request.app.state, "explanation_service", None) is not None
     asst_available = getattr(request.app.state, "chat_service", None) is not None
+    fixtures = getattr(request.app.state, "fixture_feature_service", None) is not None
     return HealthResponse(
         status="ok",
         model_loaded=model_loaded,
         explainability_available=expl_available,
         assistant_available=asst_available,
+        fixture_features_available=fixtures,
         version=get_settings().api_version,
     )

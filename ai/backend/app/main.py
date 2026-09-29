@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 
@@ -12,13 +13,24 @@ from backend.app.config import get_settings
 from backend.app.exceptions import (
     AssistantNotAvailableError,
     FeatureMissingError,
+    FixtureFeaturesNotAvailableError,
     ModelNotAvailableError,
+    UnknownTeamError,
     assistant_not_available_handler,
     feature_missing_handler,
+    fixture_features_not_available_handler,
     model_not_available_handler,
     unexpected_error_handler,
+    unknown_team_handler,
 )
-from backend.app.routers import assistant, explainability, health, model, prediction
+from backend.app.routers import (
+    assistant,
+    explainability,
+    health,
+    model,
+    prediction,
+    teams,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +46,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.explanation_service = None
     app.state.registry = None
     app.state.chat_service = None
+    app.state.fixture_feature_service = _load_fixture_features(
+        settings.matches_dir, settings.served_competition
+    )
 
     if settings.model_path.exists():
         try:
@@ -127,6 +142,25 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("Shutting down Football Intelligence backend.")
 
 
+def _load_fixture_features(directory: Path, competition: str) -> object | None:
+    """Load match history for server-side features; None if unavailable."""
+    try:
+        from backend.app.services.fixture_feature_service import (
+            FixtureFeatureService,
+        )
+        from inference.fixture_features import FixtureFeatureBuilder
+
+        builder = FixtureFeatureBuilder.from_directory(directory)
+        season, names = builder.teams(competition)
+        logger.info(
+            "Match history loaded: %s %s, %d teams", competition, season, len(names)
+        )
+        return FixtureFeatureService(builder, competition)
+    except Exception as exc:  # noqa: BLE001 — degrade to supplied features only
+        logger.warning("Match history not loaded from %s: %s", directory, exc)
+        return None
+
+
 def create_app() -> FastAPI:
     """Construct and return the FastAPI application."""
     settings = get_settings()
@@ -149,12 +183,17 @@ def create_app() -> FastAPI:
         AssistantNotAvailableError, assistant_not_available_handler
     )
     app.add_exception_handler(FeatureMissingError, feature_missing_handler)
+    app.add_exception_handler(
+        FixtureFeaturesNotAvailableError, fixture_features_not_available_handler
+    )
+    app.add_exception_handler(UnknownTeamError, unknown_team_handler)
     app.add_exception_handler(Exception, unexpected_error_handler)
 
     app.include_router(health.router)
     app.include_router(model.router)
     app.include_router(prediction.router)
     app.include_router(explainability.router)
+    app.include_router(teams.router)
     app.include_router(assistant.router)
 
     return app

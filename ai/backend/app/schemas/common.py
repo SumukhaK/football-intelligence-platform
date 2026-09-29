@@ -29,6 +29,13 @@ class HealthResponse(BaseModel):
     assistant_available: bool = Field(
         ..., description="True when the RAG assistant is available."
     )
+    fixture_features_available: bool = Field(
+        default=False,
+        description=(
+            "True when the server can compute match features from history, "
+            "so requests may omit features."
+        ),
+    )
     version: str = Field(..., description="API version string.", examples=["0.1.0"])
 
 

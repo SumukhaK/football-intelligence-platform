@@ -102,6 +102,39 @@ class FeaturePipeline:
     def __init__(self, registry: FeatureRegistry | None = None) -> None:
         self._registry = registry or build_default_registry()
 
+    def compute(
+        self, df: pd.DataFrame
+    ) -> tuple[pd.DataFrame, list[FeatureExecutionRecord]]:
+        """Validate canonical matches, sort them and append every feature column.
+
+        This is the in-memory core of ``run``; serving uses it so that features
+        for a fixture are computed exactly as they were for training.
+
+        Raises:
+            ValueError: If the canonical input fails validation.
+        """
+        df = df.sort_values(_SORT_KEYS, kind="stable").reset_index(drop=True)
+        input_validation = validate_canonical_input(df)
+        if not input_validation.passed:
+            raise ValueError(f"Canonical input validation failed:\n{input_validation}")
+
+        records: list[FeatureExecutionRecord] = []
+        for feature in self._registry.get_ordered():
+            feature_start = time.monotonic()
+            feature_df = feature.compute(df)
+            duration = time.monotonic() - feature_start
+            new_cols = [c for c in feature_df.columns if c not in df.columns]
+            df = pd.concat([df, feature_df[new_cols]], axis=1)
+            records.append(
+                FeatureExecutionRecord(
+                    name=feature.name,
+                    version=feature.version,
+                    columns_produced=feature.output_columns,
+                    duration_seconds=round(duration, 4),
+                )
+            )
+        return df, records
+
     def run(self, input_path: Path, output_dir: Path) -> FeatureReport:
         """Execute the full feature engineering pipeline.
 
@@ -123,38 +156,14 @@ class FeaturePipeline:
         generation_timestamp = datetime.now(tz=UTC)
         source_version = _extract_source_version(input_path)
 
-        # Step 1: Load and sort
+        # Step 1: Load
         df = pd.read_csv(input_path)
-        df = df.sort_values(_SORT_KEYS, kind="stable").reset_index(drop=True)
         input_row_count = len(df)
 
-        # Step 2: Validate input
-        input_validation = validate_canonical_input(df)
-        if not input_validation.passed:
-            raise ValueError(f"Canonical input validation failed:\n{input_validation}")
-
-        # Step 3: Execute features
+        # Steps 2-3: Validate input, sort and execute features
+        df, execution_records = self.compute(df)
         ordered_features: list[BaseFeature] = self._registry.get_ordered()
-        execution_records: list[FeatureExecutionRecord] = []
-        all_output_columns: list[str] = []
-
-        for feature in ordered_features:
-            feature_start = time.monotonic()
-            feature_df = feature.compute(df)
-            duration = time.monotonic() - feature_start
-
-            new_cols = [c for c in feature_df.columns if c not in df.columns]
-            df = pd.concat([df, feature_df[new_cols]], axis=1)
-
-            execution_records.append(
-                FeatureExecutionRecord(
-                    name=feature.name,
-                    version=feature.version,
-                    columns_produced=feature.output_columns,
-                    duration_seconds=round(duration, 4),
-                )
-            )
-            all_output_columns.extend(feature.output_columns)
+        all_output_columns = [c for f in ordered_features for c in f.output_columns]
 
         # Step 4: Validate feature matrix
         matrix_validation = validate_feature_matrix(df, all_output_columns)

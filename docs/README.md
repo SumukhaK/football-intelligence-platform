@@ -22,6 +22,7 @@ Maintained by the project architect. The implementation engineer updates documen
 
 | Document | Description |
 |---|---|
+| [API Reference](api.md) | Every endpoint, request fields, responses and errors |
 | [CLI Reference](reference/cli.md) | Every supported CLI command with options, examples, and expected output |
 | [Repository Structure](repository-structure.md) | Every top-level directory: purpose, what belongs, what does not |
 

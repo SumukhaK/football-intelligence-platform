@@ -27,10 +27,10 @@ from evaluation.compare_models import predict_probabilities
 from evaluation.in_season import (
     build_season_features,
     evaluate_season,
-    fetch_in_progress,
     match_predictions,
 )
 from ingestion.downloader import HttpxTransport
+from ingestion.in_progress import fetch_in_progress
 from ingestion.storage import DatasetStorage
 from providers.football_data import FootballDataProvider
 from schemas.match import season_label

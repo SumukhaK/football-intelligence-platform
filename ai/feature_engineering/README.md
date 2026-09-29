@@ -102,7 +102,7 @@ The pipeline accepts many seasons and leagues in one input file (ADR 005):
 - Rows are sorted by `match_date`, `competition`, `home_team` with a stable sort, so output never depends on input file order.
 - `league_position` keeps one table per `(competition, season)` and snapshots standings at the start of each match date, so simultaneous kick-offs never see each other's results.
 - `rest_days` counts days since the team's previous match in the same season; the first match of each season is `NaN` rather than a summer-length gap.
-- `elo_rating` keeps a separate pool per competition. At each new season continuing teams regress a third of the way to 1500, and promoted teams inherit the average rating of the teams they replaced.
+- `elo_rating` keeps a separate pool per competition. A team's first match of a new season uses its previous final rating regressed a third of the way to 1500; a promoted team starts at the mean final rating of the previous season's three lowest-rated teams. Both rules look only backwards, so a fixture's rating is the same before the rest of the season's teams are known (ADR 008).
 - `head_to_head` counts meetings across all seasons in a single pass.
 - Rolling form, goal statistics and home/away form windows run across season boundaries on purpose, so early-season rows still reflect recent form.
 

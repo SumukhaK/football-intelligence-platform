@@ -1,6 +1,6 @@
 {
   "pipeline_version": "1.1.0",
-  "generation_timestamp": "2026-09-28T07:26:22.576650Z",
+  "generation_timestamp": "2026-09-28T12:31:25.690132Z",
   "features_generated": [
     {
       "name": "rolling_form",
@@ -15,7 +15,7 @@
         "away_form_points_last5",
         "away_form_points_last10"
       ],
-      "duration_seconds": 0.328
+      "duration_seconds": 0.343
     },
     {
       "name": "goal_statistics",
@@ -34,7 +34,7 @@
         "away_goal_diff_last5",
         "away_goal_diff_last10"
       ],
-      "duration_seconds": 0.344
+      "duration_seconds": 0.36
     },
     {
       "name": "home_advantage",
@@ -43,7 +43,7 @@
         "home_win_pct",
         "home_ppg"
       ],
-      "duration_seconds": 0.172
+      "duration_seconds": 0.157
     },
     {
       "name": "away_form",
@@ -52,7 +52,7 @@
         "away_win_pct",
         "away_ppg"
       ],
-      "duration_seconds": 0.187
+      "duration_seconds": 0.171
     },
     {
       "name": "rest_days",
@@ -61,7 +61,7 @@
         "home_rest_days",
         "away_rest_days"
       ],
-      "duration_seconds": 2.813
+      "duration_seconds": 0.125
     },
     {
       "name": "head_to_head",
@@ -85,16 +85,16 @@
         "home_matches_played",
         "away_matches_played"
       ],
-      "duration_seconds": 28.171
+      "duration_seconds": 0.813
     },
     {
       "name": "elo_rating",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "columns_produced": [
         "home_elo_before",
         "away_elo_before"
       ],
-      "duration_seconds": 0.719
+      "duration_seconds": 0.672
     },
     {
       "name": "strength_of_schedule",
@@ -105,10 +105,10 @@
         "away_avg_opp_elo_last5",
         "away_avg_opp_elo_last10"
       ],
-      "duration_seconds": 0.188
+      "duration_seconds": 0.172
     }
   ],
-  "total_duration_seconds": 33.937,
+  "total_duration_seconds": 3.797,
   "input_row_count": 46709,
   "output_row_count": 46709,
   "output_column_count": 67,
