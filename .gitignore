@@ -107,3 +107,6 @@ Thumbs.db
 
 # Kotlin compiler caches
 .kotlin/
+
+# Prompt book: kept in the local project only, not on GitHub
+docs/prompt-book/
