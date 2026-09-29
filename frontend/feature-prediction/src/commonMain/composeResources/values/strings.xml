@@ -3,7 +3,8 @@
     <!-- Team selection -->
     <string name="prediction_title">Match Prediction</string>
     <string name="select_teams">Select Teams</string>
-    <string name="season_note">Premier League %1$s. Predictions use every result played so far.</string>
+    <string name="season_note">%1$s %2$s. Predictions use every result played so far.</string>
+    <string name="league">League</string>
     <string name="home_team">Home Team</string>
     <string name="away_team">Away Team</string>
     <string name="versus">vs</string>

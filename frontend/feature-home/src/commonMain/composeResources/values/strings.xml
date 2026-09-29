@@ -13,7 +13,7 @@
     <string name="cd_assistant_online">Assistant online</string>
     <string name="cd_assistant_offline">Assistant offline</string>
     <string name="card_prediction_title">Match Prediction</string>
-    <string name="card_prediction_description">Predict Premier League match outcomes using the XGBoost model with SHAP explanations.</string>
+    <string name="card_prediction_description">Predict match outcomes in Europe's top five leagues using the XGBoost model with SHAP explanations.</string>
     <string name="card_prediction_action">Predict a Match</string>
     <string name="card_assistant_title">AI Assistant</string>
     <string name="card_assistant_description">Ask questions about the model, predictions, and football analytics.</string>

@@ -32,7 +32,7 @@ Known weak spot: the model never picks a draw as the most likely result, while 2
 | W5 | **Scoreline predictions** (section 3). **Done 2026-09-28**: model and evaluation ([report](../reports/goals-model.md)), `/insights` API and app sections | Main new feature; needs W3's screen and W4's draw work | L |
 | W6 | Scheduled live refresh plus backend reload. **Done 2026-09-29**: daily in-process refresh and reload without restart (ADR 013) | Removes the manual refresh and restart | S |
 | W7 | Kaggle extras (xG, FIFA ratings, Champions League rest days) | Small expected gain; licences unconfirmed | M |
-| W8 | Other four leagues in the API and app | API contract change; needs its own ADR | M |
+| W8 | Other four leagues in the API and app. **Done 2026-09-29** (ADR 012, [plan](five-leagues-plan.md)) | API contract change; needs its own ADR | M |
 
 W1 and W2 come first so the final merge is tested and green. W3–W5 share one screen and are sequenced to touch it once per concern.
 
