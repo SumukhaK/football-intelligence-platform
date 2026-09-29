@@ -382,9 +382,9 @@ MIT License. See [LICENSE](LICENSE).
 
 ---
 
-## 2026/27 Season So Far: How Accurate Is the Model?
+## 2026/27 Season So Far (as of 28 September 2026): How Accurate Is the Model?
 
-We asked the model to predict every 2026/27 league match played so far across the five leagues, without feeding it the real results. The model was trained only on seasons up to 2021/22 and was not retrained. Each match was predicted using only the results of matches played before it, and the prediction was then compared with what actually happened.
+On 28 September 2026 we asked the model to predict every 2026/27 league match played so far (up to 20 September 2026) across the five leagues, without feeding it the real results. The model was trained only on seasons up to 2021/22 and was not retrained. Each match was predicted using only the results of matches played before it, and the prediction was then compared with what actually happened.
 
 Model `20260928_123224`, 250 matches played up to 20 September 2026. Accuracy is the share of matches where the model's most likely outcome was the actual result.
 
