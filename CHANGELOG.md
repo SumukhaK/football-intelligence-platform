@@ -13,6 +13,23 @@ Nothing yet.
 
 ---
 
+## [2.1.0] — 2026-09-29
+
+The API is unchanged and still reports version 2.0.0.
+
+### Added
+- Tactics Board adaptive app icon with a themed (monochrome) layer (#56, ADR 016).
+- Kick-off launch screen: the ring fills in on Android 12+, a still ring on Android 8 to 11 (#56).
+- Kick-off loading animation in place of every loading spinner, including pull to refresh (#56).
+
+### Changed
+- Every markdown file checked against the code and updated for v2; "Lessons Learned" removed from the README (#57, #58).
+- Branch flow: work merges into `develop`; `main` only takes release pull requests and hotfixes, each tagged. CI runs on pull requests into both, and both branches are protected (#59).
+
+[2.1.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.1.0
+
+---
+
 ## [2.0.1] — 2026-09-29
 
 A patch release. The API is unchanged and still reports version 2.0.0.

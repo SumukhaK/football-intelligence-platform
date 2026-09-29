@@ -8,7 +8,7 @@ A complete technical write-up of the platform's design, engineering decisions, a
 
 The Football Intelligence Platform is an end-to-end AI system for Europe's top five football leagues. It ingests 26 seasons of match results (46,709 matches), engineers 42 leakage-safe pre-match features, trains and evaluates an XGBoost classifier, and explains every prediction with SHAP in plain football language. A Dixon-Coles goals model adds likely scorelines and goal markets. A versioned FastAPI backend serves all of this, refreshes its data daily without a restart, and rate limits clients. A local LLM assistant is grounded in the platform's own documents via RAG. A native Android app built with Compose Multiplatform opens on upcoming fixtures and keeps working offline.
 
-It was built in 12 stages up to release v1.0.0, then extended in v2.0.0 and v2.0.1, by a single engineer, with every structural change recorded as an ADR. The result: 864 passing tests (798 Python, 66 Android), 15 ADRs, zero cloud dependency, and a reproducible pipeline. On the 2023/24 test season the model reaches 52.5% accuracy and a log loss of 0.976, against 55.0% and 0.955 for bookmakers.
+It was built in 12 stages up to release v1.0.0, then extended in v2.0.0, v2.0.1 and v2.1.0, by a single engineer, with every structural change recorded as an ADR. The result: 871 passing tests (798 Python, 73 Android), 16 ADRs, zero cloud dependency, and a reproducible pipeline. On the 2023/24 test season the model reaches 52.5% accuracy and a log loss of 0.976, against 55.0% and 0.955 for bookmakers.
 
 This document explains *why* each major component exists and the trade-offs behind it — not just what was built.
 
@@ -189,7 +189,7 @@ Compose Multiplatform keeps the UI layer (Composables, theme, navigation contrac
 | AI, data pipeline and backend | Unit and API contract tests (`TestClient` with mocked AI services) | 762 |
 | Backend integration | `TestClient` with the **real** trained model — no mocks | 36 |
 | Android | ViewModels (test-first), repositories with Ktor `MockEngine`, cache, formatting | 66 |
-| **Total** | | **864** |
+| **Total** | | **871** |
 
 The integration suite deliberately avoids mocking the model — it asserts on real SHAP values being finite, real probabilities summing to 1.0, and latency staying under threshold. This catches bugs (numerical issues, serialization mismatches, performance regressions) that contract tests with mocks cannot.
 
@@ -223,7 +223,7 @@ This showcase document set (`docs/showcase/`) is written for an audience that wa
 
 ## Release Strategy
 
-Semantic versioning, five releases to date:
+Semantic versioning, six releases to date:
 
 | Version | Focus |
 |---|---|
@@ -232,6 +232,7 @@ Semantic versioning, five releases to date:
 | v1.0.0 | Android app, end-to-end integration tests, production readiness |
 | v2.0.0 | Five leagues, versioned API, fixtures, goals model, offline app, daily refresh |
 | v2.0.1 | Offline fallback within seconds, demo video |
+| v2.1.0 | App icon, Kick-off launch screen and loader, develop and main branch flow |
 
 Each release follows the same gate: full test suite green, all quality checks clean, release notes written, before the version is tagged.
 
