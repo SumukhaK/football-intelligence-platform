@@ -36,7 +36,10 @@ import com.footballintelligence.feature.settings.resources.section_analytics
 import com.footballintelligence.feature.settings.resources.settings_title
 import org.jetbrains.compose.resources.stringResource
 
-/** Settings screen with links to Model Info and About. */
+/**
+ * Settings screen with links to Model Info and About. [status] is shown first;
+ * the app passes the backend status card.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -44,6 +47,7 @@ fun SettingsScreen(
     onAboutClick: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    status: @Composable () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -63,6 +67,7 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            status()
             Text(stringResource(Res.string.section_analytics), style = MaterialTheme.typography.labelMedium)
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column {

@@ -1,15 +1,23 @@
 package com.footballintelligence.app
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.footballintelligence.core.navigation.Screen
 import com.footballintelligence.feature.assistant.AssistantScreen
 import com.footballintelligence.feature.assistant.AssistantViewModel
+import com.footballintelligence.feature.home.BackendStatusSection
+import com.footballintelligence.feature.home.BackendStatusViewModel
 import com.footballintelligence.feature.home.HomeScreen
 import com.footballintelligence.feature.home.HomeViewModel
 import com.footballintelligence.feature.prediction.ExplainPredictionScreen
@@ -22,22 +30,56 @@ import com.footballintelligence.feature.settings.SettingsScreen
 import com.footballintelligence.feature.settings.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
 
-/** Root navigation graph for the Football Intelligence app. */
+/**
+ * Root of the app: the navigation graph, with a bottom bar on the top-level
+ * screens (fixtures, predict, assistant, settings).
+ */
 @Composable
 fun AppNavigation(navController: NavHostController) {
+    val entry by navController.currentBackStackEntryAsState()
+    val current = TopLevelDestination.forRoute(entry?.destination?.route)
+    Scaffold(
+        bottomBar = {
+            if (current != null) {
+                BottomNavBar(current = current, onSelect = { navController.navigateTo(it) })
+            }
+        },
+    ) { padding ->
+        AppNavHost(
+            navController,
+            Modifier
+                .padding(padding)
+                .consumeWindowInsets(padding),
+        )
+    }
+}
+
+/** Switches tabs, keeping each tab's own back stack and state. */
+private fun NavHostController.navigateTo(destination: TopLevelDestination) {
+    navigate(destination.screen.route) {
+        popUpTo(graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+
+@Composable
+private fun AppNavHost(navController: NavHostController, modifier: Modifier) {
     NavHost(
         navController = navController,
         startDestination = Screen.Home.route,
+        modifier = modifier,
     ) {
         composable(Screen.Home.route) {
             val vm: HomeViewModel = koinViewModel()
             val state by vm.state.collectAsState()
+            val selectedLeague by vm.selectedLeague.collectAsState()
             val isRefreshing by vm.isRefreshing.collectAsState()
             HomeScreen(
                 uiState = state,
-                onPredictClick = { navController.navigate(Screen.Prediction.route) },
-                onAssistantClick = { navController.navigate(Screen.Assistant.route) },
-                onSettingsClick = { navController.navigate(Screen.Settings.route) },
+                leagues = vm.leagues,
+                selectedLeague = selectedLeague,
+                onSelectLeague = vm::selectLeague,
                 onRetry = vm::retry,
                 isRefreshing = isRefreshing,
                 onRefresh = vm::refresh,
@@ -118,10 +160,13 @@ fun AppNavigation(navController: NavHostController) {
         }
 
         composable(Screen.Settings.route) {
+            val vm: BackendStatusViewModel = koinViewModel()
+            val status by vm.state.collectAsState()
             SettingsScreen(
                 onModelInfoClick = { navController.navigate(Screen.ModelInfo.route) },
                 onAboutClick = { navController.navigate(Screen.About.route) },
                 onBack = { navController.popBackStack() },
+                status = { BackendStatusSection(status, onRetry = vm::retry) },
             )
         }
 

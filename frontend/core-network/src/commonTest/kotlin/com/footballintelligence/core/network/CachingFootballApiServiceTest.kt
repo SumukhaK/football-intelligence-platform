@@ -5,6 +5,7 @@ import com.footballintelligence.core.model.ChatResponse
 import com.footballintelligence.core.model.CompetitionsResponse
 import com.footballintelligence.core.model.ErrorKind
 import com.footballintelligence.core.model.ExplanationResult
+import com.footballintelligence.core.model.FixturesResponse
 import com.footballintelligence.core.model.HealthStatus
 import com.footballintelligence.core.model.Insights
 import com.footballintelligence.core.model.ModelInfo
@@ -47,6 +48,8 @@ class CachingFootballApiServiceTest {
         override suspend fun getHealth(): NetworkResult<HealthStatus> = error("unused")
         override suspend fun getModel(): NetworkResult<ModelInfo> = error("unused")
         override suspend fun getCompetitions(): NetworkResult<CompetitionsResponse> = error("unused")
+        override suspend fun getFixtures(competition: String): NetworkResult<FixturesResponse> =
+            error("unused")
         override suspend fun explain(request: PredictionRequest): NetworkResult<ExplanationResult> =
             error("unused")
         override suspend fun getInsights(request: PredictionRequest): NetworkResult<Insights> =

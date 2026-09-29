@@ -2,73 +2,54 @@ package com.footballintelligence.feature.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.SportsSoccer
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.footballintelligence.core.model.HealthStatus
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
 import com.footballintelligence.core.ui.OfflineBanner
 import com.footballintelligence.core.ui.RefreshableContent
-import com.footballintelligence.core.ui.StatusChip
 import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.home.resources.Res
-import com.footballintelligence.feature.home.resources.api_version
-import com.footballintelligence.feature.home.resources.assistant_offline_hint
-import com.footballintelligence.feature.home.resources.backend_status
-import com.footballintelligence.feature.home.resources.card_assistant_action
-import com.footballintelligence.feature.home.resources.card_assistant_description
-import com.footballintelligence.feature.home.resources.card_assistant_title
-import com.footballintelligence.feature.home.resources.card_prediction_action
-import com.footballintelligence.feature.home.resources.card_prediction_description
-import com.footballintelligence.feature.home.resources.card_prediction_title
-import com.footballintelligence.feature.home.resources.card_settings_action
-import com.footballintelligence.feature.home.resources.card_settings_description
-import com.footballintelligence.feature.home.resources.card_settings_title
-import com.footballintelligence.feature.home.resources.cd_assistant_offline
-import com.footballintelligence.feature.home.resources.cd_assistant_online
-import com.footballintelligence.feature.home.resources.cd_explainer_offline
-import com.footballintelligence.feature.home.resources.cd_explainer_online
-import com.footballintelligence.feature.home.resources.cd_prediction_api_offline
-import com.footballintelligence.feature.home.resources.cd_prediction_api_online
+import com.footballintelligence.feature.home.resources.cd_fixture
+import com.footballintelligence.feature.home.resources.cd_league_tab
+import com.footballintelligence.feature.home.resources.fixture_time_tbc
+import com.footballintelligence.feature.home.resources.fixtures_empty
+import com.footballintelligence.feature.home.resources.fixtures_versus
 import com.footballintelligence.feature.home.resources.home_title
-import com.footballintelligence.feature.home.resources.status_assistant
-import com.footballintelligence.feature.home.resources.status_explainer
-import com.footballintelligence.feature.home.resources.status_prediction_api
-import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-/** Home screen: shows backend status and navigation cards. */
+/** Home screen: upcoming fixtures by date, one tab per league. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     uiState: HomeUiState,
-    onPredictClick: () -> Unit,
-    onAssistantClick: () -> Unit,
-    onSettingsClick: () -> Unit,
+    leagues: List<String>,
+    selectedLeague: String,
+    onSelectLeague: (String) -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
     isRefreshing: Boolean = false,
@@ -86,26 +67,22 @@ fun HomeScreen(
         },
         modifier = modifier,
     ) { padding ->
-        when (uiState) {
-            is HomeUiState.Loading -> LoadingView(Modifier.padding(padding))
-            is HomeUiState.Error -> ErrorView(
-                message = errorMessage(uiState.kind, uiState.message),
-                onRetry = onRetry,
-                modifier = Modifier.padding(padding),
-            )
-            is HomeUiState.Success -> RefreshableContent(
-                isRefreshing = isRefreshing,
-                onRefresh = onRefresh,
-                modifier = Modifier.padding(padding),
-            ) {
-                Column {
-                    OfflineBanner(uiState.savedAt)
-                    HomeContent(
-                        health = uiState.health,
-                        onPredictClick = onPredictClick,
-                        onAssistantClick = onAssistantClick,
-                        onSettingsClick = onSettingsClick,
-                    )
+        Column(Modifier.padding(padding)) {
+            LeagueTabs(leagues, selectedLeague, onSelectLeague)
+            when (uiState) {
+                is HomeUiState.Loading -> LoadingView()
+                is HomeUiState.Error -> ErrorView(
+                    message = errorMessage(uiState.kind, uiState.message),
+                    onRetry = onRetry,
+                )
+                is HomeUiState.Success -> RefreshableContent(
+                    isRefreshing = isRefreshing,
+                    onRefresh = onRefresh,
+                ) {
+                    Column {
+                        OfflineBanner(uiState.savedAt)
+                        FixtureList(uiState.days, selectedLeague)
+                    }
                 }
             }
         }
@@ -113,144 +90,93 @@ fun HomeScreen(
 }
 
 @Composable
-private fun HomeContent(
-    health: HealthStatus,
-    onPredictClick: () -> Unit,
-    onAssistantClick: () -> Unit,
-    onSettingsClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+private fun LeagueTabs(leagues: List<String>, selected: String, onSelect: (String) -> Unit) {
+    ScrollableTabRow(
+        selectedTabIndex = leagues.indexOf(selected).coerceAtLeast(0),
+        edgePadding = 8.dp,
     ) {
-        FeatureCard(
-            icon = Icons.Default.SportsSoccer,
-            title = stringResource(Res.string.card_prediction_title),
-            description = stringResource(Res.string.card_prediction_description),
-            enabled = health.modelLoaded,
-            buttonLabel = stringResource(Res.string.card_prediction_action),
-            onClick = onPredictClick,
-        )
-        FeatureCard(
-            icon = Icons.Default.Psychology,
-            title = stringResource(Res.string.card_assistant_title),
-            description = stringResource(Res.string.card_assistant_description),
-            enabled = health.assistantAvailable,
-            buttonLabel = stringResource(Res.string.card_assistant_action),
-            onClick = onAssistantClick,
-            disabledHint = stringResource(Res.string.assistant_offline_hint),
-        )
-        FeatureCard(
-            icon = Icons.Default.Settings,
-            title = stringResource(Res.string.card_settings_title),
-            description = stringResource(Res.string.card_settings_description),
-            enabled = true,
-            buttonLabel = stringResource(Res.string.card_settings_action),
-            onClick = onSettingsClick,
-        )
-        BackendStatusCard(health)
-    }
-}
-
-@Composable
-private fun BackendStatusCard(health: HealthStatus) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(stringResource(Res.string.backend_status), style = MaterialTheme.typography.titleSmall)
-            BackendStatusChip(
-                label = Res.string.status_prediction_api,
-                available = health.modelLoaded,
-                onlineDescription = Res.string.cd_prediction_api_online,
-                offlineDescription = Res.string.cd_prediction_api_offline,
-            )
-            BackendStatusChip(
-                label = Res.string.status_explainer,
-                available = health.explainabilityAvailable,
-                onlineDescription = Res.string.cd_explainer_online,
-                offlineDescription = Res.string.cd_explainer_offline,
-            )
-            BackendStatusChip(
-                label = Res.string.status_assistant,
-                available = health.assistantAvailable,
-                onlineDescription = Res.string.cd_assistant_online,
-                offlineDescription = Res.string.cd_assistant_offline,
-            )
-            Text(
-                text = stringResource(Res.string.api_version, health.version),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+        leagues.forEach { league ->
+            val description = stringResource(Res.string.cd_league_tab, league)
+            Tab(
+                selected = league == selected,
+                onClick = { onSelect(league) },
+                text = { Text(league) },
+                modifier = Modifier.semantics { contentDescription = description },
             )
         }
     }
 }
 
 @Composable
-private fun BackendStatusChip(
-    label: StringResource,
-    available: Boolean,
-    onlineDescription: StringResource,
-    offlineDescription: StringResource,
-) {
-    val description = stringResource(if (available) onlineDescription else offlineDescription)
-    StatusChip(
-        label = stringResource(label),
-        available = available,
-        modifier = Modifier.semantics { contentDescription = description },
-    )
+private fun FixtureList(days: List<FixtureDay>, league: String) {
+    if (days.isEmpty()) {
+        Text(
+            stringResource(Res.string.fixtures_empty, league),
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(32.dp),
+        )
+        return
+    }
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        days.forEach { day ->
+            item(key = day.label) {
+                Text(
+                    day.label,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = 8.dp).semantics { heading() },
+                )
+            }
+            items(day.fixtures, key = { "${day.label}|${it.homeTeam}|${it.awayTeam}" }) {
+                FixtureCard(it)
+            }
+        }
+    }
 }
 
 @Composable
-private fun FeatureCard(
-    icon: ImageVector,
-    title: String,
-    description: String,
-    enabled: Boolean,
-    buttonLabel: String,
-    onClick: () -> Unit,
-    disabledHint: String? = null,
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+private fun FixtureCard(fixture: FixtureRow) {
+    val time = fixture.time ?: stringResource(Res.string.fixture_time_tbc)
+    val description = stringResource(Res.string.cd_fixture, fixture.homeTeam, fixture.awayTeam, time)
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clearAndSetSemantics { contentDescription = description },
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-            )
-            Text(title, style = MaterialTheme.typography.titleMedium)
             Text(
-                description,
-                style = MaterialTheme.typography.bodySmall,
+                time,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(0.22f),
+            )
+            Text(
+                fixture.homeTeam,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.End,
+                modifier = Modifier.weight(0.35f),
+            )
+            Text(
+                stringResource(Res.string.fixtures_versus),
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            if (!enabled && disabledHint != null) {
-                Text(
-                    disabledHint,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            ElevatedButton(
-                onClick = onClick,
-                enabled = enabled,
-                modifier = Modifier.align(Alignment.End),
-            ) {
-                Text(buttonLabel)
-            }
+            Text(
+                fixture.awayTeam,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.weight(0.35f),
+            )
         }
     }
 }

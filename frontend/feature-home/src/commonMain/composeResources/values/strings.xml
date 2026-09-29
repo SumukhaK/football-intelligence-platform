@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="home_title">Football Intelligence</string>
+    <string name="fixtures_empty">No upcoming %1$s fixtures yet.</string>
+    <string name="fixtures_versus">vs</string>
+    <string name="fixture_time_tbc">TBC</string>
+    <string name="cd_fixture">%1$s against %2$s, kick-off %3$s</string>
+    <string name="cd_league_tab">Show %1$s fixtures</string>
     <string name="backend_status">Backend Status</string>
     <string name="api_version">API v%1$s</string>
+    <string name="retry">Retry</string>
     <string name="status_prediction_api">Prediction API</string>
     <string name="status_explainer">SHAP Explainer</string>
     <string name="status_assistant">AI Assistant</string>
@@ -12,14 +18,5 @@
     <string name="cd_explainer_offline">Explainer offline</string>
     <string name="cd_assistant_online">Assistant online</string>
     <string name="cd_assistant_offline">Assistant offline</string>
-    <string name="card_prediction_title">Match Prediction</string>
-    <string name="card_prediction_description">Predict match outcomes in Europe's top five leagues using the XGBoost model with SHAP explanations.</string>
-    <string name="card_prediction_action">Predict a Match</string>
-    <string name="card_assistant_title">AI Assistant</string>
-    <string name="card_assistant_description">Ask questions about the model, predictions, and football analytics.</string>
-    <string name="card_assistant_action">Open Assistant</string>
     <string name="assistant_offline_hint">The assistant is offline: it needs Ollama running on the server.</string>
-    <string name="card_settings_title">Settings &amp; Model Info</string>
-    <string name="card_settings_description">View model details, metrics, and configure the app.</string>
-    <string name="card_settings_action">Open Settings</string>
 </resources>

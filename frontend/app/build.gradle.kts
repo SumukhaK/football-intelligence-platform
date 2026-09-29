@@ -41,6 +41,7 @@ dependencies {
     implementation(compose.ui)
     implementation(compose.material3)
     implementation(compose.foundation)
+    implementation(compose.materialIconsExtended)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.ktor.client.android)

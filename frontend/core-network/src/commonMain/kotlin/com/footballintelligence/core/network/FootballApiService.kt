@@ -5,6 +5,7 @@ import com.footballintelligence.core.model.ChatResponse
 import com.footballintelligence.core.model.CompetitionsResponse
 import com.footballintelligence.core.model.ErrorKind
 import com.footballintelligence.core.model.ExplanationResult
+import com.footballintelligence.core.model.FixturesResponse
 import com.footballintelligence.core.model.HealthStatus
 import com.footballintelligence.core.model.Insights
 import com.footballintelligence.core.model.ModelInfo
@@ -31,6 +32,7 @@ interface FootballApiService {
     suspend fun getModel(): NetworkResult<ModelInfo>
     suspend fun getCompetitions(): NetworkResult<CompetitionsResponse>
     suspend fun getTeams(competition: String): NetworkResult<TeamsResponse>
+    suspend fun getFixtures(competition: String): NetworkResult<FixturesResponse>
     suspend fun predict(request: PredictionRequest): NetworkResult<PredictionResult>
     suspend fun explain(request: PredictionRequest): NetworkResult<ExplanationResult>
     suspend fun getInsights(request: PredictionRequest): NetworkResult<Insights>
@@ -63,6 +65,11 @@ class KtorFootballApiService(
     override suspend fun getTeams(competition: String): NetworkResult<TeamsResponse> =
         guarded {
             client.get("$base/teams") { parameter("competition", competition) }.decode()
+        }
+
+    override suspend fun getFixtures(competition: String): NetworkResult<FixturesResponse> =
+        guarded {
+            client.get("$base/fixtures") { parameter("competition", competition) }.decode()
         }
 
     override suspend fun predict(request: PredictionRequest): NetworkResult<PredictionResult> =
