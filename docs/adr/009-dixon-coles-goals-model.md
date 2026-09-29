@@ -1,6 +1,6 @@
 # ADR 009 — Add a Dixon-Coles Goals Model for Scoreline Predictions
 
-**Status:** Proposed
+**Status:** Accepted
 
 **Supersedes:** —
 **Superseded by:** —

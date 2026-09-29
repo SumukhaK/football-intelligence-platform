@@ -10,6 +10,9 @@ Metrics, cross-validation, plots, and structured report models for the XGBoost p
 | `cross_validation.py` | `run_cross_validation` — TimeSeriesSplit CV, returns `CVSummary` |
 | `plots.py` | Headless Matplotlib plots (confusion matrix, feature importance) |
 | `draw_analysis.py` | Draw calibration and draw-rule trade-off per season block (CLI; see `docs/reports/draw-handling.md`) |
+| `goals_backtest.py` | Rolling-origin backtest for the goals model: refit before each matchweek, forecast that week |
+| `goals_metrics.py` | Scoreline, goal-market and outcome metrics for goals-model forecasts |
+| `goals_evaluation_cli.py` | Tunes and scores the goals model against a Poisson baseline, bookmakers and XGBoost |
 | `reports.py` | Frozen Pydantic models: `SplitMetrics`, `CVReport`, `EvaluationReport` |
 
 ## Matplotlib backend

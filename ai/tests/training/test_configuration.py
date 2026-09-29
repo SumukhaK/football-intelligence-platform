@@ -31,6 +31,19 @@ def test_exclude_columns_contains_post_match_stats() -> None:
     assert config.target_column == "result"
 
 
+def test_exclude_columns_contains_every_odds_column() -> None:
+    """Bookmaker odds are benchmarks, never model inputs."""
+    config = TrainingConfig()
+    for column in [
+        "home_odds",
+        "draw_odds",
+        "away_odds",
+        "over_2_5_odds",
+        "under_2_5_odds",
+    ]:
+        assert column in config.exclude_columns
+
+
 def test_custom_config_overrides() -> None:
     """Custom values are respected."""
     config = TrainingConfig(n_estimators=50, learning_rate=0.05)

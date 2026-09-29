@@ -28,6 +28,8 @@ _POST_MATCH_COLUMNS: list[str] = [
     "home_odds",
     "draw_odds",
     "away_odds",
+    "over_2_5_odds",
+    "under_2_5_odds",
 ]
 
 _METADATA_COLUMNS: list[str] = [

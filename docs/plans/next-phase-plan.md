@@ -29,7 +29,7 @@ Known weak spot: the model never picks a draw as the most likely result, while 2
 | W2 | **CI green**: add detekt and spotless to Gradle, fix what they flag | Frontend CI jobs fail on main; the final merge should be green | M |
 | W3 | **Result screen foundations**: Compose resources for strings, previews, a three-way probability bar and a "Draw likely" tag | W4 and W5 both redesign this screen; doing strings and previews once avoids churn | M |
 | W4 | **Draw handling**, phases A–B from the draw plan. **Analysis done 2026-09-28** ([report](../reports/draw-handling.md)): a third of draws costs 4–5 points of accuracy, and draw features gave no gain. The rule awaits decision 1 | Clearest accuracy gap; cheap | M |
-| W5 | **Scoreline predictions** (section 3) | Main new feature; needs W3's screen and W4's draw work | L |
+| W5 | **Scoreline predictions** (section 3). **Model and evaluation done 2026-09-28** ([report](../reports/goals-model.md)); `/insights` and the app next | Main new feature; needs W3's screen and W4's draw work | L |
 | W6 | Scheduled live refresh plus backend reload | Removes the manual refresh and restart | S |
 | W7 | Kaggle extras (xG, FIFA ratings, Champions League rest days) | Small expected gain; licences unconfirmed | M |
 | W8 | Other four leagues in the API and app | API contract change; needs its own ADR | M |

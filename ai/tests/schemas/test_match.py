@@ -235,6 +235,36 @@ def test_normalise_row_with_optional_stats(normalizer: MatchNormalizer) -> None:
     assert m.home_odds == pytest.approx(1.95)
 
 
+def test_normalise_row_maps_over_under_odds(normalizer: MatchNormalizer) -> None:
+    row = {
+        "date": "12/08/2023",
+        "home_team": "Arsenal",
+        "away_team": "Nottm Forest",
+        "home_goals_ft": 2,
+        "away_goals_ft": 1,
+        "result_ft": "H",
+        "odds_avg_over_2_5": 1.72,
+        "odds_avg_under_2_5": 2.11,
+    }
+    m = normalizer.normalise_row(row, season_code="2324", division="E0")
+    assert m.over_2_5_odds == pytest.approx(1.72)
+    assert m.under_2_5_odds == pytest.approx(2.11)
+
+
+def test_over_under_odds_are_optional(normalizer: MatchNormalizer) -> None:
+    row = {
+        "date": "12/08/2003",
+        "home_team": "Arsenal",
+        "away_team": "Everton",
+        "home_goals_ft": 1,
+        "away_goals_ft": 1,
+        "result_ft": "D",
+    }
+    m = normalizer.normalise_row(row, season_code="0304", division="E0")
+    assert m.over_2_5_odds is None
+    assert m.under_2_5_odds is None
+
+
 def test_normalise_row_nan_optional_becomes_none(normalizer: MatchNormalizer) -> None:
     import numpy as np
 
