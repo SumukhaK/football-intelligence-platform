@@ -1,5 +1,9 @@
 # Stage 9 Demo — Prediction and Explainability API
 
+> Historical walkthrough of Stage 9 (v1.0.0 era). For the current system, use the root README Quick Start and [docs/demo/README.md](README.md).
+>
+> Today `/v2/...` is the current API. `/v1/...` and the unversioned paths used below keep the frozen v1.0.0 contract and the original Premier League model (ADR 014). The prediction and explanation steps now use `/v2`, where requests need only team names. The full contract is in [docs/api.md](../api.md).
+
 ## Prerequisites
 
 ```bash
@@ -22,9 +26,17 @@ curl http://127.0.0.1:8000/health
   "status": "ok",
   "model_loaded": true,
   "explainability_available": true,
-  "version": "0.1.0"
+  "assistant_available": false,
+  "fixture_features_available": true,
+  "insights_available": true,
+  "matches_through": "2026-09-20",
+  "last_refresh_at": "2026-09-29T07:01:31+05:30",
+  "last_refresh_error": null,
+  "version": "2.0.0"
 }
 ```
+
+`assistant_available` is true only when Ollama is running and the assistant index is built (Stage 10). The dates depend on when your data was last refreshed.
 
 ---
 
@@ -52,33 +64,28 @@ curl http://127.0.0.1:8000/model
 
 ## 3. Predict Match Outcome
 
+The server builds all 42 model features from match history (ADR 008), so the request names only the teams and, optionally, the league.
+
 ```bash
-curl -X POST http://127.0.0.1:8000/predict \
+curl -X POST http://127.0.0.1:8000/v2/predict \
   -H "Content-Type: application/json" \
-  -d '{
-    "home_team": "Arsenal",
-    "away_team": "Chelsea",
-    "features": {
-      "home_elo": 1550.0,
-      "away_elo": 1480.0,
-      "elo_diff": 70.0,
-      "home_form_wins_last5": 3.0,
-      "home_form_points_last5": 9.0,
-      ...
-    }
-  }'
+  -d '{"home_team": "Arsenal", "away_team": "Man City", "competition": "Premier League"}'
 ```
+
+Example response (the numbers depend on your data and model):
 
 ```json
 {
+  "competition": "Premier League",
   "home_team": "Arsenal",
-  "away_team": "Chelsea",
+  "away_team": "Man City",
   "predicted_result": "H",
-  "probability_home": 0.4275,
-  "probability_draw": 0.1859,
-  "probability_away": 0.3867,
-  "confidence": 0.4275,
-  "model_version": "20260630_132617"
+  "probability_home": 0.393,
+  "probability_draw": 0.277,
+  "probability_away": 0.330,
+  "confidence": 0.393,
+  "draw_possible": false,
+  "model_version": "20260928_123224"
 }
 ```
 
@@ -87,27 +94,20 @@ curl -X POST http://127.0.0.1:8000/predict \
 ## 4. Explain Prediction with SHAP
 
 ```bash
-curl -X POST http://127.0.0.1:8000/explain \
+curl -X POST http://127.0.0.1:8000/v2/explain \
   -H "Content-Type: application/json" \
-  -d '{ "home_team": "Arsenal", "away_team": "Chelsea", "features": { ... } }'
+  -d '{"home_team": "Arsenal", "away_team": "Man City", "competition": "Premier League"}'
 ```
+
+The response holds the prediction plus SHAP attributions in `top_positive_features`, `top_negative_features` and `all_contributions` (all 42 features), and `model_version`, `feature_version`, `dataset_version` and `explanation_timestamp`. Each attribution looks like this:
 
 ```json
 {
-  "predicted_result": "H",
-  "probability_home": 0.4275,
-  "confidence": 0.4275,
-  "top_positive_features": [
-    { "feature_name": "elo_diff", "feature_value": 70.0, "shap_value": 0.082 },
-    { "feature_name": "home_ppg", "feature_value": 1.8, "shap_value": 0.061 }
-  ],
-  "top_negative_features": [
-    { "feature_name": "away_elo", "feature_value": 1480.0, "shap_value": -0.045 }
-  ],
-  "all_contributions": [ ... 42 features ... ],
-  "model_version": "20260630_132617",
-  "dataset_version": "20260630_090657",
-  "explanation_timestamp": "2026-06-30T..."
+  "feature_name": "home_elo_before",
+  "feature_value": 1617.748,
+  "shap_value": 0.337,
+  "display_name": "Arsenal team strength rating",
+  "display_value": "1618"
 }
 ```
 
@@ -124,6 +124,8 @@ If the model path does not exist at startup, all prediction endpoints return:
 ```
 
 ### Missing feature columns (422)
+
+Only when a request supplies its own optional `features` object and it lacks model columns:
 
 ```json
 {

@@ -56,10 +56,10 @@ uv sync --extra dev
 **Fix:** Always prefix pipeline commands with `uv run`:
 ```sh
 # Wrong
-python -m scripts.ingest_football_data
+python -m scripts.backfill_football_data --base-dir ../datasets --confirm
 
 # Correct
-uv run python -m scripts.ingest_football_data
+uv run python -m scripts.backfill_football_data --base-dir ../datasets --confirm
 ```
 
 ---
@@ -79,32 +79,37 @@ The `dev` extras include `pandas-stubs`. All other overrides are in `pyproject.t
 
 ## Data Ingestion Issues
 
-### `ERROR: Failed to download dataset` / `httpx.ConnectError`
+### `FAILED: ...` when downloading data
 
 **Cause:** No internet connection, or `football-data.co.uk` is temporarily unavailable.
+
+The download scripts report it like this:
+- `scripts.backfill_football_data`, `scripts.refresh_live_dataset` and `scripts.refresh_fixtures` print `FAILED: <reason>` and exit with code 1.
+- The legacy `scripts.ingest_football_data` prints `Downloading... FAILED` followed by `Error: <reason>`.
 
 **Fix:**
 1. Confirm you have internet access.
 2. Try opening `https://www.football-data.co.uk/mmz4281/2324/E0.csv` in a browser.
-3. If the site is down, wait and retry. The dataset source is external and not under project control.
+3. If the site is down, wait and retry. The dataset source is external and not under project control. The backfill reuses files it already downloaded, so a retry only fetches what is missing.
 
 ---
 
-### `ERROR: Validation failed — N rows failed canonical normalisation`
+### Rows skipped, or `All N rows failed canonical normalisation`
 
 **Cause:** The downloaded CSV contains rows that cannot be normalised to the `ProcessedMatch` schema (bad dates, unrecognised result codes).
 
-**Fix:** This is expected for a small number of rows (preseason or abandoned fixtures). The pipeline logs `Rows skipped: N`. If all 380 rows fail, the source file format has changed — open an issue.
+**Fix:** A few skipped rows are expected (the legacy ingestion prints `Rows skipped: N`; the backfill fails the run if more than 0.5% of any season's rows cannot be parsed). If every row of a file fails, the source file format has changed — open an issue.
 
 ---
 
-### `FileNotFoundError: No processed CSV found in datasets/processed/`
+### `ERROR: No canonical CSV found matching '...' relative to '...'.`
 
-**Cause:** The feature engineering pipeline auto-detects the latest processed CSV. If ingestion has not been run, there is no file to find.
+**Cause:** `feature_engineering.pipeline` was run without `--input`. Its default only looks for legacy single-season files (`datasets/processed/football_data/match_results_v*.csv`, relative to `ai/`), not the five-league dataset.
 
-**Fix:** Run ingestion first:
+**Fix:** Build the five-league dataset if you have not, then pass it explicitly:
 ```sh
-uv run python -m scripts.ingest_football_data
+uv run python -m scripts.backfill_football_data --base-dir ../datasets --confirm
+uv run python -m feature_engineering.pipeline --input ../datasets/processed/football_data/match_results_top5_v<ts>.csv --output-dir ../datasets/features/top5
 ```
 
 ---
@@ -136,22 +141,24 @@ uv run python -m scripts.ingest_football_data
 uv run pytest tests/feature_engineering/
 ```
 
-All 142 tests must pass. A failing test will indicate which feature generator has a problem.
+All 91 tests must pass. A failing test will indicate which feature generator has a problem.
 
 ---
 
 ## Training Issues
 
-### `FileNotFoundError: feature_matrix.parquet not found`
+### `ERROR: [Errno 2] No such file or directory: ...feature_matrix.parquet`
 
-**Cause:** The training pipeline cannot find the feature matrix. Ingestion and feature engineering must be run first.
+**Cause:** The training pipeline cannot find the feature matrix. Its default path (`datasets/features/feature_matrix.parquet`, relative to `ai/`) is not where the five-league matrix is written.
 
-**Fix:**
+**Fix:** Build the matrix and pass its path:
 ```sh
-uv run python -m scripts.ingest_football_data
-uv run python -m feature_engineering.pipeline
-uv run python -m training.pipeline
+uv run python -m scripts.backfill_football_data --base-dir ../datasets --confirm
+uv run python -m feature_engineering.pipeline --input ../datasets/processed/football_data/match_results_top5_v<ts>.csv --output-dir ../datasets/features/top5
+uv run python -m training.pipeline --feature-matrix ../datasets/features/top5/feature_matrix.parquet --split-strategy season --val-seasons 2022/23 --test-seasons 2023/24 --holdout-seasons 2024/25 2025/26 --max-depth 3 --learning-rate 0.03 --n-estimators 400
 ```
+
+The same applies to `explainability.pipeline`: pass `--feature-matrix ../datasets/features/top5/feature_matrix.parquet`.
 
 ---
 
@@ -185,7 +192,7 @@ uv run python -m training.pipeline
 
 ## Pytest Issues
 
-### Fewer than 266 tests pass
+### Fewer than 798 tests pass
 
 **Cause:** `uv sync --extra dev` was not run, or a test file has a syntax error.
 
@@ -199,16 +206,66 @@ Review any `ERROR` or `FAILED` lines in the output.
 
 ---
 
-### Integration test is selected and fails with a network error
+### Integration tests fail on a clean checkout or offline
 
-**Cause:** The integration test marked `@pytest.mark.integration` requires network access to download live data.
+**Cause:** 37 tests are marked `@pytest.mark.integration`. They need the trained model in `ai/models/latest/`, and one of them downloads live data.
 
-**Fix:** Deselect integration tests for offline runs:
+**Fix:** Train the model (see the [quick start](setup/quick-start.md)), or skip them:
 ```sh
 uv run pytest -m "not integration"
 ```
 
-This is the default behaviour when running `uv run pytest` without additional flags.
+This is not the default: `uv run pytest` runs every test, including integration tests.
+
+---
+
+## Backend Issues
+
+### `429 Too many requests`
+
+**Cause:** A client made more than 120 requests in one minute (`RATE_LIMIT_PER_MINUTE`).
+
+**Fix:** Wait the number of seconds in the `Retry-After` header and retry. For local load testing, raise the limit or set `RATE_LIMIT_PER_MINUTE=off` in `ai/.env`. Health checks and the docs are never limited.
+
+---
+
+### `503 Match features not available`
+
+**Cause:** The server could not load match history, so it cannot compute features for a prediction. The detail reads `Match history is not loaded. Check MATCHES_DIR in configuration.` At startup the log shows `Match history not loaded from ...`, and `/v2/health` shows `"fixture_features_available": false`.
+
+**Fix:**
+1. Build the match history with `uv run python -m scripts.backfill_football_data --base-dir ../datasets --confirm`, or bring it up to date with `uv run python -m scripts.refresh_live_dataset --confirm`.
+2. Check that `MATCHES_DIR` (default `../datasets/processed/football_data`) points at the folder with the `match_results_top5_v*.csv` or `match_results_live_v*.csv` files.
+3. Restart the backend.
+
+---
+
+### Daily refresh fails
+
+**Cause:** The server downloads the latest results and fixtures every day at `LIVE_REFRESH_HOUR` (default 6). Without network access, or when a source is down, the download fails. The server keeps serving the data it already has.
+
+**Fix:** Check `last_refresh_error` in `curl http://localhost:8000/v2/health`; it says why the last refresh failed and is `null` after a success. To work offline, set `LIVE_REFRESH_HOUR=off` in `ai/.env` and restart. To refresh by hand later, run `uv run python -m scripts.refresh_live_dataset --confirm`.
+
+---
+
+### Fixtures are missing (`503 Fixtures not available`)
+
+**Cause:** No upcoming-fixtures file exists in `FIXTURES_DIR` (default `../datasets/processed/openfootball`). When the daily refresh is on, the server tries to download fixtures at startup if it has none, which needs network access.
+
+**Fix:**
+```sh
+uv run python -m scripts.refresh_fixtures --confirm
+```
+
+Then restart the backend.
+
+---
+
+### `/predict` gives different results from `/v2/predict`
+
+**Cause:** `/predict` (no prefix) and `/v1/predict` are the frozen v1.0.0 contract. They use the original Premier League model (`V1_MODEL_PATH`) and accept only the Premier League; naming another league returns 422 `Unknown competition`.
+
+**Fix:** Call `/v2/predict` for the current five-league model. Send only the team names and, optionally, `competition`. Do not send `"features": {}`: an empty object counts as supplied features and fails with 422. See [`docs/api.md`](api.md).
 
 ---
 
@@ -273,6 +330,40 @@ systemProp.http.proxyPort=8080
 ```sh
 chmod +x frontend/gradlew
 ```
+
+---
+
+### Android app shows the offline banner
+
+**Cause:** The app cannot reach the backend at `http://10.0.2.2:8000/v2` (the emulator's address for your computer), so it shows the data it saved last time.
+
+**Fix:** Start the backend from `ai/` with `uv run uvicorn backend.app.main:app --reload`, then pull down to refresh.
+
+---
+
+## CI Issues
+
+### Frontend checks did not run on a pull request
+
+**Cause:** The frontend workflows run only on pull requests into `main` (and pushes to `main`) that change `frontend/`. Pull requests into other branches skip them.
+
+**Fix:** Run the same checks locally from `frontend/`:
+```sh
+./gradlew detekt testDebugUnitTest assembleDebug spotlessCheck
+```
+
+---
+
+### CI fails with `./gradlew: Permission denied`
+
+**Cause:** `frontend/gradlew` lost its executable bit in git, often after a commit from Windows.
+
+**Fix:**
+```sh
+git update-index --chmod=+x frontend/gradlew
+```
+
+Commit the change. `git ls-files -s frontend/gradlew` should show mode `100755`.
 
 ---
 

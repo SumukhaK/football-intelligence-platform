@@ -67,4 +67,4 @@ Total across all stages: **320 tests passing**.
 
 ## ADR
 
-[ADR 004 — SHAP for Explainability](../adr/004-shap-for-explainability.md)
+[ADR 004 — SHAP for Explainability](../../../docs/adr/004-shap-for-explainability.md)

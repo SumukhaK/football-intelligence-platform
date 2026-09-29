@@ -1,5 +1,7 @@
 # Demo: Stage 7 — Model Training & Evaluation
 
+> Historical walkthrough of Stage 7 (v1.0.0 era). For the current system, use the root README Quick Start and [docs/demo/README.md](README.md).
+
 Demonstrate the complete XGBoost training pipeline: chronological split, early stopping, cross-validation, evaluation, model card, and local registry.
 
 **Approximate demo time:** 5 minutes
@@ -22,8 +24,8 @@ Show that the platform can:
 ## Prerequisites
 
 - `ai/` workspace set up: `uv sync --extra dev`
-- Stage 6 complete: `datasets/features/feature_matrix.parquet` must exist.
-  - The feature matrix is included in the repository, so Stage 5 and 6 do not need to be re-run for this demo.
+- Stage 6 complete: `datasets/features/feature_matrix.parquet` must exist. Run from `ai/` with no arguments, the training pipeline reads this path inside `ai/`, which is where Stage 6 writes by default.
+  - The feature matrix is not committed (Parquet files are gitignored), so run Stages 5 and 6 first. To train on the current five-league features instead, pass `--feature-matrix ../datasets/features/top5/feature_matrix.parquet`.
 
 ---
 
@@ -55,16 +57,16 @@ Expected: 48 tests pass across 4 packages.
 uv run python -m training.pipeline
 ```
 
-This trains the model, evaluates it, and writes all artifacts.
+This trains the model, evaluates it, and writes all artifacts to `models/` inside `ai/` (that is, `ai/models/`). Models are gitignored, so every artifact below comes from your own run.
 
 ### 4. Show the model card
 
 ```sh
 # macOS/Linux
-cat ../models/latest/model_card.md
+cat models/latest/model_card.md
 
 # Windows PowerShell
-Get-Content ..\models\latest\model_card.md
+Get-Content models\latest\model_card.md
 ```
 
 ### 5. Show the evaluation report
@@ -72,7 +74,7 @@ Get-Content ..\models\latest\model_card.md
 ```sh
 uv run python -c "
 import json, pathlib
-report = json.loads(pathlib.Path('../models/latest/evaluation_report.json').read_text())
+report = json.loads(pathlib.Path('models/latest/evaluation_report.json').read_text())
 test = report['test_metrics']
 cv = report['cv_report']
 print(f'Test accuracy: {test[\"accuracy\"]:.4f}')
@@ -86,10 +88,10 @@ print(f'CV accuracy:   {cv[\"mean_accuracy\"]:.4f} ± {cv[\"std_accuracy\"]:.4f}
 
 ```sh
 # macOS/Linux
-cat ../models/registry.json
+cat models/registry.json
 
 # Windows PowerShell
-Get-Content ..\models\registry.json
+Get-Content models\registry.json
 ```
 
 ### 7. Show the feature importance plot
@@ -98,20 +100,24 @@ The PNG is written to `models/latest/plots/feature_importance.png`. Open it in a
 
 ### 8. Load the model and make a prediction
 
+`MatchPredictor.predict()` takes a one-row DataFrame that holds all 42 feature columns, plus the two team names. The easiest source is the last row of the feature matrix:
+
 ```sh
 uv run python -c "
-from inference.predictor import MatchPredictor
+import pandas as pd
 from pathlib import Path
+from inference.predictor import MatchPredictor
 
-predictor = MatchPredictor.from_path(Path('../models/latest/model.joblib'))
-
-# Example: predict with some feature values
-# (Uses median imputation for any missing values)
-prediction = predictor.predict_proba_raw({'home_elo': 1550.0, 'away_elo': 1480.0})
-print('Prediction (class probabilities):', prediction)
-print('Classes:', predictor.classes)
+predictor = MatchPredictor.from_path(Path('models/latest/model.joblib'))
+df = pd.read_parquet('datasets/features/feature_matrix.parquet')
+row = df.tail(1)
+print(predictor.predict(row, row['home_team'].iloc[0], row['away_team'].iloc[0]))
 "
 ```
+
+It prints a `MatchPrediction` with `predicted_result` (`H`, `D` or `A`) and `probability_home`, `probability_draw` and `probability_away`. Missing values in the row are filled by the model's median imputer.
+
+With the backend running, the same prediction needs only team names: `POST /v2/predict` with `{"home_team": "Arsenal", "away_team": "Chelsea"}` (see [docs/api.md](../api.md)).
 
 ---
 

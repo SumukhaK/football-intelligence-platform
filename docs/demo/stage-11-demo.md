@@ -1,10 +1,12 @@
 # Stage 11 — Demo Guide
 
+> Historical walkthrough of Stage 11 (v1.0.0 era). For the current system, use the root README Quick Start and [docs/demo/README.md](README.md). The steps below describe the current app.
+
 ## Prerequisites
 
 1. Backend running on `localhost:8000`:
    ```bash
-   cd backend && uvicorn main:app --reload
+   cd ai && uv run uvicorn backend.app.main:app --reload
    ```
 
 2. Android emulator running (API 26+ recommended).
@@ -18,44 +20,44 @@
 
 ## Demo Flow
 
-### 1. Home Screen
+### 1. Fixtures Home
 
-Launch the app. The Home screen polls `GET /health` and shows three status chips:
+Launch the app. It opens on **Fixtures**: upcoming matches by date, with one tab per league. Pull down to refresh. A bottom bar leads to **Fixtures**, **Predict**, **Assistant** and **Settings**.
 
-- **Model**: green if the XGBoost model is loaded
-- **Explainability**: green if SHAP is available
-- **Assistant**: green if the Ollama assistant is reachable
+If the backend is unreachable, the app shows data it saved earlier under an offline banner, or an error card with a Retry button when nothing is saved yet.
 
-If the backend is unreachable, the screen shows an error card with a Retry button.
+### 2. Backend Status
 
-### 2. Match Prediction
+Open **Settings**. The **Backend Status** card calls `GET /v2/health` and shows whether the Prediction API, SHAP Explainer and AI Assistant are online.
 
-Tap **Predict Match** from Home. Select two Premier League clubs from the dropdowns (home team and away team must differ). Tap **Predict**.
+### 3. Match Prediction
 
-The app sends `POST /predict` with 44 neutral feature values and navigates to the Result screen.
+Tap **Predict** in the bottom bar. Pick a league, then a home team and an away team (they must differ). Tap **Predict Match Outcome**.
 
-### 3. Prediction Result
+The app sends `POST /v2/predict` with only the two team names and the league. The server computes the match features from history (ADR 008).
+
+### 4. Prediction Result
 
 The result shows:
 
-- Predicted outcome (Home Win / Draw / Away Win)
-- Three probability bars: home / draw / away
-- Confidence percentage
+- The predicted outcome (for example "Arsenal Win" or "Draw"), with a **Draw possible** tag when the draw chance is at least 28%
+- Home / draw / away probabilities and the confidence
+- The most likely scores, expected goals and goal markets from the goals model
 
-Tap **Explain This Prediction** to continue.
+Tap **Explain** to continue.
 
-### 4. Explain Prediction
+### 5. Explain Prediction
 
-The explain screen calls `POST /explain` and displays SHAP feature contributions:
+The explain screen calls `POST /v2/explain` and shows SHAP contributions in plain language:
 
-- **Top positive features** — pushed the prediction toward this outcome (green values)
-- **Top negative features** — pulled against this outcome (red values)
+- **Why the model leans this way**: factors that pushed toward the prediction
+- **What counts against it**: factors that pushed away from it
 
-Each row shows the feature name and its SHAP value.
+Each row has a fan-friendly label and value, such as a team's home win rate, and a **Big**, **Medium** or **Small impact** tag.
 
-### 5. AI Assistant Chat
+### 6. AI Assistant Chat
 
-Navigate to the Assistant from Home or the bottom nav. Type a question such as:
+Tap **Assistant** in the bottom bar. Type a question such as:
 
 - "Which team has the best home record this season?"
 - "What is Manchester City's expected goals per game?"
@@ -65,7 +67,7 @@ The assistant responds with a grounded answer from the retrieved dataset. Source
 
 If Ollama is not running, the screen shows an unavailability message instead of a chat input.
 
-### 6. Model Information
+### 7. Model Information
 
 Navigate to **Settings → Model Information**. The screen shows:
 
@@ -74,12 +76,12 @@ Navigate to **Settings → Model Information**. The screen shows:
 - Git commit (if available)
 - Evaluation metrics (accuracy, F1, log-loss, etc.)
 
-### 7. About Screen
+### 8. About Screen
 
 Navigate to **Settings → About**. Shows app version, technology stack summary, and dataset metadata.
 
 ---
 
-## Known Limitation
+## Note on Earlier Versions
 
-The prediction feature uses neutral average feature values rather than live-computed pre-match statistics. In a production scenario, these 42 features would be computed from recent form, Elo ratings, and head-to-head history fetched from the backend. The prediction flow is fully functional but the probabilities reflect average-team assumptions, not actual team strength differences.
+At Stage 11 the app sent neutral average feature values, so predictions did not reflect real team strength. Since v2.0.0 the server computes every feature from match history (ADR 008), and that limitation no longer applies.

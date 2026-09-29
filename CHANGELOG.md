@@ -9,9 +9,49 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+Nothing yet.
+
+---
+
+## [2.0.1] — 2026-09-29
+
+A patch release. The API is unchanged and still reports version 2.0.0.
+
+### Fixed
+- Offline mode falls back within seconds (#54). The app used to wait about 50 seconds before showing saved data under the offline banner. Connecting now gives up after 5 seconds, while a connected request still gets 30, so the banner appears after about 10 seconds on the emulator.
+
 ### Added
-- `docs/showcase/` — project showcase, timeline, portfolio summary, 50-question interview guide, demo scripts (5/10/20-minute), and screenshot capture checklist.
-- README.md rewritten as a recruiter/contributor-facing project showcase: tagline, key capabilities, architecture diagrams for every pipeline, lessons learned, and an explicit out-of-scope section.
+- Demo video (#53): a 3-minute narrated walk-through with English subtitles, linked from the README. Notes are in `docs/showcase/demo-video/`.
+- Dated accuracy check (#52): the README's 2026/27 section now says when it was measured.
+
+[2.0.1]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.0.1
+
+---
+
+## [2.0.0] — 2026-09-29
+
+A major version: the API contract changes and the model is replaced. `/v1` and the unversioned paths keep the v1.0.0 contract and the original Premier League model (ADR 014); `/v2` is current.
+
+### Added
+- Five leagues: Premier League, Bundesliga, La Liga, Serie A and Ligue 1, 2000/01 to 2025/26, 46,709 matches (ADR 005, ADR 006, ADR 012).
+- Retrained model `20260928_123224` with a season-based split and walk-forward tuning (ADR 007): 52.45% accuracy and log loss 0.976 on the 2023/24 test season.
+- Server-side match features: clients send two team names and the server builds all 42 features from match history (ADR 008).
+- Plain-language explanations: every SHAP contribution has a fan-friendly label and value.
+- Draw tag: predictions with a draw probability of at least 0.28 are tagged "draw possible"; the pick never changes (ADR 011).
+- Dixon-Coles goals model per league with likely scores and goal markets through `POST /v2/insights` (ADR 009).
+- Upcoming fixtures from openfootball through `GET /v2/fixtures` (ADR 015).
+- Daily refresh of results and fixtures inside the backend, without a restart (ADR 013).
+- Versioned API (`/v1` frozen, `/v2` current), new `GET /competitions` and `GET /teams`, and a rate limit of 120 requests a minute per client (ADR 014).
+- App: Fixtures home with one tab per league, bottom navigation (Fixtures, Predict, Assistant, Settings), league picker, likely scores, offline cache with a banner, pull to refresh and plain-language errors.
+- `ai/.env.example` listing every backend setting.
+
+### Documentation
+- ADRs 005 to 015.
+- `docs/api.md` covering both API versions.
+- `docs/releases/v2.0.0.md` — release notes.
+- Reports on the multi-league retraining, the 2026/27 live check, draw handling, the goals model and the Kaggle extras experiment.
+
+[2.0.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.0.0
 
 ---
 
@@ -49,6 +89,8 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Demo index updated to include Stages 11 and 12.
 - Docs index updated to include Stages 11 and 12 reports, demos, and release.
 - `CHANGELOG.md` updated with [1.0.0] entries for Stages 11–12.
+- `docs/showcase/` — project showcase, timeline, portfolio summary, 50-question interview guide, demo scripts (5/10/20-minute), and screenshot capture checklist.
+- README.md rewritten as a recruiter/contributor-facing project showcase: tagline, key capabilities, architecture diagrams for every pipeline, lessons learned, and an explicit out-of-scope section.
 
 [1.0.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v1.0.0
 
@@ -127,7 +169,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - AI workspace and dataset directory skeletons.
 
 #### Stage 2 — Compose Foundation
-- Compose Multiplatform Android-first Gradle project with 13 modules.
+- Compose Multiplatform Android-first Gradle project with 14 modules (`app`, 7 core, 6 feature).
 - Feature modules: `feature-home`, `feature-prediction`, `feature-match`, `feature-team`, `feature-assistant`, `feature-settings`.
 - Core modules: `core-ui`, `core-design-system`, `core-navigation`, `core-model`, `core-network`, `core-common`, `core-testing`.
 - MVVM architecture with sealed `UiState` classes and `StateFlow`-backed ViewModels.

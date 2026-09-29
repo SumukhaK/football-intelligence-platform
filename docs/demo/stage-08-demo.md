@@ -1,5 +1,7 @@
 # Stage 8 Demo — SHAP Explainability Pipeline
 
+> Historical walkthrough of Stage 8 (v1.0.0 era). For the current system, use the root README Quick Start and docs/demo/README.md.
+
 ## Prerequisites
 
 - Stage 7 training pipeline has been run (`uv run python -m training.pipeline`).
@@ -11,7 +13,13 @@
 uv run python -m explainability.pipeline
 ```
 
-Expected output:
+With no arguments, the pipeline reads the old single-season feature matrix at `datasets/features/feature_matrix.parquet` (relative to `ai/`). To explain the current five-league features, as the README Quick Start does, pass the path:
+
+```bash
+uv run python -m explainability.pipeline --feature-matrix ../datasets/features/top5/feature_matrix.parquet
+```
+
+Expected output for the single-season run (Stage 8):
 
 ```
 Model:          .../ai/models/latest/model.joblib

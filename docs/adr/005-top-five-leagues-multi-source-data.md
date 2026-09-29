@@ -3,7 +3,7 @@
 **Status:** Accepted
 
 **Supersedes:** —
-**Superseded by:** —
+**Superseded by:** [012](012-serve-all-five-leagues.md) (item 6, serving scope, only)
 
 ## Context
 

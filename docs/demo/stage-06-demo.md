@@ -1,5 +1,7 @@
 # Demo: Stage 6 — Feature Engineering Pipeline
 
+> Historical walkthrough of Stage 6 (v1.0.0 era). For the current system, use the root README Quick Start and [docs/demo/README.md](README.md).
+
 Demonstrate the composable feature engineering pipeline producing a validated 42-column feature matrix from raw match data.
 
 **Approximate demo time:** 3 minutes
@@ -122,14 +124,16 @@ After running, confirm:
 
 | Category | Count | Examples |
 |---|---|---|
-| Rolling form | 8 | `home_points_last5`, `away_wins_last10` |
-| Goal statistics | 6 | `home_goals_scored_last5`, `away_goals_conceded_last10` |
-| Home/away advantage | 4 | `home_win_rate`, `away_draw_rate` |
+| Rolling form | 8 | `home_form_points_last5`, `away_form_wins_last10` |
+| Goal statistics | 12 | `home_goals_scored_last5`, `away_goals_conceded_last10`, `home_goal_diff_last5` |
+| Home/away advantage | 4 | `home_win_pct`, `home_ppg`, `away_win_pct`, `away_ppg` |
 | Rest days | 2 | `home_rest_days`, `away_rest_days` |
-| Head-to-head | 5 | `h2h_home_wins`, `h2h_draw_rate` |
-| League position | 6 | `home_league_position`, `away_points` |
-| Elo ratings | 2 | `home_elo`, `away_elo` |
-| Strength of schedule | 9 | `home_sos_5`, `away_sos_10` |
+| Head-to-head | 4 | `h2h_meetings`, `h2h_home_wins`, `h2h_draws` |
+| League position | 6 | `home_league_position`, `away_league_points`, `home_matches_played` |
+| Elo ratings | 2 | `home_elo_before`, `away_elo_before` |
+| Strength of schedule | 4 | `home_avg_opp_elo_last5`, `away_avg_opp_elo_last10` |
+
+The full list is in `datasets/features/feature_metadata.json`.
 
 ---
 

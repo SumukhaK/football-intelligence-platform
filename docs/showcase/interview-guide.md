@@ -1,18 +1,18 @@
 # Interview Guide — Football Intelligence Platform
 
-50 questions an interviewer might ask about this project, organised by topic, each with a suggested answer, the reasoning behind it, and the trade-offs worth raising proactively.
+50 questions an interviewer might ask about this project (as of release v2.0.1), organised by topic, each with a suggested answer, the reasoning behind it, and the trade-offs worth raising proactively.
 
 ---
 
 ## Data & Feature Engineering
 
-### 1. Why did you split the data chronologically instead of randomly?
+### 1. Why did you split the data by season instead of randomly?
 
-**Answer:** Because the features are rolling-window statistics (form, goals, Elo) computed from a team's prior matches. A random split would let a model train on a match whose rolling-form features were computed using data from matches that occur *after* some of the test-set matches chronologically, which is leakage — the model would implicitly see "future" outcomes baked into engineered features.
+**Answer:** Because the features are rolling-window statistics (form, goals, Elo) computed from a team's prior matches. A random split would let the model train on matches that come *after* some test matches, and their features carry information across time, which is leakage. The model splits by whole seasons: train 2000/01–2021/22, validate 2022/23, test 2023/24, and keep 2024/25–2025/26 as an untouched holdout.
 
-**Reasoning:** This is the single most common bug in time-series ML projects, and it inflates test metrics in a way that doesn't show up unless you specifically check for it.
+**Reasoning:** This is the most common bug in time-series ML projects, and it inflates test metrics in a way that doesn't show up unless you check for it. Whole seasons also keep league tables and team lists intact.
 
-**Trade-off:** Chronological splitting means the test set is necessarily the *most recent* matches, which can have higher variance (e.g., end-of-season dead rubbers) than a random sample would. Documented in [ADR 003](../adr/003-chronological-train-val-test-split.md).
+**Trade-off:** The test set is necessarily the most recent season, which can differ from older ones. The two holdout seasons and a live 2026/27 check guard against a single lucky season. Documented in [ADR 007](../adr/007-season-based-split-and-evaluation.md), which replaced the earlier 70/15/15 chronological split of [ADR 003](../adr/003-chronological-train-val-test-split.md).
 
 ---
 
@@ -22,7 +22,7 @@
 
 **Reasoning:** Without the shift, a 5-match rolling average computed "as of" match N would include match N's own result.
 
-**Trade-off:** This means the very first few matches of a season have sparse or default-value features (no history yet) — handled with neutral defaults rather than dropping early-season rows.
+**Trade-off:** This means the very first few matches of a season have sparse or default-value features (no history yet) — filled with training-set medians rather than dropping early-season rows.
 
 ---
 
@@ -32,7 +32,7 @@
 
 **Reasoning:** Breadth across categories rather than depth in one — avoids overfitting to a single signal type.
 
-**Trade-off:** 42 features on 380 matches is a high feature-to-sample ratio for a tree model; mitigated by XGBoost's built-in regularisation and early stopping.
+**Trade-off:** Many features are correlated (form, goals and Elo overlap). With 39,627 training matches that's fine for a tree model, and SHAP still attributes the prediction fairly across them.
 
 ---
 
@@ -48,11 +48,11 @@
 
 ### 5. Why football-data.co.uk and not a richer source like FBref or Understat?
 
-**Answer:** football-data.co.uk gives clean, structured match-result CSVs with minimal preprocessing needed, which kept Stage 4-5 focused on building a *correct* ingestion framework rather than fighting messy HTML scraping. The provider abstraction (`DatasetDownloader`/`DatasetStorage`) was built to support FBref and Understat too — those providers exist in the codebase — but football-data.co.uk was used for the canonical dataset.
+**Answer:** football-data.co.uk gives clean, structured match-result CSVs with minimal preprocessing needed, and covers all five leagues from 2000/01 onwards in one consistent format (46,709 matches, [ADR 005](../adr/005-top-five-leagues-multi-source-data.md)). That kept the pipeline focused on correctness rather than fighting messy HTML scraping. The provider abstraction (`DatasetDownloader`/`DatasetStorage`) was built to support FBref and Understat too — those providers exist in the codebase — but football-data.co.uk was used for the canonical dataset.
 
 **Reasoning:** Get a correct, validated pipeline working end-to-end first; richer data sources are a drop-in extension, not a redesign.
 
-**Trade-off:** football-data.co.uk lacks advanced metrics like xG, which Understat provides — a documented future extension.
+**Trade-off:** football-data.co.uk lacks advanced metrics like xG. xG, FIFA ratings and Champions League rest days from Kaggle were tested and none improved log loss beyond noise ([report](../reports/kaggle-extras.md)).
 
 ---
 
@@ -62,7 +62,7 @@
 
 **Reasoning:** Per the project's data engineering philosophy: "data quality failures are loud errors, not silent skips" — silent skips hide problems until they surface much later as model quality issues.
 
-**Trade-off:** Stricter validation means a single bad row can halt the whole pipeline run rather than degrading gracefully — an intentional choice given the dataset size (380 matches) makes manual review of a halted run cheap.
+**Trade-off:** Stricter validation means a single bad row can halt the whole pipeline run rather than degrading gracefully — an intentional choice: each league season is its own file, so a failure names the exact file and reason, and fixing it is cheap. Season-integrity checks also verify team counts, double round robins and results matching the score.
 
 ---
 
@@ -76,27 +76,27 @@
 
 ---
 
-### 8. How would you scale this to a multi-season dataset?
+### 8. How did you scale this to a multi-season dataset?
 
-**Answer:** The main blocker is Elo ratings resetting to 1500 at the start of every pipeline run — they'd need to persist and carry over season boundaries (with appropriate season-transition regression toward the mean, a common practice in Elo systems). The ingestion and feature pipelines themselves are already season-agnostic.
+**Answer:** Version one covered one Premier League season. Version two backfills 26 seasons of five leagues (46,709 matches). The main change was Elo: ratings now carry across seasons per league, regressed a third of the way back to 1500 between seasons, and promoted teams start at the average of the teams they replaced. League position and rest days were also made season-aware.
 
-**Reasoning:** This is a known, documented limitation (see root README "Future Improvements") rather than something overlooked.
+**Reasoning:** Data volume was the biggest lever: this change improved log loss far more than any tuning.
 
-**Trade-off:** Persisting Elo across seasons adds state that needs its own storage and versioning strategy — deliberately deferred rather than half-implemented.
+**Trade-off:** Elo pools are per league, so ratings aren't comparable across leagues; the model only compares teams within a league.
 
 ---
 
 ### 9. What would you do differently if the dataset were 100x larger?
 
-**Answer:** Parquet plus pandas would start to strain; I'd look at Polars or a proper feature store, and the brute-force numpy vector store for RAG would need to become an approximate-nearest-neighbour index (e.g., FAISS or HNSW). The chronological split methodology and leakage prevention would not need to change.
+**Answer:** Parquet plus pandas would start to strain; I'd look at Polars or a proper feature store, and the brute-force numpy vector store for RAG would need to become an approximate-nearest-neighbour index (e.g., FAISS or HNSW). The season-split methodology and leakage prevention would not need to change.
 
-**Reasoning:** The architecture is sized appropriately for ~380 matches; scaling decisions are about swapping implementations behind the same interfaces, not redesigning the pipeline.
+**Reasoning:** The architecture is sized appropriately for ~47,000 matches; scaling decisions are about swapping implementations behind the same interfaces, not redesigning the pipeline.
 
 ---
 
 ### 10. How is feature engineering tested?
 
-**Answer:** Each of the 9 generators has dedicated unit tests verifying both correctness (e.g., rolling average computed correctly) and leakage prevention (a feature for match N must not change if match N+1's data changes). 142 tests cover this stage.
+**Answer:** Each of the 9 generators has dedicated unit tests verifying both correctness (e.g., rolling average computed correctly) and leakage prevention (a feature for match N must not change if match N+1's data changes). Dozens of tests cover this stage.
 
 **Reasoning:** Leakage bugs don't show up as test failures unless you specifically assert that future data doesn't affect past features — so leakage tests are written as a distinct test category, not bundled into correctness tests.
 
@@ -106,7 +106,7 @@
 
 ### 11. Why XGBoost over a neural network or logistic regression?
 
-**Answer:** Tabular, moderate-sized data (380 rows × 42 features) is exactly XGBoost's strength — it typically outperforms neural nets on tabular data at this scale, trains in seconds, and has native, exact SHAP support via `TreeExplainer`. A neural net would need far more data to justify its added complexity and would lose the exact-explainability property.
+**Answer:** Tabular data (39,627 training rows × 42 features) is exactly XGBoost's strength — it typically matches or beats neural nets on tabular data, trains in minutes on a CPU, and has native, exact SHAP support via `TreeExplainer`. A neural net would need far more data to justify its added complexity and would lose the exact-explainability property.
 
 **Reasoning:** Documented in [ADR 001](../adr/001-use-xgboost-for-predictions.md) — match outcome prediction at this scale and feature mix doesn't benefit from deep learning's representation-learning advantages.
 
@@ -124,11 +124,11 @@
 
 ### 13. What's your model's accuracy, and is that good?
 
-**Answer:** 56.1% test accuracy on a 3-class problem with a 33.3% random baseline, 0.625 ROC AUC (one-vs-rest). This is in the realistic range for football outcome prediction — bookmakers and published academic models typically land in the 50-55% range, since football has high inherent randomness (a team's "true" win probability is rarely much above 60% even for strong favourites).
+**Answer:** 52.5% accuracy and a log loss of 0.976 on the 2023/24 test season (random baseline 33.3%; always picking the home team 43.1%; bookmakers 55.0% and 0.955). On 250 real 2026/27 matches played up to 20 September 2026 it scored 52.4%, against 51.6% for bookmaker favourites. ROC AUC is 0.679. That's realistic: football is very random, and the market, with inside information, is the practical ceiling.
 
-**Reasoning:** I'd rather state this honestly than oversell it — overstating model performance in an interview is a credibility risk, and the project's stated philosophy is to be "honest about what it knows."
+**Reasoning:** I'd rather state this honestly than oversell it, and I report log loss because the app shows probabilities, so they must be trustworthy, not just the top pick.
 
-**Trade-off:** Higher accuracy is achievable with richer features (xG, lineups, weather) — explicitly out of scope for this dataset.
+**Trade-off:** Higher accuracy needs richer data (lineups, injuries, xG). The model never picks a draw, because draw probabilities are calibrated but flat; the app shows a "draw possible" tag instead ([ADR 011](../adr/011-draw-possible-tag.md)).
 
 ---
 
@@ -136,15 +136,15 @@
 
 **Answer:** Early stopping on the validation set's multi-class log-loss halts training once additional boosting rounds stop improving generalisation, preventing the model from overfitting to training-set noise.
 
-**Reasoning:** With only 380 matches, overfitting risk is real; early stopping is a cheap, standard regularisation technique appropriate to the data size.
+**Reasoning:** Early stopping on the 2022/23 season stopped the model at round 167 of up to 400; it's a cheap, standard guard against overfitting.
 
 ---
 
 ### 15. Walk me through your cross-validation strategy.
 
-**Answer:** `TimeSeriesSplit` with 5 folds — each fold trains on an expanding window of past matches and validates on the immediately following chunk, preserving chronological order throughout (never validating on data that precedes training data in time).
+**Answer:** Season walk-forward cross-validation with 5 folds: train on all seasons up to year N and validate on season N+1, then move forward one season. It's used on training seasons only to tune hyperparameters, so the test and holdout seasons stay untouched. Result: 51.9% ± 1.0% accuracy, log loss 0.994 ± 0.007.
 
-**Reasoning:** Standard k-fold CV would shuffle and leak future information into training folds, same issue as the train/test split.
+**Reasoning:** Standard k-fold would shuffle and leak future information into training folds, the same issue as a random train/test split.
 
 ---
 
@@ -176,9 +176,9 @@
 
 ### 19. What hyperparameters did you tune, and how?
 
-**Answer:** The current model uses fixed, reasonable XGBoost hyperparameters (moderate depth, learning rate, with early stopping handling the "how many rounds" question automatically) rather than a full hyperparameter search. Optuna-based tuning is explicitly listed as future scope.
+**Answer:** A grid of 27 settings (depth, learning rate, number of trees), scored by season walk-forward cross-validation on training seasons only. The top ten settings were within 0.0006 log loss of each other, so the choice is stable. Winner: depth 3, learning rate 0.03, up to 400 rounds, with early stopping.
 
-**Reasoning:** With 380 matches, exhaustive hyperparameter search risks overfitting to the validation set itself; I prioritised correct methodology (leakage prevention, chronological CV) over marginal accuracy gains from tuning, which is the higher-leverage problem at this data scale.
+**Reasoning:** Tuning on the test season would overfit the evaluation itself. The small spread between settings also shows that data and features matter far more than tuning here.
 
 ---
 
@@ -230,7 +230,7 @@
 
 ### 25. What's the latency of generating an explanation, and why does that matter?
 
-**Answer:** ~7 ms measured (10-run average) for the core SHAP computation; under 30 ms end-to-end through the FastAPI layer including serialisation. It matters because explainability is exposed as a real-time API endpoint consumed by a mobile app — if it took seconds, it couldn't be a synchronous part of the user-facing prediction flow.
+**Answer:** About 7 ms for the core SHAP computation and under 30 ms end-to-end, measured on the v1.0.0 model (Stage 12). The current model is similar in size, and the server now also builds features from history per request, which is still well under a second. It matters because explainability is exposed as a real-time API endpoint consumed by a mobile app — if it took seconds, it couldn't be a synchronous part of the user-facing prediction flow.
 
 **Reasoning:** This is the direct payoff of treating explainability as a product feature with a latency budget, not an offline analysis step.
 
@@ -254,7 +254,7 @@
 
 ### 28. Why surface positive *and* negative features separately, rather than just top-N overall?
 
-**Answer:** Football outcome reasoning is naturally "for vs. against" — a user wants to see what favoured this outcome and what worked against it, not just a ranked magnitude list that mixes both directions. The Android Explain screen renders them as two distinct, colour-coded sections for exactly this reason.
+**Answer:** Football outcome reasoning is naturally "for vs. against" — a user wants to see what favoured this outcome and what worked against it, not just a ranked magnitude list that mixes both directions. The Android Explain screen renders them as "Why the model leans this way" and "What counts against it", in plain football language with Big, Medium or Small impact, for exactly this reason.
 
 **Reasoning:** A UX-driven API design choice — the explanation structure was shaped by how it would actually be consumed, not just how SHAP naturally outputs data.
 
@@ -300,7 +300,7 @@
 
 ### 33. What happens if Ollama isn't running?
 
-**Answer:** The backend's lifespan startup attempts to load the assistant service; if it fails (Ollama unreachable), `app.state.chat_service` stays `None` and `POST /assistant/chat` returns a structured `503` with a clear error message — the backend doesn't crash, and the other four endpoints (prediction, explanation, health, model info) continue working normally.
+**Answer:** The backend's lifespan startup attempts to load the assistant service; if it fails (Ollama unreachable), `app.state.chat_service` stays `None` and `POST /assistant/chat` returns a structured `503` with a clear error message — the backend doesn't crash, and every other endpoint (predictions, explanations, insights, fixtures, teams, health) continues working normally.
 
 **Reasoning:** Graceful degradation — an optional dependency failing shouldn't take down the whole service. Verified by integration tests.
 
@@ -390,9 +390,7 @@
 
 ### 44. What would break first if this backend had to handle real production traffic?
 
-**Answer:** The vector store and model are loaded in-process and shared across all requests within a single uvicorn worker — fine for a single-instance local deployment, but horizontal scaling would need the model artifact to be reproducibly loadable on each instance (already true, since it's loaded from a versioned file) and the vector store similarly. The bigger gap is the complete absence of auth, rate limiting, and request throttling — explicitly out of scope but the first things I'd add before any public exposure.
-
-**Reasoning:** Shows awareness of the gap between "works locally" and "production-ready," and what the actual first steps would be.
+**Answer:** Authentication is missing entirely, so anyone who can reach the server can use it. There is a rate limiter (120 requests per minute per client, 429 with `Retry-After`, [ADR 014](../adr/014-api-versioning-and-rate-limiting.md)), but it lives in memory per process, so behind a load balancer each instance would count separately. The assistant is the heaviest path, since a local LLM answer can take many seconds. First steps: API keys, a shared rate-limit store such as Redis, HTTPS, and a queue or separate limit for the assistant.
 
 ---
 
@@ -422,13 +420,13 @@
 
 ---
 
-### 48. Why does the Android app use neutral feature values instead of computing real ones?
+### 48. How does the Android app get the model's 42 features?
 
-**Answer:** Computing the real 42 engineered features (rolling form, Elo, head-to-head) requires the *full* historical match dataset and the same feature-engineering pipeline that runs in Python on the backend — replicating that logic in Kotlin on-device would duplicate a non-trivial pipeline and risk it drifting out of sync with the source of truth. `buildNeutralFeatures()` provides demo-appropriate average values so the prediction flow is fully exercisable, with the limitation explicitly documented.
+**Answer:** It doesn't compute them. The app sends only the two team names and an optional league, and the server builds all 42 features from match history with the same pipeline used in training ([ADR 008](../adr/008-server-side-match-features.md)). Version one sent neutral placeholder values, which was its biggest weakness; moving feature computation to the server fixed it.
 
-**Reasoning:** A pragmatic, clearly-labelled trade-off rather than either skipping the feature or silently misrepresenting it as "real."
+**Reasoning:** One code path for training and serving means no training/serving skew, and the app doesn't need the full match history.
 
-**Trade-off:** Predictions shown in the demo reflect an average-team scenario, not the selected teams' actual current form — explicitly called out in the UI's data flow and in documentation, not hidden.
+**Trade-off:** Every prediction needs the server; the app can't predict a new fixture offline. It does show the last saved answers offline, under a banner.
 
 ---
 
@@ -442,6 +440,6 @@
 
 ### 50. If you had another two weeks on this project, what would you build next?
 
-**Answer:** Two things, in priority order: (1) replace `buildNeutralFeatures()` with a backend endpoint that computes real features for a selected team pairing as of "today," so predictions reflect actual current form rather than neutral averages — this directly improves the most user-visible limitation; (2) a structured RAG faithfulness evaluation harness with a small ground-truth Q&A set, so assistant quality becomes a measurable, trackable metric rather than something verified only by manual spot-checking.
+**Answer:** (1) An evaluation set for the assistant — questions with expected sources — to measure retrieval hit rate, faithfulness and refusals on every change. (2) A weekly monitoring job that scores the live season's matches and alerts when log loss or calibration drifts outside the cross-validation range. (3) Retries with backoff for the daily downloads and a timeout plus one retry for LLM calls.
 
-**Reasoning:** Prioritises closing the most user-visible gap first, then the most measurement-visible gap — demonstrates the ability to triage scope under a time constraint rather than listing every possible improvement with equal weight.
+**Reasoning:** The prediction path is measured and honest already; the assistant and live monitoring are the least measured parts, so they come first.

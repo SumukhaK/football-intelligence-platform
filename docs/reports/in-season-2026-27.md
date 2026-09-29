@@ -1,7 +1,7 @@
 # 2026/27 So Far: Live Check of the Five-League Model
 
 **Date:** 2026-09-28
-**Model:** `20260928_120015` (served; trained on 2000/01–2021/22, never retrained on later data)
+**Model:** `20260928_120015` (served at the time, now replaced by `20260928_123224`, see Rerun; trained on 2000/01–2021/22, never retrained on later data)
 **Matches:** every played league match of 2026/27 in the five leagues, up to 2026-09-20 (250 matches)
 **Method:** each match is predicted from features built only from matches before it, using the training feature pipeline (`python -m evaluation.in_season_cli`). Bookmaker probabilities are a benchmark only.
 
