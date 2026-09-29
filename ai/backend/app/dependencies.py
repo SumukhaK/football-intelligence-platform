@@ -14,12 +14,14 @@ from fastapi import Depends, Request
 from backend.app.config import get_settings
 from backend.app.exceptions import (
     FixtureFeaturesNotAvailableError,
+    FixturesNotAvailableError,
     InsightsNotAvailableError,
     ModelNotAvailableError,
 )
 from backend.app.services.competitions import ServedCompetitions
 from backend.app.services.explanation_service import ExplanationService
 from backend.app.services.fixture_feature_service import FixtureFeatureService
+from backend.app.services.fixtures_service import FixturesService
 from backend.app.services.insights_service import InsightsService
 from backend.app.services.prediction_service import PredictionService
 
@@ -108,6 +110,22 @@ def get_optional_insights_service(request: Request) -> InsightsService | None:
     return service
 
 
+def get_fixtures_service(request: Request) -> FixturesService:
+    """Return the FixturesService loaded at startup or by the daily refresh.
+
+    Raises FixturesNotAvailableError if no fixtures dataset is loaded.
+    """
+    service: FixturesService | None = getattr(
+        request.app.state, "fixtures_service", None
+    )
+    if service is None:
+        raise FixturesNotAvailableError(
+            "No fixtures loaded yet. Run scripts.refresh_fixtures or wait for "
+            "the daily refresh."
+        )
+    return service
+
+
 PredictionServiceDep = Annotated[PredictionService, Depends(get_prediction_service)]
 ExplanationServiceDep = Annotated[ExplanationService, Depends(get_explanation_service)]
 OptionalFixtureFeatureServiceDep = Annotated[
@@ -121,3 +139,4 @@ ServedCompetitionsDep = Annotated[ServedCompetitions, Depends(get_served_competi
 OptionalInsightsServiceDep = Annotated[
     InsightsService | None, Depends(get_optional_insights_service)
 ]
+FixturesServiceDep = Annotated[FixturesService, Depends(get_fixtures_service)]
