@@ -48,7 +48,7 @@ Service status.
   "matches_through": "2026-09-20",
   "last_refresh_at": "2026-09-29T07:01:31+05:30",
   "last_refresh_error": null,
-  "version": "0.1.0"
+  "version": "2.0.0"
 }
 ```
 
