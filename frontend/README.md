@@ -49,6 +49,7 @@ core-common/           — DispatcherProvider interface
 
 ```bash
 ./gradlew test
+./gradlew spotlessCheck detekt
 ```
 
 Tests live in `src/commonTest/` for each feature and core module.
@@ -63,6 +64,10 @@ The app follows MVVM with strict layer separation:
 - **API Service** (`commonMain`) — `FootballApiService` interface, `KtorFootballApiService` impl
 
 UI state is a sealed class per screen with `Loading`, `Success`, and `Error` variants.
+
+Screen text lives in each module's `src/commonMain/composeResources/values/strings.xml`
+and is read with `stringResource(Res.string.key)`. Every screen has previews in its
+module's `androidMain` source set, wrapped in `PreviewSurface` (ADR 010).
 
 ## Backend Base URL
 

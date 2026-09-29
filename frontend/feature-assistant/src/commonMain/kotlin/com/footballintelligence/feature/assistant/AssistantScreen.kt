@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -45,6 +44,20 @@ import androidx.compose.ui.unit.dp
 import com.footballintelligence.core.model.ChatMessage
 import com.footballintelligence.core.model.MessageRole
 import com.footballintelligence.core.model.SourceCitation
+import com.footballintelligence.core.ui.BackButton
+import com.footballintelligence.feature.assistant.resources.Res
+import com.footballintelligence.feature.assistant.resources.assistant_title
+import com.footballintelligence.feature.assistant.resources.cd_message_input
+import com.footballintelligence.feature.assistant.resources.cd_send_message
+import com.footballintelligence.feature.assistant.resources.confidence
+import com.footballintelligence.feature.assistant.resources.input_placeholder
+import com.footballintelligence.feature.assistant.resources.source_item
+import com.footballintelligence.feature.assistant.resources.sources
+import com.footballintelligence.feature.assistant.resources.unavailable_body
+import com.footballintelligence.feature.assistant.resources.unavailable_title
+import com.footballintelligence.feature.assistant.resources.welcome_body
+import com.footballintelligence.feature.assistant.resources.welcome_title
+import org.jetbrains.compose.resources.stringResource
 
 /** Multi-turn chat interface for the Football Intelligence Assistant. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,12 +72,8 @@ fun AssistantScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("AI Assistant") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+                title = { Text(stringResource(Res.string.assistant_title)) },
+                navigationIcon = { BackButton(onClick = onBack) },
             )
         },
         modifier = modifier,
@@ -96,6 +105,8 @@ private fun ChatContent(
 ) {
     val listState = rememberLazyListState()
     var inputText by rememberSaveable { mutableStateOf("") }
+    val inputDescription = stringResource(Res.string.cd_message_input)
+    val sendDescription = stringResource(Res.string.cd_send_message)
 
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
@@ -137,10 +148,10 @@ private fun ChatContent(
             OutlinedTextField(
                 value = inputText,
                 onValueChange = { inputText = it },
-                placeholder = { Text("Ask about football analytics...") },
+                placeholder = { Text(stringResource(Res.string.input_placeholder)) },
                 modifier = Modifier
                     .weight(1f)
-                    .semantics { contentDescription = "Message input" },
+                    .semantics { contentDescription = inputDescription },
                 maxLines = 4,
                 shape = RoundedCornerShape(24.dp),
             )
@@ -153,7 +164,7 @@ private fun ChatContent(
                     }
                 },
                 enabled = inputText.isNotBlank() && !isSending,
-                modifier = Modifier.semantics { contentDescription = "Send message" },
+                modifier = Modifier.semantics { contentDescription = sendDescription },
             ) {
                 Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
             }
@@ -206,7 +217,7 @@ private fun MessageBubble(message: ChatMessage) {
             }
             message.confidence?.let { conf ->
                 Text(
-                    "Confidence: ${(conf * 100).toInt()}%",
+                    stringResource(Res.string.confidence, (conf * 100).toInt()),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -226,10 +237,10 @@ private fun SourcesSection(sources: List<SourceCitation>) {
             modifier = Modifier.padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text("Sources", style = MaterialTheme.typography.labelSmall)
+            Text(stringResource(Res.string.sources), style = MaterialTheme.typography.labelSmall)
             sources.take(3).forEach { src ->
                 Text(
-                    "• ${src.source} (${(src.relevanceScore * 100).toInt()}%)",
+                    stringResource(Res.string.source_item, src.source, (src.relevanceScore * 100).toInt()),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                 )
@@ -246,9 +257,9 @@ private fun WelcomeMessage() {
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Spacer(Modifier.height(32.dp))
-        Text("Football Intelligence Assistant", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(Res.string.welcome_title), style = MaterialTheme.typography.titleMedium)
         Text(
-            "Ask me about the prediction model, SHAP explanations, feature engineering, or football analytics.",
+            stringResource(Res.string.welcome_body),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -264,10 +275,10 @@ private fun UnavailableContent(reason: String, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Assistant Unavailable", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(Res.string.unavailable_title), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
         Text(
-            "The AI assistant requires Ollama running locally with the knowledge index built. $reason",
+            stringResource(Res.string.unavailable_body, reason),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

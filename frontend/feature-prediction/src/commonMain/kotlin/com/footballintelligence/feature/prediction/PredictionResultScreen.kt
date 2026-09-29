@@ -7,14 +7,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -26,10 +22,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.footballintelligence.core.model.PredictionResult
-import com.footballintelligence.core.model.toOutcomeLabel
+import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
-import kotlin.math.roundToInt
+import com.footballintelligence.feature.prediction.resources.Res
+import com.footballintelligence.feature.prediction.resources.action_explain
+import com.footballintelligence.feature.prediction.resources.action_new_prediction
+import com.footballintelligence.feature.prediction.resources.confidence
+import com.footballintelligence.feature.prediction.resources.fixture
+import com.footballintelligence.feature.prediction.resources.model_version
+import com.footballintelligence.feature.prediction.resources.no_prediction
+import com.footballintelligence.feature.prediction.resources.outcome_draw
+import com.footballintelligence.feature.prediction.resources.outcome_team_win
+import com.footballintelligence.feature.prediction.resources.percent
+import com.footballintelligence.feature.prediction.resources.probabilities
+import com.footballintelligence.feature.prediction.resources.result_title
+import org.jetbrains.compose.resources.stringResource
 
 /** Displays the prediction result and offers navigation to the explanation. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,12 +52,8 @@ fun PredictionResultScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Prediction Result") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+                title = { Text(stringResource(Res.string.result_title)) },
+                navigationIcon = { BackButton(onClick = onBack) },
             )
         },
         modifier = modifier,
@@ -68,7 +72,7 @@ fun PredictionResultScreen(
                 modifier = Modifier.padding(padding),
             )
             is PredictionInputUiState.Idle -> ErrorView(
-                message = "No prediction available.",
+                message = stringResource(Res.string.no_prediction),
                 onRetry = onNewPrediction,
                 modifier = Modifier.padding(padding),
             )
@@ -103,20 +107,20 @@ private fun ResultContent(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    "${result.homeTeam} vs ${result.awayTeam}",
+                    stringResource(Res.string.fixture, result.homeTeam, result.awayTeam),
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Text(
-                    result.predictedResult.toOutcomeLabel(result.homeTeam, result.awayTeam),
+                    outcomeLabel(result.predictedResult, result.homeTeam, result.awayTeam),
                     style = MaterialTheme.typography.displaySmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Text(
-                    "Confidence: ${(result.confidence * 100).roundToInt()}%",
+                    stringResource(Res.string.confidence, percentOf(result.confidence)),
                     style = MaterialTheme.typography.bodyLarge,
                 )
                 Text(
-                    "Model: ${result.modelVersion}",
+                    stringResource(Res.string.model_version, result.modelVersion),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
@@ -128,10 +132,10 @@ private fun ResultContent(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Text("Probabilities", style = MaterialTheme.typography.titleSmall)
-                ProbabilityRow("${result.homeTeam} Win", result.probabilityHome)
-                ProbabilityRow("Draw", result.probabilityDraw)
-                ProbabilityRow("${result.awayTeam} Win", result.probabilityAway)
+                Text(stringResource(Res.string.probabilities), style = MaterialTheme.typography.titleSmall)
+                ProbabilityRow(stringResource(Res.string.outcome_team_win, result.homeTeam), result.probabilityHome)
+                ProbabilityRow(stringResource(Res.string.outcome_draw), result.probabilityDraw)
+                ProbabilityRow(stringResource(Res.string.outcome_team_win, result.awayTeam), result.probabilityAway)
             }
         }
 
@@ -141,13 +145,13 @@ private fun ResultContent(
             onClick = onExplain,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Explain This Prediction")
+            Text(stringResource(Res.string.action_explain))
         }
         OutlinedButton(
             onClick = onNewPrediction,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("New Prediction")
+            Text(stringResource(Res.string.action_new_prediction))
         }
     }
 }
@@ -161,7 +165,7 @@ private fun ProbabilityRow(label: String, probability: Double) {
         ) {
             Text(label, style = MaterialTheme.typography.bodyMedium)
             Text(
-                "${(probability * 100).roundToInt()}%",
+                stringResource(Res.string.percent, percentOf(probability)),
                 style = MaterialTheme.typography.bodyMedium,
             )
         }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="error_title">Something went wrong</string>
+    <string name="action_retry">Retry</string>
+    <string name="status_online">%1$s: Online</string>
+    <string name="status_offline">%1$s: Offline</string>
+    <string name="cd_back">Back</string>
+</resources>

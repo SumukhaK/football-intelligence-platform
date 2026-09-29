@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="assistant_title">AI Assistant</string>
+    <string name="input_placeholder">Ask about football analytics...</string>
+    <string name="cd_message_input">Message input</string>
+    <string name="cd_send_message">Send message</string>
+    <string name="confidence">Confidence: %1$s%</string>
+    <string name="sources">Sources</string>
+    <string name="source_item">• %1$s (%2$s%)</string>
+    <string name="welcome_title">Football Intelligence Assistant</string>
+    <string name="welcome_body">Ask me about the prediction model, SHAP explanations, feature engineering, or football analytics.</string>
+    <string name="unavailable_title">Assistant Unavailable</string>
+    <string name="unavailable_body">The AI assistant requires Ollama running locally with the knowledge index built. %1$s</string>
+</resources>

@@ -9,15 +9,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -32,8 +28,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
+import com.footballintelligence.feature.prediction.resources.Res
+import com.footballintelligence.feature.prediction.resources.action_predict
+import com.footballintelligence.feature.prediction.resources.away_team
+import com.footballintelligence.feature.prediction.resources.cd_predict
+import com.footballintelligence.feature.prediction.resources.cd_team_dropdown
+import com.footballintelligence.feature.prediction.resources.home_team
+import com.footballintelligence.feature.prediction.resources.prediction_title
+import com.footballintelligence.feature.prediction.resources.season_note
+import com.footballintelligence.feature.prediction.resources.select_teams
+import com.footballintelligence.feature.prediction.resources.teams_must_differ
+import com.footballintelligence.feature.prediction.resources.versus
+import org.jetbrains.compose.resources.stringResource
 
 /** Team selection screen for submitting a match prediction. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,12 +59,8 @@ fun PredictionScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Match Prediction") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+                title = { Text(stringResource(Res.string.prediction_title)) },
+                navigationIcon = { BackButton(onClick = onBack) },
             )
         },
         modifier = modifier,
@@ -106,20 +111,20 @@ private fun PredictionInputContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("Select Teams", style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(Res.string.select_teams), style = MaterialTheme.typography.headlineSmall)
         Text(
-            text = "Premier League $season. Predictions use every result played so far.",
+            text = stringResource(Res.string.season_note, season),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         TeamDropdown(
-            label = "Home Team",
+            label = stringResource(Res.string.home_team),
             selectedTeam = homeTeam,
             teams = teams,
             onTeamSelected = { homeTeam = it },
         )
         TeamDropdown(
-            label = "Away Team",
+            label = stringResource(Res.string.away_team),
             selectedTeam = awayTeam,
             teams = teams,
             onTeamSelected = { awayTeam = it },
@@ -134,25 +139,26 @@ private fun PredictionInputContent(
                 style = MaterialTheme.typography.titleMedium,
             )
             Spacer(Modifier.width(12.dp))
-            Text("vs", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(Res.string.versus), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.width(12.dp))
             Text(
                 text = awayTeam,
                 style = MaterialTheme.typography.titleMedium,
             )
         }
+        val predictDescription = stringResource(Res.string.cd_predict)
         Button(
             onClick = { onPredict(homeTeam, awayTeam) },
             enabled = homeTeam != awayTeam,
             modifier = Modifier
                 .fillMaxWidth()
-                .semantics { contentDescription = "Predict match outcome" },
+                .semantics { contentDescription = predictDescription },
         ) {
-            Text("Predict Match Outcome")
+            Text(stringResource(Res.string.action_predict))
         }
         if (homeTeam == awayTeam) {
             Text(
-                text = "Home and away teams must be different.",
+                text = stringResource(Res.string.teams_must_differ),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.error,
             )
@@ -169,6 +175,7 @@ private fun TeamDropdown(
     onTeamSelected: (String) -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
+    val dropdownDescription = stringResource(Res.string.cd_team_dropdown, label, selectedTeam)
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = it },
@@ -182,7 +189,7 @@ private fun TeamDropdown(
             modifier = Modifier
                 .fillMaxWidth()
                 .menuAnchor()
-                .semantics { contentDescription = "$label dropdown: $selectedTeam" },
+                .semantics { contentDescription = dropdownDescription },
         )
         ExposedDropdownMenu(
             expanded = expanded,

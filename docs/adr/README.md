@@ -92,3 +92,4 @@ ADRs are never deleted.
 | [007](007-season-based-split-and-evaluation.md) | Season-based split and evaluation protocol | Accepted |
 | [008](008-server-side-match-features.md) | Compute match features on the server | Accepted |
 | [009](009-dixon-coles-goals-model.md) | Add a Dixon-Coles goals model for scoreline predictions | Proposed |
+| [010](010-compose-resources-for-ui-text.md) | Keep UI text in Compose Multiplatform resources | Accepted |
