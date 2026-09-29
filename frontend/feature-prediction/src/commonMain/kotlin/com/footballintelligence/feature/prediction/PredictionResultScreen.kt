@@ -1,11 +1,14 @@
 package com.footballintelligence.feature.prediction
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,9 +21,12 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,7 +42,6 @@ import com.footballintelligence.feature.prediction.resources.confidence
 import com.footballintelligence.feature.prediction.resources.draw_possible
 import com.footballintelligence.feature.prediction.resources.draw_possible_detail
 import com.footballintelligence.feature.prediction.resources.fixture
-import com.footballintelligence.feature.prediction.resources.model_version
 import com.footballintelligence.feature.prediction.resources.no_prediction
 import com.footballintelligence.feature.prediction.resources.outcome_draw
 import com.footballintelligence.feature.prediction.resources.outcome_team_win
@@ -63,6 +68,11 @@ fun PredictionResultScreen(
                 navigationIcon = { BackButton(onClick = onBack) },
             )
         },
+        bottomBar = {
+            if (uiState is PredictionInputUiState.Success) {
+                ResultActions(onExplain = onExplain, onNewPrediction = onNewPrediction)
+            }
+        },
         modifier = modifier,
     ) { padding ->
         when (uiState) {
@@ -75,8 +85,6 @@ fun PredictionResultScreen(
             is PredictionInputUiState.Success -> ResultContent(
                 result = uiState.result,
                 insightsState = insightsState,
-                onExplain = onExplain,
-                onNewPrediction = onNewPrediction,
                 modifier = Modifier.padding(padding),
             )
             is PredictionInputUiState.Idle -> ErrorView(
@@ -92,8 +100,6 @@ fun PredictionResultScreen(
 private fun ResultContent(
     result: PredictionResult,
     insightsState: InsightsUiState,
-    onExplain: () -> Unit,
-    onNewPrediction: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -106,13 +112,13 @@ private fun ResultContent(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
             ),
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
+                    .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -135,18 +141,13 @@ private fun ResultContent(
                     stringResource(Res.string.confidence, percentOf(result.confidence)),
                     style = MaterialTheme.typography.bodyLarge,
                 )
-                Text(
-                    stringResource(Res.string.model_version, result.modelVersion),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
             }
         }
 
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(stringResource(Res.string.probabilities), style = MaterialTheme.typography.titleSmall)
                 ProbabilityRow(stringResource(Res.string.outcome_team_win, result.homeTeam), result.probabilityHome)
@@ -156,25 +157,37 @@ private fun ResultContent(
         }
 
         InsightsSection(state = insightsState)
+    }
+}
 
-        Button(
-            onClick = onExplain,
-            modifier = Modifier.fillMaxWidth(),
+/** Explain and New prediction, pinned to the bottom of the screen. */
+@Composable
+private fun ResultActions(onExplain: () -> Unit, onNewPrediction: () -> Unit) {
+    Surface(tonalElevation = 3.dp) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(stringResource(Res.string.action_explain))
-        }
-        OutlinedButton(
-            onClick = onNewPrediction,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(Res.string.action_new_prediction))
+            OutlinedButton(onClick = onNewPrediction, modifier = Modifier.weight(1f)) {
+                Text(stringResource(Res.string.action_new_prediction))
+            }
+            Button(onClick = onExplain, modifier = Modifier.weight(1f)) {
+                Text(stringResource(Res.string.action_explain))
+            }
         }
     }
 }
 
 @Composable
 private fun ProbabilityRow(label: String, probability: Double) {
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    val fill = remember { Animatable(0f) }
+    LaunchedEffect(probability) {
+        fill.animateTo(probability.toFloat(), tween(durationMillis = FILL_MILLIS))
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -182,11 +195,11 @@ private fun ProbabilityRow(label: String, probability: Double) {
             Text(label, style = MaterialTheme.typography.bodyMedium)
             Text(
                 stringResource(Res.string.percent, percentOf(probability)),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.titleSmall,
             )
         }
         LinearProgressIndicator(
-            progress = { probability.toFloat() },
+            progress = { fill.value },
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -211,3 +224,5 @@ private fun DrawPossibleTag() {
         )
     }
 }
+
+private const val FILL_MILLIS = 700

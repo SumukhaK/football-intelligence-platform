@@ -110,7 +110,7 @@ private fun InfoCard(title: String, content: @Composable () -> Unit) {
 
 @Composable
 private fun InfoRow(label: String, value: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             label,
             style = MaterialTheme.typography.labelMedium,
