@@ -268,7 +268,7 @@ Before approving any pull request, verify:
 4. Implement the feature in the smallest coherent unit.
 5. Verify manually.
 6. Commit with a conventional commit message.
-7. Open a pull request. Self-review against the code review checklist.
+7. Open a pull request into `develop` (never directly into `main`). Self-review against the code review checklist.
 8. Update documentation if anything changed.
 9. Stop. Wait for the next task.
 
