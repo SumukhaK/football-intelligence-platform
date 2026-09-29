@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int | None = Field(default=120, ge=1)
     matches_dir: Path = Path("../datasets/processed/football_data")
     datasets_dir: Path = Path("../datasets")
+    # Upcoming fixtures, rebuilt by the daily refresh (ADR 015).
+    fixtures_dir: Path = Path("../datasets/processed/openfootball")
     # Local hour of the daily data refresh (ADR 013); set to `off` to turn it off.
     live_refresh_hour: int | None = Field(default=6, ge=0, le=23)
     # Leagues the API serves (ADR 012); requests naming no league get the default.

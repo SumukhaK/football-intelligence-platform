@@ -6,6 +6,7 @@ import asyncio
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from datetime import date
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -15,6 +16,7 @@ from backend.app.exceptions import (
     AssistantNotAvailableError,
     FeatureMissingError,
     FixtureFeaturesNotAvailableError,
+    FixturesNotAvailableError,
     InsightsNotAvailableError,
     ModelNotAvailableError,
     UnknownCompetitionError,
@@ -22,6 +24,7 @@ from backend.app.exceptions import (
     assistant_not_available_handler,
     feature_missing_handler,
     fixture_features_not_available_handler,
+    fixtures_not_available_handler,
     insights_not_available_handler,
     model_not_available_handler,
     unexpected_error_handler,
@@ -33,6 +36,7 @@ from backend.app.routers import (
     assistant,
     competitions,
     explainability,
+    fixtures,
     health,
     insights,
     model,
@@ -188,6 +192,7 @@ def _load_match_data(app: FastAPI) -> None:
     app.state.insights_service = _load_insights(
         settings.matches_dir, settings.served_competitions
     )
+    app.state.fixtures_service = _load_fixtures(settings.fixtures_dir)
 
 
 def _start_live_refresh(app: FastAPI) -> asyncio.Task[None] | None:
@@ -197,17 +202,17 @@ def _start_live_refresh(app: FastAPI) -> asyncio.Task[None] | None:
     if settings.live_refresh_hour is None:
         logger.info("Daily data refresh is off.")
         return None
-    from datetime import date, datetime
+    from datetime import datetime
 
     from backend.app.services.live_refresh_service import LiveRefreshService, is_due
     from inference.fixture_features import find_latest_dataset
-    from ingestion.live_refresh import dataset_built_at, refresh_live_dataset
+    from ingestion.live_refresh import dataset_built_at
 
     def clock() -> datetime:
         return datetime.now().astimezone()
 
     service = LiveRefreshService(
-        refresh=lambda: refresh_live_dataset(settings.datasets_dir, date.today()),
+        refresh=lambda: _refresh_all(settings.datasets_dir, date.today()),
         reload=lambda: _load_match_data(app),
         clock=clock,
     )
@@ -216,13 +221,44 @@ def _start_live_refresh(app: FastAPI) -> asyncio.Task[None] | None:
         built = dataset_built_at(find_latest_dataset(settings.matches_dir))
     except FileNotFoundError:
         built = None
-    due = is_due(built, clock(), settings.live_refresh_hour)
+    # Missing fixtures are fetched straight away too (ADR 015).
+    due = is_due(built, clock(), settings.live_refresh_hour) or (
+        app.state.fixtures_service is None
+    )
     logger.info(
         "Daily data refresh at %02d:00; refreshing now: %s",
         settings.live_refresh_hour,
         due,
     )
     return asyncio.create_task(service.run_daily(settings.live_refresh_hour, due))
+
+
+def _refresh_all(datasets_dir: Path, today: date) -> Path:
+    """Refresh results, then fixtures; a fixtures failure is only logged."""
+    from ingestion.fixtures import refresh_fixtures
+    from ingestion.live_refresh import refresh_live_dataset
+
+    dataset = refresh_live_dataset(datasets_dir, today)
+    try:
+        logger.info(
+            "Fixtures refreshed: %s", refresh_fixtures(datasets_dir, today).name
+        )
+    except Exception as exc:  # noqa: BLE001 — keep the old fixtures
+        logger.warning("Fixtures refresh failed: %s", exc)
+    return dataset
+
+
+def _load_fixtures(directory: Path) -> object | None:
+    """Load the newest upcoming-fixtures dataset; None if there is none."""
+    try:
+        from backend.app.services.fixtures_service import FixturesService
+
+        service = FixturesService.from_directory(directory, date.today)
+        logger.info("Fixtures loaded, downloaded at %s", service.updated_at)
+        return service
+    except Exception as exc:  # noqa: BLE001 — /fixtures answers 503 instead
+        logger.warning("Fixtures not loaded from %s: %s", directory, exc)
+        return None
 
 
 def _load_fixture_features(directory: Path, competitions: list[str]) -> object | None:
@@ -294,6 +330,7 @@ def create_app() -> FastAPI:
     app.add_exception_handler(UnknownTeamError, unknown_team_handler)
     app.add_exception_handler(UnknownCompetitionError, unknown_competition_handler)
     app.add_exception_handler(InsightsNotAvailableError, insights_not_available_handler)
+    app.add_exception_handler(FixturesNotAvailableError, fixtures_not_available_handler)
     app.add_exception_handler(Exception, unexpected_error_handler)
 
     _include_routers(app)
@@ -319,6 +356,7 @@ def _include_routers(app: FastAPI) -> None:
         teams.router,
         competitions.router,
         insights.router,
+        fixtures.router,
     ]
     for router in shared + v2_only:
         app.include_router(router, prefix="/v2")

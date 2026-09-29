@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Screen text lives in each module's composeResources/values/strings.xml (ADR 010). -->
+    <!-- Screen text lives in each module's composeResources/values/strings.xml (ADR 010).
+         Only the Android-only app shell (name, bottom bar) keeps its text here. -->
     <string name="app_name">Football Intelligence</string>
+    <string name="nav_fixtures">Fixtures</string>
+    <string name="nav_predict">Predict</string>
+    <string name="nav_assistant">Assistant</string>
+    <string name="nav_settings">Settings</string>
 </resources>

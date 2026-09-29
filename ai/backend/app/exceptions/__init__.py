@@ -22,6 +22,10 @@ class InsightsNotAvailableError(Exception):
     """Raised when the goals model could not be fitted at startup."""
 
 
+class FixturesNotAvailableError(Exception):
+    """Raised when no upcoming fixtures dataset is loaded."""
+
+
 class FeatureMissingError(Exception):
     """Raised when required feature columns are absent from the request."""
 
@@ -109,6 +113,15 @@ def insights_not_available_handler(_request: Request, exc: Exception) -> JSONRes
     return JSONResponse(
         status_code=503,
         content={"error": "Insights not available", "detail": str(exc)},
+    )
+
+
+def fixtures_not_available_handler(_request: Request, exc: Exception) -> JSONResponse:
+    """Return a 503 when no fixtures dataset is loaded."""
+    logger.error("Fixtures not available: %s", exc)
+    return JSONResponse(
+        status_code=503,
+        content={"error": "Fixtures not available", "detail": str(exc)},
     )
 
 

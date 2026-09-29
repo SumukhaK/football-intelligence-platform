@@ -189,6 +189,7 @@ class DatasetStorage:
         provider_id: ProviderId,
         dataset_name: DatasetName,
         partition: str,
+        suffix: str = ".csv",
     ) -> Path:
         """Persist one raw source file, e.g. one division season, immutably.
 
@@ -198,7 +199,7 @@ class DatasetStorage:
         Returns:
             Absolute path to the partition file.
         """
-        path = self._partition_path(provider_id, dataset_name, partition)
+        path = self._partition_path(provider_id, dataset_name, partition, suffix)
         if path.exists():
             if path.read_bytes() != content:
                 raise StorageError(
@@ -214,20 +215,30 @@ class DatasetStorage:
         return path
 
     def has_raw_partition(
-        self, provider_id: ProviderId, dataset_name: DatasetName, partition: str
+        self,
+        provider_id: ProviderId,
+        dataset_name: DatasetName,
+        partition: str,
+        suffix: str = ".csv",
     ) -> bool:
         """Return whether a raw partition has already been stored."""
-        return self._partition_path(provider_id, dataset_name, partition).exists()
+        return self._partition_path(
+            provider_id, dataset_name, partition, suffix
+        ).exists()
 
     def load_raw_partition(
-        self, provider_id: ProviderId, dataset_name: DatasetName, partition: str
+        self,
+        provider_id: ProviderId,
+        dataset_name: DatasetName,
+        partition: str,
+        suffix: str = ".csv",
     ) -> bytes:
         """Read a stored raw partition.
 
         Raises:
             StorageError: If the partition does not exist.
         """
-        path = self._partition_path(provider_id, dataset_name, partition)
+        path = self._partition_path(provider_id, dataset_name, partition, suffix)
         if not path.exists():
             raise StorageError(f"Raw partition not found: '{path}'.")
         return path.read_bytes()
@@ -252,13 +263,17 @@ class DatasetStorage:
         return path
 
     def _partition_path(
-        self, provider_id: ProviderId, dataset_name: DatasetName, partition: str
+        self,
+        provider_id: ProviderId,
+        dataset_name: DatasetName,
+        partition: str,
+        suffix: str = ".csv",
     ) -> Path:
         """Return the path of a raw partition file."""
         return (
             self._paths.provider_raw_dir(provider_id)
             / dataset_name
-            / (f"{partition}.csv")
+            / f"{partition}{suffix}"
         )
 
     def list_versions(

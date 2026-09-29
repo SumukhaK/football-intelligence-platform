@@ -21,7 +21,7 @@ v1 keeps the release v1.0.0 contract so older clients keep working. It serves
 Its responses have no `competition` or `draw_possible` field, and its
 explanations have no `display_name` or `display_value`. Naming any league
 other than the Premier League returns 422 `Unknown competition`.
-`/competitions` and `/insights` exist only in v2. The unversioned paths
+`/competitions`, `/fixtures` and `/insights` exist only in v2. The unversioned paths
 behave exactly like `/v1` and are left out of the docs page.
 
 ## Rate limit
@@ -104,6 +104,35 @@ choose the league; the default is the Premier League. An unknown league returns
 ```
 
 Returns 503 when match history is not loaded.
+
+## GET /fixtures
+
+A league's scheduled matches from today on, earliest first (ADR 015). Pass
+`?competition=` to choose the league (default the Premier League) and
+`?limit=` for how many to return (default 50, at most 400). Team names are the
+ones `/predict` accepts. `kickoff` carries the league's UTC offset and is null
+until the league confirms the time; `match_date` is always set.
+
+```json
+{
+  "competition": "Premier League",
+  "fixtures": [
+    {
+      "match_date": "2026-10-10",
+      "kickoff": "2026-10-10T12:30:00+01:00",
+      "home_team": "Arsenal",
+      "away_team": "Leeds",
+      "round": "Matchday 6"
+    }
+  ],
+  "updated_at": "2026-09-29T07:06:38Z"
+}
+```
+
+Schedules come from openfootball and are downloaded with the daily refresh,
+or by hand with `uv run python -m scripts.refresh_fixtures --confirm`.
+Returns 422 `Unknown competition` for an unserved league and 503
+`Fixtures not available` before the first download.
 
 ## POST /predict
 

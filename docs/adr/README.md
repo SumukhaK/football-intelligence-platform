@@ -97,3 +97,4 @@ ADRs are never deleted.
 | [012](012-serve-all-five-leagues.md) | Serve all five leagues in the API and app | Accepted |
 | [013](013-daily-data-refresh-in-backend.md) | Refresh match data daily inside the backend | Accepted |
 | [014](014-api-versioning-and-rate-limiting.md) | Version the API and add a rate limiter | Accepted |
+| [015](015-upcoming-fixtures-from-openfootball.md) | Upcoming fixtures from openfootball | Accepted |

@@ -34,8 +34,6 @@ class CachingFootballApiService(
     private val clock: () -> String,
 ) : FootballApiService {
 
-    private val json = Json { ignoreUnknownKeys = true }
-
     override suspend fun getHealth() = cached("health") { delegate.getHealth() }
 
     override suspend fun getModel() = cached("model") { delegate.getModel() }
@@ -44,6 +42,9 @@ class CachingFootballApiService(
 
     override suspend fun getTeams(competition: String) =
         cached("teams|$competition") { delegate.getTeams(competition) }
+
+    override suspend fun getFixtures(competition: String) =
+        cached("fixtures|$competition") { delegate.getFixtures(competition) }
 
     override suspend fun predict(request: PredictionRequest) =
         cached("predict|${request.key()}") { delegate.predict(request) }
@@ -66,15 +67,18 @@ class CachingFootballApiService(
             cache.write(key, CachedResponse(json.encodeToString(serializer, result.data), clock()))
         }
         val offline = result is NetworkResult.Error && result.kind == ErrorKind.OFFLINE
-        return (if (offline) replay(key, serializer) else null) ?: result
+        return (if (offline) cache.replay(key, serializer) else null) ?: result
     }
+}
 
-    private fun <T> replay(key: String, serializer: KSerializer<T>): NetworkResult<T>? {
-        val saved = cache.read(key) ?: return null
-        return runCatching { json.decodeFromString(serializer, saved.json) }
-            .getOrNull()
-            ?.let { NetworkResult.Success(it, cachedAt = saved.savedAt) }
-    }
+private val json = Json { ignoreUnknownKeys = true }
+
+/** The saved response for [key] as a result, or null if none can be read. */
+private fun <T> ResponseCache.replay(key: String, serializer: KSerializer<T>): NetworkResult<T>? {
+    val saved = read(key) ?: return null
+    return runCatching { json.decodeFromString(serializer, saved.json) }
+        .getOrNull()
+        ?.let { NetworkResult.Success(it, cachedAt = saved.savedAt) }
 }
 
 private fun PredictionRequest.key(): String = "${competition.orEmpty()}|$homeTeam|$awayTeam"
