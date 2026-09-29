@@ -29,6 +29,7 @@ import com.footballintelligence.core.model.valueText
 import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
+import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.prediction.resources.Res
 import com.footballintelligence.feature.prediction.resources.against_subtitle
 import com.footballintelligence.feature.prediction.resources.against_title
@@ -68,7 +69,7 @@ fun ExplainPredictionScreen(
         when (uiState) {
             is ExplanationUiState.Loading -> LoadingView(Modifier.padding(padding))
             is ExplanationUiState.Error -> ErrorView(
-                message = uiState.message,
+                message = errorMessage(uiState.kind, uiState.message),
                 modifier = Modifier.padding(padding),
             )
             is ExplanationUiState.Idle -> ErrorView(

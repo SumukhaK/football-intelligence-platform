@@ -31,7 +31,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             _modelInfoState.value = when (val result = repository.getModelInfo()) {
                 is NetworkResult.Success -> ModelInfoUiState.Success(result.data)
-                is NetworkResult.Error -> ModelInfoUiState.Error(result.message)
+                is NetworkResult.Error -> ModelInfoUiState.Error(result.message, result.kind)
                 is NetworkResult.Loading -> ModelInfoUiState.Loading
             }
         }

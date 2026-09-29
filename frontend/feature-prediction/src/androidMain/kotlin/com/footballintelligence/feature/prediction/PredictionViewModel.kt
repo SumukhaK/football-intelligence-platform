@@ -51,8 +51,8 @@ class PredictionViewModel(
                     loadTeams()
                 }
                 is NetworkResult.Error -> {
-                    _competitionsState.value = CompetitionsUiState.Error(result.message)
-                    _teamsState.value = TeamsUiState.Error(result.message)
+                    _competitionsState.value = CompetitionsUiState.Error(result.message, result.kind)
+                    _teamsState.value = TeamsUiState.Error(result.message, result.kind)
                 }
                 is NetworkResult.Loading -> Unit
             }
@@ -78,7 +78,7 @@ class PredictionViewModel(
         viewModelScope.launch {
             _teamsState.value = when (val result = repository.teams(league)) {
                 is NetworkResult.Success -> result.data.toUiState()
-                is NetworkResult.Error -> TeamsUiState.Error(result.message)
+                is NetworkResult.Error -> TeamsUiState.Error(result.message, result.kind)
                 is NetworkResult.Loading -> TeamsUiState.Loading
             }
         }
@@ -99,7 +99,7 @@ class PredictionViewModel(
         viewModelScope.launch {
             _predictionState.value = when (val result = repository.predict(request)) {
                 is NetworkResult.Success -> PredictionInputUiState.Success(result.data)
-                is NetworkResult.Error -> PredictionInputUiState.Error(result.message)
+                is NetworkResult.Error -> PredictionInputUiState.Error(result.message, result.kind)
                 is NetworkResult.Loading -> PredictionInputUiState.Loading
             }
         }
@@ -118,7 +118,7 @@ class PredictionViewModel(
         viewModelScope.launch {
             _explanationState.value = when (val result = repository.explain(request)) {
                 is NetworkResult.Success -> ExplanationUiState.Success(result.data)
-                is NetworkResult.Error -> ExplanationUiState.Error(result.message)
+                is NetworkResult.Error -> ExplanationUiState.Error(result.message, result.kind)
                 is NetworkResult.Loading -> ExplanationUiState.Loading
             }
         }
@@ -139,7 +139,7 @@ class PredictionViewModel(
         viewModelScope.launch {
             _insightsState.value = when (val result = repository.insights(request)) {
                 is NetworkResult.Success -> InsightsUiState.Success(result.data)
-                is NetworkResult.Error -> InsightsUiState.Error(result.message)
+                is NetworkResult.Error -> InsightsUiState.Error(result.message, result.kind)
                 is NetworkResult.Loading -> InsightsUiState.Loading
             }
         }

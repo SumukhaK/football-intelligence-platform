@@ -20,6 +20,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.junit5.api)
             implementation(libs.junit5.params)
+            implementation(libs.junit5.engine)
         }
     }
 }

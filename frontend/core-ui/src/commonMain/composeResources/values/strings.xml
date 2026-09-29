@@ -2,6 +2,9 @@
 <resources>
     <string name="error_title">Something went wrong</string>
     <string name="action_retry">Retry</string>
+    <string name="error_offline">Can't reach the server. Check that the backend is running and your connection is on, then try again.</string>
+    <string name="error_server_busy">The server isn't ready yet. Give it a moment, then try again.</string>
+    <string name="error_unknown">Something unexpected happened on our side. Please try again.</string>
     <string name="status_online">%1$s: Online</string>
     <string name="status_offline">%1$s: Offline</string>
     <string name="cd_back">Back</string>

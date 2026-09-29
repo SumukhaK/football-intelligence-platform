@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
+import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.prediction.resources.Res
 import com.footballintelligence.feature.prediction.resources.action_predict
 import com.footballintelligence.feature.prediction.resources.away_team
@@ -72,7 +73,7 @@ fun PredictionScreen(
         when (uiState) {
             is PredictionInputUiState.Loading -> LoadingView(Modifier.padding(padding))
             is PredictionInputUiState.Error -> ErrorView(
-                message = uiState.message,
+                message = errorMessage(uiState.kind, uiState.message),
                 modifier = Modifier.padding(padding),
             )
             is PredictionInputUiState.Success -> {
@@ -92,7 +93,7 @@ fun PredictionScreen(
                 when (teamsState) {
                     is TeamsUiState.Loading -> LoadingView(Modifier.weight(1f))
                     is TeamsUiState.Error -> ErrorView(
-                        message = teamsState.message,
+                        message = errorMessage(teamsState.kind, teamsState.message),
                         onRetry = onRetryTeams,
                         modifier = Modifier.weight(1f),
                     )

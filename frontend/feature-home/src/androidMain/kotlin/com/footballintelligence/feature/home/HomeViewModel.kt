@@ -30,7 +30,7 @@ class HomeViewModel(
         viewModelScope.launch {
             _state.value = when (val result = repository.getHealth()) {
                 is NetworkResult.Success -> HomeUiState.Success(result.data)
-                is NetworkResult.Error -> HomeUiState.Error(result.message)
+                is NetworkResult.Error -> HomeUiState.Error(result.message, result.kind)
                 is NetworkResult.Loading -> HomeUiState.Loading
             }
         }
