@@ -35,7 +35,7 @@ For the Android segments: an emulator running, app installed (`cd frontend && ./
 | 0:30–1:30 | "The app opens on upcoming fixtures, one tab per league, in my time zone." | Android app: Fixtures tab, switch from Premier League to Bundesliga |
 | 1:30–3:00 | "Pick a league and two teams, and the real model answers." | Predict tab → league → teams → **Predict Match Outcome** → show probabilities, the draw tag if shown, and the likely scores |
 | 3:00–4:00 | "Every prediction comes with an explanation — not a black box." | Tap **Explain** → show "Why the model leans this way" and "What counts against it" |
-| 4:00–5:00 | "It's close to the bookmakers using only public results, and 864 tests keep it honest." | Mention 52.5% vs 55.0% for bookmakers; open `docs/releases/v2.0.0.md` if asked |
+| 4:00–5:00 | "It's close to the bookmakers using only public results, and 871 tests keep it honest." | Mention 52.5% vs 55.0% for bookmakers; open `docs/releases/v2.0.0.md` if asked |
 
 **Expected outputs:** A fixtures list by date; a prediction with three probabilities and likely scores; a plain-language explanation.
 
@@ -79,7 +79,7 @@ curl -s -X POST localhost:8000/v2/predict -H "Content-Type: application/json" \
 | 10:00–13:00 | RAG pipeline: chunking, embedding, retrieval, source-constrained prompting, graceful 503 degradation. | Ask the assistant a question; then stop Ollama and show the same request returning a clean 503 |
 | 13:00–16:00 | Backend architecture: lifespan DI, server-side features, daily refresh without restart, `/v1` vs `/v2`, rate limiting, 422 vs 503 vs 429. | Walk through `ai/backend/app/main.py`; call `/predict` (v1 model) and `/v2/predict` (current model) side by side |
 | 16:00–18:00 | Android architecture: MVVM with StateFlow, Koin DI, the caching decorator for offline mode, ViewModel sharing across Prediction → Result → Explain. | Walk through `frontend/core-network/.../CachingFootballApiService.kt` and `PredictionViewModel.kt` |
-| 18:00–19:30 | Testing strategy: 762 unit and contract tests vs. 36 real-model integration tests, plus 66 Android tests. | `uv run pytest -m "not integration"` then `uv run pytest tests/integration/ -v` |
+| 18:00–19:30 | Testing strategy: 762 unit and contract tests vs. 36 real-model integration tests, plus 73 Android tests. | `uv run pytest -m "not integration"` then `uv run pytest tests/integration/ -v` |
 | 19:30–20:00 | Known limitations and what's next: no authentication, no automated assistant evaluation, results-only data. | Reference the "Future Scope" section of [project-showcase.md](project-showcase.md) |
 
 **Expected outputs:** All of the above, plus visible proof of graceful degradation (503 without crashing) and a clear two-tier test run.

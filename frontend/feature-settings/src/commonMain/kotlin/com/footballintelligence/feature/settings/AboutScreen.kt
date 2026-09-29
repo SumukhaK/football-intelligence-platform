@@ -139,4 +139,4 @@ private fun StackItem(label: StringResource, value: StringResource) {
 }
 
 /** Matches versionName in app/build.gradle.kts. */
-private const val APP_VERSION = "2.0.1"
+private const val APP_VERSION = "2.1.0"

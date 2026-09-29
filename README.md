@@ -2,7 +2,7 @@
 
 **An AI-first football analytics platform — from raw match data to an explainable, grounded, mobile-native prediction experience.**
 
-[![CI](https://img.shields.io/badge/CI-passing-brightgreen)](.github/workflows) [![Tests](https://img.shields.io/badge/tests-864%20passing-brightgreen)](docs/reports/) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Python](https://img.shields.io/badge/python-3.12-blue)](ai/pyproject.toml) [![Kotlin](https://img.shields.io/badge/kotlin-Compose%20Multiplatform-purple)](frontend/)
+[![CI](https://img.shields.io/badge/CI-passing-brightgreen)](.github/workflows) [![Tests](https://img.shields.io/badge/tests-871%20passing-brightgreen)](docs/reports/) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Python](https://img.shields.io/badge/python-3.12-blue)](ai/pyproject.toml) [![Kotlin](https://img.shields.io/badge/kotlin-Compose%20Multiplatform-purple)](frontend/)
 
 [![Watch the 3-minute demo](docs/showcase/demo-video/thumbnail.png)](https://github.com/SumukhaK/football-intelligence-platform/releases/download/v2.0.0/football-intelligence-demo.mp4)
 
@@ -16,7 +16,7 @@ The Football Intelligence Platform ingests 26 seasons of match data from Europe'
 
 It is a complete, working system — not a notebook or a prototype. Twelve build stages take it from an empty repository to a tested, documented, end-to-end product: ingestion → validation → feature engineering → model training → explainability → a FastAPI backend → a locally-grounded RAG assistant → a Compose Multiplatform Android app → full integration testing.
 
-**864 tests pass (798 Python, 66 Android). Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes results and fixtures daily without a restart, and the app keeps working offline with the last data it saw.**
+**871 tests pass (798 Python, 73 Android). Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes results and fixtures daily without a restart, and the app keeps working offline with the last data it saw.**
 
 ---
 
@@ -47,7 +47,7 @@ This project demonstrates AI engineering as a discipline: not just "can I train 
 | **Production-shaped backend** | Versioned FastAPI (`/v1` frozen, `/v2` current, ADR 014), server-side match features, upcoming fixtures, a daily in-process data refresh (ADR 013), a per-client rate limit, structured errors, OpenAPI docs |
 | **Native Android client** | Compose Multiplatform app that opens on upcoming fixtures by league, with bottom navigation, a league picker, offline mode with saved data, pull to refresh, MVVM, StateFlow, Koin DI and previews for every screen |
 | **Full reproducibility** | Entire pipeline (ingest → features → train → explain) runs in under 15 seconds from one CLI command |
-| **End-to-end test coverage** | 798 Python tests (unit and integration against the real model) and 66 Android tests (ViewModels written test-first, repositories, network, cache) |
+| **End-to-end test coverage** | 798 Python tests (unit and integration against the real model) and 73 Android tests (ViewModels written test-first, repositories, network, cache, loader) |
 | **Zero cloud dependency** | Runs entirely on a laptop — no managed database, no cloud LLM, no hosted vector store |
 
 ---
@@ -104,7 +104,7 @@ flowchart TD
 | **Backend** | FastAPI, Pydantic v2, `pydantic-settings`, uvicorn |
 | **Mobile** | Kotlin, Compose Multiplatform, Ktor client, Koin DI, AndroidX Navigation Compose, Material 3 |
 | **Tooling** | uv (Python dependency management), Gradle 8.8, Ruff, Black, MyPy, Detekt, Spotless |
-| **Testing** | pytest (798 tests), JUnit 5, MockK, Ktor MockEngine (66 tests) |
+| **Testing** | pytest (798 tests), JUnit 5, MockK, Ktor MockEngine (73 tests) |
 | **CI/CD** | GitHub Actions |
 
 ---
@@ -317,7 +317,7 @@ The app calls API v2 at `http://10.0.2.2:8000/v2` (the Android emulator's alias 
 # Python: unit + integration (798 tests)
 cd ai && uv run pytest
 
-# Android: unit tests, lint and formatting (66 tests)
+# Android: unit tests, lint and formatting (73 tests)
 cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
 ```
 
@@ -328,7 +328,7 @@ cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
 | Document | Purpose |
 |---|---|
 | [Documentation Index](docs/README.md) | Full documentation map |
-| [ADR Index](docs/adr/README.md) | All 15 architectural decision records |
+| [ADR Index](docs/adr/README.md) | All 16 architectural decision records |
 | [Stage Reports](docs/reports/) | Detailed report for every build stage (1–12) |
 | [Demo Scripts](docs/demo/README.md) | Per-stage manual verification guides |
 | [Showcase Demo](docs/showcase/demo-script.md) | 5, 10 and 20-minute demo scripts and a [screenshot checklist](docs/showcase/screenshots/README.md) |
@@ -349,6 +349,7 @@ cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
 
 | Version | Date | Highlights |
 |---|---|---|
+| [v2.1.0](docs/releases/v2.1.0.md) | 2026-09-29 | App icon, Kick-off launch screen and loader, develop and main branch flow |
 | [v2.0.1](docs/releases/v2.0.1.md) | 2026-09-29 | Offline fallback within seconds, demo video |
 | [v2.0.0](docs/releases/v2.0.0.md) | 2026-09-29 | Five leagues, versioned API, fixtures, goals model, offline app, daily refresh |
 | [v1.0.0](docs/releases/v1.0.0.md) | 2026-07-01 | Android app, end-to-end integration tests, performance benchmarks, production readiness |

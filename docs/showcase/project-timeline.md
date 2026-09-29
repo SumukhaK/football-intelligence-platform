@@ -266,4 +266,12 @@ Those are the counts at v1.0.0.
 
 ---
 
-**Today: 5 releases, 15 ADRs, 864 tests (798 Python, 66 Android). One engineer.**
+## Release v2.1.0 (2026-09-29)
+
+**Deliverables (PRs #56–#59, ADR 016):** the Tactics Board app icon, the Kick-off launch screen and loading animation, every markdown file brought up to date, and the develop and main branch flow with protected branches.
+
+**Git Tag:** v2.1.0
+
+---
+
+**Today: 6 releases, 16 ADRs, 871 tests (798 Python, 73 Android). One engineer.**
