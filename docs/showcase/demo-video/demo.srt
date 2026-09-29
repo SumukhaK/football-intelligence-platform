@@ -1,0 +1,107 @@
+1
+00:00:00,500 --> 00:00:03,840
+This is the Football Intelligence Platform.
+
+2
+00:00:04,190 --> 00:00:11,150
+An AI-first football analytics project that goes from raw match data to an explainable prediction on your phone.
+
+3
+00:00:12,550 --> 00:00:20,540
+Results for Europe's top five leagues come from football-data.co.uk, and season schedules from openfootball.
+
+4
+00:00:20,890 --> 00:00:24,990
+Both are validated and versioned before anything uses them.
+
+5
+00:00:25,340 --> 00:00:33,090
+An XGBoost model, trained on twenty-two seasons of matches, predicts a home win, a draw or an away win.
+
+6
+00:00:33,440 --> 00:00:39,970
+SHAP explains every prediction, and a Dixon-Coles goals model adds the likely scores.
+
+7
+00:00:41,380 --> 00:00:46,850
+A FastAPI backend serves all of it, with interactive documentation.
+
+8
+00:00:47,200 --> 00:00:56,300
+Version two is the current API. Version one still answers exactly as the first release did, so older clients keep working.
+
+9
+00:00:57,710 --> 00:01:04,310
+Ask for Arsenal against Chelsea, and the server builds all forty-two model features from match history.
+
+10
+00:01:04,660 --> 00:01:12,220
+The model gives Arsenal a sixty-five percent chance of winning. The draw is not tagged as likely here.
+
+11
+00:01:13,640 --> 00:01:18,250
+The explain endpoint says why, in plain football language.
+
+12
+00:01:18,600 --> 00:01:24,960
+Arsenal's team strength rating and their sixty-eight percent win rate at home push hardest toward the pick.
+
+13
+00:01:26,370 --> 00:01:33,740
+Ask version one the same question, and the original Premier League model from June answers, in the original format.
+
+14
+00:01:35,140 --> 00:01:41,640
+Upcoming fixtures for every league are refreshed daily, and each kick-off time carries its time zone.
+
+15
+00:01:43,040 --> 00:01:46,160
+The assistant runs locally with Ollama.
+
+16
+00:01:46,510 --> 00:01:51,430
+It answers only from the project's own documents, and names its sources.
+
+17
+00:01:52,840 --> 00:01:58,020
+The Android app opens on upcoming fixtures, with one tab per league.
+
+18
+00:01:58,370 --> 00:02:02,210
+Kick-off times are shown in the phone's own time zone.
+
+19
+00:02:02,560 --> 00:02:07,260
+The bottom bar leads to predictions, the assistant and settings.
+
+20
+00:02:08,670 --> 00:02:12,170
+To predict, pick a league and two teams.
+
+21
+00:02:12,520 --> 00:02:19,550
+The result shows the win, draw and loss probabilities, the most likely scores, and the goal markets.
+
+22
+00:02:19,900 --> 00:02:25,900
+Explain lists the factors that pushed the model toward its pick, and the ones that pushed against it.
+
+23
+00:02:27,300 --> 00:02:34,380
+Every answer is saved on the phone. Here the server has been stopped, and we pull to refresh.
+
+24
+00:02:34,730 --> 00:02:41,910
+Once the request times out, the app keeps showing the saved fixtures, under a banner that says when they were saved.
+
+25
+00:02:43,310 --> 00:02:48,470
+Settings shows which backend services are up, including the assistant.
+
+26
+00:02:49,880 --> 00:02:54,270
+Everything runs on a laptop, with no cloud services.
+
+27
+00:02:54,620 --> 00:02:59,640
+The code, documentation and every design decision are on GitHub.

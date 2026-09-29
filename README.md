@@ -4,6 +4,10 @@
 
 [![CI](https://img.shields.io/badge/CI-passing-brightgreen)](.github/workflows) [![Tests](https://img.shields.io/badge/tests-864%20passing-brightgreen)](docs/reports/) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Python](https://img.shields.io/badge/python-3.12-blue)](ai/pyproject.toml) [![Kotlin](https://img.shields.io/badge/kotlin-Compose%20Multiplatform-purple)](frontend/)
 
+[![Watch the 3-minute demo](docs/showcase/demo-video/thumbnail.png)](https://github.com/SumukhaK/football-intelligence-platform/releases/download/v2.0.0/football-intelligence-demo.mp4)
+
+**▶ [Watch the 3-minute end-to-end demo](https://github.com/SumukhaK/football-intelligence-platform/releases/download/v2.0.0/football-intelligence-demo.mp4)**: narrated, with English subtitles. Scenes and the subtitle file are in [docs/showcase/demo-video](docs/showcase/demo-video/README.md).
+
 ---
 
 ## Project Overview
@@ -312,9 +316,6 @@ The app calls API v2 at `http://10.0.2.2:8000/v2` (the Android emulator's alias 
 ```sh
 # Python: unit + integration (798 tests)
 cd ai && uv run pytest
-
-# Python: unit tests only
-uv run pytest -m "not integration"
 
 # Android: unit tests, lint and formatting (66 tests)
 cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
