@@ -42,10 +42,34 @@ Registry entry of the served model: `model_version`, `dataset_version`,
 `training_timestamp`, `git_commit` and test `metrics`. Returns 503 when no
 model is registered.
 
+## GET /competitions
+
+The leagues the API serves (ADR 012): the Premier League, Bundesliga, La Liga,
+Serie A and Ligue 1. Each comes with its latest season, team count, latest
+result date and whether scoreline insights are available. Leagues without
+loaded history are left out. Returns 503 when match history is not loaded.
+
+```json
+{
+  "default": "Premier League",
+  "competitions": [
+    {
+      "name": "Bundesliga",
+      "season": "2026/27",
+      "team_count": 18,
+      "matches_through": "2026-09-20",
+      "insights_available": true
+    }
+  ]
+}
+```
+
 ## GET /teams
 
-Teams of the latest season the server has results for. These are the names
-`/predict` and `/explain` accept.
+Teams of a league's latest season. These are the names `/predict`, `/explain`
+and `/insights` accept for that league. Pass `?competition=Bundesliga` to
+choose the league; the default is the Premier League. An unknown league returns
+422 `Unknown competition`.
 
 ```json
 {
@@ -67,6 +91,7 @@ Request:
 |---|---|---|---|
 | `home_team` | string | yes | A name from `/teams`. |
 | `away_team` | string | yes | A name from `/teams`. |
+| `competition` | string | no | A league from `/competitions`. Defaults to the Premier League. Teams must belong to it. |
 | `match_date` | date | no | Only matches before this date are used. Defaults to today. |
 | `features` | object | no | Pre-computed feature vector. When omitted, the server computes all 42 model features from match history with the training feature pipeline. |
 
@@ -78,6 +103,7 @@ Response:
 
 ```json
 {
+  "competition": "Premier League",
   "home_team": "Arsenal",
   "away_team": "Man City",
   "predicted_result": "H",
@@ -99,7 +125,8 @@ Errors:
 
 | Status | `error` | When |
 |---|---|---|
-| 422 | `Unknown team` | A team did not play in the latest season. Includes `team`. |
+| 422 | `Unknown competition` | The league is not served. Includes `competition` and `supported`. |
+| 422 | `Unknown team` | A team did not play in the league's latest season. Includes `team`. |
 | 422 | `Missing feature columns` | Supplied `features` lack model columns. Includes `missing`. |
 | 503 | `Model not available` | No model loaded. |
 | 503 | `Match features not available` | `features` omitted and no match history loaded. |
@@ -122,6 +149,8 @@ Same request and errors as `/predict`. Adds SHAP attributions in
 Labels live in `ai/explainability/feature_labels.py`; every model feature has
 one, and a test enforces it.
 
+The request is the same as `/predict`, including the optional `competition`. The response echoes `competition`.
+
 ## POST /insights
 
 The goals model's view of a fixture (ADR 009): the five most likely scores,
@@ -133,8 +162,11 @@ home/draw/away pick still comes from `POST /predict`.
 Request:
 
 ```json
-{ "home_team": "Arsenal", "away_team": "Chelsea" }
+{ "home_team": "Arsenal", "away_team": "Chelsea", "competition": "Premier League" }
 ```
+
+`competition` is optional and defaults to the Premier League. The server fits a
+goals model for each served league.
 
 Response (abridged):
 
