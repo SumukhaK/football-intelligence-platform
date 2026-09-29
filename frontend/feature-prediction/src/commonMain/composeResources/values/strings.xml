@@ -24,8 +24,8 @@
     <string name="model_version">Model: %1$s</string>
     <string name="probabilities">Probabilities</string>
     <string name="percent">%1$s%</string>
-    <string name="action_explain">Explain This Prediction</string>
-    <string name="action_new_prediction">New Prediction</string>
+    <string name="action_explain">Explain</string>
+    <string name="action_new_prediction">New prediction</string>
     <string name="no_prediction">No prediction available.</string>
 
     <!-- Goals insights -->

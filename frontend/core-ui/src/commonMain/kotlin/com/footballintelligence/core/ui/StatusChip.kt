@@ -31,6 +31,6 @@ fun StatusChip(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .background(background)
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .padding(horizontal = 12.dp, vertical = 4.dp),
     )
 }

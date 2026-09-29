@@ -105,14 +105,14 @@ private fun ScoreRow(score: ScoreProbability, insights: Insights, scale: Double)
     )
     Column(
         modifier = Modifier.clearAndSetSemantics { contentDescription = description },
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(
                 stringResource(Res.string.score_line, score.home, score.away),
                 style = MaterialTheme.typography.bodyLarge,
             )
-            Text(percentText, style = MaterialTheme.typography.bodyMedium)
+            Text(percentText, style = MaterialTheme.typography.titleSmall)
         }
         LinearProgressIndicator(
             progress = { if (scale > 0) (score.probability / scale).toFloat() else 0f },
@@ -152,7 +152,7 @@ private fun MarketRow(label: String, probability: Double) {
         Text(label, style = MaterialTheme.typography.bodyMedium)
         Text(
             stringResource(Res.string.percent, percentOf(probability)),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.titleSmall,
         )
     }
 }
@@ -162,7 +162,7 @@ private fun SectionCard(title: String, content: @Composable () -> Unit) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(title, style = MaterialTheme.typography.titleSmall)
             content()

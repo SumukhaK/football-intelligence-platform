@@ -2,10 +2,8 @@ package com.footballintelligence.feature.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -36,6 +34,7 @@ import com.footballintelligence.core.ui.LoadingView
 import com.footballintelligence.core.ui.StatusChip
 import com.footballintelligence.feature.home.resources.Res
 import com.footballintelligence.feature.home.resources.api_version
+import com.footballintelligence.feature.home.resources.assistant_offline_hint
 import com.footballintelligence.feature.home.resources.backend_status
 import com.footballintelligence.feature.home.resources.card_assistant_action
 import com.footballintelligence.feature.home.resources.card_assistant_description
@@ -115,8 +114,6 @@ private fun HomeContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        BackendStatusCard(health)
-        Spacer(Modifier.height(4.dp))
         FeatureCard(
             icon = Icons.Default.SportsSoccer,
             title = stringResource(Res.string.card_prediction_title),
@@ -132,6 +129,7 @@ private fun HomeContent(
             enabled = health.assistantAvailable,
             buttonLabel = stringResource(Res.string.card_assistant_action),
             onClick = onAssistantClick,
+            disabledHint = stringResource(Res.string.assistant_offline_hint),
         )
         FeatureCard(
             icon = Icons.Default.Settings,
@@ -141,6 +139,7 @@ private fun HomeContent(
             buttonLabel = stringResource(Res.string.card_settings_action),
             onClick = onSettingsClick,
         )
+        BackendStatusCard(health)
     }
 }
 
@@ -207,6 +206,7 @@ private fun FeatureCard(
     enabled: Boolean,
     buttonLabel: String,
     onClick: () -> Unit,
+    disabledHint: String? = null,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
@@ -224,6 +224,13 @@ private fun FeatureCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            if (!enabled && disabledHint != null) {
+                Text(
+                    disabledHint,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             ElevatedButton(
                 onClick = onClick,
                 enabled = enabled,

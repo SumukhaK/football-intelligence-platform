@@ -128,7 +128,7 @@ fun AboutScreen(
 
 @Composable
 private fun StackItem(label: StringResource, value: StringResource) {
-    Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             stringResource(label),
             style = MaterialTheme.typography.labelSmall,

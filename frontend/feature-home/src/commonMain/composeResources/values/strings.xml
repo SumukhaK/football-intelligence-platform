@@ -18,6 +18,7 @@
     <string name="card_assistant_title">AI Assistant</string>
     <string name="card_assistant_description">Ask questions about the model, predictions, and football analytics.</string>
     <string name="card_assistant_action">Open Assistant</string>
+    <string name="assistant_offline_hint">The assistant is offline: it needs Ollama running on the server.</string>
     <string name="card_settings_title">Settings &amp; Model Info</string>
     <string name="card_settings_description">View model details, metrics, and configure the app.</string>
     <string name="card_settings_action">Open Settings</string>
