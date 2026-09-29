@@ -90,3 +90,16 @@ the favourite either. The options, which need a product decision:
 The Dixon-Coles goals model (ADR 009) is the remaining route to a sharper
 draw signal. It models the low scores that produce most draws directly. Its
 evaluation should repeat section 2 on the blended probabilities.
+
+## 5. Decision: tag only
+
+Chosen on 2026-09-28 (ADR 011). The API flags `draw_possible` when the draw
+probability is at least 0.28, and the pick is unchanged. The threshold was
+read off 2022/23 as the lowest that flags under a third of matches.
+
+| Block | Matches flagged | Draw rate, flagged | Draw rate, others |
+|---|---|---|---|
+| 2022/23 | 30% | 27% | 23% |
+| 2023/24 | 29% | 31% | 25% |
+| 2024/25–2025/26 | 29% | 28% | 24% |
+| 2026/27 so far | 41% | 35% | 18% |

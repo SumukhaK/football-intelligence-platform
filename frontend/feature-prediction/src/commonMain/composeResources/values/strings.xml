@@ -17,6 +17,8 @@
     <string name="fixture">%1$s vs %2$s</string>
     <string name="outcome_team_win">%1$s Win</string>
     <string name="outcome_draw">Draw</string>
+    <string name="draw_possible">Draw possible</string>
+    <string name="draw_possible_detail">About 3 in 10 games like this end level.</string>
     <string name="confidence">Confidence: %1$s%</string>
     <string name="model_version">Model: %1$s</string>
     <string name="probabilities">Probabilities</string>

@@ -98,6 +98,22 @@ private fun ResultPreview() = Result(PredictionInputUiState.Success(samplePredic
 
 @Preview
 @Composable
+private fun ResultDrawPossiblePreview() = Result(
+    PredictionInputUiState.Success(
+        samplePrediction.copy(
+            homeTeam = "Everton",
+            awayTeam = "Brentford",
+            probabilityHome = 0.39,
+            probabilityDraw = 0.30,
+            probabilityAway = 0.31,
+            confidence = 0.39,
+            drawPossible = true,
+        ),
+    ),
+)
+
+@Preview
+@Composable
 private fun ResultMissingPreview() = Result(PredictionInputUiState.Idle)
 
 @Composable

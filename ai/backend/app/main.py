@@ -61,7 +61,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             model_version = entry.version if entry else "unknown"
 
             predictor = MatchPredictor.from_path(settings.model_path)
-            app.state.prediction_service = PredictionService(predictor, model_version)
+            app.state.prediction_service = PredictionService(
+                predictor, model_version, settings.draw_possible_threshold
+            )
             app.state.registry = registry
 
             logger.info(

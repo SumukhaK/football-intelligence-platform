@@ -81,4 +81,13 @@ class PredictionResponse(BaseModel):
         le=1.0,
         description="Maximum probability across all outcomes.",
     )
+    draw_possible: bool = Field(
+        default=False,
+        description=(
+            "True when the draw probability is at least the server's draw "
+            "threshold (0.28 by default). About 3 in 10 matches are flagged, and "
+            "they end level more often than the rest. The predicted_result is "
+            "unchanged (ADR 011)."
+        ),
+    )
     model_version: str = Field(..., description="Version tag of the model used.")
