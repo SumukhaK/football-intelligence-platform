@@ -52,6 +52,7 @@ Maintained by the project architect. The implementation engineer updates documen
 |---|---|
 | [Multi-League Retraining Plan](plans/multi-league-retraining-plan.md) | Goal, data profile and phased plan for retraining on top-5 league data |
 | [Multi-League Model Comparison](reports/multi-league-retraining-comparison.md) | Candidate vs current model, bookmaker and priors, with the promotion verdict |
+| [2026/27 Live Check](reports/in-season-2026-27.md) | Served model scored on 2026/27 matches played so far |
 
 ### Demos
 

@@ -8,7 +8,7 @@ from itertools import permutations
 import pandas as pd
 import pytest
 
-from validation.season_integrity import check_season_integrity
+from validation.season_integrity import check_partial_season, check_season_integrity
 
 
 def _season(teams: list[str], start: date = date(2023, 8, 12)) -> pd.DataFrame:
@@ -86,3 +86,33 @@ def test_accepts_iso_date_strings(bundesliga: pd.DataFrame) -> None:
     df = bundesliga.copy()
     df["match_date"] = df["match_date"].astype(str)
     assert check_season_integrity(df, "D1", "2324").passed
+
+
+class TestPartialSeason:
+    def test_partial_season_passes_with_fewer_matches(
+        self, bundesliga: pd.DataFrame
+    ) -> None:
+        result = check_partial_season(bundesliga.iloc[:60], "D1", "2324")
+        assert result.passed, str(result)
+
+    def test_partial_season_still_rejects_duplicates(
+        self, bundesliga: pd.DataFrame
+    ) -> None:
+        df = pd.concat([bundesliga.iloc[:10], bundesliga.iloc[[0]]])
+        result = check_partial_season(df, "D1", "2324")
+        assert any("duplicate" in e for e in result.errors)
+
+    def test_partial_season_rejects_too_many_teams(self) -> None:
+        df = _season([f"Team {i}" for i in range(20)]).iloc[:200]
+        result = check_partial_season(df, "D1", "2324")
+        assert any("20 teams" in e for e in result.errors)
+
+    def test_partial_season_checks_results_and_dates(
+        self, bundesliga: pd.DataFrame
+    ) -> None:
+        df = bundesliga.iloc[:5].copy()
+        df.loc[0, "result"] = "D"
+        df.loc[1, "match_date"] = date(2030, 1, 1)
+        result = check_partial_season(df, "D1", "2324")
+        assert any("result" in e for e in result.errors)
+        assert any("outside" in e for e in result.errors)
