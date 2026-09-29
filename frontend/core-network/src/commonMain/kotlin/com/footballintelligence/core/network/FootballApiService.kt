@@ -43,7 +43,7 @@ class KtorFootballApiService(
     private val config: NetworkConfig,
 ) : FootballApiService {
 
-    private val base get() = config.baseUrl
+    private val base get() = "${config.baseUrl}/${config.apiVersion}"
 
     override suspend fun getHealth(): NetworkResult<HealthStatus> =
         guarded {

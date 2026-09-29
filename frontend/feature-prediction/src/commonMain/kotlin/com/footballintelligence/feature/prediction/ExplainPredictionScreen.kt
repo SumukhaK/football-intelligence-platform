@@ -29,6 +29,7 @@ import com.footballintelligence.core.model.valueText
 import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
+import com.footballintelligence.core.ui.OfflineBanner
 import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.prediction.resources.Res
 import com.footballintelligence.feature.prediction.resources.against_subtitle
@@ -76,10 +77,10 @@ fun ExplainPredictionScreen(
                 message = stringResource(Res.string.no_explanation),
                 modifier = Modifier.padding(padding),
             )
-            is ExplanationUiState.Success -> ExplanationContent(
-                result = uiState.result,
-                modifier = Modifier.padding(padding),
-            )
+            is ExplanationUiState.Success -> Column(Modifier.padding(padding)) {
+                OfflineBanner(uiState.savedAt)
+                ExplanationContent(result = uiState.result)
+            }
         }
     }
 }

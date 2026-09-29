@@ -54,6 +54,17 @@ class ErrorKindTest {
     }
 
     @Test
+    fun `requests go to API v2`() = runTest {
+        var path = ""
+        val engine = MockEngine { call ->
+            path = call.url.encodedPath
+            respond("", HttpStatusCode.InternalServerError)
+        }
+        api(engine).predict(request)
+        assertEquals("/v2/predict", path)
+    }
+
+    @Test
     fun `other server errors are unknown`() = runTest {
         val result = api(respondWith(HttpStatusCode.InternalServerError)).predict(request)
         assertEquals(ErrorKind.UNKNOWN, (result as NetworkResult.Error).kind)

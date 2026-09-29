@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import com.footballintelligence.core.model.HealthStatus
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
+import com.footballintelligence.core.ui.OfflineBanner
+import com.footballintelligence.core.ui.RefreshableContent
 import com.footballintelligence.core.ui.StatusChip
 import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.home.resources.Res
@@ -69,6 +71,8 @@ fun HomeScreen(
     onSettingsClick: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -89,13 +93,21 @@ fun HomeScreen(
                 onRetry = onRetry,
                 modifier = Modifier.padding(padding),
             )
-            is HomeUiState.Success -> HomeContent(
-                health = uiState.health,
-                onPredictClick = onPredictClick,
-                onAssistantClick = onAssistantClick,
-                onSettingsClick = onSettingsClick,
+            is HomeUiState.Success -> RefreshableContent(
+                isRefreshing = isRefreshing,
+                onRefresh = onRefresh,
                 modifier = Modifier.padding(padding),
-            )
+            ) {
+                Column {
+                    OfflineBanner(uiState.savedAt)
+                    HomeContent(
+                        health = uiState.health,
+                        onPredictClick = onPredictClick,
+                        onAssistantClick = onAssistantClick,
+                        onSettingsClick = onSettingsClick,
+                    )
+                }
+            }
         }
     }
 }

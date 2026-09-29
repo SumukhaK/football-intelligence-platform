@@ -32,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
+import com.footballintelligence.core.ui.OfflineBanner
+import com.footballintelligence.core.ui.RefreshableContent
 import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.prediction.resources.Res
 import com.footballintelligence.feature.prediction.resources.action_predict
@@ -60,6 +62,8 @@ fun PredictionScreen(
     onNavigateToResult: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -97,13 +101,21 @@ fun PredictionScreen(
                         onRetry = onRetryTeams,
                         modifier = Modifier.weight(1f),
                     )
-                    is TeamsUiState.Success -> PredictionInputContent(
-                        league = league,
-                        season = teamsState.season,
-                        teams = teamsState.teams,
-                        onPredict = onPredict,
+                    is TeamsUiState.Success -> RefreshableContent(
+                        isRefreshing = isRefreshing,
+                        onRefresh = onRefresh,
                         modifier = Modifier.weight(1f),
-                    )
+                    ) {
+                        Column {
+                            OfflineBanner(teamsState.savedAt)
+                            PredictionInputContent(
+                                league = league,
+                                season = teamsState.season,
+                                teams = teamsState.teams,
+                                onPredict = onPredict,
+                            )
+                        }
+                    }
                 }
             }
         }

@@ -9,7 +9,11 @@ import com.footballintelligence.core.model.PredictionResult
 /** UI state for the list of teams the user can pick from. */
 sealed class TeamsUiState {
     data object Loading : TeamsUiState()
-    data class Success(val season: String, val teams: List<String>) : TeamsUiState()
+    data class Success(
+        val season: String,
+        val teams: List<String>,
+        val savedAt: String? = null,
+    ) : TeamsUiState()
     data class Error(val message: String, val kind: ErrorKind = ErrorKind.UNKNOWN) : TeamsUiState()
 }
 
@@ -17,7 +21,7 @@ sealed class TeamsUiState {
 sealed class PredictionInputUiState {
     data object Idle : PredictionInputUiState()
     data object Loading : PredictionInputUiState()
-    data class Success(val result: PredictionResult) : PredictionInputUiState()
+    data class Success(val result: PredictionResult, val savedAt: String? = null) : PredictionInputUiState()
     data class Error(val message: String, val kind: ErrorKind = ErrorKind.UNKNOWN) : PredictionInputUiState()
 }
 
@@ -25,7 +29,7 @@ sealed class PredictionInputUiState {
 sealed class ExplanationUiState {
     data object Idle : ExplanationUiState()
     data object Loading : ExplanationUiState()
-    data class Success(val result: ExplanationResult) : ExplanationUiState()
+    data class Success(val result: ExplanationResult, val savedAt: String? = null) : ExplanationUiState()
     data class Error(val message: String, val kind: ErrorKind = ErrorKind.UNKNOWN) : ExplanationUiState()
 }
 

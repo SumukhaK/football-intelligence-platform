@@ -32,12 +32,15 @@ fun AppNavigation(navController: NavHostController) {
         composable(Screen.Home.route) {
             val vm: HomeViewModel = koinViewModel()
             val state by vm.state.collectAsState()
+            val isRefreshing by vm.isRefreshing.collectAsState()
             HomeScreen(
                 uiState = state,
                 onPredictClick = { navController.navigate(Screen.Prediction.route) },
                 onAssistantClick = { navController.navigate(Screen.Assistant.route) },
                 onSettingsClick = { navController.navigate(Screen.Settings.route) },
                 onRetry = vm::retry,
+                isRefreshing = isRefreshing,
+                onRefresh = vm::refresh,
             )
         }
 
@@ -46,6 +49,7 @@ fun AppNavigation(navController: NavHostController) {
             val state by vm.predictionState.collectAsState()
             val teamsState by vm.teamsState.collectAsState()
             val competitionsState by vm.competitionsState.collectAsState()
+            val isRefreshing by vm.isRefreshing.collectAsState()
             PredictionScreen(
                 uiState = state,
                 competitionsState = competitionsState,
@@ -57,6 +61,8 @@ fun AppNavigation(navController: NavHostController) {
                     navController.navigate(Screen.PredictionResult.route)
                 },
                 onBack = { navController.popBackStack() },
+                isRefreshing = isRefreshing,
+                onRefresh = vm::refreshTeams,
             )
         }
 
@@ -66,6 +72,7 @@ fun AppNavigation(navController: NavHostController) {
             )
             val state by vm.predictionState.collectAsState()
             val insightsState by vm.insightsState.collectAsState()
+            val isRefreshing by vm.isRefreshing.collectAsState()
             // Leaving the result must clear it; otherwise the team selection
             // screen still holds a finished prediction and shows a spinner.
             val backToTeamSelection: () -> Unit = {
@@ -82,6 +89,8 @@ fun AppNavigation(navController: NavHostController) {
                 },
                 onNewPrediction = backToTeamSelection,
                 onBack = backToTeamSelection,
+                isRefreshing = isRefreshing,
+                onRefresh = vm::refreshPrediction,
             )
         }
 
@@ -119,10 +128,13 @@ fun AppNavigation(navController: NavHostController) {
         composable(Screen.ModelInfo.route) {
             val vm: SettingsViewModel = koinViewModel()
             val state by vm.modelInfoState.collectAsState()
+            val isRefreshing by vm.isRefreshing.collectAsState()
             ModelInfoScreen(
                 uiState = state,
                 onRetry = vm::retry,
                 onBack = { navController.popBackStack() },
+                isRefreshing = isRefreshing,
+                onRefresh = vm::refresh,
             )
         }
 
