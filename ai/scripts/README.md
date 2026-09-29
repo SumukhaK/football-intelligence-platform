@@ -17,6 +17,8 @@ One-shot scripts that are run from the command line rather than imported as libr
 
 - `draw_feature_experiment.py` — retrains with six candidate draw features and reports the log-loss change; the features were not adopted (`docs/reports/draw-handling.md`).
 
+- `kaggle_extras_experiment.py` — tests Champions League rest days, rolling xG and FIFA ratings against the served model; none was adopted (`docs/reports/kaggle-extras.md`).
+
 ## Future Contents
 
 - `setup_env.sh` — installs Python dependencies and configures pre-commit hooks.
