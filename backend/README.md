@@ -1,6 +1,12 @@
 # Backend
 
-FastAPI application exposing match outcome predictions, SHAP explanations, and model metadata through a documented REST API.
+FastAPI application serving match predictions, SHAP explanations, goals-model
+insights, upcoming fixtures and the grounded assistant through a versioned,
+documented REST API.
+
+This folder is a placeholder: the code lives in the `ai/` Python workspace at
+`ai/backend/`, so it can import the model, feature and assistant packages
+directly.
 
 ---
 
@@ -12,13 +18,14 @@ Backend implementation. Follows the standards defined in `.claude/CLAUDE.md` sec
 
 ## Architecture
 
-Clean Architecture with strict layer separation. The application code lives inside the `ai/` Python workspace at `ai/backend/`.
+Clean Architecture with strict layer separation.
 
 - **Schemas:** Pydantic request/response models with field-level validation.
 - **Services:** Thin adapters that convert API types to AI-layer types and back.
 - **Routers:** FastAPI route handlers — no business logic, only HTTP concerns.
 - **Dependencies:** FastAPI `Depends` functions that read from `app.state`.
-- **Lifespan:** Model and explainer loaded once at startup; stored on `app.state`.
+- **Lifespan:** Both models, the match history, goals models and fixtures load once at startup; the daily refresh reloads the data without a restart (ADR 013).
+- **Middleware:** A per-client sliding-window rate limiter (ADR 014).
 
 ---
 
@@ -27,25 +34,26 @@ Clean Architecture with strict layer separation. The application code lives insi
 ```
 ai/backend/
   app/
-    config.py           # pydantic-settings configuration (model_path, registry_path)
-    dependencies.py     # Depends functions for PredictionService and ExplanationService
-    main.py             # FastAPI app factory and lifespan startup
-    exceptions/
-      __init__.py       # ModelNotAvailableError, FeatureMissingError, handlers
+    config.py           # pydantic-settings configuration
+    dependencies.py     # Depends functions reading services from app.state
+    main.py             # App factory, lifespan, router mounting per version
+    exceptions/         # Domain errors and structured JSON handlers
     middleware/
-      __init__.py       # Request logging middleware
+      rate_limit.py     # Sliding-window rate limiter, 429 with Retry-After
     routers/
       health.py         # GET /health
       model.py          # GET /model
+      competitions.py   # GET /competitions
+      teams.py          # GET /teams
+      fixtures.py       # GET /fixtures
       prediction.py     # POST /predict
       explainability.py # POST /explain
-    schemas/
-      common.py         # HealthResponse, ModelInfoResponse, ErrorResponse
-      prediction.py     # PredictionRequest, PredictionResponse
-      explainability.py # ExplanationResponse, FeatureContributionSchema
-    services/
-      prediction_service.py   # Wraps MatchPredictor for route handlers
-      explanation_service.py  # Wraps AI ExplanationService for route handlers
+      insights.py       # POST /insights
+      assistant.py      # POST /assistant/chat
+      v1.py             # The frozen v1 contract on the original model
+    schemas/            # Request and response models, one file per area
+    services/           # Prediction, explanation, insights, fixtures,
+                        # match features, chat and daily refresh services
 ```
 
 ---
@@ -61,14 +69,23 @@ The server starts on `http://127.0.0.1:8000`. Interactive docs at `/docs`.
 
 ---
 
-## API Endpoints
+## API Versions and Endpoints
 
-| Method | Path      | Description                                  |
-|--------|-----------|----------------------------------------------|
-| GET    | /health   | Service health and model availability        |
-| GET    | /model    | Latest model version and training metrics    |
-| POST   | /predict  | Match outcome prediction with probabilities  |
-| POST   | /explain  | Prediction + SHAP feature contributions      |
+`/v2/...` is current: five leagues and the latest model. `/v1/...` and the
+unversioned paths keep the release v1.0.0 contract with the original Premier
+League model (ADR 014). The full contract is in [docs/api.md](../docs/api.md).
+
+| Method | Path (under `/v2`)   | Description                                         |
+|--------|----------------------|-----------------------------------------------------|
+| GET    | /health              | Service health, data freshness, last refresh        |
+| GET    | /model               | Model version and training metrics                  |
+| GET    | /competitions        | The five served leagues                             |
+| GET    | /teams               | A league's current teams                            |
+| GET    | /fixtures            | A league's upcoming fixtures (ADR 015)              |
+| POST   | /predict             | Win/draw/loss probabilities and the draw tag        |
+| POST   | /explain             | Prediction plus SHAP feature contributions          |
+| POST   | /insights            | Likely scores and goal markets (goals model)        |
+| POST   | /assistant/chat      | Retrieval-grounded answers                          |
 
 ### Error Responses
 
@@ -77,37 +94,36 @@ All errors return structured JSON:
 { "error": "...", "detail": "..." }
 ```
 
-| HTTP | Condition                        |
-|------|----------------------------------|
-| 422  | Validation failure or missing features |
-| 503  | Model not loaded                 |
-| 500  | Unexpected server error          |
+| HTTP | Condition                                         |
+|------|---------------------------------------------------|
+| 422  | Validation failure, unknown league or team        |
+| 429  | Rate limit reached; `Retry-After` gives seconds   |
+| 503  | Model, match history, fixtures or assistant not loaded |
+| 500  | Unexpected server error                           |
 
 ---
 
 ## Configuration
 
-Set via environment variables or `.env` file:
-
-| Variable        | Default                              | Description              |
-|-----------------|--------------------------------------|--------------------------|
-| `MODEL_PATH`    | `../ai/models/latest/model.joblib`   | Path to trained model    |
-| `REGISTRY_PATH` | `../ai/models/registry.json`         | Path to model registry   |
-| `API_VERSION`   | `0.1.0`                              | Version string in /health|
-| `LOG_LEVEL`     | `INFO`                               | Logging level            |
+Set via environment variables or `ai/.env`. Every setting, with its default and
+a comment, is listed in [`ai/.env.example`](../ai/.env.example): model paths
+for both API versions, data directories, served leagues, the daily refresh
+hour, the draw threshold, the rate limit and the assistant.
 
 ---
 
 ## Testing
 
-Tests live at `ai/tests/backend/`. Run from the `ai/` directory:
+Tests live at `ai/tests/backend/`, with end-to-end tests in
+`ai/tests/integration/`. Run from the `ai/` directory:
 
 ```bash
 cd ai
 uv run pytest tests/backend/ -v
 ```
 
-43 tests cover: health, model, predict, explain, startup, error paths, and service units.
+135 backend tests cover every endpoint in both versions, the rate limiter,
+fixtures, startup, error paths and the service units.
 
 ---
 

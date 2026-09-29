@@ -8,13 +8,17 @@ Presentation layer. This module knows about all feature modules. No feature modu
 
 ## Contents
 
-- `FootballApplication` — Application subclass. Initialises Napier logging in debug builds.
+- `FootballApplication` — Application subclass. Starts Koin and Napier logging in debug builds.
+- `MainActivity` — hosts the app inside `FootballTheme`.
+- `AppNavigation` — the single NavHost, wrapped in a scaffold with the bottom bar.
+- `TopLevelDestination`, `BottomNavBar` — Fixtures, Predict, Assistant and Settings.
+- `di/AppModule` — HTTP client, response cache and API service.
 
 ## Responsibilities
 
 - Application lifecycle entry point.
 - Koin module assembly — the DI graph is declared here, not in feature modules.
-- Root NavHost will be placed here when navigation is wired in Stage 5.
+- The root NavHost and bottom navigation.
 
 ## Constraints
 

@@ -1,6 +1,6 @@
 # Screenshots — Capture Checklist
 
-This directory holds screenshots referenced by the root [README.md](../../../README.md) and [project-showcase.md](../project-showcase.md). None have been captured yet — this file defines what to capture and how, so anyone can complete the set without guessing.
+This directory holds screenshots referenced by the root [README.md](../../../README.md) and [project-showcase.md](../project-showcase.md). None have been captured yet. This file defines what to capture and how, so anyone can complete the set without guessing.
 
 ---
 
@@ -8,14 +8,16 @@ This directory holds screenshots referenced by the root [README.md](../../../REA
 
 | File | Source | What to capture |
 |---|---|---|
-| `home-screen.png` | Android app | Home screen with all status chips visible (Model, Explainability, Assistant), ideally all green |
-| `prediction-screen.png` | Android app | Match Prediction screen with both team dropdowns populated, ready to submit |
-| `prediction-result.png` | Android app | Prediction Result screen showing the outcome and three probability bars |
+| `fixtures-screen.png` | Android app | Home screen: Premier League fixtures by date, with the league tabs and bottom bar visible |
+| `offline-banner.png` | Android app | Any screen with the backend stopped, showing the offline banner over saved data |
+| `prediction-screen.png` | Android app | Match Prediction screen with a league chosen and both teams selected, ready to submit |
+| `prediction-result.png` | Android app | Prediction Result screen showing the outcome, three probability bars and the likely scores |
 | `explainability-screen.png` | Android app | Explain Prediction screen showing both positive and negative SHAP feature sections |
 | `assistant-screen.png` | Android app | AI Assistant Chat screen mid-conversation, with at least one answer showing source citations |
+| `settings-screen.png` | Android app | Settings screen with the backend status card, ideally all green |
 | `model-info-screen.png` | Android app | Model Information screen showing version, dataset version, and evaluation metrics |
 | `architecture-diagram.png` | Rendered Mermaid | The architecture diagram from the root README, rendered (e.g., via GitHub's native Mermaid rendering, exported as PNG) |
-| `api-docs.png` | Browser | FastAPI's auto-generated `/docs` Swagger UI, showing all 5 endpoints expanded in the left nav |
+| `api-docs.png` | Browser | FastAPI's auto-generated `/docs` Swagger UI, showing the v1 and v2 endpoint groups |
 
 ---
 
@@ -31,7 +33,7 @@ This directory holds screenshots referenced by the root [README.md](../../../REA
 ### API Docs
 
 1. With the backend running, open `http://127.0.0.1:8000/docs` in a browser
-2. Expand all 5 endpoint sections in the sidebar before capturing
+2. Expand the v2 endpoints before capturing
 3. Use a clean browser window (no extra tabs/bookmarks bar) for a professional look
 
 ### Architecture Diagram
@@ -43,4 +45,4 @@ This directory holds screenshots referenced by the root [README.md](../../../REA
 
 ## Naming Convention
 
-All files lowercase, kebab-case, `.png` format, placed directly in this directory. Once captured, update the root README's [Screenshots](../../../README.md#screenshots) section to embed them with `![Alt text](docs/showcase/screenshots/filename.png)`.
+All files lowercase, kebab-case, `.png` format, placed directly in this directory. Once captured, embed them in the root [README](../../../README.md) with `![Alt text](docs/showcase/screenshots/filename.png)`.

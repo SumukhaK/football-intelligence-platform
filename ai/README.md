@@ -19,6 +19,8 @@ This directory owns:
 - XGBoost model training and serialisation.
 - SHAP explainability — every prediction includes a SHAP explanation.
 - Retrieval-augmented generation pipeline using Ollama.
+- The Dixon-Coles goals model behind scoreline insights.
+- The FastAPI backend (`backend/`), which serves all of the above.
 - Prompt templates and retrieval configuration.
 - Evaluation scripts: prediction accuracy, assistant faithfulness, hallucination rate.
 
@@ -30,8 +32,8 @@ This directory owns:
 ai/
   config/               # Settings (pydantic-settings) and path layout
   shared/               # Common types, exceptions, and constants
-  providers/            # Data provider adapters (football-data.co.uk, FBref, Understat)
-  ingestion/            # Downloader (HTTP + storage orchestration) and storage layer
+  providers/            # Data provider adapters (football-data.co.uk used; FBref, Understat adapters)
+  ingestion/            # Downloader, storage, season backfill, daily live refresh, fixtures (openfootball)
   validation/           # DataFrame-level rules and schema compatibility checks
   preprocessing/        # Cleans validated data into datasets/processed/
   feature_engineering/  # Computes model-ready features from preprocessed data
@@ -39,15 +41,17 @@ ai/
   metadata/             # DatasetMetadata model and MetadataBuilder
   scripts/              # Operational CLI scripts (setup, pipeline triggers)
   tests/                # Unit tests mirroring source structure
-  training/             # XGBoost training scripts (Stage 7)
-  evaluation/           # Evaluation harness for model and assistant quality (Stage 7)
-  inference/            # Inference wrappers used by the backend (Stage 7)
-  explainability/       # SHAP explainability pipeline (Stage 8)
+  training/             # XGBoost training, season split, tuning
+  evaluation/           # Model evaluation, backtests and in-season accuracy
+  inference/            # Predictor and server-side match features used by the backend
+  explainability/       # SHAP explainability pipeline and fan-friendly feature labels
+  goals/                # Dixon-Coles goals model: likely scores and goal markets
+  model_registry/       # JSON model registry with git commit traceability
   assistant/            # RAG assistant: ingestion, chunking, embeddings, retrieval, generation
-  rag/                  # Retrieval pipeline: indexing, search, context assembly (Stage 3)
-  prompts/              # Prompt templates (source of truth is playbook/)
-  datasets/             # Symlinks or references to datasets/processed/
-  models/               # Serialised model artefacts (gitignored by default)
+  backend/              # FastAPI application (see backend/README.md at the repo root)
+  docs/                 # Stage 8 and 10 demo guides and reports
+  rag/, prompts/, datasets/  # Empty; the RAG code lives in assistant/, prompts in playbook/
+  models/               # Serialised model artefacts (gitignored)
 ```
 
 ---
@@ -76,9 +80,12 @@ The HTTP transport (`HttpTransport` protocol) is injected, so tests use a `FakeT
 
 | Provider | ID | Datasets | Format |
 |---|---|---|---|
-| football-data.co.uk | `football_data` | `match_results` | CSV |
+| football-data.co.uk | `football_data` | `match_results` (used for all training and serving data) | CSV |
 | FBref | `fbref` | `scores_and_fixtures`, `squad_standard_stats` | CSV |
 | Understat | `understat` | `match_results` | JSON |
+
+Upcoming fixtures come from openfootball's season schedules through
+`ingestion/fixtures.py` rather than a provider class (ADR 015).
 
 ---
 
@@ -169,14 +176,14 @@ The feature engineering pipeline transforms a canonical `ProcessedMatch` CSV int
 uv run python -m feature_engineering.pipeline
 
 # Run with an explicit input file
-uv run python -m feature_engineering.pipeline --input datasets/processed/football_data/match_results_v<version>.csv --output-dir datasets/features
+uv run python -m feature_engineering.pipeline --input ../datasets/processed/football_data/match_results_top5_v<version>.csv --output-dir ../datasets/features/top5
 ```
 
-**Output artefacts** written to `datasets/features/`:
+**Output artefacts** written to the output directory:
 
 | File | Contents |
 |---|---|
-| `feature_matrix.parquet` | Full feature matrix (canonical columns + 32 engineered features) |
+| `feature_matrix.parquet` | Full feature matrix (canonical columns + 42 engineered features) |
 | `feature_metadata.json` | Feature versions, row/column counts, pipeline version |
 | `feature_generation_report.json` | Per-feature timing, validation results, dataset statistics |
 
@@ -201,7 +208,7 @@ All rolling features use `.shift(1)` before `.rolling()` to prevent data leakage
 ## Assistant Package
 
 The `assistant/` package implements the RAG pipeline for the Football Intelligence
-Assistant (Stage 10). It is structured as a series of composable stages:
+Assistant. It is structured as a series of composable stages:
 
 ```
 assistant/
@@ -232,12 +239,3 @@ uv run python -m assistant.pipeline --rebuild
 - `ai/models/latest/evaluation_report.json` — model evaluation
 - `ai/explanations/global_summary.json` — SHAP global explanations
 - `datasets/features/feature_metadata.json` — feature descriptions
-
----
-
-## Future Responsibilities
-
-- Multi-league data support.
-- Player-level prediction (not just match-level).
-- Structured evaluation dashboard.
-- Retrieval quality benchmarking against labelled question sets.

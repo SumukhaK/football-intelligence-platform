@@ -43,8 +43,8 @@ Every prompt template must document:
 
 ---
 
-## Future Responsibilities
+## Status
 
-- Stage-03 templates for the RAG assistant.
-- Stage-04 templates for API response formatting.
-- Evaluation prompt templates for LLM-as-judge scoring.
+The stage folders hold no templates yet. The assistant's live prompts are in
+`ai/assistant/prompting/templates.py`, where they are tested with the rest of the
+assistant.

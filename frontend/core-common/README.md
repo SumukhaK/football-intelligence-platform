@@ -6,12 +6,11 @@ Shared utilities, extension functions, and base types used across all modules.
 
 Infrastructure. No feature or presentation logic.
 
-## Future Contents
+## Contents
 
-- Coroutine dispatchers and scope utilities.
-- Common extension functions (date formatting, string utilities).
-- Result wrapper types.
-- Base error types.
+- `DispatcherProvider` — injectable coroutine dispatchers, so tests can swap them.
+- `formatSavedAt` — when offline data was saved, e.g. "29 Sep, 14:30" (`androidMain`).
+- `fixtureDay`, `formatKickoff`, `formatMatchDay` — fixture dates and kick-off times in the phone's time zone (`androidMain`).
 
 ## Constraints
 

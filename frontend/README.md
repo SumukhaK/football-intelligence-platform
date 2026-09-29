@@ -19,24 +19,30 @@ Android client for the Football Intelligence Platform. Built with Compose Multip
 ## Module Structure
 
 ```
-app/                   — Application entry point, NavHost, Koin assembly
-feature-home/          — Home screen: backend health status
+app/                   — Application entry point, NavHost, bottom bar, Koin assembly
+feature-home/          — Fixtures by league (the first screen) and the backend status card
 feature-prediction/    — Prediction, Result, and Explain screens
 feature-assistant/     — AI Assistant chat screen
 feature-settings/      — Settings, Model Information, and About screens
-core-network/          — Ktor API service and HTTP client factory
+core-network/          — Ktor API service, offline response cache, HTTP client factory
 core-model/            — Domain models and network result types
 core-design-system/    — Material 3 theme and colour palette
 core-navigation/       — Screen routes sealed class
-core-ui/               — Shared UI components (LoadingView, ErrorView, StatusChip)
-core-common/           — DispatcherProvider interface
+core-ui/               — Shared UI components (loading, errors, offline banner, pull to refresh)
+core-common/           — Dispatchers and date/time formatting
+core-testing/, feature-match/, feature-team/ — empty, nothing depends on them
 ```
+
+A bottom bar switches between Fixtures, Predict, Assistant and Settings. Every
+API response is saved in the app's cache directory; when the server can't be
+reached, screens show the saved data under an offline banner, and pulling down
+on a screen fetches fresh data.
 
 ## Running Locally
 
-1. Start the FastAPI backend (see `backend/README.md`). It must be reachable on `localhost:8000`.
+1. Start the FastAPI backend (see [`backend/README.md`](../backend/README.md)). It must be reachable on `localhost:8000`.
 
-2. Launch an Android emulator (API 26+). The app connects to `http://10.0.2.2:8000` (emulator localhost alias).
+2. Launch an Android emulator (API 26+). The app calls API v2 at `http://10.0.2.2:8000/v2` (emulator localhost alias).
 
 3. Build and install:
    ```bash
@@ -48,11 +54,13 @@ core-common/           — DispatcherProvider interface
 ## Running Tests
 
 ```bash
-./gradlew test
+./gradlew testDebugUnitTest
 ./gradlew spotlessCheck detekt
 ```
 
-Tests live in `src/commonTest/` for each feature and core module.
+Repository and network tests live in `src/commonTest/`. ViewModel and
+date-formatting tests live in `src/androidUnitTest/`, next to the `androidMain`
+code they cover.
 
 ## Architecture
 
@@ -74,7 +82,11 @@ module's `androidMain` source set, wrapped in `PreviewSurface` (ADR 010).
 The base URL is configured in `core-network/src/commonMain/.../NetworkConfig.kt`:
 
 ```kotlin
-data class NetworkConfig(val baseUrl: String = "http://10.0.2.2:8000")
+data class NetworkConfig(
+    val baseUrl: String = "http://10.0.2.2:8000",
+    val apiVersion: String = "v2",
+    val timeoutMs: Long = 30_000L,
+)
 ```
 
 Change this for physical device testing (use your machine's LAN IP).

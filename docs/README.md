@@ -22,7 +22,7 @@ Maintained by the project architect. The implementation engineer updates documen
 
 | Document | Description |
 |---|---|
-| [API Reference](api.md) | Every endpoint, request fields, responses and errors |
+| [API Reference](api.md) | Both API versions, every endpoint, request fields, responses, errors and the rate limit |
 | [CLI Reference](reference/cli.md) | Every supported CLI command with options, examples, and expected output |
 | [Repository Structure](repository-structure.md) | Every top-level directory: purpose, what belongs, what does not |
 
@@ -52,9 +52,14 @@ Maintained by the project architect. The implementation engineer updates documen
 | Document | Description |
 |---|---|
 | [Next Phase Plan](plans/next-phase-plan.md) | Testing gaps, draw handling, scoreline predictions: order, design, impact analysis |
+| [Five Leagues Plan](plans/five-leagues-plan.md) | Serving all five leagues in the API and app |
 | [Multi-League Retraining Plan](plans/multi-league-retraining-plan.md) | Goal, data profile and phased plan for retraining on top-5 league data |
 | [Multi-League Model Comparison](reports/multi-league-retraining-comparison.md) | Candidate vs current model, bookmaker and priors, with the promotion verdict |
 | [2026/27 Live Check](reports/in-season-2026-27.md) | Served model scored on 2026/27 matches played so far |
+| [Draw Handling](reports/draw-handling.md) | Why draws are a tag, not a pick |
+| [Goals Model](reports/goals-model.md) | Dixon-Coles scoreline model and its evaluation |
+| [Kaggle Extras](reports/kaggle-extras.md) | xG, FIFA ratings and Champions League rest days tested; none adopted |
+| [UI/UX Review](reports/ui-ux-review.md) | App review against mobile design guidelines |
 
 ### Demos
 
@@ -91,6 +96,7 @@ Maintained by the project architect. The implementation engineer updates documen
 
 | Document | Description |
 |---|---|
+| [v2.0.0 Release Notes](releases/v2.0.0.md) | Five leagues, versioned API, fixtures, goals model, offline app |
 | [v1.0.0 Release Notes](releases/v1.0.0.md) | Full release notes for the complete platform (Stages 1–12) |
 | [v1.0.0 Readiness Report](releases/v1.0.0-readiness.md) | Final build, test, API, and CLI verification results |
 | [v0.2.0 Release Notes](releases/v0.2.0.md) | Full release notes for Stages 1–10 |
@@ -106,12 +112,14 @@ Maintained by the project architect. The implementation engineer updates documen
 docs/
   adr/            # Architectural Decision Records
   demo/           # Stage-by-stage demo scripts for technical interviews
+  plans/          # Plans for the follow-on phase after Stage 12
   reference/      # CLI command reference and API specifications
   releases/       # Release notes and readiness reports
-  reports/        # Stage completion summaries
+  reports/        # Stage summaries and model/data experiment reports
   setup/          # Installation and quick-start guides
   showcase/       # Recruiter-facing showcase: portfolio summary, timeline, interview guide, demo scripts
   README.md       # This index
+  api.md          # API reference
   architecture-impact.md   # How stages built on each other
   repository-structure.md  # Directory ownership guide
   troubleshooting.md       # Common issues and fixes

@@ -6,11 +6,9 @@ Team profile screen showing squad, season stats, and recent match history.
 
 Presentation layer. Depends on `core-ui`, `core-design-system`, `core-model`, `core-navigation`.
 
-## Future Contents
+## Status
 
-- `TeamViewModel` — owns `TeamUiState`. TDD required.
-- `TeamScreen` — displays team information and match history.
-- `TeamRepository` interface and implementation.
+Empty. No screen or module depends on it.
 
 ## Constraints
 

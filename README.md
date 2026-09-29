@@ -2,7 +2,7 @@
 
 **An AI-first football analytics platform — from raw match data to an explainable, grounded, mobile-native prediction experience.**
 
-[![CI](https://img.shields.io/badge/CI-passing-brightgreen)](.github/workflows) [![Tests](https://img.shields.io/badge/tests-796%20passing-brightgreen)](docs/reports/) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Python](https://img.shields.io/badge/python-3.12-blue)](ai/pyproject.toml) [![Kotlin](https://img.shields.io/badge/kotlin-Compose%20Multiplatform-purple)](frontend/)
+[![CI](https://img.shields.io/badge/CI-passing-brightgreen)](.github/workflows) [![Tests](https://img.shields.io/badge/tests-864%20passing-brightgreen)](docs/reports/) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Python](https://img.shields.io/badge/python-3.12-blue)](ai/pyproject.toml) [![Kotlin](https://img.shields.io/badge/kotlin-Compose%20Multiplatform-purple)](frontend/)
 
 ---
 
@@ -12,7 +12,7 @@ The Football Intelligence Platform ingests 26 seasons of match data from Europe'
 
 It is a complete, working system — not a notebook or a prototype. Twelve build stages take it from an empty repository to a tested, documented, end-to-end product: ingestion → validation → feature engineering → model training → explainability → a FastAPI backend → a locally-grounded RAG assistant → a Compose Multiplatform Android app → full integration testing.
 
-**796 tests pass (756 Python, 40 Android). Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes its data daily without a restart.**
+**864 tests pass (798 Python, 66 Android). Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes results and fixtures daily without a restart, and the app keeps working offline with the last data it saw.**
 
 ---
 
@@ -40,10 +40,10 @@ This project demonstrates AI engineering as a discipline: not just "can I train 
 | **Scorelines and goal markets** | Time-weighted Dixon-Coles goals model per league: five most likely scores, expected goals, both teams to score, over/under lines and clean sheets (ADR 009) |
 | **Per-prediction explainability** | SHAP `TreeExplainer` attaches feature-level attribution to every prediction, shown in plain football language ("Arsenal win rate at home · 68%") |
 | **Grounded AI assistant** | Local RAG pipeline (Ollama + numpy vector store) answers football questions using only retrieved platform data, with source citations |
-| **Production-shaped backend** | FastAPI with 8 REST endpoints, server-side match features, a daily in-process data refresh (ADR 013), structured errors, OpenAPI docs |
-| **Native Android client** | 8-screen Compose Multiplatform app with a league picker, MVVM, StateFlow, Koin DI, string resources and previews for every screen |
+| **Production-shaped backend** | Versioned FastAPI (`/v1` frozen, `/v2` current, ADR 014), server-side match features, upcoming fixtures, a daily in-process data refresh (ADR 013), a per-client rate limit, structured errors, OpenAPI docs |
+| **Native Android client** | Compose Multiplatform app that opens on upcoming fixtures by league, with bottom navigation, a league picker, offline mode with saved data, pull to refresh, MVVM, StateFlow, Koin DI and previews for every screen |
 | **Full reproducibility** | Entire pipeline (ingest → features → train → explain) runs in under 15 seconds from one CLI command |
-| **End-to-end test coverage** | 756 Python tests (unit and integration against the real model) and 40 Android tests (ViewModels written test-first, repositories, network) |
+| **End-to-end test coverage** | 798 Python tests (unit and integration against the real model) and 66 Android tests (ViewModels written test-first, repositories, network, cache) |
 | **Zero cloud dependency** | Runs entirely on a laptop — no managed database, no cloud LLM, no hosted vector store |
 
 ---
@@ -52,27 +52,40 @@ This project demonstrates AI engineering as a discipline: not just "can I train 
 
 ```mermaid
 flowchart TD
-    A["⚽ Football Data\nfootball-data.co.uk · 5 leagues · daily refresh"] --> B
+    A["⚽ Match results\nfootball-data.co.uk · 5 leagues · daily"] --> B
+    FX["📅 Fixtures\nopenfootball · season schedules · daily"] --> FS
 
     subgraph AI["AI Workspace (ai/)"]
         B["Ingestion Pipeline\nDatasetDownloader · IngestionPipeline\nschema validation · versioned storage"] --> C
         C["Canonical Dataset\ndatasets/processed/\nProcessedMatch · 46,709 matches\ntop 5 leagues · 2000/01–2025/26"] --> D
         D["Feature Engineering\n9 feature generators · FeatureRegistry\nKahn topology sort · leakage prevention"] --> E
-        E["Feature Matrix\ndatasets/features/feature_matrix.parquet\n42 pre-match features · 46,709 rows"] --> F
+        E["Feature Matrix\n42 pre-match features · 46,709 rows"] --> F
         F["Model Training\nXGBoost · season-based split\nearly stopping · season walk-forward CV"] --> G
         G["Evaluation\naccuracy · F1 · log-loss · ROC AUC"] --> H
         H["Model Registry\nmodels/registry.json\ngit commit traceability"]
         F --> I["Model Artifacts\nmodels/latest/model.joblib"]
+        FS["Fixtures Dataset\nteam names mapped · validated"]
     end
 
     I --> J["Explainability\nSHAP TreeExplainer · ExplanationService"]
-    C --> N["Goals Model\nDixon-Coles per league · fitted at startup"]
-    J --> K["FastAPI Backend\n/predict · /explain · /insights · /teams · /competitions"]
-    N --> K
+    C --> NG["Goals Model\nDixon-Coles per league · fitted at startup"]
+    J --> K["FastAPI Backend\n/v2: predict · explain · insights · fixtures · teams\n/v1: original Premier League model\nrate limited"]
+    NG --> K
+    FS --> K
     K --> L["AI Assistant\nOllama RAG · numpy vector store"]
-    K --> M["Android App\nCompose Multiplatform · MVVM · Ktor · Koin"]
+    K --> M["Android App\nCompose Multiplatform · MVVM · Ktor · Koin\noffline cache · pull to refresh"]
 
-    style AI fill:#1a1a2e,stroke:#4a9eff,color:#ffffff
+    classDef source fill:#E3F2FD,stroke:#1E88E5,color:#0D2A4A
+    classDef data fill:#E8F5E9,stroke:#43A047,color:#12351A
+    classDef model fill:#F3E5F5,stroke:#8E24AA,color:#3A1245
+    classDef serve fill:#FFF3E0,stroke:#FB8C00,color:#4A2A00
+    classDef client fill:#E0F7FA,stroke:#00ACC1,color:#003B44
+    class A,FX source
+    class B,C,D,E,FS data
+    class F,G,H,I,J,NG model
+    class K,L serve
+    class M client
+    style AI fill:#FAFAFA,stroke:#9E9E9E,color:#212121
 ```
 
 ---
@@ -87,7 +100,7 @@ flowchart TD
 | **Backend** | FastAPI, Pydantic v2, `pydantic-settings`, uvicorn |
 | **Mobile** | Kotlin, Compose Multiplatform, Ktor client, Koin DI, AndroidX Navigation Compose, Material 3 |
 | **Tooling** | uv (Python dependency management), Gradle 8.8, Ruff, Black, MyPy, Detekt, Spotless |
-| **Testing** | pytest (756 tests), JUnit 5, MockK, Ktor MockEngine (40 tests) |
+| **Testing** | pytest (798 tests), JUnit 5, MockK, Ktor MockEngine (66 tests) |
 | **CI/CD** | GitHub Actions |
 
 ---
@@ -100,10 +113,9 @@ flowchart TD
 docs/               # ADRs, stage reports, demo guides, release notes, showcase docs
 playbook/           # Prompt templates and retrieval configs (version-controlled, tested)
 frontend/           # Compose Multiplatform Android application (13 Gradle modules)
-backend/            # (legacy scaffold — active backend lives in ai/backend/)
+backend/            # Placeholder: the backend lives in ai/backend/
 ai/                 # Python workspace: ingestion → features → training → explainability → RAG → API
-datasets/           # Raw, processed, and feature-engineered football data (versioned)
-models/             # Trained model artifacts, registry, evaluation reports
+datasets/           # Raw, processed, and feature-engineered football data (versioned, not committed)
 scripts/            # Setup and automation scripts
 tools/              # Shared CLI utilities
 ```
@@ -122,6 +134,13 @@ flowchart LR
     D --> E[Feature Matrix\n42 features × 46,709 rows]
     E --> F[XGBoost Training\nseason-based split]
     F --> G[Model Registry\nJSON + git commit]
+
+    classDef source fill:#E3F2FD,stroke:#1E88E5,color:#0D2A4A
+    classDef data fill:#E8F5E9,stroke:#43A047,color:#12351A
+    classDef model fill:#F3E5F5,stroke:#8E24AA,color:#3A1245
+    class A source
+    class B,C,D,E data
+    class F,G model
 ```
 
 Every transformation is a reproducible script — never a notebook. Raw data is immutable; nothing downstream ever overwrites a source file.
@@ -149,6 +168,13 @@ flowchart TD
     D --> E[Evaluation\naccuracy · F1 · log-loss · ROC AUC]
     E --> F[Model Registry\nversioned, git-traced]
     F --> G[models/latest/\nmodel.joblib + model_card.md]
+
+    classDef data fill:#E8F5E9,stroke:#43A047,color:#12351A
+    classDef model fill:#F3E5F5,stroke:#8E24AA,color:#3A1245
+    classDef serve fill:#FFF3E0,stroke:#FB8C00,color:#4A2A00
+    class A,B data
+    class C,D,E,F model
+    class G serve
 ```
 
 Whole seasons are assigned to train, validation and test, so the model never trains on the future; see [ADR 007](docs/adr/007-season-based-split-and-evaluation.md). 2024/25 and 2025/26 are held back as an out-of-time check. Hyperparameters are chosen by season cross-validation on training seasons only (`training.tuning`). Result on the 2023/24 test season across all five leagues: **52.5% accuracy, log loss 0.976** on a 3-class problem (random baseline: 33.3%; bookmakers 55.0% and 0.955). Details: [model comparison report](docs/reports/multi-league-retraining-comparison.md).
@@ -161,7 +187,14 @@ flowchart TD
     B --> C[Per-prediction SHAP values\n42 features × 3 classes]
     C --> D[LocalExplanation\ntop positive/negative features]
     C --> E[GlobalSummary\nbeeswarm · waterfall · force · dependence]
-    D --> F[POST /explain API response]
+    D --> F[POST /v2/explain API response]
+
+    classDef data fill:#E8F5E9,stroke:#43A047,color:#12351A
+    classDef model fill:#F3E5F5,stroke:#8E24AA,color:#3A1245
+    classDef serve fill:#FFF3E0,stroke:#FB8C00,color:#4A2A00
+    class A,B,C model
+    class D,E data
+    class F serve
 ```
 
 Every prediction is explainable — not as an afterthought, but as a first-class API response. See [ADR 004](docs/adr/004-shap-for-explainability.md) for why SHAP was chosen over LIME, native XGBoost importance, and Captum.
@@ -179,6 +212,15 @@ flowchart LR
     G --> H[System Prompt\nsource-only answering]
     H --> I[OllamaGenerator\nllama3.2]
     I --> J[Answer + Citations]
+
+    classDef source fill:#E3F2FD,stroke:#1E88E5,color:#0D2A4A
+    classDef data fill:#E8F5E9,stroke:#43A047,color:#12351A
+    classDef model fill:#F3E5F5,stroke:#8E24AA,color:#3A1245
+    classDef client fill:#E0F7FA,stroke:#00ACC1,color:#003B44
+    class A,F source
+    class B,C,D,E,G data
+    class H,I model
+    class J client
 ```
 
 The assistant is instructed, by system prompt, to answer **only** from retrieved context. Low-relevance chunks are filtered before generation. If Ollama isn't running, the backend degrades gracefully — `POST /assistant/chat` returns `503`, never a crash.
@@ -189,34 +231,37 @@ The assistant is instructed, by system prompt, to answer **only** from retrieved
 flowchart TD
     A[Compose Screens\ncommonMain, stateless] --> B[ViewModels\nandroidMain, StateFlow]
     B --> C[Repositories\nNetworkResult&lt;T&gt;]
-    C --> D[KtorFootballApiService]
-    D -- HTTP --> E[FastAPI Backend]
+    C --> X[CachingFootballApiService\nsaves responses · replays offline]
+    X --> D[KtorFootballApiService]
+    D -- "HTTP /v2" --> E[FastAPI Backend]
+
+    classDef data fill:#E8F5E9,stroke:#43A047,color:#12351A
+    classDef serve fill:#FFF3E0,stroke:#FB8C00,color:#4A2A00
+    classDef client fill:#E0F7FA,stroke:#00ACC1,color:#003B44
+    class A,B client
+    class C,X,D data
+    class E serve
 ```
 
-8 screens (Home, Match Prediction, Prediction Result, Explain Prediction, AI Assistant Chat, Model Information, Settings, About), all backed by `StateFlow<UiState>` ViewModels and Koin dependency injection. Team selection starts with a league picker filled from `GET /competitions`. The result shows win/draw/loss probabilities, a draw tag for tight games, and the goals model's likely scores and goal markets. Errors are explained in plain language. See [frontend/README.md](frontend/README.md) for the full module graph.
+The app opens on upcoming fixtures, grouped by day, with one tab per league and the Premier League first; kick-off times are in the phone's time zone. A bottom bar switches between Fixtures, Predict, Assistant and Settings. Prediction starts with a league picker filled from `GET /v2/competitions`, and the result shows win/draw/loss probabilities, a draw tag for tight games, and the goals model's likely scores and goal markets. Every answer is saved: without a connection the app shows the last data it had under an offline banner, and pulling down fetches fresh data. Errors are explained in plain language. See [frontend/README.md](frontend/README.md) for the full module graph.
 
 ## Backend Services
 
-FastAPI exposes eight REST endpoints, all documented automatically via OpenAPI and in [docs/api.md](docs/api.md):
+FastAPI serves two API versions (ADR 014), documented automatically via OpenAPI and in [docs/api.md](docs/api.md). `/v2` is current:
 
 | Endpoint | Method | Purpose |
 |---|---|---|
-| `/health` | GET | Service status, latest result date and last data refresh |
-| `/model` | GET | Model version, training metadata, evaluation metrics |
-| `/competitions` | GET | The five served leagues and how current each one is |
-| `/teams` | GET | A league's current teams (`?competition=`) |
-| `/predict` | POST | Win/draw/loss prediction; the server computes features from history (ADR 008) |
-| `/explain` | POST | Prediction plus SHAP attribution in plain football language |
-| `/insights` | POST | Likely scores, expected goals and goal markets from the goals model |
-| `/assistant/chat` | POST | RAG-grounded football Q&A |
+| `/v2/health` | GET | Service status, latest result date and last data refresh |
+| `/v2/model` | GET | Model version, training metadata, evaluation metrics |
+| `/v2/competitions` | GET | The five served leagues and how current each one is |
+| `/v2/teams` | GET | A league's current teams (`?competition=`) |
+| `/v2/fixtures` | GET | A league's upcoming fixtures from today on (ADR 015) |
+| `/v2/predict` | POST | Win/draw/loss prediction; the server computes features from history (ADR 008) |
+| `/v2/explain` | POST | Prediction plus SHAP attribution in plain football language |
+| `/v2/insights` | POST | Likely scores, expected goals and goal markets from the goals model |
+| `/v2/assistant/chat` | POST | RAG-grounded football Q&A |
 
-Requests name a league with an optional `competition` and default to the Premier League (ADR 012). Dependency injection happens once at FastAPI lifespan startup, and the daily refresh swaps in new data without a restart (ADR 013). Structured errors: `503` (service unavailable), `422` (unknown league or team, validation), `500` (unexpected, logged).
-
----
-
-## Screenshots and Demo
-
-See the [screenshot checklist](docs/showcase/screenshots/README.md) and the 5/10/20-minute [demo scripts](docs/showcase/demo-script.md).
+`/v1` and the unversioned paths keep the v1.0.0 contract: the original Premier League model and the original response fields, so older clients keep working. Requests name a league with an optional `competition` and default to the Premier League (ADR 012). Each client may make 120 requests a minute before a `429` (`RATE_LIMIT_PER_MINUTE`). Dependency injection happens once at FastAPI lifespan startup, and the daily refresh swaps in new results and fixtures without a restart (ADR 013). Structured errors: `503` (service unavailable), `429` (rate limit), `422` (unknown league or team, validation), `500` (unexpected, logged).
 
 ---
 
@@ -242,7 +287,7 @@ cp .env.example .env   # optional: every value in it is already the default
 uv run uvicorn backend.app.main:app --reload
 ```
 
-Visit `http://127.0.0.1:8000/docs` for interactive OpenAPI documentation. At startup the server loads the newest match dataset and fits a goals model per league. From then on it downloads the latest results every day at 06:00 local time. Set `LIVE_REFRESH_HOUR=off` in `.env` to work offline. Every setting is listed in [`ai/.env.example`](ai/.env.example).
+Visit `http://127.0.0.1:8000/docs` for interactive OpenAPI documentation. At startup the server loads the newest match and fixtures datasets and fits a goals model per league, downloading fixtures straight away if it has none. From then on it downloads the latest results and fixtures every day at 06:00 local time. Set `LIVE_REFRESH_HOUR=off` in `.env` to work offline. Every setting is listed in [`ai/.env.example`](ai/.env.example).
 
 To enable the AI assistant (optional, requires [Ollama](https://ollama.com)):
 
@@ -260,18 +305,18 @@ cd frontend
 adb install app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The app targets `http://10.0.2.2:8000` (the Android emulator's alias for the host machine's localhost).
+The app calls API v2 at `http://10.0.2.2:8000/v2` (the Android emulator's alias for the host machine's localhost).
 
 ### Running Tests
 
 ```sh
-# Python: unit + integration (756 tests)
+# Python: unit + integration (798 tests)
 cd ai && uv run pytest
 
 # Python: unit tests only
 uv run pytest -m "not integration"
 
-# Android: unit tests, lint and formatting (40 tests)
+# Android: unit tests, lint and formatting (66 tests)
 cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
 ```
 
@@ -282,39 +327,20 @@ cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
 | Document | Purpose |
 |---|---|
 | [Documentation Index](docs/README.md) | Full documentation map |
-| [ADR Index](docs/adr/README.md) | All architectural decision records |
+| [ADR Index](docs/adr/README.md) | All 15 architectural decision records |
 | [Stage Reports](docs/reports/) | Detailed report for every build stage (1–12) |
 | [Demo Scripts](docs/demo/README.md) | Per-stage manual verification guides |
+| [Showcase Demo](docs/showcase/demo-script.md) | 5, 10 and 20-minute demo scripts and a [screenshot checklist](docs/showcase/screenshots/README.md) |
 | [CLI Reference](docs/reference/cli.md) | All pipeline commands |
 | [Quick Start Guide](docs/setup/quick-start.md) | Fastest path to a running system |
 | [Troubleshooting](docs/troubleshooting.md) | Common issues and fixes |
 | [AI Layer](ai/README.md) | Python workspace structure |
 | [Backend](backend/README.md) | Backend service notes |
 | [Frontend](frontend/README.md) | Android module structure |
-| [Model Card](models/latest/model_card.md) | Trained model details |
+| [API Reference](docs/api.md) | Every endpoint, both API versions, errors and rate limit |
 | [Project Showcase](docs/showcase/project-showcase.md) | Full technical write-up for this project |
 | [Portfolio Summary](docs/showcase/portfolio-summary.md) | Two-page recruiter-facing summary |
 | [Interview Guide](docs/showcase/interview-guide.md) | 50 likely interview questions with answers |
-
----
-
-## Architecture Decision Records
-
-| ADR | Title | Status |
-|---|---|---|
-| [001](docs/adr/001-use-xgboost-for-predictions.md) | Use XGBoost for match outcome prediction | Accepted |
-| [002](docs/adr/002-joblib-model-serialization.md) | Use joblib for model serialisation | Accepted |
-| [003](docs/adr/003-chronological-train-val-test-split.md) | Use chronological train/validation/test split | Accepted |
-| [004](docs/adr/004-shap-for-explainability.md) | Use SHAP TreeExplainer for model explainability | Accepted |
-| [005](docs/adr/005-top-five-leagues-multi-source-data.md) | Expand training data to the top five leagues | Accepted |
-| [006](docs/adr/006-team-canonicalisation-and-match-dedup.md) | Canonical team names and match deduplication | Accepted |
-| [007](docs/adr/007-season-based-split-and-evaluation.md) | Season-based split and evaluation protocol | Accepted |
-| [008](docs/adr/008-server-side-match-features.md) | Compute match features on the server | Accepted |
-| [009](docs/adr/009-dixon-coles-goals-model.md) | Dixon-Coles goals model for scoreline predictions | Accepted |
-| [010](docs/adr/010-compose-resources-for-ui-text.md) | Keep UI text in Compose Multiplatform resources | Accepted |
-| [011](docs/adr/011-draw-possible-tag.md) | Flag possible draws without changing the pick | Accepted |
-| [012](docs/adr/012-serve-all-five-leagues.md) | Serve all five leagues in the API and app | Accepted |
-| [013](docs/adr/013-daily-data-refresh-in-backend.md) | Refresh match data daily inside the backend | Accepted |
 
 ---
 
@@ -322,15 +348,12 @@ cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
 
 | Version | Date | Highlights |
 |---|---|---|
+| [v2.0.0](docs/releases/v2.0.0.md) | 2026-09-29 | Five leagues, versioned API, fixtures, goals model, offline app, daily refresh |
 | [v1.0.0](docs/releases/v1.0.0.md) | 2026-07-01 | Android app, end-to-end integration tests, performance benchmarks, production readiness |
 | [v0.2.0](docs/releases/v0.2.0.md) | 2026-06-30 | SHAP explainability, FastAPI backend, RAG assistant |
 | [v0.1.0](docs/releases/v0.1.0.md) | — | Data pipeline, feature engineering, XGBoost training |
 
----
-
-## Roadmap
-
-Build stages 1–12 (repository foundation through integration and production readiness) are complete; see the [stage reports](docs/reports/). The follow-on phase ([plan](docs/plans/next-phase-plan.md)) added the five leagues, server-side features, plain-language explanations, draw handling, scoreline predictions and a daily data refresh.
+Build stages 1–12 (repository foundation through integration and production readiness) are complete; see the [stage reports](docs/reports/). The follow-on phase ([plan](docs/plans/next-phase-plan.md)) added the five leagues, server-side features, plain-language explanations, draw handling, scoreline predictions, a daily data refresh, API versions with a rate limit, upcoming fixtures and an offline-ready app. These shipped as [v2.0.0](docs/releases/v2.0.0.md).
 
 ---
 
@@ -344,18 +367,6 @@ Build stages 1–12 (repository foundation through integration and production re
 
 ---
 
-## Future Improvements (Out of Scope)
-
-These are explicitly **not** implemented and are not planned within this project's scope. They are listed for transparency:
-
-- Structured RAG faithfulness evaluation against a ground-truth Q&A set.
-- Injury, suspension and line-up data. The free sources have none at player level, so they are not modelled (see [draw](docs/reports/draw-handling.md) and [Kaggle extras](docs/reports/kaggle-extras.md) reports for what was tested).
-- Authentication, rate limiting, or any change required for public deployment.
-- PostgreSQL backend for production use (SQLite/file-based artifacts are sufficient for this project's scope).
-- Fine-tuning or LoRA training of any language model — deliberately out of scope per the project's AI philosophy.
-
----
-
 ## License
 
 MIT License. See [LICENSE](LICENSE).
@@ -363,6 +374,7 @@ MIT License. See [LICENSE](LICENSE).
 ## Acknowledgements
 
 - [football-data.co.uk](https://www.football-data.co.uk/) for Premier League, Bundesliga, La Liga, Serie A and Ligue 1 results, 2000/01 onwards.
+- [openfootball](https://github.com/openfootball/football.json) for public-domain season schedules used for upcoming fixtures.
 - Kaggle datasets by armin2080, enricocattaneo and adrianjuliusaluoch, used to test xG, FIFA ratings and Champions League rest days ([report](docs/reports/kaggle-extras.md)).
 - [Ollama](https://ollama.com) for local LLM serving (`llama3.2`, `nomic-embed-text`).
 - [SHAP](https://github.com/shap/shap) for the `TreeExplainer` implementation underpinning all explainability features.

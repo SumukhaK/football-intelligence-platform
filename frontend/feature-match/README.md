@@ -6,11 +6,9 @@ Match detail screen showing full match data, statistics, and a link to the predi
 
 Presentation layer. Depends on `core-ui`, `core-design-system`, `core-model`, `core-navigation`.
 
-## Future Contents
+## Status
 
-- `MatchViewModel` — owns `MatchUiState`. TDD required.
-- `MatchScreen` — displays full match statistics, lineups (when available), and result.
-- `MatchRepository` interface and implementation.
+Empty. No screen or module depends on it; the app shows fixtures in `:feature-home`.
 
 ## Constraints
 

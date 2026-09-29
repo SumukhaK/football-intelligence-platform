@@ -12,13 +12,7 @@ Shared. Any engineer may add scripts, but each script must be documented and rev
 
 ## Purpose
 
-Scripts are one-off or operational tools that do not belong in the application codebase. They include:
-
-- Environment setup and dependency installation.
-- Database migration runners.
-- Dataset download and ingestion helpers.
-- CI/CD utility scripts.
-- Local development convenience scripts.
+Scripts are one-off or operational tools that do not belong in the application codebase.
 
 ---
 
@@ -32,9 +26,7 @@ Scripts are one-off or operational tools that do not belong in the application c
 
 ---
 
-## Future Responsibilities
+## Status
 
-- `setup.sh` — install all local dependencies and configure the environment.
-- `migrate.py` — apply database migrations in order.
-- `ingest.py` — download and ingest raw football data.
-- `seed.py` — populate the development database with sample data.
+Empty. Operational scripts live in `ai/scripts/`: backfill, live refresh and
+fixtures refresh.

@@ -6,13 +6,16 @@ Domain model classes shared across feature modules and the network layer.
 
 Domain layer. These types flow from the network layer through to the UI. No module depends on `core-model` except to read these types.
 
-## Future Contents
+## Contents
 
-- `Match` — match result and metadata.
-- `Team` — team identity and statistics.
-- `Player` — player profile and season stats.
-- `Prediction` — XGBoost match outcome prediction with SHAP features.
-- `AssistantMessage` — AI assistant conversation turn.
+- `HealthStatus`, `ModelInfo` — server and model status.
+- `CompetitionsResponse`, `TeamsResponse` — served leagues and their teams.
+- `FixturesResponse`, `Fixture`, `SERVED_LEAGUES` — upcoming fixtures and the league tab order.
+- `PredictionRequest`, `PredictionResult` — win/draw/loss prediction with the draw tag.
+- `ExplanationResult`, `FeatureContribution` — SHAP attribution with fan-friendly labels.
+- `Insights` — likely scores and goal markets from the goals model.
+- `ChatRequest`, `ChatResponse` — assistant conversation.
+- `NetworkResult`, `ErrorKind` — typed result of every API call; `Success.cachedAt` marks saved data replayed offline.
 
 ## Constraints
 

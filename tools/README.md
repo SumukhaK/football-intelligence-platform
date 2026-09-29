@@ -14,12 +14,6 @@ Shared. Tools are reviewed before merge and must meet the same coding standards 
 
 Tools are reusable command-line utilities that multiple parts of the project depend on. Unlike scripts, tools are designed to be called repeatedly in different contexts.
 
-Examples:
-- Dataset schema validator CLI.
-- Model evaluation runner.
-- Prompt template tester.
-- API smoke test runner.
-
 ---
 
 ## Rules
@@ -31,8 +25,8 @@ Examples:
 
 ---
 
-## Future Responsibilities
+## Status
 
-- Schema validation CLI: validate a dataset file against its schema definition.
-- Evaluation CLI: run the full evaluation suite and print a summary report.
-- Prompt test CLI: run a prompt template against a test case and display the output.
+Empty. The project's command-line tools live in `ai/scripts/` and the pipeline
+packages (`python -m training.pipeline` and similar); see
+[docs/reference/cli.md](../docs/reference/cli.md).

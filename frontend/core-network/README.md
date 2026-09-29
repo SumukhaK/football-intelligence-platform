@@ -6,11 +6,13 @@ Ktor HTTP client configuration and base network infrastructure.
 
 Infrastructure layer. Depends on `core-model` for response types.
 
-## Future Contents
+## Contents
 
-- `FootballApiClient` — Ktor client configured with JSON serialization, logging, and retry.
-- `ApiConfig` — base URL and timeout configuration.
-- `NetworkResult` — typed wrapper for network responses.
+- `FootballApiService` / `KtorFootballApiService` — one method per backend endpoint, all under API v2 (ADR 014).
+- `CachingFootballApiService` — saves every successful response and replays it when the server can't be reached. Chat is never cached.
+- `FileResponseCache` — the on-disk cache in the app's cache directory (`androidMain`).
+- `HttpClientFactory` — Ktor client with JSON and timeouts.
+- `NetworkConfig` — base URL, API version and timeout.
 
 ## Constraints
 
