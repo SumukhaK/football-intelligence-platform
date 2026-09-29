@@ -1,5 +1,7 @@
 package com.footballintelligence.feature.prediction
 
+import com.footballintelligence.core.model.Competition
+import com.footballintelligence.core.model.CompetitionsResponse
 import com.footballintelligence.core.model.ExpectedGoals
 import com.footballintelligence.core.model.GoalMarkets
 import com.footballintelligence.core.model.Insights
@@ -56,11 +58,30 @@ class PredictionViewModelTest {
         reasons = emptyList(),
     )
 
-    private val fixture = PredictionRequest(homeTeam = "Arsenal", awayTeam = "Chelsea")
+    private val fixture = PredictionRequest(
+        homeTeam = "Arsenal",
+        awayTeam = "Chelsea",
+        competition = "Premier League",
+    )
+
+    private val leagues = CompetitionsResponse(
+        default = "Premier League",
+        competitions = listOf(
+            Competition("Premier League", "2026/27", 20, "2026-09-20", true),
+            Competition("Bundesliga", "2026/27", 18, "2026-09-20", true),
+        ),
+    )
+
+    private val bundesligaTeams = TeamsResponse(
+        competition = "Bundesliga",
+        season = "2026/27",
+        teams = listOf("Bayern Munich", "Dortmund", "Leipzig"),
+    )
 
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
+        coEvery { repository.competitions() } returns NetworkResult.Success(leagues)
     }
 
     @AfterEach
@@ -70,21 +91,21 @@ class PredictionViewModelTest {
 
     @Test
     fun `loads teams from the api on start`() {
-        coEvery { repository.teams() } returns NetworkResult.Success(teams)
+        coEvery { repository.teams("Premier League") } returns NetworkResult.Success(teams)
         val viewModel = PredictionViewModel(repository)
         assertEquals(TeamsUiState.Success("2026/27", teams.teams), viewModel.teamsState.value)
     }
 
     @Test
     fun `teams error is shown with its message`() {
-        coEvery { repository.teams() } returns NetworkResult.Error("HTTP 503")
+        coEvery { repository.teams("Premier League") } returns NetworkResult.Error("HTTP 503")
         val viewModel = PredictionViewModel(repository)
         assertEquals(TeamsUiState.Error("HTTP 503"), viewModel.teamsState.value)
     }
 
     @Test
     fun `an empty team list is an error, not a crash`() {
-        coEvery { repository.teams() } returns
+        coEvery { repository.teams("Premier League") } returns
             NetworkResult.Success(TeamsResponse("Premier League", "2026/27", emptyList()))
         val viewModel = PredictionViewModel(repository)
         assertEquals(
@@ -95,7 +116,7 @@ class PredictionViewModelTest {
 
     @Test
     fun `retrying teams after an error loads them`() {
-        coEvery { repository.teams() } returnsMany listOf(
+        coEvery { repository.teams("Premier League") } returnsMany listOf(
             NetworkResult.Error("HTTP 503"),
             NetworkResult.Success(teams),
         )
@@ -106,8 +127,8 @@ class PredictionViewModelTest {
 
     @Test
     fun `predict sends only the two teams`() {
-        coEvery { repository.teams() } returns NetworkResult.Success(teams)
-        val request = PredictionRequest(homeTeam = "Arsenal", awayTeam = "Chelsea")
+        coEvery { repository.teams("Premier League") } returns NetworkResult.Success(teams)
+        val request = fixture
         coEvery { repository.predict(request) } returns NetworkResult.Success(prediction)
         coEvery { repository.insights(request) } returns NetworkResult.Success(insights)
         val viewModel = PredictionViewModel(repository)
@@ -120,8 +141,8 @@ class PredictionViewModelTest {
 
     @Test
     fun `explain reuses the predicted teams`() {
-        coEvery { repository.teams() } returns NetworkResult.Success(teams)
-        val request = PredictionRequest(homeTeam = "Arsenal", awayTeam = "Chelsea")
+        coEvery { repository.teams("Premier League") } returns NetworkResult.Success(teams)
+        val request = fixture
         coEvery { repository.predict(request) } returns NetworkResult.Success(prediction)
         coEvery { repository.insights(request) } returns NetworkResult.Success(insights)
         coEvery { repository.explain(request) } returns NetworkResult.Error("HTTP 422")
@@ -136,7 +157,7 @@ class PredictionViewModelTest {
 
     @Test
     fun `explain does nothing before a prediction`() {
-        coEvery { repository.teams() } returns NetworkResult.Success(teams)
+        coEvery { repository.teams("Premier League") } returns NetworkResult.Success(teams)
         val viewModel = PredictionViewModel(repository)
         viewModel.explain()
         assertEquals(ExplanationUiState.Idle, viewModel.explanationState.value)
@@ -145,7 +166,7 @@ class PredictionViewModelTest {
 
     @Test
     fun `insights load alongside the prediction`() {
-        coEvery { repository.teams() } returns NetworkResult.Success(teams)
+        coEvery { repository.teams("Premier League") } returns NetworkResult.Success(teams)
         coEvery { repository.predict(fixture) } returns NetworkResult.Success(prediction)
         coEvery { repository.insights(fixture) } returns NetworkResult.Success(insights)
         val viewModel = PredictionViewModel(repository)
@@ -158,7 +179,7 @@ class PredictionViewModelTest {
 
     @Test
     fun `an insights error keeps the prediction`() {
-        coEvery { repository.teams() } returns NetworkResult.Success(teams)
+        coEvery { repository.teams("Premier League") } returns NetworkResult.Success(teams)
         coEvery { repository.predict(fixture) } returns NetworkResult.Success(prediction)
         coEvery { repository.insights(fixture) } returns NetworkResult.Error("HTTP 503")
         val viewModel = PredictionViewModel(repository)
@@ -171,7 +192,7 @@ class PredictionViewModelTest {
 
     @Test
     fun `reset clears the insights`() {
-        coEvery { repository.teams() } returns NetworkResult.Success(teams)
+        coEvery { repository.teams("Premier League") } returns NetworkResult.Success(teams)
         coEvery { repository.predict(fixture) } returns NetworkResult.Success(prediction)
         coEvery { repository.insights(fixture) } returns NetworkResult.Success(insights)
         val viewModel = PredictionViewModel(repository)
@@ -180,5 +201,63 @@ class PredictionViewModelTest {
         viewModel.resetPrediction()
 
         assertEquals(InsightsUiState.Idle, viewModel.insightsState.value)
+    }
+
+    @Test
+    fun `loads the leagues and selects the default`() {
+        coEvery { repository.teams("Premier League") } returns NetworkResult.Success(teams)
+        val viewModel = PredictionViewModel(repository)
+        assertEquals(
+            CompetitionsUiState.Success(leagues.competitions, selected = "Premier League"),
+            viewModel.competitionsState.value,
+        )
+    }
+
+    @Test
+    fun `choosing a league loads its teams`() {
+        coEvery { repository.teams("Premier League") } returns NetworkResult.Success(teams)
+        coEvery { repository.teams("Bundesliga") } returns NetworkResult.Success(bundesligaTeams)
+        val viewModel = PredictionViewModel(repository)
+
+        viewModel.selectCompetition("Bundesliga")
+
+        assertEquals(
+            TeamsUiState.Success("2026/27", bundesligaTeams.teams),
+            viewModel.teamsState.value,
+        )
+        assertEquals(
+            CompetitionsUiState.Success(leagues.competitions, selected = "Bundesliga"),
+            viewModel.competitionsState.value,
+        )
+    }
+
+    @Test
+    fun `predictions carry the chosen league`() {
+        coEvery { repository.teams(any()) } returns NetworkResult.Success(bundesligaTeams)
+        val request = PredictionRequest("Bayern Munich", "Leipzig", competition = "Bundesliga")
+        coEvery { repository.predict(request) } returns NetworkResult.Success(prediction)
+        coEvery { repository.insights(request) } returns NetworkResult.Success(insights)
+        val viewModel = PredictionViewModel(repository)
+
+        viewModel.selectCompetition("Bundesliga")
+        viewModel.predict("Bayern Munich", "Leipzig")
+
+        coVerify(exactly = 1) { repository.predict(request) }
+        coVerify(exactly = 1) { repository.insights(request) }
+    }
+
+    @Test
+    fun `a leagues error is shown and can be retried`() {
+        coEvery { repository.competitions() } returnsMany listOf(
+            NetworkResult.Error("HTTP 503"),
+            NetworkResult.Success(leagues),
+        )
+        coEvery { repository.teams("Premier League") } returns NetworkResult.Success(teams)
+        val viewModel = PredictionViewModel(repository)
+        assertEquals(CompetitionsUiState.Error("HTTP 503"), viewModel.competitionsState.value)
+
+        viewModel.loadCompetitions()
+
+        assertEquals(TeamsUiState.Success("2026/27", teams.teams), viewModel.teamsState.value)
     }
 }

@@ -38,6 +38,7 @@ import com.footballintelligence.feature.prediction.resources.away_team
 import com.footballintelligence.feature.prediction.resources.cd_predict
 import com.footballintelligence.feature.prediction.resources.cd_team_dropdown
 import com.footballintelligence.feature.prediction.resources.home_team
+import com.footballintelligence.feature.prediction.resources.league
 import com.footballintelligence.feature.prediction.resources.prediction_title
 import com.footballintelligence.feature.prediction.resources.season_note
 import com.footballintelligence.feature.prediction.resources.select_teams
@@ -50,7 +51,9 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun PredictionScreen(
     uiState: PredictionInputUiState,
+    competitionsState: CompetitionsUiState,
     teamsState: TeamsUiState,
+    onSelectCompetition: (String) -> Unit,
     onPredict: (homeTeam: String, awayTeam: String) -> Unit,
     onRetryTeams: () -> Unit,
     onNavigateToResult: () -> Unit,
@@ -77,19 +80,30 @@ fun PredictionScreen(
                 LaunchedEffect(uiState.result) { onNavigateToResult() }
                 LoadingView(Modifier.padding(padding))
             }
-            is PredictionInputUiState.Idle -> when (teamsState) {
-                is TeamsUiState.Loading -> LoadingView(Modifier.padding(padding))
-                is TeamsUiState.Error -> ErrorView(
-                    message = teamsState.message,
-                    onRetry = onRetryTeams,
-                    modifier = Modifier.padding(padding),
-                )
-                is TeamsUiState.Success -> PredictionInputContent(
-                    season = teamsState.season,
-                    teams = teamsState.teams,
-                    onPredict = onPredict,
-                    modifier = Modifier.padding(padding),
-                )
+            is PredictionInputUiState.Idle -> Column(Modifier.padding(padding)) {
+                if (competitionsState is CompetitionsUiState.Success) {
+                    LeaguePicker(
+                        state = competitionsState,
+                        onSelect = onSelectCompetition,
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp),
+                    )
+                }
+                val league = (competitionsState as? CompetitionsUiState.Success)?.selected.orEmpty()
+                when (teamsState) {
+                    is TeamsUiState.Loading -> LoadingView(Modifier.weight(1f))
+                    is TeamsUiState.Error -> ErrorView(
+                        message = teamsState.message,
+                        onRetry = onRetryTeams,
+                        modifier = Modifier.weight(1f),
+                    )
+                    is TeamsUiState.Success -> PredictionInputContent(
+                        league = league,
+                        season = teamsState.season,
+                        teams = teamsState.teams,
+                        onPredict = onPredict,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
             }
         }
     }
@@ -98,6 +112,7 @@ fun PredictionScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PredictionInputContent(
+    league: String,
     season: String,
     teams: List<String>,
     onPredict: (homeTeam: String, awayTeam: String) -> Unit,
@@ -115,7 +130,7 @@ private fun PredictionInputContent(
     ) {
         Text(stringResource(Res.string.select_teams), style = MaterialTheme.typography.headlineSmall)
         Text(
-            text = stringResource(Res.string.season_note, season),
+            text = stringResource(Res.string.season_note, league, season),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -165,6 +180,23 @@ private fun PredictionInputContent(
                 color = MaterialTheme.colorScheme.error,
             )
         }
+    }
+}
+
+/** Chooses which served league's teams to predict (ADR 012). */
+@Composable
+internal fun LeaguePicker(
+    state: CompetitionsUiState.Success,
+    onSelect: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier) {
+        TeamDropdown(
+            label = stringResource(Res.string.league),
+            selectedTeam = state.selected,
+            teams = state.competitions.map { it.name },
+            onTeamSelected = onSelect,
+        )
     }
 }
 

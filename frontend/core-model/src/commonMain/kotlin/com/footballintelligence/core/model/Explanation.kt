@@ -61,4 +61,5 @@ data class ExplanationResult(
     @SerialName("feature_version") val featureVersion: String,
     @SerialName("dataset_version") val datasetVersion: String,
     @SerialName("explanation_timestamp") val explanationTimestamp: String,
+    val competition: String = "",
 )

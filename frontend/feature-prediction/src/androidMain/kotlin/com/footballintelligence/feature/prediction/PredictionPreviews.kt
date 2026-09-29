@@ -2,6 +2,7 @@ package com.footballintelligence.feature.prediction
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import com.footballintelligence.core.model.Competition
 import com.footballintelligence.core.model.ExpectedGoals
 import com.footballintelligence.core.model.ExplanationResult
 import com.footballintelligence.core.model.FeatureContribution
@@ -11,8 +12,6 @@ import com.footballintelligence.core.model.OutcomeProbabilities
 import com.footballintelligence.core.model.PredictionResult
 import com.footballintelligence.core.model.ScoreProbability
 import com.footballintelligence.core.ui.PreviewSurface
-
-private val sampleTeams = listOf("Arsenal", "Chelsea", "Coventry City", "Liverpool")
 
 private val samplePrediction = PredictionResult(
     homeTeam = "Arsenal",
@@ -64,12 +63,22 @@ private val sampleExplanation = ExplanationResult(
     explanationTimestamp = "2026-09-28T12:00:00Z",
 )
 
+private val sampleLeagues = CompetitionsUiState.Success(
+    competitions = listOf(
+        Competition("Premier League", "2026/27", 20, "2026-09-20", true),
+        Competition("Bundesliga", "2026/27", 18, "2026-09-20", true),
+    ),
+    selected = "Bundesliga",
+)
+
 @Composable
 private fun TeamSelection(teams: TeamsUiState, input: PredictionInputUiState = PredictionInputUiState.Idle) {
     PreviewSurface {
         PredictionScreen(
             uiState = input,
+            competitionsState = sampleLeagues,
             teamsState = teams,
+            onSelectCompetition = {},
             onPredict = { _, _ -> },
             onRetryTeams = {},
             onNavigateToResult = {},
@@ -80,7 +89,13 @@ private fun TeamSelection(teams: TeamsUiState, input: PredictionInputUiState = P
 
 @Preview
 @Composable
-private fun TeamSelectionPreview() = TeamSelection(TeamsUiState.Success(season = "2026/27", teams = sampleTeams))
+private fun TeamSelectionPreview() = TeamSelection(
+    TeamsUiState.Success(season = "2026/27", teams = listOf("Bayern Munich", "Dortmund", "Leipzig")),
+)
+
+@Preview
+@Composable
+private fun LeaguePickerPreview() = PreviewSurface { LeaguePicker(state = sampleLeagues, onSelect = {}) }
 
 @Preview
 @Composable

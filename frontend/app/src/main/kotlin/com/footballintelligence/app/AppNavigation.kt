@@ -45,9 +45,12 @@ fun AppNavigation(navController: NavHostController) {
             val vm: PredictionViewModel = koinViewModel()
             val state by vm.predictionState.collectAsState()
             val teamsState by vm.teamsState.collectAsState()
+            val competitionsState by vm.competitionsState.collectAsState()
             PredictionScreen(
                 uiState = state,
+                competitionsState = competitionsState,
                 teamsState = teamsState,
+                onSelectCompetition = vm::selectCompetition,
                 onPredict = vm::predict,
                 onRetryTeams = vm::loadTeams,
                 onNavigateToResult = {

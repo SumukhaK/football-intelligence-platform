@@ -1,6 +1,6 @@
 # Plan: Serve All Five Leagues (W8)
 
-**Status:** In progress. [ADR 012](../adr/012-serve-all-five-leagues.md) accepted 2026-09-29; backend done, app next
+**Status:** Done 2026-09-29. [ADR 012](../adr/012-serve-all-five-leagues.md) accepted; backend (PR 40) and app (PR 41)
 **Date:** 2026-09-29
 **Builds on:** PRs #24–#38 (stacked; merged to main together at the end)
 

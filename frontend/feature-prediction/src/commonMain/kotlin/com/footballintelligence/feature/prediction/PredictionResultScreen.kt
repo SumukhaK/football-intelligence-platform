@@ -116,6 +116,9 @@ private fun ResultContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                if (result.competition.isNotBlank()) {
+                    Text(result.competition, style = MaterialTheme.typography.labelMedium)
+                }
                 Text(
                     stringResource(Res.string.fixture, result.homeTeam, result.awayTeam),
                     style = MaterialTheme.typography.titleMedium,
