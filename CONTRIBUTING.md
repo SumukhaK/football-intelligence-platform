@@ -16,36 +16,42 @@ Read the relevant architecture documents and ADRs in `docs/adr/` before writing 
 
 | Branch | Purpose |
 |---|---|
-| `main` | Always releasable. Every pull request merges here; releases are tags on `main`. |
-| `feature/<description>` | One feature per branch, created from `main`. |
-| `fix/<description>` | One bug fix per branch, created from `main`. |
-| `docs/<description>` | Documentation-only changes. |
-| `release/v<major>.<minor>.<patch>` | Release preparation (version bump and release notes), created from `main`. |
+| `main` | Released code only. Receives release pull requests from `develop` and hotfixes. Every release is a tag on `main`. Protected. |
+| `develop` | Integration branch. Every feature, fix and docs branch merges here through a pull request. Protected. |
+| `feature/<description>` | One feature per branch, created from `develop`. |
+| `fix/<description>` | One bug fix per branch, created from `develop`. |
+| `docs/<description>` | Documentation-only changes, created from `develop`. |
+| `hotfix/<description>` | An urgent fix to a release. Created from `main`, merged into `main` and then into `develop`. |
 
-Branch names use kebab-case. When a larger piece of work is split into several pull requests, they may be stacked (each branch based on the previous one) and merged into `main` in order.
+Branch names use kebab-case. When a larger piece of work is split into several pull requests, they may be stacked (each branch based on the previous one) and merged into `develop` in order.
 
 **Examples:**
 ```
 feature/fixtures
 fix/offline-fallback-timeout
 docs/readme-refresh
-release/v2.0.1
+hotfix/crash-on-empty-fixtures
 ```
 
-The long-lived `develop` branch from the early stages is no longer used.
+### Releasing
+
+1. On a branch from `develop`, bump the version and add release notes in `docs/releases/` and `CHANGELOG.md`; merge it into `develop`.
+2. Open a release pull request from `develop` into `main`.
+3. Before merging: all CI checks pass, and an emulator smoke test passes (launch, fixtures, predict, explain, offline banner).
+4. Merge, tag the merge commit on `main` (`v<major>.<minor>.<patch>`), and publish the GitHub release with its notes and build artifacts.
 
 ---
 
 ## Development Workflow
 
-1. Create a branch from `main`.
+1. Create a branch from `develop` (or from `main` for a hotfix).
 2. Read the relevant architecture document or ADR before writing any code.
 3. Write tests first (TDD for frontend ViewModels and repositories; alongside implementation for backend and AI).
 4. Implement the smallest coherent unit that satisfies the task.
 5. Run all quality checks and confirm they pass.
 6. Verify the change manually.
 7. Commit using the conventional commit format below.
-8. Open a pull request targeting `main`.
+8. Open a pull request targeting `develop` (a hotfix targets `main`).
 9. Complete the self-review checklist before requesting review.
 10. Update documentation if behaviour or architecture changed.
 
@@ -77,7 +83,7 @@ cd frontend
 ./gradlew assembleDebug     # build
 ```
 
-Frontend CI runs only on pull requests into `main` (and pushes to `main`) that touch `frontend/`, so run these locally on stacked branches.
+Frontend CI runs on pull requests into `develop` and `main` (and pushes to them) that touch `frontend/`. Stacked pull requests that target another feature branch don't trigger it, so run these checks locally on those.
 
 ---
 
@@ -123,7 +129,7 @@ ai(ai): update training config to use early stopping patience of 10
 - Title follows the conventional commit format.
 - Description explains what changed and why.
 - All items on the self-review checklist must be checked before requesting review.
-- Pull requests target `main` (or, for stacked work, the branch below them).
+- Pull requests target `develop` (or, for stacked work, the branch below them). Only release pull requests and hotfixes target `main`.
 - Do not squash commits unless specifically requested in review.
 
 ### Self-Review Checklist
@@ -212,6 +218,6 @@ See [docs/adr/README.md](docs/adr/README.md) for the ADR format and index.
 
 - Every pull request is self-reviewed against the checklist above before merging.
 - All CI checks must pass.
-- No direct commits to `main`; every change arrives through a pull request.
+- No direct commits or force pushes to `develop` or `main`; branch protection enforces this.
 - Merge commits are preferred over squash or rebase, to preserve feature branch history.
-- Releases are tagged on `main` after a `release/*` pull request bumps the version and adds release notes in `docs/releases/`.
+- `main` receives only release pull requests from `develop` and hotfixes, and every merge into `main` is tagged.
