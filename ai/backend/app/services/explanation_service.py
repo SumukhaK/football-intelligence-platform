@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+from typing import Any
+
 import pandas as pd
 
 from backend.app.exceptions import FeatureMissingError
@@ -9,6 +12,7 @@ from backend.app.schemas.explainability import (
     ExplanationResponse,
     FeatureContributionSchema,
 )
+from explainability.feature_labels import describe_feature
 
 
 class ExplanationService:
@@ -56,35 +60,43 @@ class ExplanationService:
             probability_draw=result.probability_draw,
             probability_away=result.probability_away,
             confidence=result.confidence,
-            top_positive_features=[
-                FeatureContributionSchema(
-                    feature_name=f.feature_name,
-                    feature_value=f.feature_value,
-                    shap_value=f.shap_value,
-                )
-                for f in result.top_positive_features
-            ],
-            top_negative_features=[
-                FeatureContributionSchema(
-                    feature_name=f.feature_name,
-                    feature_value=f.feature_value,
-                    shap_value=f.shap_value,
-                )
-                for f in result.top_negative_features
-            ],
-            all_contributions=[
-                FeatureContributionSchema(
-                    feature_name=f.feature_name,
-                    feature_value=f.feature_value,
-                    shap_value=f.shap_value,
-                )
-                for f in result.all_contributions
-            ],
+            top_positive_features=_contributions(
+                result.top_positive_features, home_team, away_team
+            ),
+            top_negative_features=_contributions(
+                result.top_negative_features, home_team, away_team
+            ),
+            all_contributions=_contributions(
+                result.all_contributions, home_team, away_team
+            ),
             model_version=result.model_version,
             feature_version=result.feature_version,
             dataset_version=result.dataset_version,
             explanation_timestamp=result.explanation_timestamp,
         )
+
+
+def _contributions(
+    features: Iterable[Any], home_team: str, away_team: str
+) -> list[FeatureContributionSchema]:
+    """Build contributions with fan-friendly labels for a list of features."""
+    return [_contribution(f, home_team, away_team) for f in features]
+
+
+def _contribution(
+    feature: Any, home_team: str, away_team: str
+) -> FeatureContributionSchema:
+    """Build one contribution with its fan-friendly label and value."""
+    name = str(feature.feature_name)
+    value = float(feature.feature_value)
+    display_name, display_value = describe_feature(name, value, home_team, away_team)
+    return FeatureContributionSchema(
+        feature_name=name,
+        feature_value=value,
+        shap_value=float(feature.shap_value),
+        display_name=display_name,
+        display_value=display_value,
+    )
 
 
 def _extract_missing(error_message: str) -> list[str]:

@@ -26,9 +26,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.footballintelligence.core.model.ExplanationResult
 import com.footballintelligence.core.model.FeatureContribution
+import com.footballintelligence.core.model.Impact
+import com.footballintelligence.core.model.impact
+import com.footballintelligence.core.model.label
 import com.footballintelligence.core.model.toOutcomeLabel
+import com.footballintelligence.core.model.valueText
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /** Displays SHAP feature contributions explaining the prediction. */
@@ -111,17 +116,21 @@ private fun ExplanationContent(
             }
         }
 
+        val strongest = result.allContributions.maxOfOrNull { abs(it.shapValue) } ?: 0.0
+
         FeatureSection(
-            title = "Top Positive Contributors",
-            subtitle = "Features that pushed toward this prediction",
+            title = "Why the model leans this way",
+            subtitle = "Factors that pushed toward this prediction",
             features = result.topPositiveFeatures,
+            strongest = strongest,
             isPositive = true,
         )
 
         FeatureSection(
-            title = "Top Negative Contributors",
-            subtitle = "Features that pushed against this prediction",
+            title = "What counts against it",
+            subtitle = "Factors that pushed away from this prediction",
             features = result.topNegativeFeatures,
+            strongest = strongest,
             isPositive = false,
         )
     }
@@ -132,6 +141,7 @@ private fun FeatureSection(
     title: String,
     subtitle: String,
     features: List<FeatureContribution>,
+    strongest: Double,
     isPositive: Boolean,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
@@ -147,11 +157,11 @@ private fun FeatureSection(
             )
             HorizontalDivider()
             features.forEach { feature ->
-                FeatureRow(feature = feature, isPositive = isPositive)
+                FeatureRow(feature = feature, strongest = strongest, isPositive = isPositive)
             }
             if (features.isEmpty()) {
                 Text(
-                    "No features in this category.",
+                    "Nothing notable here.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -161,7 +171,7 @@ private fun FeatureSection(
 }
 
 @Composable
-private fun FeatureRow(feature: FeatureContribution, isPositive: Boolean) {
+private fun FeatureRow(feature: FeatureContribution, strongest: Double, isPositive: Boolean) {
     val color = if (isPositive) Color(0xFF2E7D32) else Color(0xFFC62828)
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -169,19 +179,25 @@ private fun FeatureRow(feature: FeatureContribution, isPositive: Boolean) {
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                feature.featureName.replace('_', ' '),
+                feature.label(),
                 style = MaterialTheme.typography.bodyMedium,
             )
             Text(
-                "value: ${"%.3f".format(feature.featureValue)}",
+                feature.valueText(),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         Text(
-            text = "${"%.4f".format(feature.shapValue)}",
+            text = impactText(feature.impact(strongest)),
             style = MaterialTheme.typography.bodyMedium,
             color = color,
         )
     }
+}
+
+private fun impactText(impact: Impact): String = when (impact) {
+    Impact.BIG -> "Big impact"
+    Impact.MEDIUM -> "Medium impact"
+    Impact.SMALL -> "Small impact"
 }
