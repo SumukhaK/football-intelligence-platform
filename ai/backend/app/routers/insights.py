@@ -6,7 +6,7 @@ import logging
 
 from fastapi import APIRouter
 
-from backend.app.dependencies import InsightsServiceDep
+from backend.app.dependencies import InsightsServiceDep, ServedCompetitionsDep
 from backend.app.schemas.insights import InsightsRequest, InsightsResponse
 
 logger = logging.getLogger(__name__)
@@ -26,15 +26,21 @@ router = APIRouter(tags=["Insights"])
         "likelihoods, not betting advice."
     ),
     responses={
-        422: {"description": "A team did not play in the latest season."},
+        422: {"description": "Unknown league, or a team not in its latest season."},
         503: {"description": "Goals model not available."},
     },
 )
-def insights(request: InsightsRequest, service: InsightsServiceDep) -> InsightsResponse:
+def insights(
+    request: InsightsRequest,
+    service: InsightsServiceDep,
+    competitions: ServedCompetitionsDep,
+) -> InsightsResponse:
     """Return scorelines and goal markets for one fixture."""
-    response = service.insights(request)
+    competition = competitions.resolve(request.competition)
+    response = service.insights(request, competition)
     logger.info(
-        "insights: home=%s away=%s xg=%.2f-%.2f",
+        "insights: %s home=%s away=%s xg=%.2f-%.2f",
+        competition,
         request.home_team,
         request.away_team,
         response.expected_goals.home,

@@ -9,6 +9,7 @@ from fastapi import APIRouter
 from backend.app.dependencies import (
     OptionalFixtureFeatureServiceDep,
     PredictionServiceDep,
+    ServedCompetitionsDep,
 )
 from backend.app.schemas.prediction import PredictionRequest, PredictionResponse
 from backend.app.services.fixture_feature_service import resolve_features
@@ -29,7 +30,9 @@ router = APIRouter(tags=["Prediction"])
         "A pre-computed feature vector may be sent instead."
     ),
     responses={
-        422: {"description": "Unknown team, or supplied features incomplete."},
+        422: {
+            "description": ("Unknown league or team, or supplied features incomplete.")
+        },
         503: {"description": "Model not loaded, or match history not loaded."},
     },
 )
@@ -37,18 +40,22 @@ def predict(
     request: PredictionRequest,
     service: PredictionServiceDep,
     fixtures: OptionalFixtureFeatureServiceDep,
+    competitions: ServedCompetitionsDep,
 ) -> PredictionResponse:
     """Run the XGBoost model and return a structured prediction."""
     supplied = request.features is not None
-    features = resolve_features(request, fixtures)
+    competition = competitions.resolve(request.competition)
+    features = resolve_features(request, fixtures, competition)
     logger.info(
-        "predict: home=%s away=%s n_features=%d supplied=%s",
+        "predict: %s home=%s away=%s n_features=%d supplied=%s",
+        competition,
         request.home_team,
         request.away_team,
         len(features),
         supplied,
     )
     response = service.predict(request.model_copy(update={"features": features}))
+    response = response.model_copy(update={"competition": competition})
     logger.info(
         "predict: result=%s confidence=%.3f",
         response.predicted_result,

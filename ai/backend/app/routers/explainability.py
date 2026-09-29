@@ -9,6 +9,7 @@ from fastapi import APIRouter
 from backend.app.dependencies import (
     ExplanationServiceDep,
     OptionalFixtureFeatureServiceDep,
+    ServedCompetitionsDep,
 )
 from backend.app.schemas.explainability import ExplanationResponse
 from backend.app.schemas.prediction import PredictionRequest
@@ -30,7 +31,9 @@ router = APIRouter(tags=["Explainability"])
         "and the full contribution list sorted by magnitude."
     ),
     responses={
-        422: {"description": "Unknown team, or supplied features incomplete."},
+        422: {
+            "description": ("Unknown league or team, or supplied features incomplete.")
+        },
         503: {"description": "Explainer not loaded, or match history not loaded."},
     },
 )
@@ -38,9 +41,11 @@ def explain(
     request: PredictionRequest,
     service: ExplanationServiceDep,
     fixtures: OptionalFixtureFeatureServiceDep,
+    competitions: ServedCompetitionsDep,
 ) -> ExplanationResponse:
     """Compute SHAP values and return a structured explanation."""
-    features = resolve_features(request, fixtures)
+    competition = competitions.resolve(request.competition)
+    features = resolve_features(request, fixtures, competition)
     logger.info(
         "explain: home=%s away=%s n_features=%d",
         request.home_team,
@@ -51,7 +56,7 @@ def explain(
         home_team=request.home_team,
         away_team=request.away_team,
         features=features,
-    )
+    ).model_copy(update={"competition": competition})
     logger.info(
         "explain: result=%s confidence=%.3f n_contributions=%d",
         response.predicted_result,

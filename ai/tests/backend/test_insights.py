@@ -14,6 +14,7 @@ from backend.app.main import create_app
 from backend.app.schemas.insights import InsightsRequest
 from backend.app.services.insights_service import (
     InsightsService,
+    LeagueGoalsModel,
     load_insights_service,
 )
 from goals.dixon_coles import DixonColesParams
@@ -38,7 +39,9 @@ def params() -> DixonColesParams:
 
 @pytest.fixture()
 def service() -> InsightsService:
-    return InsightsService(params(), "2026/27", TEAMS)
+    return InsightsService(
+        {"Premier League": LeagueGoalsModel(params(), "2026/27", frozenset(TEAMS))}
+    )
 
 
 @pytest.fixture()
@@ -111,7 +114,9 @@ def test_health_reports_insights(insights_client: TestClient) -> None:
 
 def test_service_rejects_unknown_teams(service: InsightsService) -> None:
     with pytest.raises(UnknownTeamError):
-        service.insights(InsightsRequest(home_team="Luton", away_team="Arsenal"))
+        service.insights(
+            InsightsRequest(home_team="Luton", away_team="Arsenal"), "Premier League"
+        )
 
 
 def test_load_fits_on_matches_before_today(tmp_path: Path) -> None:
@@ -138,9 +143,13 @@ def test_load_fits_on_matches_before_today(tmp_path: Path) -> None:
         tmp_path / "match_results_live_v20260928_120000.csv", index=False
     )
     cutoff = date(2026, 1, 1)
-    loaded = load_insights_service(tmp_path, "Premier League", today=cutoff)
-    assert loaded.model_version == "dc-2026-01-01"
-    body = loaded.insights(InsightsRequest(home_team="Arsenal", away_team="Fulham"))
+    loaded = load_insights_service(
+        tmp_path, ["Premier League", "Serie A"], today=cutoff
+    )
+    assert loaded.model_versions == {"Premier League": "dc-2026-01-01"}
+    body = loaded.insights(
+        InsightsRequest(home_team="Arsenal", away_team="Fulham"), "Premier League"
+    )
     assert body.fitted_before == "2026-01-01"
 
 
@@ -157,4 +166,4 @@ def test_load_unknown_competition_raises(tmp_path: Path) -> None:
         }
     ).to_csv(tmp_path / "match_results_live_v20260928_120000.csv", index=False)
     with pytest.raises(KeyError):
-        load_insights_service(tmp_path, "Premier League")
+        load_insights_service(tmp_path, ["Premier League"])

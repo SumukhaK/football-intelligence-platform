@@ -27,6 +27,14 @@ class PredictionRequest(BaseModel):
         description="Name of the away team.",
         examples=["Chelsea"],
     )
+    competition: str | None = Field(
+        default=None,
+        description=(
+            "League of the fixture, as listed by GET /competitions. "
+            "Defaults to the Premier League (ADR 012)."
+        ),
+        examples=["Bundesliga"],
+    )
     features: dict[str, float] | None = Field(
         default=None,
         description=(
@@ -59,6 +67,9 @@ class PredictionRequest(BaseModel):
 class PredictionResponse(BaseModel):
     """Response body for POST /predict."""
 
+    competition: str = Field(
+        default="", description="League of the fixture.", examples=["Premier League"]
+    )
     home_team: str = Field(..., description="Home team name.")
     away_team: str = Field(..., description="Away team name.")
     predicted_result: str = Field(

@@ -26,7 +26,15 @@ class Settings(BaseSettings):
     datasets_dir: Path = Path("../datasets")
     # Local hour of the daily data refresh (ADR 013); unset to turn it off.
     live_refresh_hour: int | None = Field(default=6, ge=0, le=23)
-    served_competition: str = "Premier League"
+    # Leagues the API serves (ADR 012); requests naming no league get the default.
+    served_competitions: list[str] = [
+        "Premier League",
+        "Bundesliga",
+        "La Liga",
+        "Serie A",
+        "Ligue 1",
+    ]
+    default_competition: str = "Premier League"
     draw_possible_threshold: float = DEFAULT_DRAW_POSSIBLE_THRESHOLD
     api_version: str = "0.1.0"
     log_level: str = "INFO"
