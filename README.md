@@ -357,14 +357,6 @@ cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
 
 Build stages 1–12 (repository foundation through integration and production readiness) are complete; see the [stage reports](docs/reports/). The follow-on phase ([plan](docs/plans/next-phase-plan.md)) added the five leagues, server-side features, plain-language explanations, draw handling, scoreline predictions, a daily data refresh, API versions with a rate limit, upcoming fixtures and an offline-ready app. These shipped as [v2.0.0](docs/releases/v2.0.0.md).
 
-## Lessons Learned
-
-- **Chronological splits matter more than they seem.** An early random train/test split looked fine until cross-validation exposed leakage from future match outcomes into rolling-form features. Switching to a strict chronological split (ADR 003) and `.shift(1)` on every rolling feature fixed it — see [docs/adr/003-chronological-train-val-test-split.md](docs/adr/003-chronological-train-val-test-split.md).
-- **Explainability is a product feature, not a debugging tool.** Building `POST /explain` as a first-class endpoint (not a notebook cell) forced the SHAP pipeline to be fast, deterministic, and API-shaped — which made it directly usable from the Android client.
-- **Grounding is mostly a prompting and retrieval-quality problem, not a model-size problem.** A small local model (`llama3.2`) with a tight, source-only system prompt and relevance-filtered retrieval produced more trustworthy answers than a larger model with loose grounding.
-- **KMP module boundaries pay for themselves.** Splitting `core-network`, `core-model`, and `feature-*` modules early made it possible to write Ktor repository tests without spinning up Android instrumentation at all.
-- **Integration tests against the real model catch what mocks can't.** Stage 12's 36 integration tests (using the actual `model.joblib`, not mocks) caught latency characteristics and SHAP attribution-sign issues that the 426 mocked unit tests could not.
-
 ---
 
 ## License
