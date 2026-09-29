@@ -2,6 +2,7 @@ package com.footballintelligence.feature.prediction
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.footballintelligence.core.common.formatSavedAt
 import com.footballintelligence.core.model.NetworkResult
 import com.footballintelligence.core.model.PredictionRequest
 import com.footballintelligence.core.model.TeamsResponse
@@ -30,6 +31,11 @@ class PredictionViewModel(
     private val _explanationState =
         MutableStateFlow<ExplanationUiState>(ExplanationUiState.Idle)
     val explanationState: StateFlow<ExplanationUiState> = _explanationState.asStateFlow()
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    private var lastRequest: PredictionRequest? = null
 
     private val _insightsState = MutableStateFlow<InsightsUiState>(InsightsUiState.Idle)
     val insightsState: StateFlow<InsightsUiState> = _insightsState.asStateFlow()
@@ -76,11 +82,7 @@ class PredictionViewModel(
         }
         _teamsState.value = TeamsUiState.Loading
         viewModelScope.launch {
-            _teamsState.value = when (val result = repository.teams(league)) {
-                is NetworkResult.Success -> result.data.toUiState()
-                is NetworkResult.Error -> TeamsUiState.Error(result.message, result.kind)
-                is NetworkResult.Loading -> TeamsUiState.Loading
-            }
+            _teamsState.value = teamsState(repository.teams(league))
         }
     }
 
@@ -95,10 +97,14 @@ class PredictionViewModel(
             awayTeam = awayTeam,
             competition = selectedCompetition(),
         )
+        lastRequest = request
         loadInsights(request)
         viewModelScope.launch {
             _predictionState.value = when (val result = repository.predict(request)) {
-                is NetworkResult.Success -> PredictionInputUiState.Success(result.data)
+                is NetworkResult.Success -> PredictionInputUiState.Success(
+                    result.data,
+                    savedAt = result.cachedAt?.let { formatSavedAt(it) },
+                )
                 is NetworkResult.Error -> PredictionInputUiState.Error(result.message, result.kind)
                 is NetworkResult.Loading -> PredictionInputUiState.Loading
             }
@@ -117,10 +123,47 @@ class PredictionViewModel(
         )
         viewModelScope.launch {
             _explanationState.value = when (val result = repository.explain(request)) {
-                is NetworkResult.Success -> ExplanationUiState.Success(result.data)
+                is NetworkResult.Success -> ExplanationUiState.Success(
+                    result.data,
+                    savedAt = result.cachedAt?.let { formatSavedAt(it) },
+                )
                 is NetworkResult.Error -> ExplanationUiState.Error(result.message, result.kind)
                 is NetworkResult.Loading -> ExplanationUiState.Loading
             }
+        }
+    }
+
+    /** Pull to refresh on the result: asks again for the same fixture. */
+    fun refreshPrediction() {
+        val request = lastRequest ?: return
+        _isRefreshing.value = true
+        loadInsights(request)
+        viewModelScope.launch {
+            val result = repository.predict(request)
+            if (result is NetworkResult.Success) {
+                _predictionState.value = PredictionInputUiState.Success(
+                    result.data,
+                    savedAt = result.cachedAt?.let { formatSavedAt(it) },
+                )
+            }
+            _isRefreshing.value = false
+        }
+    }
+
+    /** Pull to refresh on team selection: reloads the leagues and teams. */
+    fun refreshTeams() {
+        _isRefreshing.value = true
+        viewModelScope.launch {
+            val result = repository.competitions()
+            if (result is NetworkResult.Success) {
+                val current = _competitionsState.value as? CompetitionsUiState.Success
+                val selected = current?.selected ?: result.data.default
+                _competitionsState.value =
+                    CompetitionsUiState.Success(result.data.competitions, selected)
+            }
+            val league = selectedCompetition()
+            if (league != null) _teamsState.value = teamsState(repository.teams(league))
+            _isRefreshing.value = false
         }
     }
 
@@ -146,10 +189,17 @@ class PredictionViewModel(
     }
 }
 
+private fun teamsState(result: NetworkResult<TeamsResponse>): TeamsUiState =
+    when (result) {
+        is NetworkResult.Success -> result.data.toUiState(result.cachedAt?.let { formatSavedAt(it) })
+        is NetworkResult.Error -> TeamsUiState.Error(result.message, result.kind)
+        is NetworkResult.Loading -> TeamsUiState.Loading
+    }
+
 /** A team list needs at least two teams to pick a fixture from. */
-private fun TeamsResponse.toUiState(): TeamsUiState =
+private fun TeamsResponse.toUiState(savedAt: String?): TeamsUiState =
     if (teams.size < 2) {
         TeamsUiState.Error("No teams available for $competition $season")
     } else {
-        TeamsUiState.Success(season, teams)
+        TeamsUiState.Success(season, teams, savedAt)
     }

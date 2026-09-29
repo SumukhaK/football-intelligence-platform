@@ -21,6 +21,8 @@ import com.footballintelligence.core.model.ModelInfo
 import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
+import com.footballintelligence.core.ui.OfflineBanner
+import com.footballintelligence.core.ui.RefreshableContent
 import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.settings.resources.Res
 import com.footballintelligence.feature.settings.resources.dataset_version
@@ -40,6 +42,8 @@ fun ModelInfoScreen(
     onRetry: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -57,10 +61,16 @@ fun ModelInfoScreen(
                 onRetry = onRetry,
                 modifier = Modifier.padding(padding),
             )
-            is ModelInfoUiState.Success -> ModelInfoContent(
-                info = uiState.info,
+            is ModelInfoUiState.Success -> RefreshableContent(
+                isRefreshing = isRefreshing,
+                onRefresh = onRefresh,
                 modifier = Modifier.padding(padding),
-            )
+            ) {
+                Column {
+                    OfflineBanner(uiState.savedAt)
+                    ModelInfoContent(info = uiState.info)
+                }
+            }
         }
     }
 }

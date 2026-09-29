@@ -35,6 +35,8 @@ import com.footballintelligence.core.model.PredictionResult
 import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
+import com.footballintelligence.core.ui.OfflineBanner
+import com.footballintelligence.core.ui.RefreshableContent
 import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.prediction.resources.Res
 import com.footballintelligence.feature.prediction.resources.action_explain
@@ -61,6 +63,8 @@ fun PredictionResultScreen(
     onNewPrediction: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -83,11 +87,16 @@ fun PredictionResultScreen(
                 onRetry = onNewPrediction,
                 modifier = Modifier.padding(padding),
             )
-            is PredictionInputUiState.Success -> ResultContent(
-                result = uiState.result,
-                insightsState = insightsState,
+            is PredictionInputUiState.Success -> RefreshableContent(
+                isRefreshing = isRefreshing,
+                onRefresh = onRefresh,
                 modifier = Modifier.padding(padding),
-            )
+            ) {
+                Column {
+                    OfflineBanner(uiState.savedAt)
+                    ResultContent(result = uiState.result, insightsState = insightsState)
+                }
+            }
             is PredictionInputUiState.Idle -> ErrorView(
                 message = stringResource(Res.string.no_prediction),
                 onRetry = onNewPrediction,

@@ -2,6 +2,7 @@ package com.footballintelligence.feature.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.footballintelligence.core.common.formatSavedAt
 import com.footballintelligence.core.model.NetworkResult
 import com.footballintelligence.feature.settings.repository.ModelInfoRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +19,9 @@ class SettingsViewModel(
         MutableStateFlow<ModelInfoUiState>(ModelInfoUiState.Loading)
     val modelInfoState: StateFlow<ModelInfoUiState> = _modelInfoState.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     init {
         loadModelInfo()
     }
@@ -26,14 +30,27 @@ class SettingsViewModel(
         loadModelInfo()
     }
 
-    private fun loadModelInfo() {
-        _modelInfoState.value = ModelInfoUiState.Loading
+    /** Pull to refresh: reloads while the current content stays on screen. */
+    fun refresh() {
+        _isRefreshing.value = true
         viewModelScope.launch {
-            _modelInfoState.value = when (val result = repository.getModelInfo()) {
-                is NetworkResult.Success -> ModelInfoUiState.Success(result.data)
-                is NetworkResult.Error -> ModelInfoUiState.Error(result.message, result.kind)
-                is NetworkResult.Loading -> ModelInfoUiState.Loading
-            }
+            _modelInfoState.value = fetch()
+            _isRefreshing.value = false
         }
     }
+
+    private fun loadModelInfo() {
+        _modelInfoState.value = ModelInfoUiState.Loading
+        viewModelScope.launch { _modelInfoState.value = fetch() }
+    }
+
+    private suspend fun fetch(): ModelInfoUiState =
+        when (val result = repository.getModelInfo()) {
+            is NetworkResult.Success -> ModelInfoUiState.Success(
+                result.data,
+                savedAt = result.cachedAt?.let { formatSavedAt(it) },
+            )
+            is NetworkResult.Error -> ModelInfoUiState.Error(result.message, result.kind)
+            is NetworkResult.Loading -> ModelInfoUiState.Loading
+        }
 }

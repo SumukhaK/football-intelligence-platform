@@ -21,6 +21,8 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -259,5 +261,47 @@ class PredictionViewModelTest {
         viewModel.loadCompetitions()
 
         assertEquals(TeamsUiState.Success("2026/27", teams.teams), viewModel.teamsState.value)
+    }
+
+    @Test
+    fun `a saved prediction is shown with when it was saved`() {
+        coEvery { repository.teams("Premier League") } returns NetworkResult.Success(teams)
+        coEvery { repository.predict(fixture) } returns
+            NetworkResult.Success(prediction, cachedAt = "2026-09-29T09:00:00Z")
+        coEvery { repository.insights(fixture) } returns NetworkResult.Success(insights)
+        val viewModel = PredictionViewModel(repository)
+
+        viewModel.predict("Arsenal", "Chelsea")
+
+        val state = viewModel.predictionState.value as PredictionInputUiState.Success
+        assertEquals(prediction, state.result)
+        assertTrue(state.savedAt != null)
+    }
+
+    @Test
+    fun `refreshing a prediction asks again for the same fixture`() {
+        coEvery { repository.teams("Premier League") } returns NetworkResult.Success(teams)
+        coEvery { repository.predict(fixture) } returns NetworkResult.Success(prediction)
+        coEvery { repository.insights(fixture) } returns NetworkResult.Success(insights)
+        val viewModel = PredictionViewModel(repository)
+
+        viewModel.predict("Arsenal", "Chelsea")
+        viewModel.refreshPrediction()
+
+        coVerify(exactly = 2) { repository.predict(fixture) }
+        coVerify(exactly = 2) { repository.insights(fixture) }
+        assertEquals(PredictionInputUiState.Success(prediction), viewModel.predictionState.value)
+        assertFalse(viewModel.isRefreshing.value)
+    }
+
+    @Test
+    fun `refreshing teams reloads the leagues and teams`() {
+        coEvery { repository.teams("Premier League") } returns NetworkResult.Success(teams)
+        val viewModel = PredictionViewModel(repository)
+
+        viewModel.refreshTeams()
+
+        coVerify(exactly = 2) { repository.competitions() }
+        coVerify(exactly = 2) { repository.teams("Premier League") }
     }
 }
