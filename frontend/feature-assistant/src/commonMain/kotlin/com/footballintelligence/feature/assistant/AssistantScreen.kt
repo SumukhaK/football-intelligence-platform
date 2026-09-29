@@ -183,15 +183,21 @@ private fun MessageBubble(message: ChatMessage) {
                         ),
                     )
                     .background(
-                        if (isUser) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.surfaceVariant,
+                        if (isUser) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant
+                        },
                     )
                     .padding(12.dp),
             ) {
                 Text(
                     text = message.text,
-                    color = if (isUser) MaterialTheme.colorScheme.onPrimary
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (isUser) {
+                        MaterialTheme.colorScheme.onPrimary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }

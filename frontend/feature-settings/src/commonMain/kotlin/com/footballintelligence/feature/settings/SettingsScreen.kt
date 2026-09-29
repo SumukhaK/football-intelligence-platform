@@ -1,5 +1,6 @@
 package com.footballintelligence.feature.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -71,6 +72,7 @@ fun SettingsScreen(
                             )
                         },
                         modifier = Modifier
+                            .clickable(onClick = onModelInfoClick)
                             .semantics { contentDescription = "Open model information" },
                     )
                     HorizontalDivider()
@@ -87,6 +89,7 @@ fun SettingsScreen(
                             )
                         },
                         modifier = Modifier
+                            .clickable(onClick = onAboutClick)
                             .semantics { contentDescription = "Open about screen" },
                     )
                 }
