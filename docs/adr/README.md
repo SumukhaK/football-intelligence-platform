@@ -96,3 +96,4 @@ ADRs are never deleted.
 | [011](011-draw-possible-tag.md) | Flag possible draws without changing the pick | Accepted |
 | [012](012-serve-all-five-leagues.md) | Serve all five leagues in the API and app | Accepted |
 | [013](013-daily-data-refresh-in-backend.md) | Refresh match data daily inside the backend | Accepted |
+| [014](014-api-versioning-and-rate-limiting.md) | Version the API and add a rate limiter | Accepted |

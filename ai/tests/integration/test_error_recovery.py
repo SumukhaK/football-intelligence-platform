@@ -32,7 +32,7 @@ def test_predict_503_when_model_missing(tmp_path: Path) -> None:
             application = create_app()
             with TestClient(application, raise_server_exceptions=False) as c:
                 response = c.post(
-                    "/predict",
+                    "/v2/predict",
                     json={
                         "home_team": "Arsenal",
                         "away_team": "Chelsea",
@@ -59,7 +59,7 @@ def test_explain_503_when_model_missing(tmp_path: Path) -> None:
             application = create_app()
             with TestClient(application, raise_server_exceptions=False) as c:
                 response = c.post(
-                    "/explain",
+                    "/v2/explain",
                     json={
                         "home_team": "Arsenal",
                         "away_team": "Chelsea",
@@ -98,7 +98,7 @@ def test_health_still_returns_200_when_model_missing(tmp_path: Path) -> None:
 def test_predict_422_empty_features(real_client: object) -> None:
     """POST /predict returns 422 when features dict is empty."""
     response = real_client.post(  # type: ignore[attr-defined]
-        "/predict",
+        "/v2/predict",
         json={"home_team": "Arsenal", "away_team": "Chelsea", "features": {}},
     )
     # The service raises FeatureMissingError → 422
@@ -109,7 +109,7 @@ def test_predict_422_empty_features(real_client: object) -> None:
 def test_predict_422_malformed_body(real_client: object) -> None:
     """POST /predict returns 422 for a completely wrong body shape."""
     response = real_client.post(  # type: ignore[attr-defined]
-        "/predict",
+        "/v2/predict",
         json={"nonsense": True},
     )
     assert response.status_code == 422
@@ -133,5 +133,5 @@ def test_wrong_http_method_returns_405() -> None:
 
     application = create_app()
     with TestClient(application, raise_server_exceptions=False) as c:
-        response = c.get("/predict")
+        response = c.get("/v2/predict")
     assert response.status_code == 405

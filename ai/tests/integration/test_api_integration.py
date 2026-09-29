@@ -56,14 +56,14 @@ def test_health_response_fields(real_client: Any) -> None:
 @pytest.mark.integration
 def test_model_returns_200(real_client: Any) -> None:
     """GET /model returns 200 when registry is present."""
-    response = real_client.get("/model")
+    response = real_client.get("/v2/model")
     assert response.status_code == 200
 
 
 @pytest.mark.integration
 def test_model_response_fields(real_client: Any) -> None:
     """GET /model returns version, metrics, and timestamp."""
-    data = real_client.get("/model").json()
+    data = real_client.get("/v2/model").json()
     for field in ("model_version", "dataset_version", "training_timestamp", "metrics"):
         assert field in data, f"Missing field: {field}"
 
@@ -71,7 +71,7 @@ def test_model_response_fields(real_client: Any) -> None:
 @pytest.mark.integration
 def test_model_metrics_are_numeric(real_client: Any) -> None:
     """GET /model metrics values are all floats."""
-    data = real_client.get("/model").json()
+    data = real_client.get("/v2/model").json()
     for key, value in data.get("metrics", {}).items():
         assert isinstance(value, float), f"Metric {key} is not float: {value!r}"
 
@@ -89,7 +89,7 @@ def test_predict_returns_200(real_client: Any) -> None:
         "away_team": "Chelsea",
         "features": NEUTRAL_FEATURES,
     }
-    response = real_client.post("/predict", json=payload)
+    response = real_client.post("/v2/predict", json=payload)
     assert response.status_code == 200
 
 
@@ -101,7 +101,7 @@ def test_predict_outcome_valid(real_client: Any) -> None:
         "away_team": "Chelsea",
         "features": NEUTRAL_FEATURES,
     }
-    data = real_client.post("/predict", json=payload).json()
+    data = real_client.post("/v2/predict", json=payload).json()
     assert data["predicted_result"] in ("H", "D", "A")
 
 
@@ -113,7 +113,7 @@ def test_predict_probabilities_sum_to_one(real_client: Any) -> None:
         "away_team": "Chelsea",
         "features": NEUTRAL_FEATURES,
     }
-    data = real_client.post("/predict", json=payload).json()
+    data = real_client.post("/v2/predict", json=payload).json()
     total = (
         data["probability_home"] + data["probability_draw"] + data["probability_away"]
     )
@@ -129,7 +129,7 @@ def test_predict_latency_under_500ms(real_client: Any) -> None:
         "features": NEUTRAL_FEATURES,
     }
     start = time.perf_counter()
-    real_client.post("/predict", json=payload)
+    real_client.post("/v2/predict", json=payload)
     elapsed_ms = (time.perf_counter() - start) * 1000
     assert elapsed_ms < 500, f"Prediction API took {elapsed_ms:.1f} ms (limit 500 ms)"
 
@@ -138,7 +138,7 @@ def test_predict_latency_under_500ms(real_client: Any) -> None:
 def test_predict_422_missing_team(real_client: Any) -> None:
     """POST /predict returns 422 when a required field is absent."""
     payload = {"away_team": "Chelsea", "features": NEUTRAL_FEATURES}
-    response = real_client.post("/predict", json=payload)
+    response = real_client.post("/v2/predict", json=payload)
     assert response.status_code == 422
 
 
@@ -146,7 +146,7 @@ def test_predict_422_missing_team(real_client: Any) -> None:
 def test_predict_422_empty_team(real_client: Any) -> None:
     """POST /predict returns 422 when home_team is an empty string."""
     payload = {"home_team": "", "away_team": "Chelsea", "features": NEUTRAL_FEATURES}
-    response = real_client.post("/predict", json=payload)
+    response = real_client.post("/v2/predict", json=payload)
     assert response.status_code == 422
 
 
@@ -163,7 +163,7 @@ def test_explain_returns_200(real_client: Any) -> None:
         "away_team": "Chelsea",
         "features": NEUTRAL_FEATURES,
     }
-    response = real_client.post("/explain", json=payload)
+    response = real_client.post("/v2/explain", json=payload)
     assert response.status_code == 200
 
 
@@ -175,7 +175,7 @@ def test_explain_has_feature_contributions(real_client: Any) -> None:
         "away_team": "Chelsea",
         "features": NEUTRAL_FEATURES,
     }
-    data = real_client.post("/explain", json=payload).json()
+    data = real_client.post("/v2/explain", json=payload).json()
     assert len(data["top_positive_features"]) > 0
     assert len(data["top_negative_features"]) > 0
     assert len(data["all_contributions"]) == 42
@@ -189,10 +189,10 @@ def test_explain_consistent_with_predict(real_client: Any) -> None:
         "away_team": "Chelsea",
         "features": NEUTRAL_FEATURES,
     }
-    predict_result = real_client.post("/predict", json=payload).json()[
+    predict_result = real_client.post("/v2/predict", json=payload).json()[
         "predicted_result"
     ]
-    explain_result = real_client.post("/explain", json=payload).json()[
+    explain_result = real_client.post("/v2/explain", json=payload).json()[
         "predicted_result"
     ]
     assert (
@@ -209,7 +209,7 @@ def test_explain_latency_under_3s(real_client: Any) -> None:
         "features": NEUTRAL_FEATURES,
     }
     start = time.perf_counter()
-    real_client.post("/explain", json=payload)
+    real_client.post("/v2/explain", json=payload)
     elapsed_ms = (time.perf_counter() - start) * 1000
     assert elapsed_ms < 3000, f"Explain API took {elapsed_ms:.1f} ms (limit 3000 ms)"
 

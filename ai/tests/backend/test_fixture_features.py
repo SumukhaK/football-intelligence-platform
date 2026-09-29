@@ -116,7 +116,7 @@ def fixture_client(
 
 class TestEndpoints:
     def test_teams(self, fixture_client: TestClient) -> None:
-        body = fixture_client.get("/teams").json()
+        body = fixture_client.get("/v2/teams").json()
         assert body == {
             "competition": _COMP,
             "season": "2026/27",
@@ -131,7 +131,7 @@ class TestEndpoints:
         assert body["last_refresh_at"] is None
 
     def test_teams_503_without_history(self, client: TestClient) -> None:
-        response = client.get("/teams")
+        response = client.get("/v2/teams")
         assert response.status_code == 503
         assert response.json()["error"] == "Match features not available"
 
@@ -139,7 +139,7 @@ class TestEndpoints:
         self, fixture_client: TestClient, mock_prediction_service: MagicMock
     ) -> None:
         response = fixture_client.post(
-            "/predict", json={"home_team": "Arsenal", "away_team": "Chelsea"}
+            "/v2/predict", json={"home_team": "Arsenal", "away_team": "Chelsea"}
         )
         assert response.status_code == 200
         sent = mock_prediction_service.predict.call_args.args[0]
@@ -150,7 +150,7 @@ class TestEndpoints:
         self, fixture_client: TestClient, mock_explanation_service: MagicMock
     ) -> None:
         response = fixture_client.post(
-            "/explain",
+            "/v2/explain",
             json={
                 "home_team": "Arsenal",
                 "away_team": "Chelsea",
@@ -163,7 +163,7 @@ class TestEndpoints:
 
     def test_unknown_team_is_a_structured_422(self, fixture_client: TestClient) -> None:
         response = fixture_client.post(
-            "/predict", json={"home_team": "Luton", "away_team": "Arsenal"}
+            "/v2/predict", json={"home_team": "Luton", "away_team": "Arsenal"}
         )
         assert response.status_code == 422
         assert response.json() == {

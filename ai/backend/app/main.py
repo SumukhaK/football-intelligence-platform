@@ -28,6 +28,7 @@ from backend.app.exceptions import (
     unknown_competition_handler,
     unknown_team_handler,
 )
+from backend.app.middleware.rate_limit import RateLimitMiddleware, SlidingWindowLimiter
 from backend.app.routers import (
     assistant,
     competitions,
@@ -37,7 +38,9 @@ from backend.app.routers import (
     model,
     prediction,
     teams,
+    v1,
 )
+from model_registry.registry import ModelRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -56,55 +59,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     _load_match_data(app)
     refresh_task = _start_live_refresh(app)
 
+    registry = ModelRegistry(settings.registry_path)
     if settings.model_path.exists():
-        try:
-            from backend.app.services.prediction_service import PredictionService
-            from inference.predictor import MatchPredictor
-            from model_registry.registry import ModelRegistry
-
-            registry = ModelRegistry(settings.registry_path)
-            entry = registry.latest() if settings.registry_path.exists() else None
-            model_version = entry.version if entry else "unknown"
-
-            predictor = MatchPredictor.from_path(settings.model_path)
-            app.state.prediction_service = PredictionService(
-                predictor, model_version, settings.draw_possible_threshold
-            )
-            app.state.registry = registry
-
-            logger.info(
-                "Prediction model loaded: version=%s path=%s",
-                model_version,
-                settings.model_path,
-            )
-        except Exception as exc:  # noqa: BLE001
-            logger.error("Failed to load prediction model: %s", exc)
-    else:
-        logger.warning(
-            "Model not found at %s — prediction disabled.", settings.model_path
-        )
-
-    if settings.model_path.exists():
-        try:
-            from backend.app.services.explanation_service import ExplanationService
-            from explainability.services.explanation_service import (
-                ExplanationService as AIExplanationService,
-            )
-            from model_registry.registry import ModelRegistry
-
-            registry_for_expl = ModelRegistry(settings.registry_path)
-            entry_e = (
-                registry_for_expl.latest() if settings.registry_path.exists() else None
-            )
-            mv = entry_e.version if entry_e else "unknown"
-            dv = entry_e.source_dataset_version if entry_e else "unknown"
-
-            ai_svc = AIExplanationService(settings.model_path)
-            app.state.explanation_service = ExplanationService(ai_svc, mv, dv)
-
-            logger.info("Explanation service loaded.")
-        except Exception as exc:  # noqa: BLE001
-            logger.error("Failed to load explanation service: %s", exc)
+        app.state.registry = registry
+    app.state.prediction_service, app.state.explanation_service = _load_model(
+        settings.model_path, registry, version=None
+    )
+    # API v1 keeps answering with the original model (ADR 014).
+    app.state.v1_model_version = settings.v1_model_version
+    app.state.v1_prediction_service, app.state.v1_explanation_service = _load_model(
+        settings.v1_model_path, registry, version=settings.v1_model_version
+    )
 
     try:
         from assistant.configuration import AssistantSettings
@@ -150,6 +115,68 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if refresh_task is not None:
         refresh_task.cancel()
     logger.info("Shutting down Football Intelligence backend.")
+
+
+def _load_model(
+    path: Path, registry: ModelRegistry, version: str | None
+) -> tuple[object | None, object | None]:
+    """Prediction and explanation services for one model file.
+
+    ``version`` names the registry entry to report; None means the latest.
+    Either service is None when it can't be loaded, so its endpoints answer 503.
+    """
+    if not path.exists():
+        logger.warning("Model not found at %s; its endpoints are disabled.", path)
+        return None, None
+    entries = registry.list_versions()
+    if version is None:
+        entry = entries[-1] if entries else None
+    else:
+        entry = next((e for e in entries if e.version == version), None)
+    model_version = entry.version if entry else (version or "unknown")
+    dataset_version = entry.source_dataset_version if entry else "unknown"
+    return (
+        _load_prediction(path, model_version),
+        _load_explanation(path, model_version, dataset_version),
+    )
+
+
+def _load_prediction(path: Path, model_version: str) -> object | None:
+    """Prediction service for one model file; None if it can't be loaded."""
+    try:
+        from backend.app.services.prediction_service import PredictionService
+        from inference.predictor import MatchPredictor
+
+        service = PredictionService(
+            MatchPredictor.from_path(path),
+            model_version,
+            get_settings().draw_possible_threshold,
+        )
+        logger.info("Prediction model loaded: version=%s path=%s", model_version, path)
+        return service
+    except Exception as exc:  # noqa: BLE001 — /predict answers 503 instead
+        logger.error("Failed to load prediction model %s: %s", path, exc)
+        return None
+
+
+def _load_explanation(
+    path: Path, model_version: str, dataset_version: str
+) -> object | None:
+    """Explanation service for one model file; None if it can't be loaded."""
+    try:
+        from backend.app.services.explanation_service import ExplanationService
+        from explainability.services.explanation_service import (
+            ExplanationService as AIExplanationService,
+        )
+
+        service = ExplanationService(
+            AIExplanationService(path), model_version, dataset_version
+        )
+        logger.info("Explanation service loaded: version=%s", model_version)
+        return service
+    except Exception as exc:  # noqa: BLE001 — /explain answers 503 instead
+        logger.error("Failed to load explanation service %s: %s", path, exc)
+        return None
 
 
 def _load_match_data(app: FastAPI) -> None:
@@ -269,16 +296,35 @@ def create_app() -> FastAPI:
     app.add_exception_handler(InsightsNotAvailableError, insights_not_available_handler)
     app.add_exception_handler(Exception, unexpected_error_handler)
 
-    app.include_router(health.router)
-    app.include_router(model.router)
-    app.include_router(prediction.router)
-    app.include_router(explainability.router)
-    app.include_router(teams.router)
-    app.include_router(competitions.router)
-    app.include_router(insights.router)
-    app.include_router(assistant.router)
-
+    _include_routers(app)
+    if settings.rate_limit_per_minute is not None:
+        app.add_middleware(
+            RateLimitMiddleware,
+            limiter=SlidingWindowLimiter(settings.rate_limit_per_minute),
+        )
     return app
+
+
+def _include_routers(app: FastAPI) -> None:
+    """Mount v2 under /v2, and v1 under /v1 and the unversioned paths (ADR 014).
+
+    Unversioned paths stay on v1 so clients built for release v1.0.0 keep
+    working. They are hidden from the docs, which list /v1 and /v2.
+    """
+    shared = [health.router, assistant.router]
+    v2_only = [
+        model.router,
+        prediction.router,
+        explainability.router,
+        teams.router,
+        competitions.router,
+        insights.router,
+    ]
+    for router in shared + v2_only:
+        app.include_router(router, prefix="/v2")
+    for router in [*shared, v1.router]:
+        app.include_router(router, prefix="/v1")
+        app.include_router(router, include_in_schema=False)
 
 
 app = create_app()
