@@ -55,7 +55,7 @@ Maintained by the project architect. The implementation engineer updates documen
 | [Five Leagues Plan](plans/five-leagues-plan.md) | Serving all five leagues in the API and app |
 | [Multi-League Retraining Plan](plans/multi-league-retraining-plan.md) | Goal, data profile and phased plan for retraining on top-5 league data |
 | [Multi-League Model Comparison](reports/multi-league-retraining-comparison.md) | Candidate vs current model, bookmaker and priors, with the promotion verdict |
-| [2026/27 Live Check](reports/in-season-2026-27.md) | Served model scored on 2026/27 matches played so far |
+| [2026/27 Live Check](reports/in-season-2026-27.md) | Served model scored on 2026/27 matches played up to 20 September 2026 (checked 28 September) |
 | [Draw Handling](reports/draw-handling.md) | Why draws are a tag, not a pick |
 | [Goals Model](reports/goals-model.md) | Dixon-Coles scoreline model and its evaluation |
 | [Kaggle Extras](reports/kaggle-extras.md) | xG, FIFA ratings and Champions League rest days tested; none adopted |
