@@ -18,6 +18,10 @@ class AssistantNotAvailableError(Exception):
     """Raised when the assistant or its dependencies are not available."""
 
 
+class InsightsNotAvailableError(Exception):
+    """Raised when the goals model could not be fitted at startup."""
+
+
 class FeatureMissingError(Exception):
     """Raised when required feature columns are absent from the request."""
 
@@ -69,6 +73,15 @@ def assistant_not_available_handler(_request: Request, exc: Exception) -> JSONRe
     return JSONResponse(
         status_code=503,
         content={"error": "Assistant not available", "detail": str(exc)},
+    )
+
+
+def insights_not_available_handler(_request: Request, exc: Exception) -> JSONResponse:
+    """Return a 503 when the goals model is not available."""
+    logger.error("Insights not available: %s", exc)
+    return JSONResponse(
+        status_code=503,
+        content={"error": "Insights not available", "detail": str(exc)},
     )
 
 

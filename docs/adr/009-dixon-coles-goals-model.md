@@ -39,12 +39,19 @@ XGBoost classifier.
    `/predict` and `/explain` contracts are unchanged.
 6. **Dependency.** `scipy`, already installed through scikit-learn, becomes
    an explicit dependency.
+7. **Serving (amended 2026-09-28).** The server fits the goals model from the
+   same match history it loads for ADR 008, at every start, on matches before
+   that day. A fit takes under a second, so there is no stored artifact or
+   registry entry. The version is `dc-<fit date>`, and every data refresh plus
+   restart gives a fresh fit. This replaces the per-league parameter file first
+   planned: a stored file could only go stale.
 
 ## Consequences
 
 - Scoreline, expected goals and market outputs become available at negligible
-  serving cost: a small parameter file and an 11×11 score grid per fixture.
-- A second model artifact is versioned, registered and refreshed.
+  serving cost: one fit at startup and an 11×11 score grid per fixture.
+- The goals model's version is its fit date. Evaluation results live in
+  `docs/reports/goals-model.md`, and the tuned settings in `GoalsModelConfig`.
 - Evaluation needs scoreline and market metrics and a rolling-origin harness.
 - The app's result screen grows new sections, which need strings resources
   and previews (CLAUDE.md §7).
