@@ -1,0 +1,304 @@
+<title>Football Intelligence Icon Concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a design review board. Header with the spec, then two boards (icons, splash screens) of equal cards, then the pick. */
+:root {
+  --bg: #F4F7F2;
+  --surface: #FFFFFF;
+  --ink: #15201A;
+  --muted: #56675B;
+  --line: #D9E2D8;
+  --accent: #1B5E20;
+  --chip: #E6EFE3;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --body: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --t-bg: #DCE4FF;   /* themed icon: sample wallpaper tint */
+  --t-fg: #26396F;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1410; --surface: #162019; --ink: #E3ECE4; --muted: #9AAC9F;
+    --line: #2A372E; --accent: #7CDB85; --chip: #1E2B22; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1410; --surface: #162019; --ink: #E3ECE4; --muted: #9AAC9F;
+  --line: #2A372E; --accent: #7CDB85; --chip: #1E2B22; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 400 16px/1.55 var(--body); margin: 0; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 40px); padding-block: 40px 72px; display: grid; gap: 56px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: .01em; text-wrap: balance; margin: 0; line-height: 1.05; }
+h1 { font-size: clamp(34px, 5vw, 54px); }
+h2 { font-size: clamp(26px, 3.2vw, 34px); }
+h3 { font-size: 22px; }
+p { margin: 0; max-width: 65ch; }
+.eyebrow { font: 600 13px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.lede { color: var(--muted); font-size: 18px; }
+header { display: grid; gap: 14px; }
+.specs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.spec { background: var(--chip); border-radius: 999px; padding: 6px 12px; font: 400 13px/1.3 var(--body); color: var(--ink); }
+.spec b { font: 500 13px var(--mono); color: var(--accent); }
+section { display: grid; gap: 20px; }
+.section-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+.section-head p { color: var(--muted); }
+.toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); cursor: pointer; user-select: none; }
+.toggle input { accent-color: var(--accent); width: 18px; height: 18px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.card header { display: flex; align-items: baseline; gap: 10px; }
+.num { font: 500 13px var(--mono); color: var(--muted); }
+.card p { font-size: 15px; color: var(--muted); }
+.pick { outline: 2px solid var(--accent); outline-offset: -1px; }
+.badge { justify-self: start; background: var(--accent); color: var(--surface); font: 600 12px/1 var(--body); letter-spacing: .06em; text-transform: uppercase; padding: 6px 10px; border-radius: 999px; }
+
+/* Icons: layers are drawn on the 108dp adaptive grid; launchers show the middle 72dp through a mask. */
+.hero-icon { position: relative; width: 132px; aspect-ratio: 1; max-width: 100%; justify-self: center; border-radius: 50%; overflow: hidden; }
+.hero-icon svg, .mask svg { display: block; width: 100%; height: 100%; }
+.keyline { display: none; }
+.show-keylines .keyline { display: block; }
+.masks { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.mask { width: 44px; aspect-ratio: 1; overflow: hidden; flex: none; }
+.mask.circle { border-radius: 50%; }
+.mask.squircle { border-radius: 30%; }
+.mask.rounded { border-radius: 20%; }
+.mask.teardrop { border-radius: 50% 50% 50% 16%; }
+.mask.small { width: 28px; }
+.mask.themed { --k-bg: var(--t-bg); --k1: var(--t-fg); --k2: var(--t-fg); --k3: var(--t-fg); --k4: var(--t-fg); --kd: var(--t-bg); --kl: var(--t-bg); }
+.mask-labels { font: 400 12px/1.3 var(--mono); color: var(--muted); }
+
+/* Per-concept colours, passed into the shared symbols as custom properties. */
+.c1 { --k-bg: #1B5E20; --k1: #FFFFFF; --k2: #A5D6A7; --kd: #1B5E20; }
+.c2 { --k-bg: #123D1B; --k1: #7CDB85; --k2: #F1F8EE; --k3: #FFD54F; --k4: #FFFFFF; --kd: #123D1B; }
+.c3 { --k-bg: #2E7D32; --k1: #FFFFFF; --k2: #FFD54F; --k3: #FFFFFF; }
+.c4 { --k-bg: #1B5E20; --k1: #FFFFFF; --k2: #A5D6A7; --kd: #1B5E20; }
+.c5 { --k-bg: #E8F5E9; --k1: #1B5E20; --k2: #2E7D32; --k3: #C62828; --kl: #FFFFFF; }
+
+/* Splash screens: phones drawn at half scale (1dp = 0.5px), so the 160dp icon circle is 80px. */
+.phone { width: 180px; max-width: 100%; aspect-ratio: 9 / 19.5; justify-self: center; border-radius: 26px; border: 6px solid #1D2420; position: relative; overflow: hidden; display: grid; place-items: center; }
+.phone .status { position: absolute; inset: 0 0 auto 0; height: 22px; display: flex; justify-content: space-between; align-items: center; padding: 0 14px; font: 500 10px var(--mono); opacity: .75; }
+.phone .brand { position: absolute; bottom: 26px; left: 0; right: 0; text-align: center; font: 700 12px/1 var(--display); letter-spacing: .22em; text-transform: uppercase; }
+.icon-circle { width: 80px; height: 80px; border-radius: 50%; overflow: hidden; }
+.icon-bare { width: 96px; height: 96px; }
+.icon-circle svg, .icon-bare svg { display: block; width: 100%; height: 100%; }
+.s1 { background: #1B5E20; color: #E8F5E9; }
+.s2 { background: #F1F8EE; color: #1B5E20; }
+.s3 { background: #0B1A10; color: #C8E6C9; }
+.s3 .icon-circle { box-shadow: 0 0 0 10px rgba(124, 219, 133, .08), 0 0 36px rgba(124, 219, 133, .25); }
+.s4 { background: #1B5E20; color: #E8F5E9; }
+.s5 { background: var(--tint, #EADDFF); color: var(--tint-fg, #332469); transition: background .3s; }
+.s5 .icon-circle { --k-bg: var(--tint-2, #D0BCFF); --k1: var(--tint-fg, #332469); --k2: var(--tint-fg, #332469); --k3: var(--tint-fg, #332469); --k4: var(--tint-fg, #332469); --kd: var(--tint-2, #D0BCFF); }
+.swatches { display: flex; gap: 8px; }
+.swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--line); cursor: pointer; padding: 0; }
+.swatch[aria-pressed="true"] { border-color: var(--ink); }
+.swatch:focus-visible, .toggle input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.kick .arc { animation: draw 900ms cubic-bezier(.3, 0, .2, 1) both; animation-iteration-count: infinite; animation-duration: 2400ms; }
+.kick .arc.d { animation-delay: 150ms; }
+.kick .arc.a { animation-delay: 300ms; }
+@keyframes draw { 0% { stroke-dashoffset: var(--from); } 38%, 100% { stroke-dashoffset: var(--to); } }
+@media (prefers-reduced-motion: reduce) { .kick .arc { animation: none; } }
+.spec-line { font: 400 12px/1.5 var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+
+.verdict { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: clamp(18px, 3vw, 28px); display: grid; gap: 12px; }
+.verdict ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 70ch; }
+.muted { color: var(--muted); }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- 1 · Pitch Network: football panels drawn as a small neural graph -->
+    <symbol id="g1" viewBox="0 0 108 108">
+      <circle cx="54" cy="54" r="26" style="fill:none;stroke:var(--k1);stroke-width:3.5"/>
+      <g style="stroke:var(--k2);stroke-width:2.4;stroke-linecap:round">
+        <line x1="54" y1="46" x2="54" y2="36"/><line x1="61.6" y1="51.5" x2="71.1" y2="48.4"/>
+        <line x1="58.7" y1="60.5" x2="64.6" y2="68.6"/><line x1="49.3" y1="60.5" x2="43.4" y2="68.6"/>
+        <line x1="46.4" y1="51.5" x2="36.9" y2="48.4"/>
+      </g>
+      <polygon points="54,46 61.6,51.5 58.7,60.5 49.3,60.5 46.4,51.5" style="fill:var(--k1)"/>
+      <g style="fill:var(--k1)">
+        <circle cx="54" cy="36" r="3.3"/><circle cx="71.1" cy="48.4" r="3.3"/><circle cx="64.6" cy="68.6" r="3.3"/>
+        <circle cx="43.4" cy="68.6" r="3.3"/><circle cx="36.9" cy="48.4" r="3.3"/>
+      </g>
+    </symbol>
+    <!-- 2 · Probability Ring: home / draw / away as three arcs around the ball -->
+    <symbol id="g2" viewBox="0 0 108 108">
+      <g transform="rotate(-90 54 54)" style="fill:none;stroke-width:7;stroke-linecap:butt">
+        <circle cx="54" cy="54" r="25" pathLength="100" style="stroke:var(--k1);stroke-dasharray:47 53"/>
+        <circle cx="54" cy="54" r="25" pathLength="100" style="stroke:var(--k2);stroke-dasharray:22 78;stroke-dashoffset:-50"/>
+        <circle cx="54" cy="54" r="25" pathLength="100" style="stroke:var(--k3);stroke-dasharray:22 78;stroke-dashoffset:-75"/>
+      </g>
+      <circle cx="54" cy="54" r="13" style="fill:var(--k4)"/>
+      <polygon points="54,48.5 59.2,52.3 57.2,58.4 50.8,58.4 48.8,52.3" style="fill:var(--kd)"/>
+    </symbol>
+    <!-- 3 · Tactics Board: a pitch with the predicted run to the ball -->
+    <symbol id="g3" viewBox="0 0 108 108">
+      <g style="fill:none;stroke:var(--k1);stroke-width:3;stroke-linejoin:round">
+        <rect x="31" y="38" width="46" height="32" rx="3"/>
+        <line x1="54" y1="38" x2="54" y2="70"/>
+        <circle cx="54" cy="54" r="6"/>
+      </g>
+      <path d="M38 63 Q47 44 61 47" style="fill:none;stroke:var(--k3);stroke-width:2.6;stroke-linecap:round;stroke-dasharray:3.5 3.5"/>
+      <circle cx="67" cy="47" r="4.6" style="fill:var(--k2)"/>
+    </symbol>
+    <!-- 4 · Form Line: a rising form chart that ends in the ball -->
+    <symbol id="g4" viewBox="0 0 108 108">
+      <polyline points="30,70 42,60 52,64 64,47" style="fill:none;stroke:var(--k2);stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round"/>
+      <circle cx="71" cy="41" r="8.5" style="fill:var(--k1)"/>
+      <polygon points="71,37.3 74.5,39.9 73.2,44 68.8,44 67.5,39.9" style="fill:var(--kd)"/>
+    </symbol>
+    <!-- 5 · Explain Lens: a magnifier over SHAP bars, for "why this pick" -->
+    <symbol id="g5" viewBox="0 0 108 108">
+      <line x1="61.5" y1="61.5" x2="71" y2="71" style="stroke:var(--k1);stroke-width:6.5;stroke-linecap:round"/>
+      <circle cx="50" cy="50" r="15.5" style="fill:var(--kl);stroke:var(--k1);stroke-width:5"/>
+      <rect x="41" y="43" width="17" height="4" rx="2" style="fill:var(--k2)"/>
+      <rect x="41" y="49" width="12" height="4" rx="2" style="fill:var(--k2)"/>
+      <rect x="41" y="55" width="7" height="4" rx="2" style="fill:var(--k3)"/>
+    </symbol>
+    <symbol id="keylines" viewBox="0 0 108 108">
+      <circle cx="54" cy="54" r="33" style="fill:none;stroke:#FF4081;stroke-width:.8;stroke-dasharray:2 2"/>
+      <rect x="18" y="18" width="72" height="72" style="fill:none;stroke:#FF4081;stroke-width:.6;opacity:.6"/>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="wrap" id="board">
+  <header>
+    <span class="eyebrow">Android app · design review</span>
+    <h1>Football Intelligence icon and splash concepts</h1>
+    <p class="lede">Five launcher icons and five launch screens for the app, drawn to Material Design's adaptive icon rules and Android 12's splash screen spec. The app currently ships with Android's default icon.</p>
+    <div class="specs" aria-label="Specs every concept follows">
+      <span class="spec">Adaptive icon canvas <b>108dp</b></span>
+      <span class="spec">Visible area <b>72dp</b></span>
+      <span class="spec">Safe zone circle <b>66dp</b></span>
+      <span class="spec">Themed icon layer <b>monochrome</b></span>
+      <span class="spec">Splash icon with background <b>160dp</b> circle</span>
+      <span class="spec">Splash branding image <b>200×80dp</b></span>
+    </div>
+  </header>
+
+  <section aria-labelledby="icons-h">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Launcher icon</span>
+        <h2 id="icons-h">Five icon concepts</h2>
+      </div>
+      <label class="toggle" for="keys"><input type="checkbox" id="keys"> Show keylines (66dp safe zone)</label>
+    </div>
+    <p class="muted">Each icon is shown the way launchers mask it: circle, squircle, rounded square and teardrop. It also appears as a themed icon tinted from the wallpaper (Android 13+) and at a small size.</p>
+    <div class="grid" id="icons"></div>
+  </section>
+
+  <section aria-labelledby="splash-h">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Launch screen</span>
+        <h2 id="splash-h">Five splash screen concepts</h2>
+      </div>
+    </div>
+    <p class="muted">All five use Android's SplashScreen API: one background colour, the centred app icon, and optionally a small branding mark at the bottom. They are shown with icon 2, the recommended icon.</p>
+    <div class="grid">
+      <article class="card">
+        <header><span class="num">S1</span><h3>Pitch</h3></header>
+        <div class="phone s1"><div class="status"><span>10:15</span><span>●●</span></div>
+          <div class="icon-bare c2" style="--k4:#FFFFFF;--kd:#1B5E20"><svg viewBox="18 18 72 72" role="img" aria-label="Probability ring on pitch green"><use width="108" height="108" href="#g2"/></svg></div>
+          <div class="brand">Football Intelligence</div></div>
+        <p>Brand green edge to edge, with the icon's foreground only and the wordmark as a branding image. It feels like walking out onto the pitch.</p>
+        <p class="spec-line">background #1B5E20 · icon without background · branding 200×80dp</p>
+      </article>
+      <article class="card">
+        <header><span class="num">S2</span><h3>Daylight</h3></header>
+        <div class="phone s2"><div class="status"><span>10:15</span><span>●●</span></div>
+          <div class="icon-circle c2"><svg viewBox="18 18 72 72" role="img" aria-label="Probability ring icon on a light screen"><rect width="108" height="108" style="fill:var(--k-bg)"/><use width="108" height="108" href="#g2"/></svg></div></div>
+        <p>A light green-tinted surface that matches the app's light theme, with the full icon in its 160dp circle. It's quiet and has no branding.</p>
+        <p class="spec-line">background #F1F8EE · icon with background · no branding</p>
+      </article>
+      <article class="card">
+        <header><span class="num">S3</span><h3>Floodlights</h3></header>
+        <div class="phone s3"><div class="status"><span>10:15</span><span>●●</span></div>
+          <div class="icon-circle c2"><svg viewBox="18 18 72 72" role="img" aria-label="Probability ring icon glowing on a dark screen"><rect width="108" height="108" style="fill:var(--k-bg)"/><use width="108" height="108" href="#g2"/></svg></div>
+          <div class="brand">Football Intelligence</div></div>
+        <p>A night-match dark screen for dark mode, with a soft floodlight glow behind the icon. It pairs with S1 or S2 as the dark variant.</p>
+        <p class="spec-line">values-night background #0B1A10 · icon background glow · branding</p>
+      </article>
+      <article class="card">
+        <header><span class="num">S4</span><h3>Kick-off</h3></header>
+        <div class="phone s4"><div class="status"><span>10:15</span><span>●●</span></div>
+          <div class="icon-bare kick">
+            <svg viewBox="18 18 72 72" role="img" aria-label="Animated probability ring filling in">
+              <g transform="rotate(-90 54 54)" style="fill:none;stroke-width:7">
+                <circle class="arc h" cx="54" cy="54" r="25" pathLength="100" style="stroke:#7CDB85;stroke-dasharray:47 53;--from:47;--to:0"/>
+                <circle class="arc d" cx="54" cy="54" r="25" pathLength="100" style="stroke:#F1F8EE;stroke-dasharray:22 78;--from:-28;--to:-50"/>
+                <circle class="arc a" cx="54" cy="54" r="25" pathLength="100" style="stroke:#FFD54F;stroke-dasharray:22 78;--from:-53;--to:-75"/>
+              </g>
+              <circle cx="54" cy="54" r="13" fill="#FFFFFF"/>
+              <polygon points="54,48.5 59.2,52.3 57.2,58.4 50.8,58.4 48.8,52.3" fill="#1B5E20"/>
+            </svg>
+          </div></div>
+        <p>The ring fills in home, draw, away while the app loads: an animated vector icon under 1 second, so it never holds the user up.</p>
+        <p class="spec-line">animated icon (AVD) · duration ≤ 1000ms · background #1B5E20</p>
+      </article>
+      <article class="card">
+        <header><span class="num">S5</span><h3>Your colours</h3></header>
+        <div class="phone s5" id="dyn"><div class="status"><span>10:15</span><span>●●</span></div>
+          <div class="icon-circle"><svg viewBox="18 18 72 72" role="img" aria-label="Monochrome icon in the wallpaper's colours"><rect width="108" height="108" style="fill:var(--k-bg)"/><use width="108" height="108" href="#g2"/></svg></div></div>
+        <div class="swatches" role="group" aria-label="Sample wallpaper colours">
+          <button class="swatch" type="button" aria-pressed="true" aria-label="Lavender wallpaper" style="background:#EADDFF" data-t="#EADDFF,#D0BCFF,#332469"></button>
+          <button class="swatch" type="button" aria-pressed="false" aria-label="Sky wallpaper" style="background:#D7E3FF" data-t="#D7E3FF,#AEC6FF,#123A73"></button>
+          <button class="swatch" type="button" aria-pressed="false" aria-label="Sand wallpaper" style="background:#FFDCC2" data-t="#FFDCC2,#FFB783,#5A2C00"></button>
+        </div>
+        <p>Material You: the screen and a monochrome icon take the user's wallpaper colours, so the app feels native on every phone. Tap a colour to try it.</p>
+        <p class="spec-line">dynamic colour · primaryContainer background · monochrome icon</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="verdict" aria-labelledby="pick-h">
+    <span class="eyebrow">Recommendation</span>
+    <h2 id="pick-h">Icon 2 with splash S2, plus S3 in dark mode</h2>
+    <ul>
+      <li>Icon 2, the probability ring, is the only concept that shows what the app does: three outcomes around a ball. It stays recognisable as a flat monochrome themed icon because the gaps between the arcs carry the shape.</li>
+      <li>S2 and S3 follow the app's light and dark themes, so launch flows straight into the first screen without a colour flash.</li>
+      <li>S4's animation can be added later as a small extra, using the same icon.</li>
+    </ul>
+    <p class="muted">Reply with an icon number and a splash letter, for example "2 and S2", and I'll build it into the app with the adaptive and themed layers, the Android 12+ splash screen and a fallback for older Android versions.</p>
+  </section>
+</main>
+
+<script>
+  const icons = [
+    { n: 1, name: "Pitch Network", text: "The ball's panels drawn as a small neural network. It says football and AI in one mark." },
+    { n: 2, name: "Probability Ring", text: "Home, draw and away as three arcs around the ball: exactly what the app predicts.", pick: true },
+    { n: 3, name: "Tactics Board", text: "A pitch with a dashed run to the ball. It reads as analysis and planning." },
+    { n: 4, name: "Form Line", text: "A rising form chart that ends in the ball, for data and momentum." },
+    { n: 5, name: "Explain Lens", text: "A magnifier over SHAP bars, for the app's 'why this pick'. It's a light icon, for contrast on dark wallpapers." },
+  ];
+  const masks = ["circle", "squircle", "rounded", "teardrop"];
+  const svg = (n, box, bg = true) =>
+    `<svg viewBox="${box}" aria-hidden="true">${bg ? '<rect width="108" height="108" style="fill:var(--k-bg)"/>' : ""}<use width="108" height="108" href="#g${n}"/><use class="keyline" width="108" height="108" href="#keylines"/></svg>`;
+  document.getElementById("icons").innerHTML = icons.map((i) => `
+    <article class="card c${i.n}${i.pick ? " pick" : ""}">
+      ${i.pick ? '<span class="badge">Recommended</span>' : ""}
+      <header><span class="num">${i.n}</span><h3>${i.name}</h3></header>
+      <div class="hero-icon" role="img" aria-label="${i.name} icon">${svg(i.n, "18 18 72 72")}</div>
+      <div class="masks">
+        ${masks.map((m) => `<div class="mask ${m}" title="${m} mask">${svg(i.n, "18 18 72 72")}</div>`).join("")}
+        <div class="mask circle themed" title="themed icon">${svg(i.n, "18 18 72 72")}</div>
+        <div class="mask circle small" title="small size">${svg(i.n, "18 18 72 72")}</div>
+      </div>
+      <div class="mask-labels">circle · squircle · rounded · teardrop · themed · small</div>
+      <p>${i.text}</p>
+    </article>`).join("");
+
+  const board = document.getElementById("board");
+  document.getElementById("keys").addEventListener("change", (e) => board.classList.toggle("show-keylines", e.target.checked));
+
+  const dyn = document.getElementById("dyn");
+  document.querySelectorAll(".swatch").forEach((b) => b.addEventListener("click", () => {
+    const [t, t2, fg] = b.dataset.t.split(",");
+    dyn.style.setProperty("--tint", t); dyn.style.setProperty("--tint-2", t2); dyn.style.setProperty("--tint-fg", fg);
+    document.querySelectorAll(".swatch").forEach((s) => s.setAttribute("aria-pressed", String(s === b)));
+  }));
+</script>
