@@ -33,7 +33,7 @@ object HttpClientFactory {
             }
             install(HttpTimeout) {
                 requestTimeoutMillis = config.timeoutMs
-                connectTimeoutMillis = config.timeoutMs
+                connectTimeoutMillis = config.connectTimeoutMs
                 socketTimeoutMillis = config.timeoutMs
             }
         }
