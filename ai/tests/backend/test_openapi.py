@@ -15,7 +15,13 @@ def test_openapi_schema_has_paths(client: TestClient) -> None:
     """OpenAPI schema lists all expected endpoint paths."""
     schema = client.get("/openapi.json").json()
     paths = schema.get("paths", {})
-    for expected in ("/health", "/model", "/predict", "/explain"):
+    for expected in (
+        "/v1/health",
+        "/v1/predict",
+        "/v2/model",
+        "/v2/predict",
+        "/v2/explain",
+    ):
         assert expected in paths, f"Missing path: {expected}"
 
 

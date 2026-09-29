@@ -20,7 +20,7 @@ def test_predict_returns_200(
         "away_team": "Chelsea",
         "features": valid_features,
     }
-    response = client.post("/predict", json=payload)
+    response = client.post("/v2/predict", json=payload)
     assert response.status_code == 200
 
 
@@ -33,7 +33,7 @@ def test_predict_response_fields(
         "away_team": "Chelsea",
         "features": valid_features,
     }
-    data = client.post("/predict", json=payload).json()
+    data = client.post("/v2/predict", json=payload).json()
     assert "predicted_result" in data
     assert "probability_home" in data
     assert "probability_draw" in data
@@ -52,7 +52,7 @@ def test_predict_result_is_valid_outcome(
         "away_team": "Chelsea",
         "features": valid_features,
     }
-    data = client.post("/predict", json=payload).json()
+    data = client.post("/v2/predict", json=payload).json()
     assert data["predicted_result"] in ("H", "D", "A")
 
 
@@ -65,7 +65,7 @@ def test_predict_probabilities_between_0_and_1(
         "away_team": "Chelsea",
         "features": valid_features,
     }
-    data = client.post("/predict", json=payload).json()
+    data = client.post("/v2/predict", json=payload).json()
     for key in (
         "probability_home",
         "probability_draw",
@@ -80,7 +80,7 @@ def test_predict_422_missing_home_team(
 ) -> None:
     """POST /predict returns 422 when home_team is absent."""
     response = client.post(
-        "/predict", json={"away_team": "Chelsea", "features": valid_features}
+        "/v2/predict", json={"away_team": "Chelsea", "features": valid_features}
     )
     assert response.status_code == 422
 
@@ -90,7 +90,7 @@ def test_predict_503_without_features_when_history_not_loaded(
 ) -> None:
     """POST /predict without features needs match history (ADR 008)."""
     response = client.post(
-        "/predict", json={"home_team": "Arsenal", "away_team": "Chelsea"}
+        "/v2/predict", json={"home_team": "Arsenal", "away_team": "Chelsea"}
     )
     assert response.status_code == 503
     assert response.json()["error"] == "Match features not available"
@@ -101,7 +101,7 @@ def test_predict_422_empty_home_team(
 ) -> None:
     """POST /predict returns 422 when home_team is an empty string."""
     payload = {"home_team": "", "away_team": "Chelsea", "features": valid_features}
-    response = client.post("/predict", json=payload)
+    response = client.post("/v2/predict", json=payload)
     assert response.status_code == 422
 
 
@@ -117,7 +117,7 @@ def test_predict_422_missing_feature_columns(
         "away_team": "Chelsea",
         "features": valid_features,
     }
-    response = client.post("/predict", json=payload)
+    response = client.post("/v2/predict", json=payload)
     assert response.status_code == 422
     assert "missing" in response.json()
 
@@ -138,7 +138,7 @@ def test_predict_503_when_service_unavailable(tmp_path: Path) -> None:
             bare_app = create_app()
             with TestClient(bare_app, raise_server_exceptions=False) as c:
                 response = c.post(
-                    "/predict",
+                    "/v2/predict",
                     json={
                         "home_team": "Arsenal",
                         "away_team": "Chelsea",

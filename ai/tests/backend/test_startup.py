@@ -35,14 +35,25 @@ def test_lifespan_sets_state_to_none_when_model_missing(tmp_path: Path) -> None:
 
 
 def test_app_has_all_routes() -> None:
-    """create_app() registers /health, /model, /predict, /explain."""
+    """create_app() registers every route under /v1 and /v2, and v1 unversioned."""
     from backend.app.main import create_app
 
     application = create_app()
     schema = application.openapi()
-    paths = set(schema.get("paths", {}).keys())
-    for expected in ("/health", "/model", "/predict", "/explain", "/assistant/chat"):
-        assert expected in paths, f"Missing route: {expected}"
+    documented = set(schema.get("paths", {}).keys())
+    for version in ("/v1", "/v2"):
+        for route in ("/health", "/model", "/predict", "/explain", "/assistant/chat"):
+            assert version + route in documented, f"Missing route: {version}{route}"
+    client = TestClient(application, raise_server_exceptions=False)
+    for method, route in [
+        ("GET", "/health"),
+        ("GET", "/model"),
+        ("GET", "/teams"),
+        ("POST", "/predict"),
+        ("POST", "/explain"),
+    ]:
+        status = client.request(method, route, json={}).status_code
+        assert status != 404, f"Missing unversioned route: {route}"
 
 
 def test_exception_handlers_registered() -> None:

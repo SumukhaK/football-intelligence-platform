@@ -20,7 +20,7 @@ def test_explain_returns_200(
         "away_team": "Chelsea",
         "features": valid_features,
     }
-    response = client.post("/explain", json=payload)
+    response = client.post("/v2/explain", json=payload)
     assert response.status_code == 200
 
 
@@ -33,7 +33,7 @@ def test_explain_response_fields(
         "away_team": "Chelsea",
         "features": valid_features,
     }
-    data = client.post("/explain", json=payload).json()
+    data = client.post("/v2/explain", json=payload).json()
     for field in (
         "predicted_result",
         "probability_home",
@@ -60,7 +60,7 @@ def test_explain_contributions_have_expected_keys(
         "away_team": "Chelsea",
         "features": valid_features,
     }
-    data = client.post("/explain", json=payload).json()
+    data = client.post("/v2/explain", json=payload).json()
     for entry in data["all_contributions"]:
         assert "feature_name" in entry
         assert "feature_value" in entry
@@ -69,7 +69,7 @@ def test_explain_contributions_have_expected_keys(
 
 def test_explain_422_missing_fields(client: TestClient) -> None:
     """POST /explain returns 422 when required fields are absent."""
-    response = client.post("/explain", json={"home_team": "Arsenal"})
+    response = client.post("/v2/explain", json={"home_team": "Arsenal"})
     assert response.status_code == 422
 
 
@@ -85,7 +85,7 @@ def test_explain_422_missing_feature_columns(
         "away_team": "Chelsea",
         "features": valid_features,
     }
-    response = client.post("/explain", json=payload)
+    response = client.post("/v2/explain", json=payload)
     assert response.status_code == 422
 
 
@@ -105,7 +105,7 @@ def test_explain_503_when_service_unavailable(tmp_path: Path) -> None:
             bare_app = create_app()
             with TestClient(bare_app, raise_server_exceptions=False) as c:
                 response = c.post(
-                    "/explain",
+                    "/v2/explain",
                     json={
                         "home_team": "Arsenal",
                         "away_team": "Chelsea",
@@ -124,5 +124,5 @@ def test_explain_result_in_valid_outcomes(
         "away_team": "Chelsea",
         "features": valid_features,
     }
-    data = client.post("/explain", json=payload).json()
+    data = client.post("/v2/explain", json=payload).json()
     assert data["predicted_result"] in ("H", "D", "A")

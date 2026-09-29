@@ -1,11 +1,35 @@
 # API Reference
 
 FastAPI backend in `ai/backend/`. The OpenAPI docs are served at `/docs`, and
-this page summarises the contract. The API serves the Premier League only
-(ADR 005).
+this page summarises the contract.
 
 Errors return JSON `{ "error": "...", "detail": "..." }` with extra fields
 where noted.
+
+## Versions
+
+The API has two versions (ADR 014). Every endpoint below is described as it
+works in **v2**, under the `/v2` prefix, for example `POST /v2/predict`.
+
+| Version | Paths | Model | Leagues |
+|---|---|---|---|
+| v2 (current) | `/v2/...` | Latest five-league model | All five (ADR 012) |
+| v1 (frozen) | `/v1/...` and unversioned paths | Original model `20260630_132617` | Premier League only |
+
+v1 keeps the release v1.0.0 contract so older clients keep working. It serves
+`/health`, `/model`, `/teams`, `/predict`, `/explain` and `/assistant/chat`.
+Its responses have no `competition` or `draw_possible` field, and its
+explanations have no `display_name` or `display_value`. Naming any league
+other than the Premier League returns 422 `Unknown competition`.
+`/competitions` and `/insights` exist only in v2. The unversioned paths
+behave exactly like `/v1` and are left out of the docs page.
+
+## Rate limit
+
+Each client address may make `RATE_LIMIT_PER_MINUTE` requests in any
+one-minute window (default 120; `off` turns it off). Beyond that the server
+answers 429 `{ "error": "Too many requests", "detail": "..." }` with a
+`Retry-After` header in seconds. Health checks and the docs are never limited.
 
 ---
 
@@ -235,4 +259,4 @@ uv run python -m scripts.refresh_live_dataset --confirm
 ```
 
 Then restart the backend. Configure the directories with `MATCHES_DIR` and
-`DATASETS_DIR`, and the competition with `SERVED_COMPETITION`.
+`DATASETS_DIR`, and the leagues with `SERVED_COMPETITIONS`.

@@ -53,7 +53,7 @@ def insights_client(service: InsightsService) -> TestClient:
 
 def test_insights_returns_scores_and_markets(insights_client: TestClient) -> None:
     response = insights_client.post(
-        "/insights", json={"home_team": "Arsenal", "away_team": "Chelsea"}
+        "/v2/insights", json={"home_team": "Arsenal", "away_team": "Chelsea"}
     )
     assert response.status_code == 200
     body = response.json()
@@ -77,7 +77,7 @@ def test_promoted_team_without_history_gets_insights(
     insights_client: TestClient,
 ) -> None:
     response = insights_client.post(
-        "/insights", json={"home_team": "Coventry", "away_team": "Arsenal"}
+        "/v2/insights", json={"home_team": "Coventry", "away_team": "Arsenal"}
     )
     assert response.status_code == 200
     assert response.json()["outcome"]["away"] > response.json()["outcome"]["home"]
@@ -85,7 +85,7 @@ def test_promoted_team_without_history_gets_insights(
 
 def test_unknown_team_is_422(insights_client: TestClient) -> None:
     response = insights_client.post(
-        "/insights", json={"home_team": "Arsenal", "away_team": "Real Madrid"}
+        "/v2/insights", json={"home_team": "Arsenal", "away_team": "Real Madrid"}
     )
     assert response.status_code == 422
     assert response.json()["error"] == "Unknown team"
@@ -95,7 +95,7 @@ def test_unknown_team_is_422(insights_client: TestClient) -> None:
 def test_missing_goals_model_is_503() -> None:
     client = TestClient(create_app(), raise_server_exceptions=False)
     response = client.post(
-        "/insights", json={"home_team": "Arsenal", "away_team": "Chelsea"}
+        "/v2/insights", json={"home_team": "Arsenal", "away_team": "Chelsea"}
     )
     assert response.status_code == 503
     assert response.json()["error"] == "Insights not available"
@@ -103,7 +103,7 @@ def test_missing_goals_model_is_503() -> None:
 
 def test_empty_team_is_rejected(insights_client: TestClient) -> None:
     response = insights_client.post(
-        "/insights", json={"home_team": "", "away_team": "Chelsea"}
+        "/v2/insights", json={"home_team": "", "away_team": "Chelsea"}
     )
     assert response.status_code == 422
 

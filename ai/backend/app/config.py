@@ -18,12 +18,17 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        # Lets LIVE_REFRESH_HOUR=off turn the daily refresh off.
+        # Lets LIVE_REFRESH_HOUR=off and RATE_LIMIT_PER_MINUTE=off turn those off.
         env_parse_none_str="off",
     )
 
     model_path: Path = Path("../ai/models/latest/model.joblib")
     registry_path: Path = Path("../ai/models/registry.json")
+    # The original model behind API v1 and unversioned paths (ADR 014).
+    v1_model_path: Path = Path("../ai/models/runs/20260630_132617/model.joblib")
+    v1_model_version: str = "20260630_132617"
+    # Requests per client per minute; `off` turns rate limiting off (ADR 014).
+    rate_limit_per_minute: int | None = Field(default=120, ge=1)
     matches_dir: Path = Path("../datasets/processed/football_data")
     datasets_dir: Path = Path("../datasets")
     # Local hour of the daily data refresh (ADR 013); set to `off` to turn it off.

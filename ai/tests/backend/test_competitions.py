@@ -92,7 +92,7 @@ class TestEndpoints:
     def test_competitions_lists_leagues_with_history(
         self, league_client: TestClient
     ) -> None:
-        body = league_client.get("/competitions").json()
+        body = league_client.get("/v2/competitions").json()
         assert body["default"] == "Premier League"
         by_name = {c["name"]: c for c in body["competitions"]}
         assert by_name["Bundesliga"] == {
@@ -107,19 +107,21 @@ class TestEndpoints:
         assert "Serie A" not in by_name
 
     def test_teams_for_a_league(self, league_client: TestClient) -> None:
-        body = league_client.get("/teams", params={"competition": "Bundesliga"}).json()
+        body = league_client.get(
+            "/v2/teams", params={"competition": "Bundesliga"}
+        ).json()
         assert body["competition"] == "Bundesliga"
         assert body["teams"] == ["Bayern", "Dortmund", "Freiburg", "Leipzig"]
 
     def test_teams_default_to_the_premier_league(
         self, league_client: TestClient
     ) -> None:
-        assert league_client.get("/teams").json()["competition"] == "Premier League"
+        assert league_client.get("/v2/teams").json()["competition"] == "Premier League"
 
     def test_unknown_league_is_a_structured_422(
         self, league_client: TestClient
     ) -> None:
-        response = _post(league_client, "/predict", competition="Eredivisie")
+        response = _post(league_client, "/v2/predict", competition="Eredivisie")
         assert response.status_code == 422
         body = response.json()
         assert body["error"] == "Unknown competition"
@@ -129,7 +131,7 @@ class TestEndpoints:
     def test_predict_uses_and_echoes_the_league(
         self, league_client: TestClient, mock_prediction_service: MagicMock
     ) -> None:
-        response = _post(league_client, "/predict", competition="Bundesliga")
+        response = _post(league_client, "/v2/predict", competition="Bundesliga")
         assert response.status_code == 200
         assert response.json()["competition"] == "Bundesliga"
         sent = mock_prediction_service.predict.call_args.args[0]
@@ -139,17 +141,17 @@ class TestEndpoints:
         self, league_client: TestClient
     ) -> None:
         response = league_client.post(
-            "/predict", json={"home_team": "Arsenal", "away_team": "Chelsea"}
+            "/v2/predict", json={"home_team": "Arsenal", "away_team": "Chelsea"}
         )
         assert response.json()["competition"] == "Premier League"
 
     def test_explain_echoes_the_league(self, league_client: TestClient) -> None:
-        response = _post(league_client, "/explain", competition="Bundesliga")
+        response = _post(league_client, "/v2/explain", competition="Bundesliga")
         assert response.status_code == 200
         assert response.json()["competition"] == "Bundesliga"
 
     def test_insights_for_a_league(self, league_client: TestClient) -> None:
-        response = _post(league_client, "/insights", competition="Bundesliga")
+        response = _post(league_client, "/v2/insights", competition="Bundesliga")
         assert response.status_code == 200
         assert response.json()["competition"] == "Bundesliga"
 
@@ -157,7 +159,7 @@ class TestEndpoints:
         self, league_client: TestClient
     ) -> None:
         response = league_client.post(
-            "/insights", json={"home_team": "Arsenal", "away_team": "Chelsea"}
+            "/v2/insights", json={"home_team": "Arsenal", "away_team": "Chelsea"}
         )
         assert response.status_code == 503
         assert response.json()["error"] == "Insights not available"
