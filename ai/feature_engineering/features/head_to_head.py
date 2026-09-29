@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
+
 import pandas as pd
 
 from feature_engineering.base import BaseFeature
@@ -16,7 +18,7 @@ class HeadToHeadFeature(BaseFeature):
 
     @property
     def version(self) -> str:
-        return "1.0.0"
+        return "1.0.1"
 
     @property
     def output_columns(self) -> list[str]:
@@ -25,61 +27,29 @@ class HeadToHeadFeature(BaseFeature):
     def compute(self, df: pd.DataFrame) -> pd.DataFrame:
         """Compute head-to-head statistics for each match.
 
-        For match i, considers all prior matches (index < i) between
-        home_team and away_team in either direction. O(n²) — acceptable
-        for typical season-length datasets (~380 rows).
+        For match i, counts all prior rows (index < i) between home_team and
+        away_team in either direction. Wins are tracked per team for each
+        unordered pair, so one pass is enough for multi-season datasets.
         """
-        meetings_list: list[int] = []
-        home_wins_list: list[int] = []
-        away_wins_list: list[int] = []
-        draws_list: list[int] = []
-
-        for i, row in df.iterrows():
-            team_a = row["home_team"]
-            team_b = row["away_team"]
-
-            prior = df.loc[:i].iloc[:-1]  # all rows before this one
-
-            mask = ((prior["home_team"] == team_a) & (prior["away_team"] == team_b)) | (
-                (prior["home_team"] == team_b) & (prior["away_team"] == team_a)
-            )
-            h2h = prior[mask]
-
-            meetings = len(h2h)
-
-            # Wins for team_a (current home team)
-            a_home_wins = int(
-                ((h2h["home_team"] == team_a) & (h2h["result"] == "H")).sum()
-            )
-            a_away_wins = int(
-                ((h2h["away_team"] == team_a) & (h2h["result"] == "A")).sum()
-            )
-            home_wins = a_home_wins + a_away_wins
-
-            # Wins for team_b (current away team)
-            b_home_wins = int(
-                ((h2h["home_team"] == team_b) & (h2h["result"] == "H")).sum()
-            )
-            b_away_wins = int(
-                ((h2h["away_team"] == team_b) & (h2h["result"] == "A")).sum()
-            )
-            away_wins = b_home_wins + b_away_wins
-
-            draws = int((h2h["result"] == "D").sum())
-
-            meetings_list.append(meetings)
-            home_wins_list.append(home_wins)
-            away_wins_list.append(away_wins)
-            draws_list.append(draws)
-
-        result = pd.DataFrame(
-            {
-                "h2h_meetings": meetings_list,
-                "h2h_home_wins": home_wins_list,
-                "h2h_away_wins": away_wins_list,
-                "h2h_draws": draws_list,
-            },
-            index=df.index,
+        # pair -> [wins for team, wins for other team, draws], keyed by team name
+        wins: dict[frozenset[str], dict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
         )
+        draws: dict[frozenset[str], int] = defaultdict(int)
+        rows: list[tuple[int, int, int, int]] = []
 
-        return result
+        for row in df.itertuples(index=False):
+            home, away = str(row.home_team), str(row.away_team)
+            pair = frozenset((home, away))
+            home_wins, away_wins = wins[pair][home], wins[pair][away]
+            rows.append(
+                (home_wins + away_wins + draws[pair], home_wins, away_wins, draws[pair])
+            )
+            if row.result == "H":
+                wins[pair][home] += 1
+            elif row.result == "A":
+                wins[pair][away] += 1
+            else:
+                draws[pair] += 1
+
+        return pd.DataFrame(rows, index=df.index, columns=self.output_columns)

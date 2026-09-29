@@ -8,13 +8,18 @@ Directory layout under ``DataPaths.raw``:
       {provider_id}/
         {dataset_name}_v{version}.csv          # raw bytes as-received
         {dataset_name}_v{version}_metadata.json
+        {dataset_name}/
+          {partition}.csv                      # one immutable source file,
+                                               # e.g. E0_2324.csv
 
 Directory layout under ``DataPaths.processed``:
     processed/
       {provider_id}/
         {dataset_name}_v{version}.csv          # normalised DataFrame
+        {dataset_name}_v{version}_report.json  # run report, when produced
 """
 
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -177,6 +182,84 @@ class DatasetStorage:
         if not path.exists():
             raise StorageError(f"Metadata sidecar not found: '{path}'.")
         return MetadataBuilder.load(path)
+
+    def save_raw_partition(
+        self,
+        content: bytes,
+        provider_id: ProviderId,
+        dataset_name: DatasetName,
+        partition: str,
+    ) -> Path:
+        """Persist one raw source file, e.g. one division season, immutably.
+
+        Saving identical bytes again is a no-op. Saving different bytes to an
+        existing partition raises, because raw data is never overwritten.
+
+        Returns:
+            Absolute path to the partition file.
+        """
+        path = self._partition_path(provider_id, dataset_name, partition)
+        if path.exists():
+            if path.read_bytes() != content:
+                raise StorageError(
+                    f"Raw partition '{path}' is immutable and already holds "
+                    "different content. Move it aside to re-download."
+                )
+            return path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            path.write_bytes(content)
+        except OSError as exc:
+            raise StorageError(f"Failed to write raw file '{path}': {exc}") from exc
+        return path
+
+    def has_raw_partition(
+        self, provider_id: ProviderId, dataset_name: DatasetName, partition: str
+    ) -> bool:
+        """Return whether a raw partition has already been stored."""
+        return self._partition_path(provider_id, dataset_name, partition).exists()
+
+    def load_raw_partition(
+        self, provider_id: ProviderId, dataset_name: DatasetName, partition: str
+    ) -> bytes:
+        """Read a stored raw partition.
+
+        Raises:
+            StorageError: If the partition does not exist.
+        """
+        path = self._partition_path(provider_id, dataset_name, partition)
+        if not path.exists():
+            raise StorageError(f"Raw partition not found: '{path}'.")
+        return path.read_bytes()
+
+    def save_report(
+        self,
+        report: dict[str, object],
+        provider_id: ProviderId,
+        dataset_name: DatasetName,
+        version: DatasetVersion,
+    ) -> Path:
+        """Write a JSON run report next to the processed dataset."""
+        target_dir = self._paths.processed / provider_id
+        target_dir.mkdir(parents=True, exist_ok=True)
+        path = target_dir / (
+            f"{dataset_name}{DATASET_VERSION_SEPARATOR}{version}_report.json"
+        )
+        try:
+            path.write_text(json.dumps(report, indent=2, default=str), "utf-8")
+        except OSError as exc:
+            raise StorageError(f"Failed to write report '{path}': {exc}") from exc
+        return path
+
+    def _partition_path(
+        self, provider_id: ProviderId, dataset_name: DatasetName, partition: str
+    ) -> Path:
+        """Return the path of a raw partition file."""
+        return (
+            self._paths.provider_raw_dir(provider_id)
+            / dataset_name
+            / (f"{partition}.csv")
+        )
 
     def list_versions(
         self,

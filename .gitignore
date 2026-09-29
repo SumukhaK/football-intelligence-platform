@@ -49,7 +49,9 @@ google-services.json
 # =============================================================================
 # Datasets and models
 # =============================================================================
-datasets/raw/
+# Keep the folders (CI checks they exist) but never their data
+datasets/raw/*
+!datasets/raw/.gitkeep
 datasets/interim/
 datasets/external/
 ai/models/*.pkl
@@ -58,6 +60,14 @@ ai/models/*.json
 ai/models/*.ubj
 models/runs/
 models/latest/
+
+# AI pipeline outputs (trained models, reports, explanations)
+ai/models/runs/
+ai/models/latest/
+ai/models/evaluation/
+ai/models/backtests/
+ai/models/tuning/
+ai/explanations/
 models/evaluation/
 models/registry.json
 *.csv
@@ -65,7 +75,8 @@ models/registry.json
 *.feather
 
 # Processed datasets are committed only when explicitly versioned
-datasets/processed/
+datasets/processed/*
+!datasets/processed/.gitkeep
 
 # =============================================================================
 # OS and editor

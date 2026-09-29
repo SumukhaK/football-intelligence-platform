@@ -7,6 +7,7 @@ e.g. https://www.football-data.co.uk/mmz4281/2324/E0.csv
 License: Free for non-commercial use. See https://www.football-data.co.uk/
 """
 
+import csv
 import io
 
 import pandas as pd
@@ -49,13 +50,18 @@ _COLUMN_MAP: dict[str, str] = {
 
 _BASE_URL = "https://www.football-data.co.uk/mmz4281"
 
-# Supported division codes (English leagues)
+# Supported division codes: English leagues plus the other top-five leagues
+# (ADR 005). Kept in step with schemas.match.DIVISION_TO_COMPETITION by a test.
 _DIVISIONS: dict[str, str] = {
     "E0": "Premier League",
     "E1": "Championship",
     "E2": "League One",
     "E3": "League Two",
     "EC": "Conference National",
+    "D1": "Bundesliga",
+    "SP1": "La Liga",
+    "I1": "Serie A",
+    "F1": "Ligue 1",
 }
 
 _MATCH_RESULTS_DATASET = DatasetName("match_results")
@@ -114,8 +120,9 @@ class FootballDataProvider(BaseProvider):
     def parse(self, content: bytes, dataset_name: DatasetName) -> pd.DataFrame:
         """Parse a football-data.co.uk CSV file into a DataFrame."""
         self.get_descriptor(dataset_name)
+        text = _trim_empty_trailing_fields(content.decode("latin-1"), dataset_name)
         try:
-            df = pd.read_csv(io.BytesIO(content), encoding="latin-1")
+            df = pd.read_csv(io.StringIO(text))
         except Exception as exc:
             raise IngestionError(
                 dataset_name, f"Failed to parse CSV content: {exc}"
@@ -127,3 +134,27 @@ class FootballDataProvider(BaseProvider):
         """Rename football-data.co.uk columns to platform-standard names."""
         present = {k: v for k, v in _COLUMN_MAP.items() if k in df.columns}
         return df[list(present)].rename(columns=present)
+
+
+def _trim_empty_trailing_fields(text: str, dataset_name: DatasetName) -> str:
+    """Drop empty fields beyond the header width that some season files carry.
+
+    Raises ``IngestionError`` if a row has extra fields that are not empty,
+    because that means columns are misaligned rather than merely padded.
+    """
+    rows = list(csv.reader(io.StringIO(text)))
+    if not rows:
+        return text
+    width = len(rows[0])
+    out = io.StringIO()
+    writer = csv.writer(out, lineterminator="\n")
+    for line_no, row in enumerate(rows, start=1):
+        if len(row) > width:
+            if any(field.strip() for field in row[width:]):
+                raise IngestionError(
+                    dataset_name,
+                    f"line {line_no} has {len(row)} fields, header has {width}",
+                )
+            row = row[:width]
+        writer.writerow(row)
+    return out.getvalue()

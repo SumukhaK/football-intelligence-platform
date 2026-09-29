@@ -1,4 +1,8 @@
-"""Chronological train/validation/test split for football data."""
+"""Train/validation/test splits for football data.
+
+``ChronologicalSplitter`` splits by row ratios (ADR 003); ``SeasonSplitter``
+assigns whole seasons (ADR 007). Neither ever shuffles.
+"""
 
 from __future__ import annotations
 
@@ -52,21 +56,79 @@ class ChronologicalSplitter:
         val_df = df_sorted.iloc[train_end:val_end]
         test_df = df_sorted.iloc[val_end:]
 
-        def _date_range(sub: pd.DataFrame) -> tuple[str, str]:
-            dates = sub[config.date_column].astype(str)
-            return str(dates.iloc[0]), str(dates.iloc[-1])
+        return _build_split(train_df, val_df, test_df, feature_cols, config)
 
-        return DataSplit(
-            X_train=train_df[feature_cols].copy(),
-            X_val=val_df[feature_cols].copy(),
-            X_test=test_df[feature_cols].copy(),
-            y_train=train_df[config.target_column].copy(),
-            y_val=val_df[config.target_column].copy(),
-            y_test=test_df[config.target_column].copy(),
-            train_size=len(train_df),
-            val_size=len(val_df),
-            test_size=len(test_df),
-            date_range_train=_date_range(train_df),
-            date_range_val=_date_range(val_df),
-            date_range_test=_date_range(test_df),
+
+class SeasonSplitter:
+    """Splits a feature matrix by whole seasons, in date order."""
+
+    def split(
+        self,
+        df: pd.DataFrame,
+        feature_cols: list[str],
+        config: TrainingConfig,
+    ) -> DataSplit:
+        """Return train (seasons before validation), validation and test sets.
+
+        Holdout seasons, and any season after the first validation season that
+        is not listed, are left out entirely.
+        """
+        season = df[config.season_column]
+        known = set(season)
+        listed = config.val_seasons + config.test_seasons + config.holdout_seasons
+        missing = [s for s in listed if s not in known]
+        if missing:
+            raise ValueError(f"Seasons not in feature matrix: {missing}")
+
+        starts = df.groupby(config.season_column)[config.date_column].min()
+        cutoff = min(starts[s] for s in config.val_seasons)
+        train_seasons = [
+            s for s in starts.index if starts[s] < cutoff and s not in listed
+        ]
+
+        df_sorted = df.sort_values(config.date_column, kind="stable")
+        in_season = df_sorted[config.season_column].isin
+        return _build_split(
+            df_sorted[in_season(train_seasons)],
+            df_sorted[in_season(config.val_seasons)],
+            df_sorted[in_season(config.test_seasons)],
+            feature_cols,
+            config,
         )
+
+
+def make_splitter(config: TrainingConfig) -> ChronologicalSplitter | SeasonSplitter:
+    """Return the splitter selected by ``config.split_strategy``."""
+    if config.split_strategy == "season":
+        return SeasonSplitter()
+    return ChronologicalSplitter()
+
+
+def _build_split(
+    train_df: pd.DataFrame,
+    val_df: pd.DataFrame,
+    test_df: pd.DataFrame,
+    feature_cols: list[str],
+    config: TrainingConfig,
+) -> DataSplit:
+    """Assemble a DataSplit from three already-ordered frames."""
+
+    def _date_range(sub: pd.DataFrame) -> tuple[str, str]:
+        dates = sub[config.date_column].astype(str)
+        return str(dates.iloc[0]), str(dates.iloc[-1])
+
+    target = config.target_column
+    return DataSplit(
+        X_train=train_df[feature_cols].copy(),
+        X_val=val_df[feature_cols].copy(),
+        X_test=test_df[feature_cols].copy(),
+        y_train=train_df[target].copy(),
+        y_val=val_df[target].copy(),
+        y_test=test_df[target].copy(),
+        train_size=len(train_df),
+        val_size=len(val_df),
+        test_size=len(test_df),
+        date_range_train=_date_range(train_df),
+        date_range_val=_date_range(val_df),
+        date_range_test=_date_range(test_df),
+    )

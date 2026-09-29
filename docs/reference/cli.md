@@ -17,6 +17,51 @@ uv sync --extra dev   # install all runtime + dev dependencies
 
 ## Data Ingestion
 
+### `python -m scripts.backfill_football_data`
+
+Backfills many seasons for the top five leagues (ADR 005), checks every season's integrity (ADR 006), and writes one combined dataset. Runs as a dry run unless `--confirm` is given.
+
+**Usage:**
+```sh
+uv run python -m scripts.backfill_football_data [OPTIONS]
+```
+
+**Options:**
+
+| Flag | Default | Description |
+|---|---|---|
+| `--divisions DIV ...` | `E0 D1 SP1 I1 F1` | Division codes to include. |
+| `--first-season CODE` | `0001` | First season code, `0001` = 2000/01. |
+| `--last-season CODE` | `2526` | Last season code, inclusive. |
+| `--base-dir DIR` | `datasets/` | Override the datasets base directory. |
+| `--confirm` | off | Download missing files and build the dataset. Without it, only the plan is printed. |
+
+**Examples:**
+```sh
+# See what would be downloaded
+uv run python -m scripts.backfill_football_data --base-dir ../datasets
+
+# Download and build all five leagues, 2000/01 to 2025/26
+uv run python -m scripts.backfill_football_data --base-dir ../datasets --confirm
+```
+
+**Behaviour:**
+- Season files already in `raw/football_data/match_results/` are reused, never re-downloaded or overwritten.
+- Every season must pass the integrity checks: expected team count, each fixture played once, result consistent with goals, dates inside the season window. Ligue 1 2019/20 is whitelisted at 279 matches.
+- More than 0.5% unparseable rows in any season fails the run.
+
+**Outputs:**
+
+| File | Location | Description |
+|---|---|---|
+| Raw CSVs | `datasets/raw/football_data/match_results/<DIV>_<season>.csv` | One immutable file per division season |
+| Processed CSV | `datasets/processed/football_data/match_results_top5_v<ts>.csv` | All seasons, canonical `ProcessedMatch` schema, sorted by date |
+| Report JSON | `datasets/processed/football_data/match_results_top5_v<ts>_report.json` | Per-season URL, checksum, row counts, errors and warnings. Written even when checks fail |
+
+**Exit codes:** `0` on success or dry run, `1` on any failure.
+
+---
+
 ### `python -m scripts.ingest_football_data`
 
 Downloads match data from football-data.co.uk, validates it against the `ProcessedMatch` schema, and writes three output files.
@@ -152,6 +197,47 @@ Outputs written to: datasets/features
 
 ## Model Training
 
+### `python -m training.tuning`
+
+Searches XGBoost hyperparameters by season walk-forward CV on training seasons only, so validation, test and holdout seasons stay unseen (ADR 007).
+
+**Usage:**
+```sh
+uv run python -m training.tuning --feature-matrix ../datasets/features/top5/feature_matrix.parquet   --val-seasons 2022/23 --test-seasons 2023/24 --holdout-seasons 2024/25 2025/26
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `--max-depths N ...` | `2 3 4` | Tree depths to try. |
+| `--learning-rates LR ...` | `0.03 0.05 0.1` | Learning rates to try. |
+| `--n-estimators N ...` | `100 200 400` | Tree counts to try. |
+| `--cv-folds N` | `5` | Number of final training seasons used as validation folds. |
+| `--output PATH` | `models/tuning/tuning_results.json` | Where to write ranked results. |
+
+Prints every setting ranked by mean CV log loss.
+
+---
+
+### `python -m evaluation.compare_models`
+
+Scores a candidate run against the current model, bookmaker probabilities and training-set outcome frequencies (ADR 007), then applies the promotion rule. Nothing is promoted.
+
+**Usage:**
+```sh
+uv run python -m evaluation.compare_models --candidate-run models/runs/<version>   [--feature-matrix PATH] [--current-model PATH] [--current-feature-matrix PATH]
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `--candidate-run DIR` | required | Run directory with `model.joblib` and `config.json` from a season-split run. |
+| `--feature-matrix PATH` | `../datasets/features/top5/feature_matrix.parquet` | Feature matrix the candidate was trained on. |
+| `--current-model PATH` | `models/latest/model.joblib` | The model currently served. |
+| `--current-feature-matrix PATH` | `../datasets/features/feature_matrix.parquet` | Feature matrix the current model was trained on. |
+
+**Outputs:** `comparison.json` and `comparison.md` in the candidate run directory: log loss, RPS, Brier and accuracy per league for the test and holdout seasons, a paired bootstrap of candidate minus current on the current model's own test matches, and the promotion verdict.
+
+---
+
 ### `python -m training.pipeline`
 
 Loads the feature matrix, performs a chronological 70/15/15 split, trains an XGBoost classifier with early stopping, runs cross-validation, evaluates on all splits, generates a model card, and registers the run.
@@ -171,11 +257,19 @@ uv run python -m training.pipeline [OPTIONS]
 | `--learning-rate LR` | `0.1` | XGBoost learning rate (eta). |
 | `--max-depth DEPTH` | `6` | Maximum tree depth. |
 | `--seed SEED` | `42` | Random seed for reproducibility. |
+| `--split-strategy {chronological,season}` | `chronological` | `season` assigns whole seasons (ADR 007) and uses season walk-forward CV. |
+| `--val-seasons S ...` | — | Validation seasons for `season`, e.g. `2022/23`. Training uses every earlier season. |
+| `--test-seasons S ...` | — | Test seasons for `season`. |
+| `--holdout-seasons S ...` | — | Seasons never used in training or model selection. |
+| `--no-promote` | off | Write only `models/runs/<version>/`; leave `models/latest/`, the global report and the registry untouched. |
 
 **Examples:**
 ```sh
 # Default configuration
 uv run python -m training.pipeline
+
+# Five-league season split, without replacing the served model
+uv run python -m training.pipeline   --feature-matrix ../datasets/features/top5/feature_matrix.parquet   --split-strategy season --val-seasons 2022/23 --test-seasons 2023/24   --holdout-seasons 2024/25 2025/26 --no-promote
 
 # Custom hyperparameters
 uv run python -m training.pipeline \

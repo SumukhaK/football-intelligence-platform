@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Literal, Self
+
+from pydantic import BaseModel, Field, model_validator
 
 # Columns present after Stage 6 that must never be used as features.
 # They are either post-match statistics (leakage) or metadata identifiers.
@@ -56,9 +58,15 @@ class TrainingConfig(BaseModel):
     random_seed: int = 42
     early_stopping_rounds: int = Field(default=50, ge=1)
 
-    # Data split ratios
+    # Data split: "chronological" uses the ratios below (ADR 003); "season"
+    # assigns whole seasons (ADR 007). Training takes every season before the
+    # first validation season; holdout seasons are never used in training.
+    split_strategy: Literal["chronological", "season"] = "chronological"
     train_ratio: float = Field(default=0.70, gt=0.0, lt=1.0)
     val_ratio: float = Field(default=0.15, gt=0.0, lt=1.0)
+    val_seasons: list[str] = Field(default_factory=list)
+    test_seasons: list[str] = Field(default_factory=list)
+    holdout_seasons: list[str] = Field(default_factory=list)
 
     # Cross-validation
     cv_folds: int = Field(default=5, ge=2)
@@ -70,4 +78,18 @@ class TrainingConfig(BaseModel):
     # Schema
     target_column: str = "result"
     date_column: str = "match_date"
+    season_column: str = "season"
     exclude_columns: list[str] = Field(default_factory=_default_exclude)
+
+    @model_validator(mode="after")
+    def _check_season_lists(self) -> Self:
+        """Require disjoint validation and test seasons for the season split."""
+        if self.split_strategy != "season":
+            return self
+        if not self.val_seasons or not self.test_seasons:
+            raise ValueError("Season split needs val_seasons and test_seasons")
+        lists = [self.val_seasons, self.test_seasons, self.holdout_seasons]
+        flat = [season for group in lists for season in group]
+        if len(flat) != len(set(flat)):
+            raise ValueError(f"Season lists overlap: {flat}")
+        return self

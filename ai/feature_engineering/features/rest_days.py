@@ -16,7 +16,7 @@ class RestDaysFeature(BaseFeature):
 
     @property
     def version(self) -> str:
-        return "1.0.0"
+        return "1.1.0"
 
     @property
     def output_columns(self) -> list[str]:
@@ -26,12 +26,14 @@ class RestDaysFeature(BaseFeature):
         """Compute rest days for home and away teams.
 
         For each match, calculates the number of days since that team's
-        immediately preceding match. NaN is returned for a team's first match.
+        immediately preceding match in the same season. NaN is returned for a
+        team's first match of each season, so the summer break is not counted.
         """
         tv = build_team_match_view(df)
         tv["match_date"] = pd.to_datetime(tv["match_date"])
 
-        tv["days_since_last"] = tv.groupby("team")["match_date"].transform(
+        tv["season"] = tv["_original_idx"].map(df["season"])
+        tv["days_since_last"] = tv.groupby(["team", "season"])["match_date"].transform(
             lambda x: x.diff().dt.days
         )
 
