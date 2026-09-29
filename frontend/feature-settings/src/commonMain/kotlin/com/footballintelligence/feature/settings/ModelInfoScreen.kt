@@ -21,6 +21,7 @@ import com.footballintelligence.core.model.ModelInfo
 import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
+import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.settings.resources.Res
 import com.footballintelligence.feature.settings.resources.dataset_version
 import com.footballintelligence.feature.settings.resources.git_commit
@@ -52,7 +53,7 @@ fun ModelInfoScreen(
         when (uiState) {
             is ModelInfoUiState.Loading -> LoadingView(Modifier.padding(padding))
             is ModelInfoUiState.Error -> ErrorView(
-                message = uiState.message,
+                message = errorMessage(uiState.kind, uiState.message),
                 onRetry = onRetry,
                 modifier = Modifier.padding(padding),
             )

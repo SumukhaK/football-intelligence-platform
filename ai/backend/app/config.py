@@ -18,13 +18,15 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        # Lets LIVE_REFRESH_HOUR=off turn the daily refresh off.
+        env_parse_none_str="off",
     )
 
     model_path: Path = Path("../ai/models/latest/model.joblib")
     registry_path: Path = Path("../ai/models/registry.json")
     matches_dir: Path = Path("../datasets/processed/football_data")
     datasets_dir: Path = Path("../datasets")
-    # Local hour of the daily data refresh (ADR 013); unset to turn it off.
+    # Local hour of the daily data refresh (ADR 013); set to `off` to turn it off.
     live_refresh_hour: int | None = Field(default=6, ge=0, le=23)
     # Leagues the API serves (ADR 012); requests naming no league get the default.
     served_competitions: list[str] = [

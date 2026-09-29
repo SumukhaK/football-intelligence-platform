@@ -32,6 +32,7 @@ import com.footballintelligence.core.model.HealthStatus
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
 import com.footballintelligence.core.ui.StatusChip
+import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.home.resources.Res
 import com.footballintelligence.feature.home.resources.api_version
 import com.footballintelligence.feature.home.resources.assistant_offline_hint
@@ -84,7 +85,7 @@ fun HomeScreen(
         when (uiState) {
             is HomeUiState.Loading -> LoadingView(Modifier.padding(padding))
             is HomeUiState.Error -> ErrorView(
-                message = uiState.message,
+                message = errorMessage(uiState.kind, uiState.message),
                 onRetry = onRetry,
                 modifier = Modifier.padding(padding),
             )

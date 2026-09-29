@@ -16,6 +16,7 @@ kotlin {
             implementation(compose.ui)
             implementation(libs.coil.compose)
             implementation(compose.components.resources)
+            implementation(project(":core-model"))
         }
         androidMain.dependencies {
             implementation(compose.preview)

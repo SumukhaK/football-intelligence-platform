@@ -226,8 +226,7 @@ It then keeps it current itself (ADR 013). Every day at `LIVE_REFRESH_HOUR`:00
 local time (default 6), it downloads the season in progress and writes a new
 live dataset. It then rebuilds server-side features and the goals model without
 restarting. If the data is older than the last scheduled time when the server
-starts, it refreshes straight away. Leave `LIVE_REFRESH_HOUR` unset to turn this
-off, for example when working offline.
+starts, it refreshes straight away. Set `LIVE_REFRESH_HOUR=off` to turn this off, for example when working offline.
 
 To refresh by hand instead:
 

@@ -3,6 +3,7 @@ package com.footballintelligence.core.network
 import com.footballintelligence.core.model.ChatRequest
 import com.footballintelligence.core.model.ChatResponse
 import com.footballintelligence.core.model.CompetitionsResponse
+import com.footballintelligence.core.model.ErrorKind
 import com.footballintelligence.core.model.ExplanationResult
 import com.footballintelligence.core.model.HealthStatus
 import com.footballintelligence.core.model.Insights
@@ -21,6 +22,8 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 
 /** Typed API service for the Football Intelligence FastAPI backend. */
 interface FootballApiService {
@@ -93,29 +96,51 @@ class KtorFootballApiService(
                 setBody(request)
             }.decode()
         }
-
-    /**
-     * Runs one API call and turns any failure into [NetworkResult.Error].
-     *
-     * Ktor surfaces connection, timeout, TLS and serialization problems as
-     * unrelated exception types, and the UI treats every one the same way,
-     * so a broad catch in this single place is deliberate.
-     */
-    @Suppress("TooGenericExceptionCaught")
-    private suspend inline fun <T> guarded(call: () -> NetworkResult<T>): NetworkResult<T> =
-        try {
-            call()
-        } catch (e: Exception) {
-            NetworkResult.Error(message = e.message ?: "Unknown network error")
-        }
-
-    private suspend inline fun <reified T> HttpResponse.decode(): NetworkResult<T> =
-        if (status.isSuccess()) {
-            NetworkResult.Success(body())
-        } else {
-            NetworkResult.Error(
-                message = "HTTP ${status.value}: ${status.description}",
-                code = status.value,
-            )
-        }
 }
+
+/**
+ * Runs one API call and turns any failure into [NetworkResult.Error].
+ *
+ * Ktor surfaces connection, timeout and TLS problems as unrelated exception
+ * types, and the UI treats every one as "can't reach the server", so a broad
+ * catch in this single place is deliberate. A malformed response is reported
+ * separately as an unexpected error.
+ */
+@Suppress("TooGenericExceptionCaught")
+private suspend inline fun <T> guarded(call: () -> NetworkResult<T>): NetworkResult<T> =
+    try {
+        call()
+    } catch (e: SerializationException) {
+        NetworkResult.Error(message = e.message ?: "Malformed response", kind = ErrorKind.UNKNOWN)
+    } catch (e: Exception) {
+        NetworkResult.Error(message = e.message ?: "Unknown network error", kind = ErrorKind.OFFLINE)
+    }
+
+private suspend inline fun <reified T> HttpResponse.decode(): NetworkResult<T> =
+    if (status.isSuccess()) {
+        NetworkResult.Success(body())
+    } else {
+        NetworkResult.Error(
+            message = serverDetail() ?: "HTTP ${status.value}: ${status.description}",
+            code = status.value,
+            kind = errorKindFor(status.value),
+        )
+    }
+
+/** The `detail` of the backend's structured error body, if it has one. */
+private suspend fun HttpResponse.serverDetail(): String? =
+    runCatching { body<ErrorBody>() }.getOrNull()?.detail?.takeIf { it.isNotBlank() }
+
+/** The backend's structured error body: `{"error": ..., "detail": ...}`. */
+@Serializable
+private data class ErrorBody(val error: String = "", val detail: String = "")
+
+/** Classifies an HTTP error status for the UI. */
+internal fun errorKindFor(status: Int): ErrorKind = when (status) {
+    in SERVER_BUSY_CODES -> ErrorKind.SERVER_BUSY
+    in CLIENT_ERROR_CODES -> ErrorKind.REJECTED
+    else -> ErrorKind.UNKNOWN
+}
+
+private val SERVER_BUSY_CODES = 502..504
+private val CLIENT_ERROR_CODES = 400..499
