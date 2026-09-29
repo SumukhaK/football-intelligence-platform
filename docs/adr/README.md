@@ -94,3 +94,4 @@ ADRs are never deleted.
 | [009](009-dixon-coles-goals-model.md) | Add a Dixon-Coles goals model for scoreline predictions | Accepted |
 | [010](010-compose-resources-for-ui-text.md) | Keep UI text in Compose Multiplatform resources | Accepted |
 | [011](011-draw-possible-tag.md) | Flag possible draws without changing the pick | Accepted |
+| [013](013-daily-data-refresh-in-backend.md) | Refresh match data daily inside the backend | Accepted |

@@ -21,9 +21,16 @@ Service status.
   "assistant_available": false,
   "fixture_features_available": true,
   "insights_available": true,
+  "matches_through": "2026-09-20",
+  "last_refresh_at": "2026-09-29T07:01:31+05:30",
+  "last_refresh_error": null,
   "version": "0.1.0"
 }
 ```
+
+`matches_through` is the date of the latest result the server holds.
+`last_refresh_at` and `last_refresh_error` describe the most recent daily
+refresh (ADR 013); both are null until one has run.
 
 `fixture_features_available` is true when match history is loaded, so
 requests may omit `features` (ADR 008). `insights_available` is true when the
@@ -181,12 +188,20 @@ when the assistant's vector store or Ollama is unavailable.
 
 The server loads the newest `match_results_live_v*.csv` from
 `datasets/processed/football_data/` at startup, falling back to the newest
-`match_results_top5_v*.csv`. To include the latest results, run:
+`match_results_top5_v*.csv`.
+
+It then keeps it current itself (ADR 013). Every day at `LIVE_REFRESH_HOUR`:00
+local time (default 6), it downloads the season in progress and writes a new
+live dataset. It then rebuilds server-side features and the goals model without
+restarting. If the data is older than the last scheduled time when the server
+starts, it refreshes straight away. Leave `LIVE_REFRESH_HOUR` unset to turn this
+off, for example when working offline.
+
+To refresh by hand instead:
 
 ```sh
 uv run python -m scripts.refresh_live_dataset --confirm
 ```
 
-Then restart the backend; the restart also refits the goals model on the new
-results. Configure the directory with `MATCHES_DIR` and the
-competition with `SERVED_COMPETITION`.
+Then restart the backend. Configure the directories with `MATCHES_DIR` and
+`DATASETS_DIR`, and the competition with `SERVED_COMPETITION`.
