@@ -32,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.footballintelligence.core.model.PREMIER_LEAGUE_TEAMS
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
 
@@ -41,7 +40,9 @@ import com.footballintelligence.core.ui.LoadingView
 @Composable
 fun PredictionScreen(
     uiState: PredictionInputUiState,
+    teamsState: TeamsUiState,
     onPredict: (homeTeam: String, awayTeam: String) -> Unit,
+    onRetryTeams: () -> Unit,
     onNavigateToResult: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -69,10 +70,20 @@ fun PredictionScreen(
                 onNavigateToResult()
                 LoadingView(Modifier.padding(padding))
             }
-            is PredictionInputUiState.Idle -> PredictionInputContent(
-                onPredict = onPredict,
-                modifier = Modifier.padding(padding),
-            )
+            is PredictionInputUiState.Idle -> when (teamsState) {
+                is TeamsUiState.Loading -> LoadingView(Modifier.padding(padding))
+                is TeamsUiState.Error -> ErrorView(
+                    message = teamsState.message,
+                    onRetry = onRetryTeams,
+                    modifier = Modifier.padding(padding),
+                )
+                is TeamsUiState.Success -> PredictionInputContent(
+                    season = teamsState.season,
+                    teams = teamsState.teams,
+                    onPredict = onPredict,
+                    modifier = Modifier.padding(padding),
+                )
+            }
         }
     }
 }
@@ -80,12 +91,14 @@ fun PredictionScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PredictionInputContent(
+    season: String,
+    teams: List<String>,
     onPredict: (homeTeam: String, awayTeam: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val teams = PREMIER_LEAGUE_TEAMS.map { it.name }
-    var homeTeam by rememberSaveable { mutableStateOf(teams.first()) }
-    var awayTeam by rememberSaveable { mutableStateOf(teams[1]) }
+    // Keyed on the list so a reloaded team list never leaves a stale selection.
+    var homeTeam by rememberSaveable(teams) { mutableStateOf(teams[0]) }
+    var awayTeam by rememberSaveable(teams) { mutableStateOf(teams[1]) }
 
     Column(
         modifier = modifier
@@ -95,7 +108,7 @@ private fun PredictionInputContent(
     ) {
         Text("Select Teams", style = MaterialTheme.typography.headlineSmall)
         Text(
-            text = "Note: predictions use average feature values for demonstration.",
+            text = "Premier League $season. Predictions use every result played so far.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

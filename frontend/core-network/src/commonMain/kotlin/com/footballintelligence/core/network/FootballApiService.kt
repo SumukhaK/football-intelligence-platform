@@ -8,6 +8,7 @@ import com.footballintelligence.core.model.ModelInfo
 import com.footballintelligence.core.model.NetworkResult
 import com.footballintelligence.core.model.PredictionRequest
 import com.footballintelligence.core.model.PredictionResult
+import com.footballintelligence.core.model.TeamsResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -22,6 +23,7 @@ import io.ktor.http.isSuccess
 interface FootballApiService {
     suspend fun getHealth(): NetworkResult<HealthStatus>
     suspend fun getModel(): NetworkResult<ModelInfo>
+    suspend fun getTeams(): NetworkResult<TeamsResponse>
     suspend fun predict(request: PredictionRequest): NetworkResult<PredictionResult>
     suspend fun explain(request: PredictionRequest): NetworkResult<ExplanationResult>
     suspend fun chat(request: ChatRequest): NetworkResult<ChatResponse>
@@ -45,6 +47,13 @@ class KtorFootballApiService(
     override suspend fun getModel(): NetworkResult<ModelInfo> =
         try {
             client.get("$base/model").decode()
+        } catch (e: Exception) {
+            NetworkResult.Error(message = e.message ?: "Unknown network error")
+        }
+
+    override suspend fun getTeams(): NetworkResult<TeamsResponse> =
+        try {
+            client.get("$base/teams").decode()
         } catch (e: Exception) {
             NetworkResult.Error(message = e.message ?: "Unknown network error")
         }

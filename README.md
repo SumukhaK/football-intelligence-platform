@@ -371,3 +371,21 @@ MIT License. See [LICENSE](LICENSE).
 - [Ollama](https://ollama.com) for local LLM serving (`llama3.2`, `nomic-embed-text`).
 - [SHAP](https://github.com/shap/shap) for the `TreeExplainer` implementation underpinning all explainability features.
 - [XGBoost](https://xgboost.readthedocs.io/), [JetBrains Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/), and [FastAPI](https://fastapi.tiangolo.com/) as the core frameworks this project is built on.
+
+---
+
+## 2026/27 Season So Far: How Accurate Is the Model?
+
+We asked the model to predict every 2026/27 league match played so far across the five leagues, without feeding it the real results. The model was trained only on seasons up to 2021/22 and was not retrained. Each match was predicted using only the results of matches played before it, and the prediction was then compared with what actually happened.
+
+Model `20260928_123224`, 250 matches played up to 20 September 2026. Accuracy is the share of matches where the model's most likely outcome was the actual result.
+
+| Competition | Matches | Correct | Accuracy |
+|---|---|---|---|
+| Serie A | 50 | 31 | 62.00% |
+| Ligue 1 | 45 | 25 | 55.56% |
+| Bundesliga | 36 | 18 | 50.00% |
+| La Liga | 69 | 34 | 49.28% |
+| Premier League | 50 | 23 | 46.00% |
+
+**Overall: 131 correct out of 250 matches, 52.40%.** Bookmakers' favourites won 51.6% of the same matches. Per-league samples are small, so league-to-league differences are not yet reliable. Full write-up: [docs/reports/in-season-2026-27.md](docs/reports/in-season-2026-27.md).

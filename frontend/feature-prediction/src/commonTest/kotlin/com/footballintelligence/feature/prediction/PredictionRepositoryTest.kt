@@ -3,7 +3,7 @@ package com.footballintelligence.feature.prediction
 import com.footballintelligence.core.model.NetworkResult
 import com.footballintelligence.core.model.PredictionRequest
 import com.footballintelligence.core.model.PredictionResult
-import com.footballintelligence.core.model.buildNeutralFeatures
+import com.footballintelligence.core.model.TeamsResponse
 import com.footballintelligence.core.network.FootballApiService
 import com.footballintelligence.feature.prediction.repository.DefaultPredictionRepository
 import io.mockk.coEvery
@@ -19,11 +19,7 @@ class PredictionRepositoryTest {
     private val api = mockk<FootballApiService>()
     private val repository = DefaultPredictionRepository(api)
 
-    private val request = PredictionRequest(
-        homeTeam = "Arsenal",
-        awayTeam = "Chelsea",
-        features = buildNeutralFeatures(),
-    )
+    private val request = PredictionRequest(homeTeam = "Arsenal", awayTeam = "Chelsea")
 
     private val result = PredictionResult(
         homeTeam = "Arsenal",
@@ -57,5 +53,14 @@ class PredictionRepositoryTest {
         coEvery { api.explain(request) } returns NetworkResult.Error("503")
         repository.explain(request)
         coVerify(exactly = 1) { api.explain(request) }
+    }
+
+    @Test
+    fun `teams delegates to api`() = runTest {
+        val teams = TeamsResponse("Premier League", "2026/27", listOf("Arsenal", "Chelsea"))
+        coEvery { api.getTeams() } returns NetworkResult.Success(teams)
+        val response = repository.teams()
+        assertEquals(NetworkResult.Success(teams), response)
+        coVerify(exactly = 1) { api.getTeams() }
     }
 }

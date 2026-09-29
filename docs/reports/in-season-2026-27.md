@@ -5,6 +5,15 @@
 **Matches:** every played league match of 2026/27 in the five leagues, up to 2026-09-20 (250 matches)
 **Method:** each match is predicted from features built only from matches before it, using the training feature pipeline (`python -m evaluation.in_season_cli`). Bookmaker probabilities are a benchmark only.
 
+## Rerun with the current model
+
+After ADR 008 changed the Elo season rules, the served model became
+`20260928_123224`. Rerun on the same 250 matches, overall accuracy is
+unchanged at 131/250 (52.4%), with log loss 0.975 against the bookmakers'
+0.981. Two matches flip: Serie A becomes 31/50 (62.0%) and Ligue 1 becomes
+25/45 (55.6%). The root README shows these numbers. The tables below are
+from the first run, with model `20260928_120015`.
+
 ## Results
 
 Played matches up to 2026-09-20, scored 2026-09-28.

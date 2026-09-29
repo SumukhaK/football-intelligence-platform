@@ -2,7 +2,9 @@ import com.android.build.gradle.LibraryExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -19,6 +21,11 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
                         jvmTarget.set(JvmTarget.JVM_17)
                     }
                 }
+            }
+            // Unit tests are written for JUnit 5; without this Gradle's default
+            // JUnit 4 runner finds none of them and reports success.
+            tasks.withType<Test>().configureEach {
+                useJUnitPlatform()
             }
             extensions.configure<LibraryExtension> {
                 compileSdk = 35
