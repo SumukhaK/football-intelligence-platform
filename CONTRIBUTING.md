@@ -16,34 +16,36 @@ Read the relevant architecture documents and ADRs in `docs/adr/` before writing 
 
 | Branch | Purpose |
 |---|---|
-| `main` | Production-ready code. Tagged releases only. |
-| `develop` | Integration branch. All feature branches merge here. |
-| `feature/<scope>-<description>` | One feature or fix per branch. |
-| `release/v<major>.<minor>.<patch>` | Release preparation. Created from `develop`. |
-| `hotfix/<description>` | Critical fixes that cannot wait for a release cycle. Branches from `main`, merges to both `main` and `develop`. |
+| `main` | Always releasable. Every pull request merges here; releases are tags on `main`. |
+| `feature/<description>` | One feature per branch, created from `main`. |
+| `fix/<description>` | One bug fix per branch, created from `main`. |
+| `docs/<description>` | Documentation-only changes. |
+| `release/v<major>.<minor>.<patch>` | Release preparation (version bump and release notes), created from `main`. |
 
-Branch names use kebab-case. Scope prefixes match the conventional commit scopes: `ai`, `frontend`, `backend`, `docs`, `data`, `scripts`, `repo`.
+Branch names use kebab-case. When a larger piece of work is split into several pull requests, they may be stacked (each branch based on the previous one) and merged into `main` in order.
 
 **Examples:**
 ```
-feature/ai-stage8-shap-explainability
-feature/backend-prediction-router
-feature/docs-api-reference
-hotfix/ai-training-nan-imputation
+feature/fixtures
+fix/offline-fallback-timeout
+docs/readme-refresh
+release/v2.0.1
 ```
+
+The long-lived `develop` branch from the early stages is no longer used.
 
 ---
 
 ## Development Workflow
 
-1. Create a branch from `develop`.
+1. Create a branch from `main`.
 2. Read the relevant architecture document or ADR before writing any code.
 3. Write tests first (TDD for frontend ViewModels and repositories; alongside implementation for backend and AI).
 4. Implement the smallest coherent unit that satisfies the task.
 5. Run all quality checks and confirm they pass.
 6. Verify the change manually.
 7. Commit using the conventional commit format below.
-8. Open a pull request targeting `develop`.
+8. Open a pull request targeting `main`.
 9. Complete the self-review checklist before requesting review.
 10. Update documentation if behaviour or architecture changed.
 
@@ -72,7 +74,10 @@ cd frontend
 ./gradlew spotlessCheck     # formatting
 ./gradlew detekt            # static analysis
 ./gradlew testDebugUnitTest # unit tests
+./gradlew assembleDebug     # build
 ```
+
+Frontend CI runs only on pull requests into `main` (and pushes to `main`) that touch `frontend/`, so run these locally on stacked branches.
 
 ---
 
@@ -106,7 +111,7 @@ docs(repo): add cli reference guide
 chore(frontend): update compose bom to 2024.09.00
 test(ai): add edge cases for head-to-head with no prior history
 refactor(ai): extract team match view builder to shared helper
-data(data): ingest premier league 2023/24 season
+data(data): backfill top five leagues 2000/01 to 2025/26
 ai(ai): update training config to use early stopping patience of 10
 ```
 
@@ -118,7 +123,7 @@ ai(ai): update training config to use early stopping patience of 10
 - Title follows the conventional commit format.
 - Description explains what changed and why.
 - All items on the self-review checklist must be checked before requesting review.
-- Pull requests must target `develop`, not `main`.
+- Pull requests target `main` (or, for stacked work, the branch below them).
 - Do not squash commits unless specifically requested in review.
 
 ### Self-Review Checklist
@@ -164,17 +169,15 @@ Before requesting review, confirm every item:
 ## Testing Requirements
 
 - **Frontend:** TDD required for all ViewModels and repositories. Compose UI tests for critical user flows.
-- **Backend:** Unit tests for all service methods. Integration tests for all API endpoints using `TestClient`. No mocking of the database layer in integration tests.
+- **Backend:** Unit tests for all service methods. API tests for every endpoint using `TestClient`. Integration tests in `ai/tests/integration/` run against the real trained model, not mocks.
 - **AI:** Unit tests alongside every new module. Evaluation scripts must pass before any model change is merged.
 - **Data:** Schema validation tests run after every transformation step.
 
 Test files mirror source structure:
 - `ai/tests/training/test_trainer.py` tests `ai/training/trainer.py`
-- `backend/tests/services/test_match_service.py` tests `backend/services/match_service.py`
+- `ai/tests/backend/test_fixtures.py` tests `ai/backend/app/services/fixtures_service.py` and its router
 
-Minimum coverage enforced by CI:
-- Backend services: 80%
-- Frontend ViewModels: 70%
+Minimum coverage enforced by CI: 70% for the Python workspace (`fail_under = 70` in `ai/pyproject.toml`). There is no coverage gate for the frontend yet; ViewModels are still written test-first.
 
 Tests must be deterministic. No time-dependent or order-dependent tests.
 
@@ -207,8 +210,8 @@ See [docs/adr/README.md](docs/adr/README.md) for the ADR format and index.
 
 ## Merge Policy
 
-- Pull requests require at least one approval before merging.
+- Every pull request is self-reviewed against the checklist above before merging.
 - All CI checks must pass.
-- No direct commits to `develop` or `main`.
+- No direct commits to `main`; every change arrives through a pull request.
 - Merge commits are preferred over squash or rebase, to preserve feature branch history.
-- `main` receives only tagged release commits merged from `release/*` branches.
+- Releases are tagged on `main` after a `release/*` pull request bumps the version and adds release notes in `docs/releases/`.

@@ -18,7 +18,7 @@ Build an AI-first football analytics application that demonstrates practical AI 
 
 ## 3. Non Goals
 
-- Real-time match streaming or live data ingestion.
+- Real-time match streaming. (A daily batch refresh of results and fixtures is in scope; see ADR 013 and ADR 015.)
 - Fine-tuning or LoRA training of any language model.
 - Multi-cloud deployment or Kubernetes orchestration.
 - Social features, user accounts, or authentication in early stages.
@@ -54,7 +54,7 @@ The system follows Clean Architecture with strict layer separation. Each layer h
 
 - The assistant never invents facts. Every claim is grounded in retrieved data or model output.
 - SHAP values accompany every prediction so users can see which features drove the result.
-- Prompt templates are version-controlled in `playbook/`. They are tested like code.
+- Prompt templates are version-controlled in `ai/assistant/prompting/templates.py` (`playbook/` is reserved for future template docs). They are tested like code.
 - Retrieval is done with lightweight vector search over processed datasets. No external embedding APIs in development.
 - Evaluation of the assistant is structured: track retrieval precision, answer faithfulness, and hallucination rate.
 - Model selection favours the smallest Ollama model that meets quality thresholds.
@@ -76,8 +76,9 @@ The system follows Clean Architecture with strict layer separation. Each layer h
 ```
 datasets/
   raw/          # Immutable source data
-  processed/    # Cleaned, validated, feature-engineered
-  schemas/      # Pydantic or JSON Schema definitions
+  processed/    # Cleaned, validated datasets (versioned files)
+  features/     # Feature matrices and their metadata
+  schemas/      # Reference data such as team_aliases.csv (Pydantic schemas live in ai/schemas/)
 ```
 
 ---
@@ -93,20 +94,20 @@ datasets/
 - UI state is a sealed class: `Loading`, `Success`, `Error`.
 - Test-Driven Development is required for ViewModels and repositories. Write the test first.
 - Preview every Composable with `@Preview`. No unpreviewable UI components.
-- No hardcoded strings. All user-facing text goes in `strings.xml`.
+- No hardcoded strings. All user-facing text goes in each module's `composeResources/values/strings.xml` (ADR 010).
 - Accessibility: content descriptions on all interactive elements.
 
 ---
 
 ## 8. Backend Standards
 
-**Stack:** FastAPI, Python 3.11+, SQLite (development), PostgreSQL (production-ready schema).
+**Stack:** FastAPI, Python 3.12+. Data is file-based (versioned CSV and Parquet files); there is no database.
 
-- One router per domain area. Routers live in `backend/routers/`.
-- Business logic lives in service classes in `backend/services/`. Routes are thin.
+- One router per domain area. Routers live in `ai/backend/app/routers/`.
+- Business logic lives in service classes in `ai/backend/app/services/`. Routes are thin.
 - Dependency injection via FastAPI's `Depends`. No global state.
 - All request and response bodies are Pydantic models with field-level validation.
-- Database access via SQLAlchemy Core (not ORM magic). Explicit queries.
+- Data access through explicit loaders over versioned files (pandas). If a database is ever added, use SQLAlchemy Core, not ORM magic.
 - Errors return structured JSON: `{ "error": "...", "detail": "..." }`.
 - All endpoints have OpenAPI docstrings. The auto-generated docs must be accurate.
 - Background tasks (e.g. pipeline runs) use FastAPI `BackgroundTasks` or a simple queue. No Celery in early stages.
@@ -119,9 +120,9 @@ datasets/
 ```
 .claude/        # Claude Code context (this file)
 docs/           # Architecture docs, ADRs, API specs
-playbook/       # Prompt templates and retrieval configs
+playbook/       # Reserved for prompt template docs (prompts live in ai/assistant/prompting/)
 frontend/       # Compose Multiplatform application
-backend/        # FastAPI application and domain logic
+backend/        # Placeholder README; the FastAPI app lives in ai/backend/app/
 ai/             # ML training, SHAP analysis, evaluation scripts
 datasets/       # Raw and processed football data
 scripts/        # Setup, migration, and automation scripts
@@ -162,7 +163,7 @@ tools/          # Shared CLI utilities
 - Every public function and class has a one-line docstring.
 - Architecture decisions are recorded as ADRs in `docs/adr/`.
 - API changes update `docs/api.md` in the same commit.
-- `playbook/` prompt templates include: purpose, input variables, expected output format, and known failure modes.
+- Prompt templates (`ai/assistant/prompting/`) document: purpose, input variables, expected output format, and known failure modes.
 - The root `README.md` always reflects the current state of the project, including how to run it locally.
 
 ---
@@ -173,9 +174,9 @@ tools/          # Shared CLI utilities
 - **Backend:** Unit tests for all service methods. Integration tests for all API endpoints using `TestClient`.
 - **AI/ML:** Evaluation scripts in `ai/evaluation/`. Track metrics across runs. No model is merged without a passing evaluation.
 - **Data pipelines:** Schema validation tests run after every transformation step.
-- Test files mirror source structure. A file at `backend/services/match_service.py` has tests at `backend/tests/services/test_match_service.py`.
-- No mocking of the database layer in integration tests. Use a test database.
-- Minimum coverage enforced by CI: 80% for backend services, 70% for ViewModels.
+- Test files mirror source structure. A file at `ai/training/trainer.py` has tests at `ai/tests/training/test_trainer.py`; backend code in `ai/backend/app/` is tested in `ai/tests/backend/`.
+- Integration tests (`ai/tests/integration/`) run against the real trained model, not mocks.
+- Minimum coverage enforced by CI: 70% for the Python workspace (`fail_under` in `ai/pyproject.toml`). ViewModels are written test-first; there is no frontend coverage gate yet.
 - Tests must be deterministic. No time-dependent or order-dependent tests.
 
 ---
@@ -276,6 +277,8 @@ Local development must work without any cloud services. All external dependencie
 ---
 
 ## 19. Project Stages
+
+These were the original stages. The project was built in 12 stages up to release v1.0.0 (`docs/reports/stage-NN-summary.md`), then extended in v2.0.0 and v2.0.1 (`docs/releases/`).
 
 **Stage 1 — Data Foundation**
 Ingest raw football data, validate schemas, build a processed dataset ready for modelling.
