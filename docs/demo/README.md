@@ -55,21 +55,28 @@ Each stage can also be demonstrated individually using the pre-generated artifac
 
 ## End-to-End Quick Demo (Stages 7–10)
 
-If the feature matrix and model already exist (pre-generated artifacts are in the repository), run this sequence from `ai/`:
+Once the model is trained (models are not committed; see the [Quick Start](../setup/quick-start.md)), run this sequence from `ai/`:
 
 ```sh
 # Start the backend
 uv run uvicorn backend.app.main:app
 
 # In a second terminal — predict a match
-curl -s -X POST http://localhost:8000/predict \
+curl -s -X POST http://localhost:8000/v2/predict \
   -H "Content-Type: application/json" \
-  -d '{"home_team": "Arsenal", "away_team": "Chelsea", "features": {}}' \
+  -d '{"home_team": "Arsenal", "away_team": "Chelsea", "competition": "Premier League"}' \
   | python -m json.tool
 
 # Explain the prediction
-curl -s -X POST http://localhost:8000/explain \
+curl -s -X POST http://localhost:8000/v2/explain \
   -H "Content-Type: application/json" \
-  -d '{"home_team": "Arsenal", "away_team": "Chelsea", "features": {}}' \
+  -d '{"home_team": "Arsenal", "away_team": "Chelsea", "competition": "Premier League"}' \
   | python -m json.tool
+
+# Upcoming Bundesliga fixtures
+curl -s "http://localhost:8000/v2/fixtures?competition=Bundesliga&limit=5" | python -m json.tool
 ```
+
+The server computes every model feature from match history, so requests only
+name the teams. The stage demos below show the API as it was at each stage;
+today the current API is under `/v2` (see [docs/api.md](../api.md)).

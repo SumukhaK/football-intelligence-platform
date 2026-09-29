@@ -13,8 +13,6 @@ Transforms validated raw records into a clean, consistent form ready for feature
 - Processed data is written to `datasets/processed/` with a version suffix matching the pipeline run.
 - Raw source files are never modified.
 
-## Future Contents
+## Status
 
-- `cleaners/` — per-dataset cleaning functions.
-- `normaliser.py` — shared normalisation utilities (date parsing, string standardisation).
-- `runner.py` — CLI entry point for a preprocessing run.
+Empty package. Cleaning and canonicalisation happen during ingestion (`schemas/match.py`, `ingestion/`), so nothing lives here yet.

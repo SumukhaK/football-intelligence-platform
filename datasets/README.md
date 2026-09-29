@@ -14,10 +14,13 @@ Managed by the AI layer. Raw data is immutable. All transformations are reproduc
 
 ```
 datasets/
-  raw/        # Immutable source data. Never modified after ingestion.
-  interim/    # Intermediate outputs between transformation steps.
-  processed/  # Validated, feature-engineered data ready for modelling and retrieval.
-  external/   # Third-party reference data (league tables, player registries).
+  raw/        # Immutable source data, one folder per provider:
+              #   football_data/ results · openfootball/ fixtures · kaggle/ experiment inputs
+  processed/  # Validated datasets: football_data/ matches (top 5, live) · openfootball/ fixtures
+  features/   # Feature matrices and their metadata (metadata is committed)
+  schemas/    # Reference data: team_aliases.csv canonical team names (committed)
+  interim/    # Intermediate outputs between transformation steps
+  external/   # Third-party reference data
 ```
 
 ---
@@ -25,7 +28,7 @@ datasets/
 ## Rules
 
 - Raw data is never overwritten or modified. If a source file needs correction, document the issue and re-ingest.
-- Every dataset has a schema definition in `ai/validation/`. Validation runs before any downstream step.
+- Every dataset has a schema definition in `ai/schemas/` and validation in `ai/validation/`. Validation runs before any downstream step.
 - Data quality failures are loud errors. Silent skips are not acceptable.
 - Processed datasets are versioned alongside the scripts that produced them.
 - Datasets are kept small enough to run locally. Large datasets are documented but not committed.
@@ -38,12 +41,5 @@ datasets/
 - `interim/` — gitignored. Reproducible from raw data.
 - `processed/` — gitignored by default. Committed only when explicitly versioned for a release.
 - `external/` — gitignored. Sourced from documented external locations.
-- Schema definitions in `ai/validation/` — always committed.
-
----
-
-## Future Responsibilities
-
-- Multi-league datasets.
-- Player-level event data.
-- Historical odds data for model calibration.
+- `schemas/team_aliases.csv` and feature metadata under `features/` — always committed.
+- Schema definitions in `ai/schemas/` — always committed.

@@ -4,19 +4,33 @@ Unit and integration tests for the AI data engineering workspace.
 
 ## Responsibility
 
-Verifies the correctness of ingestion logic, validation rules, preprocessing transformations, and feature engineering functions. Tests mirror the source structure.
+Verifies ingestion, validation, feature engineering, training, explainability, the goals model, the assistant and the FastAPI backend. Tests mirror the source structure.
 
 ## Structure
 
 ```
 tests/
   test_bootstrap.py          # Verifies packages import and dependencies are installed
-  ingestion/                 # Tests for ai/ingestion/
+  test_config.py, test_leagues.py, test_storage.py
+  ingestion/                 # Tests for ai/ingestion/ (backfill, live refresh, fixtures)
+  providers/                 # Tests for ai/providers/
   validation/                # Tests for ai/validation/
-  preprocessing/             # Tests for ai/preprocessing/
-  feature_engineering/       # Tests for ai/feature_engineering/
   schemas/                   # Tests for ai/schemas/
+  metadata/                  # Tests for ai/metadata/
+  feature_engineering/       # Tests for ai/feature_engineering/
+  training/                  # Tests for ai/training/
+  evaluation/                # Tests for ai/evaluation/
+  model_registry/            # Tests for ai/model_registry/
+  inference/                 # Tests for ai/inference/
+  explainability/            # Tests for ai/explainability/
+  goals/                     # Tests for ai/goals/
+  assistant/                 # Tests for ai/assistant/
+  backend/                   # Endpoint, versioning, rate limit and service tests for ai/backend/
+  integration/               # End-to-end tests against the real model (marked integration)
 ```
+
+Run everything with `uv run pytest`, or skip the integration tests with
+`uv run pytest -m "not integration"`.
 
 ## Contracts
 

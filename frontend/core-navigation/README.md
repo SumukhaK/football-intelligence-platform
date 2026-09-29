@@ -6,11 +6,9 @@ Navigation contracts, route definitions, and navigation utilities.
 
 Presentation layer — infrastructure only. Does not own any screens.
 
-## Future Contents
+## Contents
 
-- `AppDestination` — sealed class or enum of all navigation destinations.
-- Navigation extension functions for type-safe route arguments.
-- Deep link URI patterns.
+- `Screen` — sealed class of every route in the app's single NavHost.
 
 ## Constraints
 

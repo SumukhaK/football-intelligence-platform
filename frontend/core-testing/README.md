@@ -6,12 +6,9 @@ Shared test utilities, fakes, and base classes for unit and integration tests.
 
 Test infrastructure. This module is a `testImplementation` dependency only — it is never shipped in production.
 
-## Future Contents
+## Status
 
-- `MainDispatcherRule` — JUnit 5 extension to swap `Dispatchers.Main` in tests.
-- `FakeNetworkClient` — in-memory Ktor mock client pre-configured for common responses.
-- `TestData` — builder functions for domain model test fixtures.
-- Turbine flow assertion helpers.
+Empty. Test helpers currently live next to the tests that use them. No module depends on this one.
 
 ## Constraints
 

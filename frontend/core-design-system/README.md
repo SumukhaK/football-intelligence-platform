@@ -6,12 +6,10 @@ Material 3 design tokens, typography, colour scheme, and theming for the Footbal
 
 Presentation layer. All feature modules consume this; nothing depends on feature modules here.
 
-## Future Contents
+## Contents
 
-- `FootballTheme` — root Compose theme composable.
-- `FootballColors` — brand colour palette (light and dark).
-- `FootballTypography` — type scale definitions.
-- `FootballShapes` — corner radius and shape tokens.
+- `FootballTheme` — root Compose theme, light and dark.
+- `Color.kt` — the brand colour schemes.
 
 ## Constraints
 

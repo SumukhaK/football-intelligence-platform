@@ -6,12 +6,12 @@ Reusable Compose UI components shared across feature modules.
 
 Presentation layer — shared components only. Feature-specific UI lives in feature modules.
 
-## Future Contents
+## Contents
 
-- Loading indicators and error state components.
-- Shared card, chip, and badge components.
-- Image loading components (Coil wrappers).
-- Screen-level scaffolds.
+- `LoadingView`, `ErrorView`, `errorMessage` — loading and plain-language error states.
+- `OfflineBanner`, `RefreshableContent` — the offline notice and pull to refresh.
+- `StatusChip`, `BackButton` — small shared controls.
+- `PreviewSurface` — wrapper for `@Preview` functions.
 
 ## Constraints
 

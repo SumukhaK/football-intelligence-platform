@@ -1,17 +1,18 @@
 # :feature-home
 
-Home screen showing recent matches, upcoming fixtures, and entry points to other features.
+The app's first screen: upcoming fixtures by date, one tab per league.
 
 ## Ownership
 
 Presentation layer. Depends on `core-ui`, `core-design-system`, `core-model`, `core-navigation`.
 
-## Future Contents
+## Contents
 
-- `HomeViewModel` — owns `HomeUiState` as `StateFlow`. TDD required.
-- `HomeScreen` — stateless Composable. Receives state, emits events.
-- `HomeUiState` — sealed class: `Loading`, `Success(matches)`, `Error(message)`.
-- `HomeRepository` interface and implementation.
+- `HomeViewModel` — upcoming fixtures for the selected league tab, grouped by day in the phone's time zone.
+- `HomeScreen` — league tabs (Premier League first) over the fixtures list, with pull to refresh and the offline banner.
+- `FixturesRepository` — reads `GET /v2/fixtures`.
+- `BackendStatusViewModel`, `BackendStatusSection` — the backend status card shown on the Settings screen.
+- `HealthRepository` — reads `GET /v2/health`.
 
 ## Constraints
 

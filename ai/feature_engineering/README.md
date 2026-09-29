@@ -24,7 +24,7 @@ All outputs are written to `datasets/features/`:
 
 | File | Description |
 |---|---|
-| `feature_matrix.parquet` | Feature matrix: canonical columns + 32 engineered feature columns |
+| `feature_matrix.parquet` | Feature matrix: canonical columns + 42 engineered feature columns |
 | `feature_metadata.json` | `FeatureMetadata`: pipeline version, feature names/versions, row and column counts |
 | `feature_generation_report.json` | `FeatureReport`: per-feature timing, validation result, dataset statistics |
 

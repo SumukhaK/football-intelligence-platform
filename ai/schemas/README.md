@@ -13,9 +13,7 @@ Defines the contract for every dataset the platform ingests and produces. Schema
 - A schema change requires a new version. Old schemas are not deleted while data using them exists.
 - JSON Schema exports live alongside the Pydantic models and are regenerated on change.
 
-## Future Contents
+## Contents
 
-- `match.py` — `RawMatch`, `ProcessedMatch` schema definitions.
-- `team.py` — `Team` schema definition.
-- `player.py` — `Player` schema definition.
-- `features.py` — `MatchFeatureRow` schema definition (input contract for the model).
+- `match.py` — `ProcessedMatch`, the canonical match row, and `MatchNormalizer`.
+- `fixture.py` — `ProcessedFixture`, one upcoming match in the fixtures dataset (ADR 015).

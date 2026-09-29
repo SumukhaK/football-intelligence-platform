@@ -1,16 +1,17 @@
 # :feature-settings
 
-Application settings screen for user preferences and developer configuration.
+Settings: backend status, model information and About.
 
 ## Ownership
 
 Presentation layer. Depends on `core-ui`, `core-design-system`, `core-navigation`.
 
-## Future Contents
+## Contents
 
-- `SettingsViewModel` — owns `SettingsUiState`. TDD required.
-- `SettingsScreen` — preference list with toggles for theme, API endpoint, and debug options.
-- `SettingsRepository` interface backed by `DataStore`.
+- `SettingsScreen` — the backend status card (passed in by the app) and links to Model Info and About.
+- `SettingsViewModel`, `ModelInfoScreen` — model version, dataset and test metrics.
+- `AboutScreen` — app and project information.
+- `ModelInfoRepository` — reads `GET /v2/model`.
 
 ## Constraints
 

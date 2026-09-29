@@ -1,1 +1,1 @@
-"""Middleware package — reserved for future request/response middleware."""
+"""Request middleware: the per-client rate limiter (ADR 014)."""

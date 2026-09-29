@@ -12,7 +12,10 @@ This package owns the boundary between external data sources and the platform. I
 - Every ingestion run must record: source identifier, timestamp, row count, and file hash.
 - Data quality failures are loud errors, not silent skips.
 
-## Future Contents
+## Contents
 
-- `loaders/` — source-specific loader classes (CSV, JSON, API).
-- `runner.py` — CLI entry point for running an ingestion pipeline.
+- `downloader.py`, `pipeline.py` — download one provider dataset, validate it and store raw and canonical copies.
+- `backfill.py` — every season of the five leagues from football-data.co.uk (ADR 005).
+- `in_progress.py`, `live_refresh.py` — the season so far, appended to history as the served live dataset (ADR 008, ADR 013).
+- `fixtures.py` — upcoming fixtures from openfootball, renamed to football-data team names and validated (ADR 015).
+- `storage.py` — immutable raw partitions and versioned processed files.
