@@ -96,6 +96,7 @@ Maintained by the project architect. The implementation engineer updates documen
 
 | Document | Description |
 |---|---|
+| [v2.0.1 Release Notes](releases/v2.0.1.md) | Faster offline fallback in the app, demo video |
 | [v2.0.0 Release Notes](releases/v2.0.0.md) | Five leagues, versioned API, fixtures, goals model, offline app |
 | [v1.0.0 Release Notes](releases/v1.0.0.md) | Full release notes for the complete platform (Stages 1–12) |
 | [v1.0.0 Readiness Report](releases/v1.0.0-readiness.md) | Final build, test, API, and CLI verification results |
