@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     ]
     default_competition: str = "Premier League"
     draw_possible_threshold: float = DEFAULT_DRAW_POSSIBLE_THRESHOLD
-    api_version: str = "0.1.0"
+    api_version: str = "2.0.0"
     log_level: str = "INFO"
 
     ollama_base_url: str = "http://localhost:11434"
