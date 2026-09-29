@@ -27,6 +27,25 @@
     <string name="action_new_prediction">New Prediction</string>
     <string name="no_prediction">No prediction available.</string>
 
+    <!-- Goals insights -->
+    <string name="insights_loading">Loading likely scores…</string>
+    <string name="insights_unavailable">Likely scores are unavailable right now.</string>
+    <string name="top_scores_title">Most likely scores</string>
+    <string name="score_line">%1$s–%2$s</string>
+    <string name="cd_score_row">%1$s %2$s, %3$s %4$s: %5$s percent</string>
+    <string name="expected_goals_title">Expected goals</string>
+    <string name="expected_goals_line">%1$s %2$s – %3$s %4$s</string>
+    <string name="markets_title">Goals and clean sheets</string>
+    <string name="market_btts">Both teams score</string>
+    <string name="market_over_1_5">2 or more goals</string>
+    <string name="market_over_2_5">3 or more goals</string>
+    <string name="market_over_3_5">4 or more goals</string>
+    <string name="market_clean_sheet">%1$s clean sheet</string>
+    <string name="cd_market_row">%1$s: %2$s percent</string>
+    <string name="why_title">Why</string>
+    <string name="reason_bullet">• %1$s</string>
+    <string name="insights_disclaimer">Likelihoods from our goals model, not betting tips.</string>
+
     <!-- Explanation -->
     <string name="explanation_title">Explanation</string>
     <string name="no_explanation">No explanation loaded.</string>

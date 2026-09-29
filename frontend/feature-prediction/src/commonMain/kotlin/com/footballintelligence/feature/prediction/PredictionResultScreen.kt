@@ -4,11 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -49,6 +50,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun PredictionResultScreen(
     uiState: PredictionInputUiState,
+    insightsState: InsightsUiState,
     onExplain: () -> Unit,
     onNewPrediction: () -> Unit,
     onBack: () -> Unit,
@@ -72,6 +74,7 @@ fun PredictionResultScreen(
             )
             is PredictionInputUiState.Success -> ResultContent(
                 result = uiState.result,
+                insightsState = insightsState,
                 onExplain = onExplain,
                 onNewPrediction = onNewPrediction,
                 modifier = Modifier.padding(padding),
@@ -88,6 +91,7 @@ fun PredictionResultScreen(
 @Composable
 private fun ResultContent(
     result: PredictionResult,
+    insightsState: InsightsUiState,
     onExplain: () -> Unit,
     onNewPrediction: () -> Unit,
     modifier: Modifier = Modifier,
@@ -95,6 +99,7 @@ private fun ResultContent(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -147,7 +152,7 @@ private fun ResultContent(
             }
         }
 
-        Spacer(Modifier.weight(1f))
+        InsightsSection(state = insightsState)
 
         Button(
             onClick = onExplain,

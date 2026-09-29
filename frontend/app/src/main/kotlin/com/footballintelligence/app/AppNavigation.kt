@@ -62,6 +62,7 @@ fun AppNavigation(navController: NavHostController) {
                 viewModelStoreOwner = navController.getBackStackEntry(Screen.Prediction.route),
             )
             val state by vm.predictionState.collectAsState()
+            val insightsState by vm.insightsState.collectAsState()
             // Leaving the result must clear it; otherwise the team selection
             // screen still holds a finished prediction and shows a spinner.
             val backToTeamSelection: () -> Unit = {
@@ -71,6 +72,7 @@ fun AppNavigation(navController: NavHostController) {
             BackHandler(onBack = backToTeamSelection)
             PredictionResultScreen(
                 uiState = state,
+                insightsState = insightsState,
                 onExplain = {
                     vm.explain()
                     navController.navigate(Screen.ExplainPrediction.route)

@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Request body for POST /predict and POST /explain.
+ * Request body for POST /predict, POST /explain and POST /insights.
  *
  * Only the teams are sent; the server computes match features from results
  * played before today (ADR 008).

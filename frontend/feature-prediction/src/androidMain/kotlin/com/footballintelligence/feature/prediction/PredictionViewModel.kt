@@ -27,6 +27,9 @@ class PredictionViewModel(
         MutableStateFlow<ExplanationUiState>(ExplanationUiState.Idle)
     val explanationState: StateFlow<ExplanationUiState> = _explanationState.asStateFlow()
 
+    private val _insightsState = MutableStateFlow<InsightsUiState>(InsightsUiState.Idle)
+    val insightsState: StateFlow<InsightsUiState> = _insightsState.asStateFlow()
+
     init {
         loadTeams()
     }
@@ -43,10 +46,14 @@ class PredictionViewModel(
         }
     }
 
-    /** Requests a prediction; the backend computes the match features. */
+    /**
+     * Requests a prediction and, in parallel, the goals insights for the same
+     * fixture. An insights failure never affects the prediction.
+     */
     fun predict(homeTeam: String, awayTeam: String) {
         _predictionState.value = PredictionInputUiState.Loading
         val request = PredictionRequest(homeTeam = homeTeam, awayTeam = awayTeam)
+        loadInsights(request)
         viewModelScope.launch {
             _predictionState.value = when (val result = repository.predict(request)) {
                 is NetworkResult.Success -> PredictionInputUiState.Success(result.data)
@@ -74,10 +81,22 @@ class PredictionViewModel(
         }
     }
 
-    /** Clears the current prediction and explanation. */
+    /** Clears the current prediction, explanation and insights. */
     fun resetPrediction() {
         _predictionState.value = PredictionInputUiState.Idle
         _explanationState.value = ExplanationUiState.Idle
+        _insightsState.value = InsightsUiState.Idle
+    }
+
+    private fun loadInsights(request: PredictionRequest) {
+        _insightsState.value = InsightsUiState.Loading
+        viewModelScope.launch {
+            _insightsState.value = when (val result = repository.insights(request)) {
+                is NetworkResult.Success -> InsightsUiState.Success(result.data)
+                is NetworkResult.Error -> InsightsUiState.Error(result.message)
+                is NetworkResult.Loading -> InsightsUiState.Loading
+            }
+        }
     }
 }
 
