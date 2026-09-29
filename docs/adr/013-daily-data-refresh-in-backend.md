@@ -34,7 +34,7 @@ background work through FastAPI or a simple queue rather than Celery.
 3. **Failure.** A failed refresh is logged, the old data stays in service, and
    `/health` reports `last_refresh_at` and `last_refresh_error`. `/health` also
    reports `matches_through`, the latest result date the server knows.
-4. **Off switch.** An unset `LIVE_REFRESH_HOUR` turns the refresh off. The test
+4. **Off switch.** `LIVE_REFRESH_HOUR=off` turns the refresh off. The test
    suite disables it with an autouse fixture, so tests never download.
 
 ## Alternatives rejected
@@ -53,7 +53,7 @@ background work through FastAPI or a simple queue rather than Celery.
   after football-data.co.uk publishes them. That source updates a few times a
   week, so `matches_through` can lag the real fixtures by a few days.
 - Running the backend implies a daily download from football-data.co.uk.
-  Turn it off with an unset `LIVE_REFRESH_HOUR` when offline.
+  Turn it off with `LIVE_REFRESH_HOUR=off` when offline.
 - Each refresh writes a new versioned live dataset. Old versions are kept, as
   for every processed dataset.
 - With more than one server process, each would refresh on its own. That is

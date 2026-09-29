@@ -110,3 +110,12 @@ def test_startup_never_refreshes_in_tests(tmp_path: Path) -> None:
         assert getattr(client.app.state, "live_refresh_service", None) is None  # type: ignore[attr-defined]
     after = sorted(Path("../datasets/processed/football_data").glob("*live*.csv"))
     assert before == after
+
+
+def test_refresh_can_be_turned_off(monkeypatch: pytest.MonkeyPatch) -> None:
+    from backend.app.config import Settings
+
+    monkeypatch.setenv("LIVE_REFRESH_HOUR", "off")
+    assert Settings().live_refresh_hour is None
+    monkeypatch.setenv("LIVE_REFRESH_HOUR", "18")
+    assert Settings().live_refresh_hour == 18
