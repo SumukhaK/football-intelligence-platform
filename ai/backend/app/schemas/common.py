@@ -40,6 +40,19 @@ class HealthResponse(BaseModel):
         default=False,
         description="True when the goals model is fitted, so POST /insights works.",
     )
+    matches_through: str | None = Field(
+        default=None,
+        description="Date of the latest result the server knows, YYYY-MM-DD.",
+        examples=["2026-09-20"],
+    )
+    last_refresh_at: str | None = Field(
+        default=None,
+        description="When the daily data refresh last ran (ISO 8601), if it has.",
+    )
+    last_refresh_error: str | None = Field(
+        default=None,
+        description="Why the last refresh failed; null when it succeeded.",
+    )
     version: str = Field(..., description="API version string.", examples=["0.1.0"])
 
 

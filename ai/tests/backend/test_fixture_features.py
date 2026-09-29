@@ -115,6 +115,13 @@ class TestEndpoints:
             "teams": ["Arsenal", "Chelsea", "Leeds", "Sunderland"],
         }
 
+    def test_health_reports_the_latest_result(
+        self, fixture_client: TestClient, service: FixtureFeatureService
+    ) -> None:
+        body = fixture_client.get("/health").json()
+        assert body["matches_through"] == service.matches_through()
+        assert body["last_refresh_at"] is None
+
     def test_teams_503_without_history(self, client: TestClient) -> None:
         response = client.get("/teams")
         assert response.status_code == 503

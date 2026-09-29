@@ -86,6 +86,11 @@ def test_teams_are_from_the_latest_season(matches: pd.DataFrame) -> None:
     assert teams == ["A", "B", "C", "E"]
 
 
+def test_latest_match_date(matches: pd.DataFrame) -> None:
+    latest = str(pd.to_datetime(matches["match_date"]).max().date())
+    assert FixtureFeatureBuilder(matches).latest_match_date(_COMP) == latest
+
+
 def test_relegated_team_is_rejected(matches: pd.DataFrame) -> None:
     builder = FixtureFeatureBuilder(matches)
     with pytest.raises(UnknownTeamError, match="'D'"):
