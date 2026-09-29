@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kick-off launch animation (Android 12+): the three arcs fill in one after
+     another in under a second, the same motion as the in-app KickoffLoader. -->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="108dp"
+            android:height="108dp"
+            android:viewportWidth="108"
+            android:viewportHeight="108">
+            <group
+                android:pivotX="54"
+                android:pivotY="54"
+                android:rotation="-90">
+                <path
+                    android:name="home"
+                    android:pathData="M79,54 A25,25 0 1 1 29,54 A25,25 0 1 1 79,54"
+                    android:strokeWidth="7"
+                    android:strokeColor="#7CDB85"
+                    android:trimPathStart="0"
+                    android:trimPathEnd="0" />
+                <path
+                    android:name="draw"
+                    android:pathData="M79,54 A25,25 0 1 1 29,54 A25,25 0 1 1 79,54"
+                    android:strokeWidth="7"
+                    android:strokeColor="#F1F8EE"
+                    android:trimPathStart="0.5"
+                    android:trimPathEnd="0.5" />
+                <path
+                    android:name="away"
+                    android:pathData="M79,54 A25,25 0 1 1 29,54 A25,25 0 1 1 79,54"
+                    android:strokeWidth="7"
+                    android:strokeColor="#FFD54F"
+                    android:trimPathStart="0.75"
+                    android:trimPathEnd="0.75" />
+            </group>
+            <path
+                android:pathData="M67,54 A13,13 0 1 1 41,54 A13,13 0 1 1 67,54 Z"
+                android:fillColor="#FFFFFF" />
+            <path
+                android:pathData="M54,48.5 L59.2,52.3 L57.2,58.4 L50.8,58.4 L48.8,52.3 Z"
+                android:fillColor="#1B5E20" />
+        </vector>
+    </aapt:attr>
+    <target android:name="home">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="500"
+                android:interpolator="@android:interpolator/fast_out_slow_in"
+                android:propertyName="trimPathEnd"
+                android:valueFrom="0"
+                android:valueTo="0.47"
+                android:valueType="floatType" />
+        </aapt:attr>
+    </target>
+    <target android:name="draw">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="400"
+                android:interpolator="@android:interpolator/fast_out_slow_in"
+                android:propertyName="trimPathEnd"
+                android:startOffset="150"
+                android:valueFrom="0.5"
+                android:valueTo="0.72"
+                android:valueType="floatType" />
+        </aapt:attr>
+    </target>
+    <target android:name="away">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="400"
+                android:interpolator="@android:interpolator/fast_out_slow_in"
+                android:propertyName="trimPathEnd"
+                android:startOffset="300"
+                android:valueFrom="0.75"
+                android:valueTo="0.97"
+                android:valueType="floatType" />
+        </aapt:attr>
+    </target>
+</animated-vector>

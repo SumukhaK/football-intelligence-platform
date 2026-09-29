@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tactics Board launcher icon: a pitch with the predicted run to the ball.
+     Drawn on the 108dp adaptive grid; everything sits inside the 66dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Pitch outline, halfway line and centre circle -->
+    <path
+        android:pathData="M34,38 H74 A3,3 0 0 1 77,41 V67 A3,3 0 0 1 74,70 H34 A3,3 0 0 1 31,67 V41 A3,3 0 0 1 34,38 Z M54,38 V70 M60,54 A6,6 0 1 1 48,54 A6,6 0 1 1 60,54"
+        android:strokeWidth="3"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000" />
+    <!-- The predicted run, as dots along the curve to the ball -->
+    <path
+        android:pathData="M38,63 m-1.5,0 a1.5,1.5 0 1 0 3,0 a1.5,1.5 0 1 0 -3,0 M41.8,56.3 m-1.5,0 a1.5,1.5 0 1 0 3,0 a1.5,1.5 0 1 0 -3,0 M46,51.3 m-1.5,0 a1.5,1.5 0 1 0 3,0 a1.5,1.5 0 1 0 -3,0 M50.6,48.1 m-1.5,0 a1.5,1.5 0 1 0 3,0 a1.5,1.5 0 1 0 -3,0 M55.6,46.7 m-1.5,0 a1.5,1.5 0 1 0 3,0 a1.5,1.5 0 1 0 -3,0"
+        android:fillColor="#FFFFFF" />
+    <!-- The ball -->
+    <path
+        android:pathData="M71.6,47 A4.6,4.6 0 1 1 62.4,47 A4.6,4.6 0 1 1 71.6,47 Z"
+        android:fillColor="#FFD54F" />
+</vector>

@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -16,6 +15,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.footballintelligence.core.model.HealthStatus
+import com.footballintelligence.core.ui.KickoffLoader
 import com.footballintelligence.core.ui.StatusChip
 import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.home.resources.Res
@@ -52,7 +52,7 @@ fun BackendStatusSection(
         ) {
             Text(stringResource(Res.string.backend_status), style = MaterialTheme.typography.titleSmall)
             when (uiState) {
-                is BackendStatusUiState.Loading -> CircularProgressIndicator()
+                is BackendStatusUiState.Loading -> KickoffLoader(size = 40.dp)
                 is BackendStatusUiState.Error -> {
                     Text(errorMessage(uiState.kind, uiState.message), style = MaterialTheme.typography.bodySmall)
                     TextButton(onClick = onRetry) { Text(stringResource(Res.string.retry)) }

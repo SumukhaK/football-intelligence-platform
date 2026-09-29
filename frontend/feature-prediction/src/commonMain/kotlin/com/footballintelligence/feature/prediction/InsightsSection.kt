@@ -5,9 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,6 +17,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import com.footballintelligence.core.model.Insights
 import com.footballintelligence.core.model.ScoreProbability
+import com.footballintelligence.core.ui.KickoffLoader
 import com.footballintelligence.feature.prediction.resources.Res
 import com.footballintelligence.feature.prediction.resources.cd_market_row
 import com.footballintelligence.feature.prediction.resources.cd_score_row
@@ -176,7 +175,7 @@ private fun InsightsLoading() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+        KickoffLoader(size = 24.dp)
         MutedText(stringResource(Res.string.insights_loading))
     }
 }
