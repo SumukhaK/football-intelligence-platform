@@ -2,6 +2,7 @@ package com.footballintelligence.core.network
 
 import com.footballintelligence.core.model.ChatRequest
 import com.footballintelligence.core.model.ChatResponse
+import com.footballintelligence.core.model.CompetitionsResponse
 import com.footballintelligence.core.model.ExplanationResult
 import com.footballintelligence.core.model.HealthStatus
 import com.footballintelligence.core.model.Insights
@@ -13,6 +14,7 @@ import com.footballintelligence.core.model.TeamsResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -24,7 +26,8 @@ import io.ktor.http.isSuccess
 interface FootballApiService {
     suspend fun getHealth(): NetworkResult<HealthStatus>
     suspend fun getModel(): NetworkResult<ModelInfo>
-    suspend fun getTeams(): NetworkResult<TeamsResponse>
+    suspend fun getCompetitions(): NetworkResult<CompetitionsResponse>
+    suspend fun getTeams(competition: String): NetworkResult<TeamsResponse>
     suspend fun predict(request: PredictionRequest): NetworkResult<PredictionResult>
     suspend fun explain(request: PredictionRequest): NetworkResult<ExplanationResult>
     suspend fun getInsights(request: PredictionRequest): NetworkResult<Insights>
@@ -49,9 +52,14 @@ class KtorFootballApiService(
             client.get("$base/model").decode()
         }
 
-    override suspend fun getTeams(): NetworkResult<TeamsResponse> =
+    override suspend fun getCompetitions(): NetworkResult<CompetitionsResponse> =
         guarded {
-            client.get("$base/teams").decode()
+            client.get("$base/competitions").decode()
+        }
+
+    override suspend fun getTeams(competition: String): NetworkResult<TeamsResponse> =
+        guarded {
+            client.get("$base/teams") { parameter("competition", competition) }.decode()
         }
 
     override suspend fun predict(request: PredictionRequest): NetworkResult<PredictionResult> =

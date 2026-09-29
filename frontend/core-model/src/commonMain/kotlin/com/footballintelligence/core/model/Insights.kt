@@ -20,6 +20,7 @@ data class Insights(
     val markets: GoalMarkets,
     val outcome: OutcomeProbabilities,
     val reasons: List<String>,
+    val competition: String = "",
 )
 
 /** Mean goals for each side. */

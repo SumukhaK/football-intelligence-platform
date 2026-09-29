@@ -1,5 +1,6 @@
 package com.footballintelligence.feature.prediction
 
+import com.footballintelligence.core.model.Competition
 import com.footballintelligence.core.model.ExplanationResult
 import com.footballintelligence.core.model.Insights
 import com.footballintelligence.core.model.PredictionResult
@@ -33,4 +34,11 @@ sealed class InsightsUiState {
     data object Loading : InsightsUiState()
     data class Success(val insights: Insights) : InsightsUiState()
     data class Error(val message: String) : InsightsUiState()
+}
+
+/** UI state for the league picker (ADR 012). */
+sealed class CompetitionsUiState {
+    data object Loading : CompetitionsUiState()
+    data class Success(val competitions: List<Competition>, val selected: String) : CompetitionsUiState()
+    data class Error(val message: String) : CompetitionsUiState()
 }

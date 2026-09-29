@@ -13,6 +13,8 @@ import kotlinx.serialization.Serializable
 data class PredictionRequest(
     @SerialName("home_team") val homeTeam: String,
     @SerialName("away_team") val awayTeam: String,
+    /** League from GET /competitions; the server defaults to the Premier League. */
+    val competition: String? = null,
 )
 
 /**
@@ -32,4 +34,6 @@ data class PredictionResult(
     val confidence: Double,
     @SerialName("model_version") val modelVersion: String,
     @SerialName("draw_possible") val drawPossible: Boolean = false,
+    /** Echoed by the server (ADR 012); empty from older servers. */
+    val competition: String = "",
 )

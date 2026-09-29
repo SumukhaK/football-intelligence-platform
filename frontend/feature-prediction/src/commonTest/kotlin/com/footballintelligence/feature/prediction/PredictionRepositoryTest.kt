@@ -66,9 +66,16 @@ class PredictionRepositoryTest {
     @Test
     fun `teams delegates to api`() = runTest {
         val teams = TeamsResponse("Premier League", "2026/27", listOf("Arsenal", "Chelsea"))
-        coEvery { api.getTeams() } returns NetworkResult.Success(teams)
-        val response = repository.teams()
+        coEvery { api.getTeams("Premier League") } returns NetworkResult.Success(teams)
+        val response = repository.teams("Premier League")
         assertEquals(NetworkResult.Success(teams), response)
-        coVerify(exactly = 1) { api.getTeams() }
+        coVerify(exactly = 1) { api.getTeams("Premier League") }
+    }
+
+    @Test
+    fun `competitions delegates to api`() = runTest {
+        coEvery { api.getCompetitions() } returns NetworkResult.Error("503")
+        repository.competitions()
+        coVerify(exactly = 1) { api.getCompetitions() }
     }
 }
