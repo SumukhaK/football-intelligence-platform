@@ -1,6 +1,6 @@
 # Plan: Next Phase — Quality Gaps, Draws and Scoreline Predictions
 
-**Status:** Draft for review
+**Status:** Done 2026-09-29; everything below shipped in v2.0.0.
 **Date:** 2026-09-28
 **Builds on:** PRs #24 → #25 → #26 → #27 (stacked; merged to main together at the end)
 **Branch:** `feature/scoreline-predictions`
@@ -26,9 +26,9 @@ Known weak spot: the model never picks a draw as the most likely result, while 2
 | # | Work | Why this order | Size |
 |---|---|---|---|
 | W1 | **End-to-end app test** on the emulator. **Done 2026-09-28** on a Pixel 6 Pro API 31: it found and fixed debug cleartext HTTP (PR #27); predict → result → explain now works | Nobody had tapped predict → result → explain | S |
-| W2 | **CI green**: add detekt and spotless to Gradle, fix what they flag | Frontend CI jobs fail on main; the final merge should be green | M |
-| W3 | **Result screen foundations**: Compose resources for strings, previews, a three-way probability bar and a "Draw likely" tag | W4 and W5 both redesign this screen; doing strings and previews once avoids churn | M |
-| W4 | **Draw handling**, phases A–B from the draw plan. **Analysis done 2026-09-28** ([report](../reports/draw-handling.md)): a third of draws costs 4–5 points of accuracy, and draw features gave no gain. The rule awaits decision 1 | Clearest accuracy gap; cheap | M |
+| W2 | **CI green**: add detekt and spotless to Gradle, fix what they flag. **Done** (PR #30) | Frontend CI jobs fail on main; the final merge should be green | M |
+| W3 | **Result screen foundations**: Compose resources for strings, previews, a three-way probability bar and a "Draw likely" tag. **Done** (PR #31, #34, ADR 010); the tag shipped as "Draw possible" | W4 and W5 both redesign this screen; doing strings and previews once avoids churn | M |
+| W4 | **Draw handling**, phases A–B from the draw plan. **Analysis done 2026-09-28** ([report](../reports/draw-handling.md)): a third of draws costs 4–5 points of accuracy, and draw features gave no gain. **Done**: decided tag only (ADR 011, PR #33, #34) | Clearest accuracy gap; cheap | M |
 | W5 | **Scoreline predictions** (section 3). **Done 2026-09-28**: model and evaluation ([report](../reports/goals-model.md)), `/insights` API and app sections | Main new feature; needs W3's screen and W4's draw work | L |
 | W6 | Scheduled live refresh plus backend reload. **Done 2026-09-29**: daily in-process refresh and reload without restart (ADR 013) | Removes the manual refresh and restart | S |
 | W7 | Kaggle extras (xG, FIFA ratings, Champions League rest days). **Tested 2026-09-29: none improves log loss, none kept** ([report](../reports/kaggle-extras.md)) | Small expected gain; licences unconfirmed | M |
@@ -170,5 +170,5 @@ Dependency: `scipy` is already installed through scikit-learn. It becomes an exp
 
 ## 5. Decisions needed
 
-1. **Draw rule objective.** The original default (a third of draws for at most one point) is not reachable with this model ([report](../reports/draw-handling.md)). Options: tag only **(recommended)**, a small rule catching about 10% of draws for about one point, or a third of draws for 4–5 points.
+1. **Draw rule objective.** **Decided 2026-09-28: tag only** ([ADR 011](../adr/011-draw-possible-tag.md)). The original default (a third of draws for at most one point) is not reachable with this model ([report](../reports/draw-handling.md)). Options: tag only **(recommended)**, a small rule catching about 10% of draws for about one point, or a third of draws for 4–5 points.
 2. **Headline H/D/A pick.** **Decided 2026-09-28:** XGBoost keeps the headline pick; the goals model feeds the extras only.

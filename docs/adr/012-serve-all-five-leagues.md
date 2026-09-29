@@ -2,8 +2,9 @@
 
 **Status:** Accepted
 
-**Supersedes:** —
+**Supersedes:** [005](005-top-five-leagues-multi-source-data.md) (item 6, API and app scope), [008](008-server-side-match-features.md) (item 6, Premier League-only scope)
 **Superseded by:** —
+**Amended by:** [014](014-api-versioning-and-rate-limiting.md) (the optional `competition` applies to `/v2`; `/v1` and unversioned paths stay Premier League only)
 
 ## Context
 

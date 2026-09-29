@@ -49,7 +49,7 @@ For a full end-to-end demonstration, run the stages in order:
 7. Stage 11 — demonstrates the Android application consuming the backend
 8. Stage 12 — runs the integration test suite and validates the full stack
 
-Each stage can also be demonstrated individually using the pre-generated artifacts already committed to the repository.
+Models, feature matrices and explanations are not committed: they are generated locally by the pipeline. Run the earlier stages (or the root README Quick Start) before demonstrating a later stage on its own.
 
 ---
 

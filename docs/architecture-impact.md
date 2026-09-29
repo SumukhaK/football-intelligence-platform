@@ -2,6 +2,8 @@
 
 How each stage built on the previous one, what capability it introduced, and what it enabled downstream.
 
+> **Historical view.** This page describes the architecture as it stood after Stage 7 and is kept as a record. Some choices have changed since: the chronological split from ADR 003 was replaced by the season-based split in [ADR 007](adr/007-season-based-split-and-evaluation.md). For later changes (five leagues, server-side match features, the goals model, API versioning and more) see [ADRs 005–015](adr/README.md).
+
 ---
 
 ## Overview
@@ -30,14 +32,14 @@ The Football Intelligence Platform was built incrementally over 7 stages. Each s
 **New capability:** A buildable Android application shell with a defined module graph.
 
 **Key decisions:**
-- 13-module Gradle structure defined upfront (6 feature, 6 core, 1 app). Adding a new screen requires creating a feature module, not modifying existing ones.
-- MVVM with `StateFlow` chosen over alternatives. All future ViewModels will follow this pattern.
+- 14-module Gradle structure defined upfront (6 feature, 7 core, 1 app). Adding a new screen requires creating a feature module, not modifying existing ones.
+- MVVM with `StateFlow` chosen over alternatives. Every later ViewModel follows this pattern.
 - `core-testing` separated as a test-only dependency. It is never shipped in the APK.
 - Spotless and Detekt configured. Code quality gates exist before any Kotlin code was written.
 
 **Affected modules:** `frontend/` entirely.
 
-**Downstream impact:** When the backend (Stage 9) and assistant (Stage 10) are built, the Android feature modules already know their interface. `feature-prediction` is a placeholder now; it becomes real when the backend API exists. The module boundaries cannot change without architectural justification.
+**Downstream impact:** When the backend (Stage 9) and assistant (Stage 10) were built, the Android feature modules already had their place. `feature-prediction` was a placeholder at this point and became real in Stage 11, once the backend API existed. The module boundaries cannot change without architectural justification.
 
 ---
 
@@ -116,11 +118,11 @@ The Football Intelligence Platform was built incrementally over 7 stages. Each s
 - Model card generated programmatically from the `EvaluationReport`. It cannot drift from actual metrics.
 - `registry.json` records the git commit at training time. Every run is reproducible by checking out the exact commit and re-running the pipeline.
 
-**Affected modules:** `ai/training/`, `ai/evaluation/`, `ai/inference/`, `ai/model_registry/`, `models/`.
+**Affected modules:** `ai/training/`, `ai/evaluation/`, `ai/inference/`, `ai/model_registry/`, `ai/models/`.
 
 **Downstream impact:**
 - **Stage 8 (SHAP):** `model.joblib` contains the XGBClassifier. SHAP's `TreeExplainer` accepts XGBoost models directly. The feature names are available from `FeatureRegistry`.
-- **Stage 9 (Backend):** `MatchPredictor.from_path()` is the inference interface the backend will call. No backend code needs to know about training or feature engineering.
+- **Stage 9 (Backend):** `MatchPredictor.from_path()` is the inference interface the backend calls. No backend code needs to know about training.
 - **Stage 12 (Evaluation):** The `EvaluationReport` schema and `registry.json` provide the baseline for structured evaluation across all stages.
 
 ---
@@ -134,6 +136,6 @@ The Football Intelligence Platform was built incrementally over 7 stages. Each s
 | All pipeline steps are CLI-invocable | Stage 5 | Stages 6, 7 and CI |
 | HttpTransport is injected | Stage 4 | All provider tests |
 | `.shift(1)` on all rolling features | Stage 6 | Stage 7 training, Stage 8 SHAP |
-| Chronological data splits | Stage 7 (ADR 003) | Stage 8, 9, 12 |
+| Chronological data splits (now season-based, ADR 007) | Stage 7 (ADR 003) | Stage 8, 9, 12 |
 | Artifacts versioned by UTC timestamp | Stage 5 | Stages 6, 7 |
 | Git commit recorded at training time | Stage 7 | Stage 9 (model serving), Stage 12 |

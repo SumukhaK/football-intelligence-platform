@@ -1,6 +1,6 @@
 # Project Timeline
 
-A stage-by-stage history of how the Football Intelligence Platform was built, from an empty repository to a tested, documented, end-to-end product.
+A stage-by-stage history of how the Football Intelligence Platform was built, from an empty repository to a tested, documented, end-to-end product: 12 stages up to release v1.0.0, then the v2 releases.
 
 Each stage was implemented on its own feature branch, merged via pull request, and documented with a dedicated stage report and demo guide before the next stage began.
 
@@ -27,10 +27,10 @@ Each stage was implemented on its own feature branch, merged via pull request, a
 
 **Purpose:** Stand up the Android project structure early so the eventual frontend has a correct module architecture from day one, rather than retrofitting one later.
 
-**Outcome:** 13 Gradle modules with MVVM conventions, Material 3 theming, and a Ktor network layer scaffold — ready to receive feature implementation in Stage 11.
+**Outcome:** 14 Gradle modules with MVVM conventions, Material 3 theming, and a Ktor network layer scaffold — ready to receive feature implementation in Stage 11.
 
 **Major Deliverables:**
-- 13-module Gradle project (6 feature modules, 6 core modules, 1 app module)
+- 14-module Gradle project (6 feature modules, 7 core modules including core-testing, 1 app module)
 - MVVM architecture conventions documented
 - Material 3 design system scaffold
 - Ktor network layer foundation
@@ -233,3 +233,37 @@ Each stage was implemented on its own feature branch, merged via pull request, a
 | 12 | Integration & Release | 36 | 462 + 9 |
 
 **12 stages. 12 pull requests. 471 total tests. One engineer.**
+
+Those are the counts at v1.0.0.
+
+---
+
+## After v1.0.0 — Release v2.0.0 (2026-09-29)
+
+**Purpose:** Turn a working demo into a stronger, honest model and a product that stays useful: v1.0.0 trained on one Premier League season, and the app sent placeholder features.
+
+**Outcome:** A model trained on 46,709 matches from five leagues and benchmarked against bookmakers, served with server-side features, likely scores and fixtures, through a versioned, rate-limited API that refreshes itself daily, to an app that opens on fixtures and works offline.
+
+**Major Deliverables (PRs #24–#50, ADRs 005–015):**
+- Five leagues, 2000/01–2025/26, validated season by season; season-based split and walk-forward tuning (ADRs 005–007)
+- Retrained, tuned model: 52.5% accuracy and log loss 0.976 on 2023/24 (bookmakers 55.0% and 0.955); live 2026/27 check 52.4%
+- Server-side match features, so the app sends only team names (ADR 008)
+- Plain-language SHAP explanations; "draw possible" tag (ADR 011)
+- Dixon-Coles goals model and `POST /insights` for likely scores (ADR 009)
+- Daily in-process data refresh (ADR 013); upcoming fixtures from openfootball (ADR 015)
+- `/v1` and `/v2` API versions and a rate limiter (ADR 014)
+- Android: league picker, fixtures home with league tabs, bottom navigation, offline cache and pull to refresh, string resources and previews, Detekt and Spotless
+
+**Git Tag:** v2.0.0
+
+---
+
+## Release v2.0.1 (2026-09-29)
+
+**Deliverables (PRs #52–#55):** offline fallback within about 10 seconds instead of 50, a dated 2026/27 accuracy section, and a 3-minute narrated demo video.
+
+**Git Tag:** v2.0.1
+
+---
+
+**Today: 5 releases, 15 ADRs, 864 tests (798 Python, 66 Android). One engineer.**

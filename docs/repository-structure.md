@@ -15,13 +15,14 @@ football-intelligence-platform/
 ├── datasets/
 ├── docs/
 ├── frontend/
-├── models/
+├── infrastructure/
 ├── playbook/
 ├── scripts/
 ├── tools/
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
 ├── CODE_OF_CONDUCT.md
+├── LICENSE
 └── README.md
 ```
 
@@ -48,13 +49,13 @@ football-intelligence-platform/
 - `PULL_REQUEST_TEMPLATE.md` — standard PR description template.
 - `CODEOWNERS` — code ownership assignments.
 
-**Does not own:** deployment scripts (those belong in `scripts/`) or infrastructure config (that belongs in the future `infrastructure/` directory).
+**Does not own:** deployment scripts (those belong in `scripts/`) or infrastructure config (that belongs in `infrastructure/`, which is an empty placeholder today).
 
 ---
 
 ## `ai/`
 
-**Purpose:** The standalone Python AI workspace. Owns the complete data-to-model pipeline.
+**Purpose:** The standalone Python AI workspace. Owns the complete data-to-model pipeline, the assistant and the FastAPI backend.
 
 **Owns:**
 - `config/` — `pydantic-settings`-based configuration and path layout.
@@ -66,35 +67,32 @@ football-intelligence-platform/
 - `schemas/` — Pydantic schema definitions for all datasets (`RawMatch`, `ProcessedMatch`).
 - `metadata/` — `DatasetMetadata` model and `MetadataBuilder`.
 - `feature_engineering/` — 9 composable feature generators, `FeatureRegistry`, `FeaturePipeline`.
-- `training/` — `TrainingConfig`, chronological splitter, XGBoost trainer, persistence, registry.
-- `evaluation/` — metrics, cross-validation, Matplotlib plots, Pydantic report models.
+- `training/` — `TrainingConfig`, chronological and season splitters (ADR 007), hyperparameter tuning, XGBoost trainer, persistence, registry and model cards.
+- `evaluation/` — metrics, cross-validation, plots, model comparison, draw analysis, in-season and goals-model evaluation.
 - `inference/` — `MatchPredictor`: loads a persisted model and returns `MatchPrediction`.
+- `explainability/` — SHAP explainer, plain-language feature labels, explanation pipeline and plots.
+- `goals/` — Dixon-Coles goals model, score grid and goal-market insights (ADR 009).
+- `assistant/` — the retrieval-grounded assistant: chunking, embeddings, vector store, retrieval, prompt templates (`assistant/prompting/templates.py`) and generation.
 - `model_registry/` — JSON-backed local model registry with versioned `ModelEntry` records.
-- `scripts/` — operational CLI scripts (`ingest_football_data.py`).
-- `tests/` — unit tests mirroring the source package structure.
+- `backend/` — the FastAPI application in `backend/app/`: `routers/`, `services/`, `schemas/`, `middleware/` (rate limiter) and `exceptions/`.
+- `scripts/` — operational CLI scripts: `backfill_football_data`, `ingest_football_data`, `refresh_live_dataset`, `refresh_fixtures`, and two experiment scripts (`draw_feature_experiment`, `kaggle_extras_experiment`).
+- `models/` — trained model output (runs, `latest/`, `registry.json`). Gitignored: only `.gitkeep` is tracked. See `ai/models/` below.
+- `explanations/` — SHAP explanation output. Gitignored.
+- `datasets/` — where the pipelines read and write by default when run from `ai/` without explicit paths (the README Quick Start passes `../datasets` instead). Only `.gitkeep` is tracked; the shared data lives in the root `datasets/`.
+- `rag/`, `prompts/` — empty placeholders (`.gitkeep` only). The assistant code lives in `assistant/`.
+- `tests/` — unit, backend and integration tests mirroring the source package structure.
 - `pyproject.toml` — package metadata, dependencies, toolchain configuration.
 - `uv.lock` — pinned dependency lockfile.
 
-**Future (planned):**
-- `rag/` — retrieval pipeline: indexing, search, context assembly (Stage 10).
-- `prompts/` — prompt templates mirroring `playbook/` (Stage 10).
-
-**Does not own:** raw or processed datasets (those live in `datasets/`), trained model artifacts (those live in `models/`), or API routes (those belong in `backend/`).
+**Does not own:** the shared raw, processed and feature datasets (those live in the root `datasets/`).
 
 ---
 
 ## `backend/`
 
-**Purpose:** FastAPI application and domain logic. (Planned — Stage 9.)
+**Purpose:** Placeholder. It holds a `README.md` (and `.gitkeep`) that describes the API and points to the code.
 
-**Will own:**
-- `routers/` — one router per domain area.
-- `services/` — business logic service classes.
-- `domain/` — entities, value objects, business rules.
-- `infrastructure/` — database access, ML model loading.
-- `tests/` — unit and integration tests.
-
-**Does not own:** ML training logic (that belongs in `ai/`), or Android UI (that belongs in `frontend/`).
+The FastAPI code lives in `ai/backend/app/` so it can import the model, feature and assistant packages directly. API routes are in `ai/backend/app/routers/`, and backend tests are in `ai/tests/backend/`.
 
 ---
 
@@ -105,10 +103,12 @@ football-intelligence-platform/
 **Owns:**
 - `raw/` — immutable source data exactly as received from providers. Never overwrite; version by timestamp.
 - `processed/` — canonical `ProcessedMatch` CSVs produced by the ingestion pipeline.
-- `features/` — the feature matrix (`feature_matrix.parquet`) and feature metadata produced by the feature engineering pipeline.
-- `schemas/` — JSON Schema or Pydantic definitions for dataset contracts (supplements `ai/schemas/`).
+- `features/` — the feature matrix (`feature_matrix.parquet`) and feature metadata produced by the feature engineering pipeline. `features/top5/` holds the five-league features the current model uses; the files directly in `features/` are the original single-season Premier League features.
+- `schemas/` — reviewed reference tables such as `team_aliases.csv` (ADR 006).
 
-**Does not own:** trained model artifacts (those live in `models/`), or code (that belongs in `ai/`).
+Only metadata and reports are tracked. CSV and Parquet data files are gitignored and generated locally.
+
+**Does not own:** trained model artifacts (those live in `ai/models/`), or code (that belongs in `ai/`).
 
 **Invariants:**
 - Files in `raw/` are never overwritten. New runs write new versioned files.
@@ -125,10 +125,15 @@ football-intelligence-platform/
 - `adr/` — Architectural Decision Records. One file per decision, numbered sequentially.
 - `reports/` — stage completion summaries with executive summary, design decisions, tests, and metrics.
 - `releases/` — release notes and readiness reports.
+- `plans/` — plans for the multi-league work and the next phase.
 - `setup/` — installation and quick-start guides.
-- `reference/` — CLI command references and API specifications.
+- `reference/` — CLI command reference.
+- `api.md` — the full API contract for both versions.
+- `showcase/` — project write-up, portfolio summary, interview guide, demo video notes and screenshots.
 - `demo/` — demo scripts for each completed stage, aimed at technical interviewers.
 - `README.md` — documentation index.
+
+A few other folders (`ai/`, `architecture/`, `backend/` and similar) are empty placeholders.
 
 **Does not own:** code examples that belong alongside the source (use inline docstrings), or ephemeral notes (use issues).
 
@@ -145,15 +150,17 @@ football-intelligence-platform/
 - `build-logic/` — shared Gradle convention plugins.
 - `gradle/` — Gradle wrapper and version catalog.
 
-**Module graph:** Feature modules depend on core modules. Feature modules never depend on each other. `app` depends on all features.
+**Modules:** 14 Gradle modules: `app`, 7 core modules and 6 feature modules (see `settings.gradle.kts`).
 
-**Does not own:** business logic (that belongs in domain/service classes), network configuration beyond Ktor setup (that belongs in `core-network`), or ML inference (that belongs in `ai/` and exposed via `backend/`).
+**Module graph:** Feature modules depend on core modules. Feature modules never depend on each other. `app` depends on the four features in use (home, prediction, assistant, settings); `feature-match` and `feature-team` are empty and not wired in.
+
+**Does not own:** business logic (that belongs in domain/service classes), network configuration beyond Ktor setup (that belongs in `core-network`), or ML inference (that belongs in `ai/` and is exposed through the API in `ai/backend/`).
 
 ---
 
-## `models/`
+## `ai/models/`
 
-**Purpose:** Persisted model artifacts. Git-tracked metadata; large binaries are gitignored.
+**Purpose:** Persisted model artifacts, written by the training pipeline when it runs from `ai/`. The whole folder is gitignored except `.gitkeep`, so every artifact is generated locally.
 
 **Owns:**
 - `runs/<timestamp>/` — per-run artifacts: `model.joblib`, `config.json`, `metrics.json`, `evaluation_report.json`, `model_card.md`, `plots/`.
@@ -163,20 +170,23 @@ football-intelligence-platform/
 
 **Does not own:** training code (that belongs in `ai/training/`), raw data (that belongs in `datasets/`).
 
-**Gitignore policy:** `model.joblib` and other large binary files are gitignored. The registry, model card, config, and metrics JSON files are tracked. See `.gitignore` for the exact policy.
+**Gitignore policy:** nothing in this folder is tracked apart from `.gitkeep`. See `.gitignore` for the exact rules.
 
 ---
 
 ## `playbook/`
 
-**Purpose:** Prompt templates and retrieval configurations. (Partially planned — Stage 10.)
+**Purpose:** Reserved for prompt templates and retrieval configurations.
 
-**Will own:**
-- Versioned prompt templates for the football intelligence assistant.
-- Retrieval configuration files.
-- Prompt evaluation results.
+Today it holds only a `README.md` and empty `stage-*/` and `templates/` folders (`.gitkeep`). The assistant's prompt templates live in code at `ai/assistant/prompting/templates.py`.
 
 **Invariant:** Prompt templates are version-controlled and tested like code. They are never edited ad hoc.
+
+---
+
+## `infrastructure/`
+
+**Purpose:** Empty placeholder (`.gitkeep` only) for future deployment configuration.
 
 ---
 
@@ -204,12 +214,13 @@ football-intelligence-platform/
 |---|---|---|---|
 | `.claude/` | Markdown | Manual | AI agent context |
 | `.github/` | YAML | Manual | CI and GitHub config |
-| `ai/` | Python 3.12 | uv | Data pipeline, ML training, evaluation |
-| `backend/` | Python 3.12 | uv (planned) | FastAPI REST API |
+| `ai/` | Python 3.12 | uv | Data pipeline, ML training, evaluation, assistant, FastAPI backend |
+| `backend/` | Markdown | Manual | Placeholder README; the code is in `ai/backend/` |
 | `datasets/` | CSV, Parquet, JSON | Pipeline scripts | Raw and processed football data |
 | `docs/` | Markdown | Manual | All project documentation |
 | `frontend/` | Kotlin | Gradle | Compose Multiplatform Android app |
-| `models/` | JSON, joblib | Training pipeline | Trained model artifacts and registry |
-| `playbook/` | Markdown, JSON | Manual | Prompt templates and retrieval config |
+| `ai/models/` | JSON, joblib | Training pipeline | Trained model artifacts and registry (gitignored) |
+| `infrastructure/` | — | — | Empty placeholder |
+| `playbook/` | Markdown | Manual | Placeholder for prompt templates |
 | `scripts/` | Shell, Python | Manual | Repository automation |
 | `tools/` | Any | Manual | Shared CLI utilities |

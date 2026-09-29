@@ -87,10 +87,10 @@ ADRs are never deleted.
 | [002](002-joblib-model-serialization.md) | Use joblib for model serialisation | Accepted |
 | [003](003-chronological-train-val-test-split.md) | Use chronological train/validation/test split | Deprecated (see 007) |
 | [004](004-shap-for-explainability.md) | Use SHAP TreeExplainer for model explainability | Accepted |
-| [005](005-top-five-leagues-multi-source-data.md) | Expand training data to the top five leagues from multiple sources | Accepted |
+| [005](005-top-five-leagues-multi-source-data.md) | Expand training data to the top five leagues from multiple sources | Accepted (item 6 superseded by 012) |
 | [006](006-team-canonicalisation-and-match-dedup.md) | Canonical team names and match deduplication | Accepted |
 | [007](007-season-based-split-and-evaluation.md) | Season-based split and evaluation protocol | Accepted |
-| [008](008-server-side-match-features.md) | Compute match features on the server | Accepted |
+| [008](008-server-side-match-features.md) | Compute match features on the server | Accepted (item 6 superseded by 012) |
 | [009](009-dixon-coles-goals-model.md) | Add a Dixon-Coles goals model for scoreline predictions | Accepted |
 | [010](010-compose-resources-for-ui-text.md) | Keep UI text in Compose Multiplatform resources | Accepted |
 | [011](011-draw-possible-tag.md) | Flag possible draws without changing the pick | Accepted |

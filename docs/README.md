@@ -30,7 +30,7 @@ Maintained by the project architect. The implementation engineer updates documen
 
 | Document | Description |
 |---|---|
-| [Architecture Impact](architecture-impact.md) | How Stages 1–12 progressively built the architecture and what each stage enabled downstream |
+| [Architecture Impact](architecture-impact.md) | How Stages 1–7 built the architecture and what each stage enabled downstream (historical view) |
 | [ADR Index](adr/README.md) | All Architectural Decision Records |
 
 ### Stage Reports
@@ -85,12 +85,13 @@ Maintained by the project architect. The implementation engineer updates documen
 | [Interview Guide](showcase/interview-guide.md) | 50 likely interview questions with answers and trade-off reasoning |
 | [Demo Script](showcase/demo-script.md) | 5/10/20-minute demo scripts with talking points and commands |
 | [Screenshots](showcase/screenshots/README.md) | Screenshot capture checklist |
+| [Demo Video](showcase/demo-video/README.md) | Demo video notes, captions and thumbnail |
 
 ### Troubleshooting
 
 | Document | Description |
 |---|---|
-| [Troubleshooting Guide](troubleshooting.md) | Common issues and fixes for Python, uv, Android, and CI |
+| [Troubleshooting Guide](troubleshooting.md) | Common issues and fixes for Python, uv, Android, the backend and CI |
 
 ### Releases
 
@@ -114,17 +115,19 @@ docs/
   adr/            # Architectural Decision Records
   demo/           # Stage-by-stage demo scripts for technical interviews
   plans/          # Plans for the follow-on phase after Stage 12
-  reference/      # CLI command reference and API specifications
+  reference/      # CLI command reference
   releases/       # Release notes and readiness reports
   reports/        # Stage summaries and model/data experiment reports
   setup/          # Installation and quick-start guides
-  showcase/       # Recruiter-facing showcase: portfolio summary, timeline, interview guide, demo scripts
+  showcase/       # Recruiter-facing showcase: portfolio summary, timeline, interview guide, demo scripts, demo video
   README.md       # This index
   api.md          # API reference
-  architecture-impact.md   # How stages built on each other
+  architecture-impact.md   # How Stages 1–7 built on each other
   repository-structure.md  # Directory ownership guide
   troubleshooting.md       # Common issues and fixes
 ```
+
+The directory also holds empty placeholder folders (`ai/`, `architecture/`, `backend/`, `constitution/`, `decisions/`, `frontend/`, `prompts/`, `roadmap/`, `testing/`) that contain only a `.gitkeep`.
 
 ---
 

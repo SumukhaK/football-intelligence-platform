@@ -1,5 +1,7 @@
 # Stage 10 Demo — Football Intelligence Assistant
 
+> Historical walkthrough of Stage 10 (v1.0.0 era). For the current system, use the root README Quick Start and docs/demo/README.md.
+
 ## Prerequisites
 
 - Ollama installed and running: `ollama serve`
@@ -13,17 +15,13 @@
 uv run python -m assistant.pipeline --rebuild
 ```
 
-Expected output:
+The last line of output reports the size of the index, for example:
 
 ```
-Loading documents from knowledge base...
-Loaded 12 documents (4 markdown, 8 JSON)
-Chunking 12 documents...
-Produced 47 chunks
-Embedding 47 chunks with nomic-embed-text...
-Saved vector store: 47 documents → assistant/vector_store
-Index built: 47 chunks
+Index built: 443 chunks in assistant/vector_store
 ```
+
+The index now covers the model cards and reports under `models/`, the ADRs, the reports and the other top-level docs in `docs/`, plus the model's evaluation, metrics, SHAP summary and feature metadata JSON files. The current build has 443 chunks; your count depends on which docs and model runs you have locally. At Stage 10 it was 47 chunks.
 
 ## Step 2 — Query the index directly
 
@@ -42,7 +40,7 @@ uv run uvicorn backend.app.main:app --reload
 Expected log output includes:
 
 ```
-INFO: Assistant service loaded: 47 chunks in index.
+Assistant service loaded: 443 chunks in index.
 ```
 
 ## Step 4 — Check health
@@ -55,11 +53,18 @@ curl http://localhost:8000/health
 {
   "status": "ok",
   "model_loaded": true,
-  "explanation_service_available": true,
+  "explainability_available": true,
   "assistant_available": true,
-  "version": "0.1.0"
+  "fixture_features_available": true,
+  "insights_available": true,
+  "matches_through": "2026-09-20",
+  "last_refresh_at": "2026-09-29T07:01:31+05:30",
+  "last_refresh_error": null,
+  "version": "2.0.0"
 }
 ```
+
+The dates depend on when your data was last refreshed.
 
 ## Step 5 — Chat with the assistant
 
@@ -74,11 +79,11 @@ Example response:
 
 ```json
 {
-  "answer": "The XGBoost model achieved 56.3% accuracy on the test set ...\n[source: model_card.md]",
+  "answer": "The XGBoost model achieved 52.45% accuracy on the test set ...\n[source: model_card.md]",
   "sources": [
     {
       "source": "model_card.md",
-      "excerpt": "Overall accuracy: 56.3% ...",
+      "excerpt": "| Accuracy | 0.5245 | ...",
       "relevance_score": 0.87
     }
   ],

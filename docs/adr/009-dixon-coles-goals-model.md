@@ -4,6 +4,7 @@
 
 **Supersedes:** —
 **Superseded by:** —
+**Amended by:** [014](014-api-versioning-and-rate-limiting.md) (`POST /insights` is served under `/v2` only)
 
 ## Context
 

@@ -1,6 +1,6 @@
 # Plan: Multi-League Retraining of the Match Outcome Model
 
-**Status:** Decisions agreed (see §9); Phase 0 profile done (see §2). No code changed.
+**Status:** Done 2026-09-29. Phases 1, 2, 5 and 6 shipped in v2.0.0 (PR #24); phase 7 was tested and nothing was kept (PR #43); phases 3–4 were not done (see §8).
 **Date:** 2026-09-28
 **Branch:** `feature/multi-league-retraining`
 **Scope:** Data hygiene and retraining of the XGBoost H/D/A classifier
@@ -276,10 +276,10 @@ licence and download date, and the model card lists every data source.
 | 0. Profile | **Done 2026-09-28** (§2). Still to do: confirm each Kaggle page's licence, and copy the approved zips into `datasets/raw/kaggle/<slug>/` with checksums | Licences confirmed |
 | 1. ADRs | **Done 2026-09-28.** ADR 005 top-five leagues and sources; ADR 006 team canonicalisation and dedup; ADR 007 season-based split (supersedes ADR 003's mechanism); CLAUDE.md non-goal amended | Accepted |
 | 2. History backfill | **Done 2026-09-28.** 130 season files, 46,709 matches, all integrity checks pass. Extend the football-data provider to `E0, D1, SP1, I1, F1`; ingest 2000/01–2025/26; add multi-season, multi-league merge | Per-league season integrity checks pass |
-| 3. Kaggle adapters | One adapter per approved source, with tests, alias table, rejects file | Cleaning and schema tests pass |
-| 4. Merge and dedup | Unified processed dataset plus merge/conflict report | Zero unresolved conflicts |
+| 3. Kaggle adapters | **Not done.** Replaced by the phase 7 experiment; only the team alias table shipped (`datasets/schemas/team_aliases.csv`). One adapter per approved source, with tests, alias table, rejects file | Cleaning and schema tests pass |
+| 4. Merge and dedup | **Not done**, for the same reason as phase 3. Unified processed dataset plus merge/conflict report | Zero unresolved conflicts |
 | 5. Feature fixes | **Done 2026-09-28.** Season-aware league position (snapshotted per match day), per-season rest days, per-league Elo with season carryover, one-pass head-to-head, deterministic sort. Five-league matrix: 46,709 rows. Runs before phases 3–4, since the baseline needs only football-data.co.uk | Feature validation passes; 2023/24 output unchanged except league position (same-day fix) |
-| 6. Retrain and evaluate | **Done 2026-09-28.** Tuned by season CV (depth 3, learning rate 0.03, 400 trees) and promoted as `20260928_120015`: log loss 0.808 vs 0.949 on the current model's test matches (interval −0.22 to −0.06); 0.975 on 2023/24 and 0.995 on the holdout; bookmaker about 0.02 better. See [comparison report](../reports/multi-league-retraining-comparison.md) | Promotion rule in §6 |
+| 6. Retrain and evaluate | **Done 2026-09-28.** Tuned by season CV (depth 3, learning rate 0.03, 400 trees) and promoted as `20260928_120015`: log loss 0.808 vs 0.949 on the current model's test matches (interval −0.22 to −0.06); 0.975 on 2023/24 and 0.995 on the holdout; bookmaker about 0.02 better. See [comparison report](../reports/multi-league-retraining-comparison.md). Replaced the same day by `20260928_123224`, retrained after the ADR 008 Elo rule change (log loss 0.976 on 2023/24, 0.996 on the holdout) | Promotion rule in §6 |
 | 7. Optional new features | Rolling xG (if B has it), FIFA ratings as-of (if C is approved), European-fixture fatigue (C/D) | Each must improve log loss in ablation. **Tested 2026-09-29, none kept** ([report](../reports/kaggle-extras.md)) |
 
 Each phase is one task and stops for review before the next.
