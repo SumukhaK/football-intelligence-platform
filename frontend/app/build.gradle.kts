@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.bundles.lifecycle.compose)
     implementation(libs.napier)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(libs.junit5.api)

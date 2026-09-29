@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,6 +44,7 @@ import com.footballintelligence.core.model.ChatMessage
 import com.footballintelligence.core.model.MessageRole
 import com.footballintelligence.core.model.SourceCitation
 import com.footballintelligence.core.ui.BackButton
+import com.footballintelligence.core.ui.KickoffLoader
 import com.footballintelligence.feature.assistant.resources.Res
 import com.footballintelligence.feature.assistant.resources.assistant_title
 import com.footballintelligence.feature.assistant.resources.cd_message_input
@@ -132,7 +132,7 @@ private fun ChatContent(
             if (isSending) {
                 item {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
-                        CircularProgressIndicator(modifier = Modifier.padding(8.dp))
+                        KickoffLoader(size = 36.dp, modifier = Modifier.padding(8.dp))
                     }
                 }
             }

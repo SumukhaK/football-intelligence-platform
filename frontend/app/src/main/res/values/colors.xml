@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Launcher icon background: pitch green -->
+    <color name="ic_launcher_background">#2E7D32</color>
+    <!-- Kick-off launch screen background: brand green -->
+    <color name="splash_background">#1B5E20</color>
+</resources>

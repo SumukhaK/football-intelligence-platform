@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+: the Kick-off ring fills in while the app starts (under 1 second). -->
+    <style name="Theme.FootballIntelligence.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/avd_kickoff</item>
+        <item name="windowSplashScreenAnimationDuration">700</item>
+        <item name="postSplashScreenTheme">@style/Theme.FootballIntelligence</item>
+    </style>
+</resources>

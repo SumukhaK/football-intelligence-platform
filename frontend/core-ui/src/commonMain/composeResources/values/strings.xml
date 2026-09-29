@@ -9,4 +9,5 @@
     <string name="status_offline">%1$s: Offline</string>
     <string name="cd_back">Back</string>
     <string name="offline_banner">You're offline. Showing data saved %1$s.</string>
+    <string name="cd_loading">Loading</string>
 </resources>

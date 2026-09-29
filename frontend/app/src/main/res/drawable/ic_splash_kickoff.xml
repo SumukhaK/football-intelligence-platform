@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kick-off launch icon, fully drawn: home, draw and away arcs around the ball.
+     Shown as-is before Android 12, and as the final frame of avd_kickoff after it. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:rotation="-90">
+        <path
+            android:pathData="M79,54 A25,25 0 1 1 29,54 A25,25 0 1 1 79,54"
+            android:strokeWidth="7"
+            android:strokeColor="#7CDB85"
+            android:trimPathStart="0"
+            android:trimPathEnd="0.47" />
+        <path
+            android:pathData="M79,54 A25,25 0 1 1 29,54 A25,25 0 1 1 79,54"
+            android:strokeWidth="7"
+            android:strokeColor="#F1F8EE"
+            android:trimPathStart="0.5"
+            android:trimPathEnd="0.72" />
+        <path
+            android:pathData="M79,54 A25,25 0 1 1 29,54 A25,25 0 1 1 79,54"
+            android:strokeWidth="7"
+            android:strokeColor="#FFD54F"
+            android:trimPathStart="0.75"
+            android:trimPathEnd="0.97" />
+    </group>
+    <path
+        android:pathData="M67,54 A13,13 0 1 1 41,54 A13,13 0 1 1 67,54 Z"
+        android:fillColor="#FFFFFF" />
+    <path
+        android:pathData="M54,48.5 L59.2,52.3 L57.2,58.4 L50.8,58.4 L48.8,52.3 Z"
+        android:fillColor="#1B5E20" />
+</vector>

@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.FootballIntelligence" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- Kick-off launch screen (AndroidX SplashScreen, ADR 016). Before Android 12 the
+         static ring is shown; values-v31 swaps in the animated one. -->
+    <style name="Theme.FootballIntelligence.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_kickoff</item>
+        <item name="postSplashScreenTheme">@style/Theme.FootballIntelligence</item>
+    </style>
 </resources>

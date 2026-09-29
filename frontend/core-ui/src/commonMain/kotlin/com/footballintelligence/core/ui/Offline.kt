@@ -8,16 +8,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -65,10 +69,28 @@ fun RefreshableContent(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
+    val state = rememberPullToRefreshState()
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = onRefresh,
         modifier = modifier.fillMaxSize(),
+        state = state,
+        indicator = {
+            // The Kick-off ring replaces the default spinner, fading in as the user pulls.
+            val pulled = state.distanceFraction.coerceIn(0f, 1f)
+            if (isRefreshing || pulled > 0f) {
+                Surface(
+                    shape = CircleShape,
+                    shadowElevation = 3.dp,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 12.dp)
+                        .graphicsLayer { alpha = if (isRefreshing) 1f else pulled },
+                ) {
+                    KickoffLoader(size = 34.dp, modifier = Modifier.padding(6.dp))
+                }
+            }
+        },
     ) {
         Box(Modifier.fillMaxSize()) { content() }
     }

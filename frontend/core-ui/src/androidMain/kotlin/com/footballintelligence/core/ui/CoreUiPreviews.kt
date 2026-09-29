@@ -1,8 +1,11 @@
 package com.footballintelligence.core.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 
 @Preview
 @Composable
@@ -17,6 +20,18 @@ private fun ErrorViewPreview() {
 private fun LoadingViewPreview() {
     PreviewSurface {
         LoadingView()
+    }
+}
+
+@Preview
+@Composable
+private fun KickoffLoaderPreview() {
+    PreviewSurface {
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            KickoffLoader(size = 24.dp)
+            KickoffLoader(size = 40.dp)
+            KickoffLoader()
+        }
     }
 }
 
