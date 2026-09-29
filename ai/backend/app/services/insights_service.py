@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict
+import logging
+from dataclasses import asdict, dataclass
 from datetime import date
 from pathlib import Path
 
 import pandas as pd
 
-from backend.app.exceptions import UnknownTeamError
+from backend.app.exceptions import InsightsNotAvailableError, UnknownTeamError
 from backend.app.schemas.insights import (
     ExpectedGoals,
     GoalMarketsSchema,
@@ -22,36 +23,60 @@ from goals.dixon_coles import DixonColesParams, fit_dixon_coles
 from goals.insights import fixture_insight
 from inference.fixture_features import find_latest_dataset
 
+logger = logging.getLogger(__name__)
 
-class InsightsService:
-    """Answers POST /insights for the served competition."""
 
-    def __init__(self, params: DixonColesParams, season: str, teams: list[str]) -> None:
-        """Initialise with a fitted model and the season's valid team names."""
-        self._params = params
-        self._season = season
-        self._teams = frozenset(teams)
+@dataclass(frozen=True)
+class LeagueGoalsModel:
+    """One league's fitted goals model and its latest season's teams."""
+
+    params: DixonColesParams
+    season: str
+    teams: frozenset[str]
 
     @property
     def model_version(self) -> str:
         """Version tag of the fitted goals model."""
-        return f"dc-{self._params.fitted_before}"
+        return f"dc-{self.params.fitted_before}"
 
-    def insights(self, request: InsightsRequest) -> InsightsResponse:
-        """Return the goals-model view of one fixture.
+
+class InsightsService:
+    """Answers POST /insights for every league with a fitted goals model."""
+
+    def __init__(self, leagues: dict[str, LeagueGoalsModel]) -> None:
+        """Initialise with a fitted goals model per league name."""
+        self._leagues = leagues
+
+    def has(self, competition: str) -> bool:
+        """True when ``competition`` has a fitted goals model."""
+        return competition in self._leagues
+
+    @property
+    def model_versions(self) -> dict[str, str]:
+        """Goals-model version per league."""
+        return {name: m.model_version for name, m in self._leagues.items()}
+
+    def insights(self, request: InsightsRequest, competition: str) -> InsightsResponse:
+        """Return the goals-model view of one fixture in ``competition``.
 
         Raises:
-            UnknownTeamError: If a team did not play in the latest season.
+            InsightsNotAvailableError: If the league has no fitted model.
+            UnknownTeamError: If a team did not play in the league's latest season.
         """
+        league = self._leagues.get(competition)
+        if league is None:
+            raise InsightsNotAvailableError(f"No goals model fitted for {competition}.")
         for team in (request.home_team, request.away_team):
-            if team not in self._teams:
-                raise UnknownTeamError(team, self._params.competition, self._season)
-        insight = fixture_insight(self._params, request.home_team, request.away_team)
+            if team not in league.teams:
+                raise UnknownTeamError(team, competition, league.season)
+        params = league.params
+        insight = fixture_insight(params, request.home_team, request.away_team)
         return InsightsResponse(
+            competition=competition,
             home_team=insight.home_team,
             away_team=insight.away_team,
-            model_version=self.model_version,
-            fitted_before=self._params.fitted_before,
+            model_version=league.model_version,
+            fitted_before=params.fitted_before,
             expected_goals=ExpectedGoals(
                 home=insight.expected_home_goals, away=insight.expected_away_goals
             ),
@@ -70,24 +95,31 @@ class InsightsService:
 
 
 def load_insights_service(
-    directory: Path, competition: str, today: date | None = None
+    directory: Path, competitions: list[str], today: date | None = None
 ) -> InsightsService:
-    """Fit the goals model on the newest dataset's matches before ``today``.
+    """Fit one goals model per league on the newest dataset, before ``today``.
 
-    Fitting takes well under a second, so the server refits at every start and
-    picks up each data refresh (ADR 009).
+    Fitting takes well under a second per league, so the server refits at every
+    start and refresh (ADR 009, ADR 012). Leagues absent from the data are
+    skipped with a warning.
 
     Raises:
         FileNotFoundError: If ``directory`` holds no match dataset.
-        KeyError: If the competition is not in the data.
+        KeyError: If none of the leagues are in the data.
     """
     matches = pd.read_csv(find_latest_dataset(directory), parse_dates=["match_date"])
-    league = matches[matches["competition"] == competition]
-    if league.empty:
-        raise KeyError(competition)
-    season = str(league["season"].max())
-    current = league[league["season"] == season]
-    teams = sorted(set(current["home_team"]) | set(current["away_team"]))
     cutoff = pd.Timestamp(today or date.today())
-    params = fit_dixon_coles(league, cutoff, competition=competition)
-    return InsightsService(params, season, teams)
+    leagues = {}
+    for name in competitions:
+        league = matches[matches["competition"] == name]
+        if league.empty:
+            logger.warning("No matches for %s; no goals model fitted.", name)
+            continue
+        season = str(league["season"].max())
+        current = league[league["season"] == season]
+        teams = frozenset(current["home_team"]) | frozenset(current["away_team"])
+        params = fit_dixon_coles(league, cutoff, competition=name)
+        leagues[name] = LeagueGoalsModel(params, season, teams)
+    if not leagues:
+        raise KeyError(", ".join(competitions))
+    return InsightsService(leagues)

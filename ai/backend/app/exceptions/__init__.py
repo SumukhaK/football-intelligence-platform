@@ -46,6 +46,33 @@ class UnknownTeamError(Exception):
         super().__init__(f"'{team}' did not play in {competition} {season}")
 
 
+class UnknownCompetitionError(Exception):
+    """Raised when a request names a league the API does not serve."""
+
+    def __init__(self, competition: str, supported: list[str]) -> None:
+        """Record the requested league and the served ones."""
+        self.competition = competition
+        self.supported = supported
+        super().__init__(
+            f"'{competition}' is not served; choose one of: {', '.join(supported)}"
+        )
+
+
+def unknown_competition_handler(_request: Request, exc: Exception) -> JSONResponse:
+    """Return a 422 naming the unknown league and the served ones."""
+    assert isinstance(exc, UnknownCompetitionError)
+    logger.warning("Unknown competition: %s", exc)
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": "Unknown competition",
+            "detail": str(exc),
+            "competition": exc.competition,
+            "supported": exc.supported,
+        },
+    )
+
+
 def fixture_features_not_available_handler(
     _request: Request, exc: Exception
 ) -> JSONResponse:

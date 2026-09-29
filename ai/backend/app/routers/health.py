@@ -38,7 +38,9 @@ def health(request: Request) -> HealthResponse:
         fixture_features_available=fixture_service is not None,
         insights_available=insights,
         matches_through=(
-            fixture_service.matches_through() if fixture_service is not None else None
+            fixture_service.matches_through(get_settings().default_competition)
+            if fixture_service is not None
+            else None
         ),
         last_refresh_at=outcome.attempted_at.isoformat() if outcome else None,
         last_refresh_error=outcome.error if outcome else None,

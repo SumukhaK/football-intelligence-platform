@@ -17,6 +17,7 @@ from backend.app.exceptions import (
     FixtureFeaturesNotAvailableError,
     InsightsNotAvailableError,
     ModelNotAvailableError,
+    UnknownCompetitionError,
     UnknownTeamError,
     assistant_not_available_handler,
     feature_missing_handler,
@@ -24,10 +25,12 @@ from backend.app.exceptions import (
     insights_not_available_handler,
     model_not_available_handler,
     unexpected_error_handler,
+    unknown_competition_handler,
     unknown_team_handler,
 )
 from backend.app.routers import (
     assistant,
+    competitions,
     explainability,
     health,
     insights,
@@ -153,10 +156,10 @@ def _load_match_data(app: FastAPI) -> None:
     """(Re)build every service that reads the match history."""
     settings = get_settings()
     app.state.fixture_feature_service = _load_fixture_features(
-        settings.matches_dir, settings.served_competition
+        settings.matches_dir, settings.served_competitions
     )
     app.state.insights_service = _load_insights(
-        settings.matches_dir, settings.served_competition
+        settings.matches_dir, settings.served_competitions
     )
 
 
@@ -195,7 +198,7 @@ def _start_live_refresh(app: FastAPI) -> asyncio.Task[None] | None:
     return asyncio.create_task(service.run_daily(settings.live_refresh_hour, due))
 
 
-def _load_fixture_features(directory: Path, competition: str) -> object | None:
+def _load_fixture_features(directory: Path, competitions: list[str]) -> object | None:
     """Load match history for server-side features; None if unavailable."""
     try:
         from backend.app.services.fixture_feature_service import (
@@ -204,23 +207,31 @@ def _load_fixture_features(directory: Path, competition: str) -> object | None:
         from inference.fixture_features import FixtureFeatureBuilder
 
         builder = FixtureFeatureBuilder.from_directory(directory)
-        season, names = builder.teams(competition)
-        logger.info(
-            "Match history loaded: %s %s, %d teams", competition, season, len(names)
-        )
-        return FixtureFeatureService(builder, competition)
+        for competition in competitions:
+            try:
+                season, names = builder.teams(competition)
+            except KeyError:
+                logger.warning("No match history for %s", competition)
+                continue
+            logger.info(
+                "Match history loaded: %s %s, %d teams",
+                competition,
+                season,
+                len(names),
+            )
+        return FixtureFeatureService(builder)
     except Exception as exc:  # noqa: BLE001 — degrade to supplied features only
         logger.warning("Match history not loaded from %s: %s", directory, exc)
         return None
 
 
-def _load_insights(directory: Path, competition: str) -> object | None:
-    """Fit the goals model from match history; None if that fails."""
+def _load_insights(directory: Path, competitions: list[str]) -> object | None:
+    """Fit a goals model per league from match history; None if that fails."""
     try:
         from backend.app.services.insights_service import load_insights_service
 
-        service = load_insights_service(directory, competition)
-        logger.info("Goals model fitted: %s", service.model_version)
+        service = load_insights_service(directory, competitions)
+        logger.info("Goals models fitted: %s", service.model_versions)
         return service
     except Exception as exc:  # noqa: BLE001 — /insights answers 503 instead
         logger.warning("Goals model not fitted from %s: %s", directory, exc)
@@ -234,8 +245,9 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="Football Intelligence Platform API",
         description=(
-            "REST API exposing XGBoost match outcome predictions and "
-            "SHAP-driven feature explanations for Premier League matches."
+            "REST API exposing XGBoost match outcome predictions, "
+            "SHAP-driven explanations and goals-model insights for the top "
+            "five European leagues."
         ),
         version=settings.api_version,
         lifespan=lifespan,
@@ -253,6 +265,7 @@ def create_app() -> FastAPI:
         FixtureFeaturesNotAvailableError, fixture_features_not_available_handler
     )
     app.add_exception_handler(UnknownTeamError, unknown_team_handler)
+    app.add_exception_handler(UnknownCompetitionError, unknown_competition_handler)
     app.add_exception_handler(InsightsNotAvailableError, insights_not_available_handler)
     app.add_exception_handler(Exception, unexpected_error_handler)
 
@@ -261,6 +274,7 @@ def create_app() -> FastAPI:
     app.include_router(prediction.router)
     app.include_router(explainability.router)
     app.include_router(teams.router)
+    app.include_router(competitions.router)
     app.include_router(insights.router)
     app.include_router(assistant.router)
 

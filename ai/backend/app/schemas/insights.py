@@ -14,6 +14,14 @@ class InsightsRequest(BaseModel):
     away_team: str = Field(
         ..., min_length=1, description="Name of the away team.", examples=["Chelsea"]
     )
+    competition: str | None = Field(
+        default=None,
+        description=(
+            "League of the fixture, as listed by GET /competitions. "
+            "Defaults to the Premier League (ADR 012)."
+        ),
+        examples=["Bundesliga"],
+    )
 
 
 class ExpectedGoals(BaseModel):
@@ -66,6 +74,9 @@ class StrengthsSchema(BaseModel):
 class InsightsResponse(BaseModel):
     """Response body for POST /insights."""
 
+    competition: str = Field(
+        default="", description="League of the fixture.", examples=["Premier League"]
+    )
     home_team: str
     away_team: str
     model_version: str = Field(

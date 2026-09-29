@@ -11,11 +11,13 @@ from typing import Annotated
 
 from fastapi import Depends, Request
 
+from backend.app.config import get_settings
 from backend.app.exceptions import (
     FixtureFeaturesNotAvailableError,
     InsightsNotAvailableError,
     ModelNotAvailableError,
 )
+from backend.app.services.competitions import ServedCompetitions
 from backend.app.services.explanation_service import ExplanationService
 from backend.app.services.fixture_feature_service import FixtureFeatureService
 from backend.app.services.insights_service import InsightsService
@@ -90,6 +92,22 @@ def get_insights_service(request: Request) -> InsightsService:
     return service
 
 
+def get_served_competitions() -> ServedCompetitions:
+    """Return the served leagues and the default, from configuration."""
+    settings = get_settings()
+    return ServedCompetitions(
+        tuple(settings.served_competitions), settings.default_competition
+    )
+
+
+def get_optional_insights_service(request: Request) -> InsightsService | None:
+    """Return the InsightsService, or None when no goals model is fitted."""
+    service: InsightsService | None = getattr(
+        request.app.state, "insights_service", None
+    )
+    return service
+
+
 PredictionServiceDep = Annotated[PredictionService, Depends(get_prediction_service)]
 ExplanationServiceDep = Annotated[ExplanationService, Depends(get_explanation_service)]
 OptionalFixtureFeatureServiceDep = Annotated[
@@ -99,3 +117,7 @@ FixtureFeatureServiceDep = Annotated[
     FixtureFeatureService, Depends(get_fixture_feature_service)
 ]
 InsightsServiceDep = Annotated[InsightsService, Depends(get_insights_service)]
+ServedCompetitionsDep = Annotated[ServedCompetitions, Depends(get_served_competitions)]
+OptionalInsightsServiceDep = Annotated[
+    InsightsService | None, Depends(get_optional_insights_service)
+]

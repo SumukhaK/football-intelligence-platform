@@ -1,6 +1,6 @@
 # ADR 012 — Serve All Five Leagues in the API and App
 
-**Status:** Proposed
+**Status:** Accepted
 
 **Supersedes:** —
 **Superseded by:** —

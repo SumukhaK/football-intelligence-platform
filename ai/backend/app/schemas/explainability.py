@@ -30,6 +30,9 @@ class FeatureContributionSchema(BaseModel):
 class ExplanationResponse(BaseModel):
     """Response body for POST /explain."""
 
+    competition: str = Field(
+        default="", description="League of the fixture.", examples=["Premier League"]
+    )
     home_team: str = Field(..., description="Home team name.")
     away_team: str = Field(..., description="Away team name.")
     predicted_result: str = Field(

@@ -20,14 +20,17 @@ from backend.app.services.fixture_feature_service import (
 from inference.fixture_features import FixtureFeatureBuilder
 
 _COMP = "Premier League"
+_BUNDESLIGA = "Bundesliga"
 
 
-def _row(day: str, season: str, home: str, away: str, res: str) -> dict[str, Any]:
+def _row(
+    day: str, season: str, home: str, away: str, res: str, comp: str = _COMP
+) -> dict[str, Any]:
     goals = {"H": (2, 0), "D": (1, 1), "A": (0, 1)}[res]
     return {
         "match_date": day,
         "season": season,
-        "competition": _COMP,
+        "competition": comp,
         "home_team": home,
         "away_team": away,
         "full_time_home_goals": goals[0],
@@ -44,10 +47,13 @@ def service() -> FixtureFeatureService:
             _row("2025-08-16", "2025/26", "Chelsea", "Burnley", "D"),
             _row("2026-08-22", "2026/27", "Leeds", "Chelsea", "A"),
             _row("2026-08-22", "2026/27", "Arsenal", "Sunderland", "H"),
+            _row("2025-08-23", "2025/26", "Bayern", "Leipzig", "H", _BUNDESLIGA),
+            _row("2026-08-29", "2026/27", "Leipzig", "Dortmund", "D", _BUNDESLIGA),
+            _row("2026-08-29", "2026/27", "Bayern", "Freiburg", "H", _BUNDESLIGA),
         ]
     )
     return FixtureFeatureService(
-        FixtureFeatureBuilder(matches), _COMP, today=lambda: date(2026, 9, 28)
+        FixtureFeatureBuilder(matches), today=lambda: date(2026, 9, 28)
     )
 
 
@@ -59,38 +65,40 @@ class TestFixtureFeatureService:
     def test_supplied_features_pass_through(
         self, service: FixtureFeatureService
     ) -> None:
-        assert service.features_for(_request(features={"x": 1.0})) == {"x": 1.0}
+        assert service.features_for(_request(features={"x": 1.0}), _COMP) == {"x": 1.0}
 
     def test_features_are_computed_from_history(
         self, service: FixtureFeatureService
     ) -> None:
-        features = service.features_for(_request())
+        features = service.features_for(_request(), _COMP)
         assert len(features) == 42
         assert features["h2h_meetings"] == 0
         assert features["home_league_points"] == 3
         assert features["away_league_points"] == 3
 
     def test_match_date_limits_history(self, service: FixtureFeatureService) -> None:
-        features = service.features_for(_request(match_date=date(2026, 8, 20)))
+        features = service.features_for(_request(match_date=date(2026, 8, 20)), _COMP)
         assert features["home_league_points"] == 0
 
     def test_unknown_team_raises(self, service: FixtureFeatureService) -> None:
         with pytest.raises(UnknownTeamError) as err:
             service.features_for(
-                PredictionRequest(home_team="Burnley", away_team="Arsenal")
+                PredictionRequest(home_team="Burnley", away_team="Arsenal"), _COMP
             )
         assert err.value.team == "Burnley"
         assert err.value.season == "2026/27"
 
     def test_teams_are_the_latest_season(self, service: FixtureFeatureService) -> None:
-        response = service.teams()
+        response = service.teams(_COMP)
         assert response.season == "2026/27"
         assert response.teams == ["Arsenal", "Chelsea", "Leeds", "Sunderland"]
 
     def test_resolve_without_service_needs_features(self) -> None:
-        assert resolve_features(_request(features={"x": 1.0}), None) == {"x": 1.0}
+        assert resolve_features(_request(features={"x": 1.0}), None, _COMP) == {
+            "x": 1.0
+        }
         with pytest.raises(FixtureFeaturesNotAvailableError):
-            resolve_features(_request(), None)
+            resolve_features(_request(), None, _COMP)
 
 
 @pytest.fixture()
@@ -119,7 +127,7 @@ class TestEndpoints:
         self, fixture_client: TestClient, service: FixtureFeatureService
     ) -> None:
         body = fixture_client.get("/health").json()
-        assert body["matches_through"] == service.matches_through()
+        assert body["matches_through"] == service.matches_through(_COMP)
         assert body["last_refresh_at"] is None
 
     def test_teams_503_without_history(self, client: TestClient) -> None:
