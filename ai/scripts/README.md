@@ -13,6 +13,10 @@ One-shot scripts that are run from the command line rather than imported as libr
 - Scripts must be idempotent where possible.
 - No script downloads data or modifies `datasets/raw/` without user confirmation.
 
+## Contents
+
+- `draw_feature_experiment.py` — retrains with six candidate draw features and reports the log-loss change; the features were not adopted (`docs/reports/draw-handling.md`).
+
 ## Future Contents
 
 - `setup_env.sh` — installs Python dependencies and configures pre-commit hooks.
