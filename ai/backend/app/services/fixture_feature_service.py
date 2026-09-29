@@ -45,6 +45,10 @@ class FixtureFeatureService:
         except AIUnknownTeamError as exc:
             raise UnknownTeamError(exc.team, exc.competition, exc.season) from exc
 
+    def matches_through(self) -> str:
+        """Date of the latest served-competition match in the loaded history."""
+        return self._builder.latest_match_date(self._competition)
+
     def teams(self) -> TeamsResponse:
         """Return the latest season's teams for the served competition."""
         season, teams = self._builder.teams(self._competition)

@@ -12,6 +12,23 @@ from ingestion.storage import DatasetStorage
 from shared.types import DatasetName, DatasetVersion, ProviderId, SchemaVersion
 
 # ---------------------------------------------------------------------------
+# Network isolation
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=True)
+def no_live_refresh(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep app startup in tests from downloading data (ADR 013).
+
+    Tests that run the lifespan would otherwise start the daily refresh and,
+    when the real dataset is stale, download today's results into it.
+    """
+    import backend.app.main as main
+
+    monkeypatch.setattr(main, "_start_live_refresh", lambda app: None)
+
+
+# ---------------------------------------------------------------------------
 # DataPaths / storage fixtures
 # ---------------------------------------------------------------------------
 

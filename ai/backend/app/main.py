@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -49,12 +50,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.explanation_service = None
     app.state.registry = None
     app.state.chat_service = None
-    app.state.fixture_feature_service = _load_fixture_features(
-        settings.matches_dir, settings.served_competition
-    )
-    app.state.insights_service = _load_insights(
-        settings.matches_dir, settings.served_competition
-    )
+    _load_match_data(app)
+    refresh_task = _start_live_refresh(app)
 
     if settings.model_path.exists():
         try:
@@ -147,7 +144,55 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     yield
 
+    if refresh_task is not None:
+        refresh_task.cancel()
     logger.info("Shutting down Football Intelligence backend.")
+
+
+def _load_match_data(app: FastAPI) -> None:
+    """(Re)build every service that reads the match history."""
+    settings = get_settings()
+    app.state.fixture_feature_service = _load_fixture_features(
+        settings.matches_dir, settings.served_competition
+    )
+    app.state.insights_service = _load_insights(
+        settings.matches_dir, settings.served_competition
+    )
+
+
+def _start_live_refresh(app: FastAPI) -> asyncio.Task[None] | None:
+    """Schedule the daily data refresh (ADR 013); None when turned off."""
+    settings = get_settings()
+    app.state.live_refresh_service = None
+    if settings.live_refresh_hour is None:
+        logger.info("Daily data refresh is off.")
+        return None
+    from datetime import date, datetime
+
+    from backend.app.services.live_refresh_service import LiveRefreshService, is_due
+    from inference.fixture_features import find_latest_dataset
+    from ingestion.live_refresh import dataset_built_at, refresh_live_dataset
+
+    def clock() -> datetime:
+        return datetime.now().astimezone()
+
+    service = LiveRefreshService(
+        refresh=lambda: refresh_live_dataset(settings.datasets_dir, date.today()),
+        reload=lambda: _load_match_data(app),
+        clock=clock,
+    )
+    app.state.live_refresh_service = service
+    try:
+        built = dataset_built_at(find_latest_dataset(settings.matches_dir))
+    except FileNotFoundError:
+        built = None
+    due = is_due(built, clock(), settings.live_refresh_hour)
+    logger.info(
+        "Daily data refresh at %02d:00; refreshing now: %s",
+        settings.live_refresh_hour,
+        due,
+    )
+    return asyncio.create_task(service.run_daily(settings.live_refresh_hour, due))
 
 
 def _load_fixture_features(directory: Path, competition: str) -> object | None:

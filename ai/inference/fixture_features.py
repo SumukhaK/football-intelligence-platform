@@ -91,6 +91,14 @@ class FixtureFeatureBuilder:
         season = str(self._by_competition[competition]["season"].max())
         return season, self._season_teams(competition, season)
 
+    def latest_match_date(self, competition: str) -> str:
+        """Date of the most recent match held for ``competition`` (YYYY-MM-DD).
+
+        Raises:
+            KeyError: If the competition is not in the data.
+        """
+        return str(self._by_competition[competition]["match_date"].max())[:10]
+
     @property
     def cached_fixtures(self) -> int:
         """Return how many fixtures' features are cached."""

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Tuned on 2022/23 in docs/reports/draw-handling.md (ADR 011).
@@ -22,6 +23,9 @@ class Settings(BaseSettings):
     model_path: Path = Path("../ai/models/latest/model.joblib")
     registry_path: Path = Path("../ai/models/registry.json")
     matches_dir: Path = Path("../datasets/processed/football_data")
+    datasets_dir: Path = Path("../datasets")
+    # Local hour of the daily data refresh (ADR 013); unset to turn it off.
+    live_refresh_hour: int | None = Field(default=6, ge=0, le=23)
     served_competition: str = "Premier League"
     draw_possible_threshold: float = DEFAULT_DRAW_POSSIBLE_THRESHOLD
     api_version: str = "0.1.0"
