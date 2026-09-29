@@ -71,6 +71,8 @@ ai/explanations/
 models/evaluation/
 models/registry.json
 *.csv
+# Reviewed reference tables are versioned with the code (ADR 006).
+!datasets/schemas/*.csv
 *.parquet
 *.feather
 
