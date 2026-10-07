@@ -32,12 +32,12 @@ _DEFAULT_FEATURE_MATRIX = "datasets/features/feature_matrix.parquet"
 _DEFAULT_MODELS_DIR = "models"
 
 
-def _make_version() -> str:
+def make_version() -> str:
     """Generate a sortable UTC timestamp version string."""
     return datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
 
 
-def _extract_dataset_version(feature_matrix_path: Path) -> str:
+def extract_dataset_version(feature_matrix_path: Path) -> str:
     """Read source_dataset_version from the sibling feature_metadata.json."""
     metadata_path = feature_matrix_path.parent / "feature_metadata.json"
     if metadata_path.exists():
@@ -185,7 +185,7 @@ class TrainingPipeline:
         backend serves from, are left untouched.
         """
         config = self._config
-        version = _make_version()
+        version = make_version()
 
         feature_matrix_path = cwd / config.feature_matrix_path
         models_dir = cwd / config.models_dir
@@ -270,7 +270,7 @@ class TrainingPipeline:
                 report=report,
                 config=config,
                 version=version,
-                source_version=_extract_dataset_version(feature_matrix_path),
+                source_version=extract_dataset_version(feature_matrix_path),
             )
 
         return {

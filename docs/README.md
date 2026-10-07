@@ -57,6 +57,7 @@ Maintained by the project architect. The implementation engineer updates documen
 | [Multi-League Model Comparison](reports/multi-league-retraining-comparison.md) | Candidate vs current model, bookmaker and priors, with the promotion verdict |
 | [2026/27 Live Check](reports/in-season-2026-27.md) | Served model scored on 2026/27 matches played up to 20 September 2026 (checked 28 September) |
 | [Draw Handling](reports/draw-handling.md) | Why draws are a tag, not a pick |
+| [Refit on All Seasons](reports/refit-all-seasons.md) | Frozen-split model vs a refit on every season through 2025/26, on the same 250 matches of 2026/27 (ADR 017) |
 | [Goals Model](reports/goals-model.md) | Dixon-Coles scoreline model and its evaluation |
 | [Kaggle Extras](reports/kaggle-extras.md) | xG, FIFA ratings and Champions League rest days tested; none adopted |
 | [UI/UX Review](reports/ui-ux-review.md) | App review against mobile design guidelines |

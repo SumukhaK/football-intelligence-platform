@@ -97,7 +97,8 @@ def paired_bootstrap_delta(
 ) -> BootstrapDelta:
     """Bootstrap metric(A) - metric(B) on the same resampled rows.
 
-    A negative delta means forecast A scores better (lower) than B.
+    A negative delta means forecast A scores better (lower) than B, except
+    for ``accuracy``, where higher is better.
     """
     labels = np.asarray(y_true)
     score = _METRICS[metric]
@@ -124,10 +125,16 @@ def _log_loss(y: Labels, probs: np.ndarray, classes: list[str]) -> float:
     return float(log_loss(np.asarray(y), probs, labels=classes))
 
 
+def _accuracy(y: Labels, probs: np.ndarray, classes: list[str]) -> float:
+    """Share of rows whose most likely class happened."""
+    return float(np.mean(np.asarray(classes)[probs.argmax(axis=1)] == np.asarray(y)))
+
+
 _METRICS: dict[str, Callable[[Labels, np.ndarray, list[str]], float]] = {
     "log_loss": _log_loss,
     "rps": ranked_probability_score,
     "brier": brier_score,
+    "accuracy": _accuracy,
 }
 
 

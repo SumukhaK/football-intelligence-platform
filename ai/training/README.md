@@ -14,6 +14,8 @@ XGBoost training pipeline for the match outcome prediction model.
 | `model_card.py` | Writes `model_card.md` for each run: data, split, settings, metrics |
 | `tuning.py` | Hyperparameter grid search by season walk-forward CV on training seasons only (CLI) |
 | `pipeline.py` | `TrainingPipeline` — end-to-end orchestrator; CLI entry point |
+| `refit.py` | Serving refit: retrains a chosen run on every completed season with its best tree count, without promoting (CLI; ADR 017) |
+| `promote_refit.py` | Serves a backtested refit: copies it to `latest/` and registers it with its current-season backtest scores (CLI; ADR 017) |
 
 ## Features
 
