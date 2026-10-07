@@ -3,7 +3,8 @@
 **Date:** 2026-09-28
 **Model:** `20260928_120015` (served at the time, now replaced by `20260928_123224`, see Rerun; trained on 2000/01–2021/22, never retrained on later data)
 **Matches:** every played league match of 2026/27 in the five leagues, up to 2026-09-20 (250 matches)
-**Method:** each match is predicted from features built only from matches before it, using the training feature pipeline (`python -m evaluation.in_season_cli`). Bookmaker probabilities are a benchmark only.
+**Method:** each match is predicted from features built only from matches before it, using the training feature pipeline (`python -m evaluation.in_season_cli`).
+**Benchmark:** the bookmaker is Bet365's pre-match odds (football-data.co.uk `B365H`, `B365D`, `B365A`) with the margin removed by normalising the implied probabilities to sum to 1. It is a benchmark only and never a model input.
 
 ## Rerun with the current model
 
@@ -13,6 +14,36 @@ unchanged at 131/250 (52.4%), with log loss 0.975 against the bookmakers'
 0.981. Two matches flip: Serie A becomes 31/50 (62.0%) and Ligue 1 becomes
 25/45 (55.6%). The root README shows these numbers. The tables below are
 from the first run, with model `20260928_120015`.
+
+## Confidence ranges and an Elo-only baseline
+
+Rescored on 2026-10-07 from the same saved features (model `20260928_123224`,
+250 matches up to 2026-09-20). Ranges are 95% bootstrap intervals over 2,000
+resamples of the 250 matches. The Elo-only baseline is a multinomial logistic
+regression on the pre-match Elo gap (home minus away), fitted on every
+completed season before 2026/27, so it shows what the model adds over ratings
+alone.
+
+| Forecast | Accuracy | Log loss | RPS | Brier |
+|---|---|---|---|---|
+| Our model | 52.4% (46.4% to 58.8%) | 0.975 (0.930 to 1.020) | 0.199 (0.185 to 0.213) | 0.578 (0.546 to 0.610) |
+| Elo only | 48.8% (42.8% to 55.2%) | 1.005 (0.956 to 1.056) | 0.207 (0.192 to 0.223) | 0.598 (0.563 to 0.634) |
+| Bet365 | 51.6% (45.6% to 57.6%) | 0.981 (0.925 to 1.037) | 0.201 (0.185 to 0.218) | 0.584 (0.544 to 0.623) |
+
+Paired bootstrap of our model minus each benchmark on the same resampled
+matches. Negative is better for log loss, RPS and Brier; positive is better
+for accuracy (in percentage points).
+
+| Model minus | Accuracy | Log loss | RPS | Brier |
+|---|---|---|---|---|
+| Bet365 | +0.8 (−2.4 to +4.0) | −0.006 (−0.027 to +0.016) | −0.003 (−0.009 to +0.004) | −0.006 (−0.021 to +0.009) |
+| Elo only | +3.7 (+0.8 to +6.8) | −0.030 (−0.051 to −0.010) | −0.009 (−0.016 to −0.003) | −0.021 (−0.034 to −0.008) |
+
+- **Level with Bet365.** Every interval for model minus Bet365 includes zero.
+- **Clearly better than Elo alone.** Every interval for model minus Elo only
+  excludes zero, so the other features add real information on these matches.
+- **The ranges are wide.** With 250 matches, accuracy alone is only known to
+  about ±6 points, so the per-league tables below say little on their own.
 
 ## Results
 
