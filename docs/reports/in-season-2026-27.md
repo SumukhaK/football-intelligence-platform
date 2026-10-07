@@ -36,8 +36,8 @@ for accuracy (in percentage points).
 
 | Model minus | Accuracy | Log loss | RPS | Brier |
 |---|---|---|---|---|
-| Bet365 | +0.8 (−2.4 to +4.0) | −0.006 (−0.027 to +0.016) | −0.003 (−0.009 to +0.004) | −0.006 (−0.021 to +0.009) |
-| Elo only | +3.7 (+0.8 to +6.8) | −0.030 (−0.051 to −0.010) | −0.009 (−0.016 to −0.003) | −0.021 (−0.034 to −0.008) |
+| Bet365 | +0.8 (−2.4 to +4.0) | −0.006 (−0.027 to +0.015) | −0.003 (−0.009 to +0.004) | −0.006 (−0.021 to +0.009) |
+| Elo only | +3.7 (+0.8 to +6.8) | −0.030 (−0.051 to −0.010) | −0.009 (−0.015 to −0.003) | −0.021 (−0.034 to −0.008) |
 
 - **Level with Bet365.** Every interval for model minus Bet365 includes zero.
 - **Clearly better than Elo alone.** Every interval for model minus Elo only
