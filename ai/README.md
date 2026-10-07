@@ -23,8 +23,9 @@ This directory owns:
 - The FastAPI backend (`backend/`), which serves all of the above.
 - Prompt templates and retrieval configuration.
 - Evaluation scripts for the match and goals models: season-split comparisons,
-  bookmaker benchmarks and in-season backtests. Structured assistant evaluation
-  (faithfulness, hallucination rate) is not built yet.
+  bookmaker benchmarks and in-season backtests. For the assistant: a grounding
+  check that it quotes the API's predictions without inventing numbers, and an
+  abstention check that it says "I don't know" when it should.
 
 ---
 
@@ -210,7 +211,10 @@ All rolling features use `.shift(1)` before `.rolling()` to prevent data leakage
 ## Assistant Package
 
 The `assistant/` package implements the RAG pipeline for the Football Intelligence
-Assistant. It is structured as a series of composable stages:
+Assistant. Besides retrieved documents, the chat model can call tools that run the
+backend's prediction, SHAP and fixtures services, so it quotes the served model's
+numbers (ADR 018; the tools are built in `backend/app/services/assistant_tools.py`).
+It is structured as a series of composable stages:
 
 ```
 assistant/
@@ -219,8 +223,9 @@ assistant/
   embeddings/     # Embedder protocol + OllamaEmbedder
   retrieval/      # VectorStore (numpy, file-persisted) + cosine retrieve()
   prompting/      # System prompt + build_messages()
-  generation/     # Generator protocol + OllamaGenerator
-  services/       # AssistantService — orchestrates the full pipeline
+  generation/     # Generator protocols + OllamaGenerator (plain and tool-calling chat)
+  tools/          # Tool definition and run_tool(): the functions the model may call
+  services/       # AssistantService — retrieve, prompt, run tool calls, answer
   pipeline.py     # AssistantPipeline facade: build_index / load_index / query
   configuration.py  # AssistantSettings (pydantic-settings)
 ```
