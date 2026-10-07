@@ -40,6 +40,7 @@ def trained_model() -> TrainedModel:
     """Trained model for explainability tests (module-scoped to avoid re-training)."""
     df = _make_feature_matrix(n=60)
     config = TrainingConfig(
+        feature_columns=[c for c in df.columns if df[c].dtype.kind == "f"],
         n_estimators=20,
         early_stopping_rounds=5,
         cv_folds=3,

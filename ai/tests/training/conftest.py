@@ -8,6 +8,17 @@ import pytest
 
 from training.configuration import TrainingConfig
 
+FEATURES = [
+    "home_form_wins_last5",
+    "away_form_wins_last5",
+    "home_elo",
+    "away_elo",
+    "home_goals_scored_last5",
+    "away_goals_scored_last5",
+    "home_rest_days",
+    "away_rest_days",
+]
+
 
 def _make_feature_matrix(n: int = 80, seed: int = 42) -> pd.DataFrame:
     """Return a minimal feature matrix with the same shape as production data."""
@@ -45,6 +56,7 @@ def feature_matrix() -> pd.DataFrame:
 def training_config() -> TrainingConfig:
     """Fast training config for tests (fewer estimators, no early stopping risk)."""
     return TrainingConfig(
+        feature_columns=FEATURES,
         n_estimators=20,
         early_stopping_rounds=5,
         cv_folds=3,

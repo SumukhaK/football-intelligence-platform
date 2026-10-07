@@ -6,12 +6,21 @@ XGBoost training pipeline for the match outcome prediction model.
 
 | Module | Responsibility |
 |---|---|
-| `configuration.py` | `TrainingConfig` — all hyper-parameters and path settings |
-| `splitter.py` | Chronological 70/15/15 train/val/test split |
+| `configuration.py` | `TrainingConfig` — hyper-parameters, paths, and the pinned `MODEL_FEATURES` list |
+| `splitter.py` | Train/val/test splits; `get_feature_columns` checks the pinned features against the matrix |
 | `trainer.py` | `ModelTrainer` — fits XGBClassifier, wraps imputer and label encoder |
 | `persistence.py` | Save/load model via joblib; JSON helpers for config and metrics |
 | `registry.py` | Register a completed run into the local JSON model registry |
 | `pipeline.py` | `TrainingPipeline` — end-to-end orchestrator; CLI entry point |
+
+## Features
+
+The model trains on exactly the 42 columns in `MODEL_FEATURES`
+(`training/configuration.py`), in that order. Training stops with an error if a
+pinned feature is missing from the feature matrix, or if the matrix holds a
+numeric column that is neither a feature nor listed in `exclude_columns`
+(odds, goals, match stats). Adding a feature means adding it to the list on
+purpose.
 
 ## CLI
 
