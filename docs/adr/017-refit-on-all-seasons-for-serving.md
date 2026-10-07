@@ -1,6 +1,6 @@
 # ADR 017 — Refit on All Seasons for Serving
 
-**Status:** Proposed
+**Status:** Accepted (2026-10-07)
 
 **Supersedes:** —
 **Superseded by:** —
@@ -56,4 +56,9 @@ far before deciding whether to serve it.
 - Every new completed season means another refit and backtest.
 - The first refit, `20261007_154105`, is in
   [the refit report](../reports/refit-all-seasons.md). On 250 matches of
-  2026/27 it is level with the reporting model.
+  2026/27 it is level with the reporting model. The owner approved the swap on
+  2026-10-07 and it is now the served model; `20260928_123224` stays in
+  `models/runs/` as the reporting model and the rollback.
+- `python -m training.promote_refit` serves a backtested refit: it copies the
+  run to `latest/` and registers it with its current-season backtest scores
+  (`accuracy_2026_27` and similar), since it has no held-out test score.

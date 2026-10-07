@@ -7,7 +7,7 @@ best tree count, and uses no early stopping because nothing is held out.
 
 The run is written to ``runs/<version>`` only. ``latest/`` and the registry,
 which the backend serves from, are left untouched: switching the served model
-is a separate, explicit step.
+is a separate, explicit step (``training.promote_refit``).
 
 Usage:
     uv run python -m training.refit --source-run models/runs/20260928_123224

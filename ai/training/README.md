@@ -13,6 +13,7 @@ XGBoost training pipeline for the match outcome prediction model.
 | `registry.py` | Register a completed run into the local JSON model registry |
 | `pipeline.py` | `TrainingPipeline` — end-to-end orchestrator; CLI entry point |
 | `refit.py` | Serving refit: retrains a chosen run on every completed season with its best tree count, without promoting (CLI; ADR 017) |
+| `promote_refit.py` | Serves a backtested refit: copies it to `latest/` and registers it with its current-season backtest scores (CLI; ADR 017) |
 
 ## Features
 

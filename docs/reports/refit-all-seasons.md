@@ -1,8 +1,8 @@
 # Refit on All Seasons: Backtest on 2026/27 So Far
 
 **Date:** 2026-10-07
-**Reporting model (frozen split):** `20260928_123224`, trained on 2000/01–2021/22 (served today)
-**Serving refit:** `20261007_154105`, trained on 2000/01–2025/26 (46,709 matches), not served
+**Reporting model (frozen split):** `20260928_123224`, trained on 2000/01–2021/22 (served until 2026-10-07; still the source of test and holdout results)
+**Serving refit:** `20261007_154105`, trained on 2000/01–2025/26 (46,709 matches), served since 2026-10-07
 **Matches:** the same 250 played league matches of 2026/27, up to 2026-09-20, as the [in-season check](in-season-2026-27.md)
 **Decision record:** [ADR 017](../adr/017-refit-on-all-seasons-for-serving.md)
 
@@ -87,11 +87,11 @@ still never the pick.
 
 ## Status
 
-The refit is not served. `models/latest/` and the registry still point to
-`20260928_123224`, and README figures are unchanged. Under ADR 017 the refit
-meets the proposed swap rule: the log loss interval is within ±0.02, the draw
-tag holds, and SHAP values generate for it (42 features × 3 classes, all
-finite, on 2026/27 rows). Serving it needs the owner's approval.
+Served since 2026-10-07, on the owner's approval (ADR 017 accepted). It met
+the swap rule: the log loss interval against the frozen model is within
+±0.02, the draw tag holds at 0.28, and SHAP values generate (42 features × 3
+classes, all finite). `20260928_123224` stays in `models/runs/` as the
+reporting model and the rollback.
 
 ## Reproduce
 
@@ -101,6 +101,7 @@ From `ai/`:
 uv run python -m training.refit --source-run models/runs/20260928_123224 --last-season 2025/26
 uv run python -m evaluation.refit_backtest --rows models/backtests/2627_20260928_model123224/features/feature_matrix.parquet --frozen-run models/runs/20260928_123224 --refit-run models/runs/20261007_154105
 uv run python -m evaluation.draw_analysis --model models/runs/20261007_154105/model.joblib --in-season models/backtests/refit_20261007_154105/predictions_refit.csv --output models/backtests/refit_20261007_154105/draw_analysis_refit.json
+uv run python -m training.promote_refit --run models/runs/20261007_154105 --backtest models/backtests/refit_20261007_154105/report.json
 ```
 
 Model runs and backtest outputs are local artefacts under `ai/models/` and are

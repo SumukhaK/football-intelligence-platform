@@ -37,7 +37,7 @@ def make_version() -> str:
     return datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
 
 
-def _extract_dataset_version(feature_matrix_path: Path) -> str:
+def extract_dataset_version(feature_matrix_path: Path) -> str:
     """Read source_dataset_version from the sibling feature_metadata.json."""
     metadata_path = feature_matrix_path.parent / "feature_metadata.json"
     if metadata_path.exists():
@@ -270,7 +270,7 @@ class TrainingPipeline:
                 report=report,
                 config=config,
                 version=version,
-                source_version=_extract_dataset_version(feature_matrix_path),
+                source_version=extract_dataset_version(feature_matrix_path),
             )
 
         return {
