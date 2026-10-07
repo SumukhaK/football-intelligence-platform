@@ -63,6 +63,20 @@ def test_build_messages_system_content_matches_prompt() -> None:
     assert msgs[0]["content"] == SYSTEM_PROMPT
 
 
+def test_default_cut_off_drops_off_topic_chunks() -> None:
+    """A chunk scoring like an off-topic question (0.80) is left out by default."""
+    doc = Document(id="x", text="Team name aliases.", source="006.md", doc_type="adr")
+    prompt = build_user_prompt("Who won the 1966 World Cup?", [(doc, 0.80)])
+    assert "Team name aliases." not in prompt
+    assert "No relevant context" in prompt
+
+
+def test_default_cut_off_keeps_on_topic_chunks() -> None:
+    """A chunk scoring like an answerable question (0.85) is kept by default."""
+    doc = Document(id="x", text="Draw tag rule.", source="011.md", doc_type="adr")
+    assert "Draw tag rule." in build_user_prompt("What is the draw tag?", [(doc, 0.85)])
+
+
 def test_system_prompt_requires_quoting_tool_numbers() -> None:
     """SYSTEM_PROMPT tells the model to use tools and never compute numbers."""
     assert "call the matching tool" in SYSTEM_PROMPT

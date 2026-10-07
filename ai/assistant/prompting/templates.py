@@ -39,7 +39,12 @@ Rules you must follow without exception:
 
 _CONTEXT_HEADER = "--- KNOWLEDGE BASE CONTEXT ---"
 _CONTEXT_FOOTER = "--- END OF CONTEXT ---"
-_MIN_RELEVANCE = 0.50
+# Scores are (cosine + 1) / 2, and nomic-embed-text puts every chunk of this
+# index at 0.73 or above, so 0.50 let everything through. Measured on the
+# questions in evaluation/assistant_abstention.py: in-scope questions top out
+# at 0.80-0.88, out-of-scope ones at 0.74-0.81. Re-measure if the embedding
+# model or the knowledge base changes.
+_MIN_RELEVANCE = 0.81
 
 
 def build_user_prompt(
