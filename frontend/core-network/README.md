@@ -12,7 +12,7 @@ Infrastructure layer. Depends on `core-model` for response types.
 - `CachingFootballApiService` — saves every successful response and replays it when the server can't be reached. Chat is never cached.
 - `FileResponseCache` — the on-disk cache in the app's cache directory (`androidMain`).
 - `HttpClientFactory` — Ktor client with JSON and timeouts.
-- `NetworkConfig` — base URL, API version and timeout.
+- `NetworkConfig` — base URL, API version, and the connect and request timeouts.
 
 ## Constraints
 

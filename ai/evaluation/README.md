@@ -7,7 +7,12 @@ Metrics, cross-validation, plots, and structured report models for the XGBoost p
 | Module | Responsibility |
 |---|---|
 | `metrics.py` | `compute_metrics`, `compute_confusion_matrix` — sklearn wrappers |
-| `cross_validation.py` | `run_cross_validation` — TimeSeriesSplit CV, returns `CVSummary` |
+| `cross_validation.py` | `run_cross_validation` (TimeSeriesSplit over rows) and `run_season_cross_validation` (walk-forward by season, ADR 007); both return `CVSummary` |
+| `comparison.py` | Log loss, RPS, Brier, accuracy; bookmaker implied probabilities (normalised); class-prior baseline; paired bootstrap deltas |
+| `compare_models.py` | Compares a candidate run with the served model, priors and bookmakers per league, and applies the ADR 007 promotion rule (CLI) |
+| `comparison_report.py` | Markdown rendering for `compare_models` reports |
+| `in_season.py` | Scores a model on a season in progress, each match from features built only on earlier matches |
+| `in_season_cli.py` | Downloads the current season's played matches and runs `in_season` (CLI; see `docs/reports/in-season-2026-27.md`) |
 | `plots.py` | Headless Matplotlib plots (confusion matrix, feature importance) |
 | `draw_analysis.py` | Draw calibration and draw-rule trade-off per season block (CLI; see `docs/reports/draw-handling.md`) |
 | `goals_backtest.py` | Rolling-origin backtest for the goals model: refit before each matchweek, forecast that week |
