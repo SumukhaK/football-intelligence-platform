@@ -192,7 +192,7 @@ The same applies to `explainability.pipeline`: pass `--feature-matrix ../dataset
 
 ## Pytest Issues
 
-### Fewer than 798 tests pass
+### Fewer than 872 tests pass
 
 **Cause:** `uv sync --extra dev` was not run, or a test file has a syntax error.
 
