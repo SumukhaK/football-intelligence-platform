@@ -61,3 +61,9 @@ def test_build_messages_system_content_matches_prompt() -> None:
     """System message content matches SYSTEM_PROMPT."""
     msgs = build_messages("Q?", [(_DOC, 0.9)])
     assert msgs[0]["content"] == SYSTEM_PROMPT
+
+
+def test_system_prompt_requires_quoting_tool_numbers() -> None:
+    """SYSTEM_PROMPT tells the model to use tools and never compute numbers."""
+    assert "call the matching tool" in SYSTEM_PROMPT
+    assert "never estimate" in SYSTEM_PROMPT
