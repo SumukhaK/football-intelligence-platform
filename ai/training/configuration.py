@@ -41,6 +41,55 @@ _METADATA_COLUMNS: list[str] = [
 ]
 
 
+# The pinned model inputs, in the order the served model 20260928_123224 was
+# trained on. Training uses exactly these; any other numeric column must be
+# listed in exclude_columns, so a new column can never leak in unnoticed.
+MODEL_FEATURES: tuple[str, ...] = (
+    "home_form_wins_last5",
+    "home_form_wins_last10",
+    "home_form_points_last5",
+    "home_form_points_last10",
+    "away_form_wins_last5",
+    "away_form_wins_last10",
+    "away_form_points_last5",
+    "away_form_points_last10",
+    "home_goals_scored_last5",
+    "home_goals_scored_last10",
+    "home_goals_conceded_last5",
+    "home_goals_conceded_last10",
+    "home_goal_diff_last5",
+    "home_goal_diff_last10",
+    "away_goals_scored_last5",
+    "away_goals_scored_last10",
+    "away_goals_conceded_last5",
+    "away_goals_conceded_last10",
+    "away_goal_diff_last5",
+    "away_goal_diff_last10",
+    "home_win_pct",
+    "home_ppg",
+    "away_win_pct",
+    "away_ppg",
+    "home_rest_days",
+    "away_rest_days",
+    "h2h_meetings",
+    "h2h_home_wins",
+    "h2h_away_wins",
+    "h2h_draws",
+    "home_league_position",
+    "away_league_position",
+    "home_league_points",
+    "away_league_points",
+    "home_matches_played",
+    "away_matches_played",
+    "home_elo_before",
+    "away_elo_before",
+    "home_avg_opp_elo_last5",
+    "home_avg_opp_elo_last10",
+    "away_avg_opp_elo_last5",
+    "away_avg_opp_elo_last10",
+)
+
+
 def _default_exclude() -> list[str]:
     """Return the default list of columns to exclude from feature training."""
     return _METADATA_COLUMNS + _POST_MATCH_COLUMNS
@@ -82,6 +131,20 @@ class TrainingConfig(BaseModel):
     date_column: str = "match_date"
     season_column: str = "season"
     exclude_columns: list[str] = Field(default_factory=_default_exclude)
+    feature_columns: list[str] = Field(
+        default_factory=lambda: list(MODEL_FEATURES), min_length=1
+    )
+
+    @model_validator(mode="after")
+    def _check_feature_columns(self) -> Self:
+        """Reject duplicate features and features that are excluded columns."""
+        if len(self.feature_columns) != len(set(self.feature_columns)):
+            raise ValueError(f"Duplicate feature columns: {self.feature_columns}")
+        banned = set(self.exclude_columns) | {self.target_column}
+        clash = [c for c in self.feature_columns if c in banned]
+        if clash:
+            raise ValueError(f"Excluded columns listed as features: {clash}")
+        return self
 
     @model_validator(mode="after")
     def _check_season_lists(self) -> Self:

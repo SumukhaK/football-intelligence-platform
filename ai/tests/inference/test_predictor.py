@@ -37,7 +37,12 @@ def _make_feature_matrix(n: int = 80, seed: int = 0) -> pd.DataFrame:
 def _trained() -> TrainedModel:
     """Trained model for inference tests."""
     df = _make_feature_matrix()
-    config = TrainingConfig(n_estimators=10, cv_folds=3, early_stopping_rounds=3)
+    config = TrainingConfig(
+        feature_columns=["feat_a", "feat_b"],
+        n_estimators=10,
+        cv_folds=3,
+        early_stopping_rounds=3,
+    )
     cols = get_feature_columns(df, config)
     split = ChronologicalSplitter().split(df, cols, config)
     return ModelTrainer().train(split, config)

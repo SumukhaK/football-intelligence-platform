@@ -70,9 +70,13 @@ def main(argv: list[str] | None = None) -> int:
     df = pd.read_parquet(MATRIX)
     df = df.sort_values(["match_date", "competition", "home_team"], kind="stable")
     df = df.reset_index(drop=True)
-    extended = pd.concat([df, draw_features(df)], axis=1)
+    extras = draw_features(df)
+    extended = pd.concat([df, extras], axis=1)
+    candidate_config = config.model_copy(
+        update={"feature_columns": [*config.feature_columns, *extras.columns]}
+    )
     current, current_cols = fit(df, config)
-    candidate, candidate_cols = fit(extended, config)
+    candidate, candidate_cols = fit(extended, candidate_config)
     for block, seasons in [
         ("test", config.test_seasons),
         ("holdout", config.holdout_seasons),
