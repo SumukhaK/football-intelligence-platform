@@ -11,8 +11,8 @@ Metrics, cross-validation, plots, and structured report models for the XGBoost p
 | `comparison.py` | Log loss, RPS, Brier, accuracy; bookmaker implied probabilities (normalised); class-prior baseline; paired bootstrap deltas |
 | `compare_models.py` | Compares a candidate run with the served model, priors and bookmakers per league, and applies the ADR 007 promotion rule (CLI) |
 | `comparison_report.py` | Markdown rendering for `compare_models` reports |
-| `in_season.py` | Scores a model on a season in progress, each match from features built only on earlier matches |
-| `in_season_cli.py` | Downloads the current season's played matches and runs `in_season` (CLI; see `docs/reports/in-season-2026-27.md`) |
+| `in_season.py` | Scores a model on a season in progress, each match from features built only on earlier matches, against an Elo-only baseline, priors and Bet365 (benchmark only), with bootstrap ranges |
+| `in_season_cli.py` | Downloads the current season's played matches, or rescores a saved feature matrix with `--features`, and runs `in_season` (CLI; see `docs/reports/in-season-2026-27.md`) |
 | `plots.py` | Headless Matplotlib plots (confusion matrix, feature importance) |
 | `draw_analysis.py` | Draw calibration, draw-rule trade-off and the ADR 011 draw-tag check per season block (CLI; see `docs/reports/draw-handling.md`) |
 | `refit_backtest.py` | Scores a serving refit against the frozen-split model and the bookmaker on a season so far (CLI; ADR 017) |
