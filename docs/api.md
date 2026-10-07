@@ -267,6 +267,12 @@ Errors:
 Retrieval-augmented answers about the project's data and models. Returns 503
 when the assistant's vector store or Ollama is unavailable.
 
+For a match prediction, its SHAP explanation or a league's upcoming fixtures,
+the assistant calls tools that run the same services as `/v2/predict`,
+`/v2/explain` and `/v2/fixtures`, so it quotes the latest model's numbers
+(ADR 018). `OLLAMA_CHAT_MODEL` must name a model that supports tool calling.
+The request and response bodies are unchanged.
+
 ---
 
 ## Keeping match history current
