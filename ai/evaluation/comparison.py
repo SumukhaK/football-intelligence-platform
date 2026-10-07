@@ -120,6 +120,27 @@ def paired_bootstrap_delta(
     )
 
 
+def bootstrap_interval(
+    y_true: Labels,
+    probs: np.ndarray,
+    classes: list[str],
+    metric: str = "log_loss",
+    n_resamples: int = 2000,
+    seed: int = 42,
+) -> tuple[float, float]:
+    """Return the 95% bootstrap interval of one forecast's metric."""
+    labels = np.asarray(y_true)
+    score = _METRICS[metric]
+    rng = np.random.default_rng(seed)
+    n = len(labels)
+    values = [
+        score(labels[idx], probs[idx], classes)
+        for idx in (rng.integers(0, n, n) for _ in range(n_resamples))
+    ]
+    lower, upper = np.percentile(values, [2.5, 97.5])
+    return float(lower), float(upper)
+
+
 def _log_loss(y: Labels, probs: np.ndarray, classes: list[str]) -> float:
     """Log loss with explicit labels, so resamples missing a class still work."""
     return float(log_loss(np.asarray(y), probs, labels=classes))

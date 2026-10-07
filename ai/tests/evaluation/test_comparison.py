@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from evaluation.comparison import (
+    bootstrap_interval,
     brier_score,
     class_prior_probabilities,
     implied_probabilities,
@@ -70,6 +71,15 @@ def test_class_prior_probabilities_repeat_training_frequencies() -> None:
     probs = class_prior_probabilities(pd.Series(["H", "H", "D", "A"]), 3, _CLASSES)
     assert probs.shape == (3, 3)
     assert probs[0].tolist() == [0.25, 0.25, 0.5]
+
+
+def test_bootstrap_interval_brackets_the_point_estimate() -> None:
+    rng = np.random.default_rng(1)
+    y = rng.choice(["H", "D", "A"], 200)
+    probs = rng.dirichlet([2, 2, 2], 200)
+    lower, upper = bootstrap_interval(y, probs, _CLASSES, n_resamples=200)
+    point = score_probabilities(y, probs, _CLASSES)["log_loss"]
+    assert lower < point < upper
 
 
 def test_paired_bootstrap_delta_detects_a_clearly_better_forecast() -> None:

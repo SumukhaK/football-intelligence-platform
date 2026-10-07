@@ -217,7 +217,11 @@ uv run python -m evaluation.in_season_cli --season 2627 --confirm
 | `--model PATH` | `models/latest/model.joblib` | Model to score. |
 | `--base-dir DIR` | `../datasets` | Datasets base directory. |
 | `--output-dir DIR` | `models/backtests/<season>_<date>` | Where outputs go. |
+| `--features PATH` | none | Rescore a saved run's `features/feature_matrix.parquet` instead of downloading. |
+| `--through DATE` | none | Score only matches up to this date (`YYYY-MM-DD`). |
 | `--confirm` | off | Download and score. |
+
+The report scores the model against an Elo-only baseline (logistic regression on the pre-match Elo gap, fitted on earlier seasons), outcome-frequency priors and Bet365 (pre-match odds with the margin removed; a benchmark only). It adds overall 95% bootstrap ranges for accuracy, log loss, RPS and Brier, and paired bootstraps of the model minus Bet365 and minus Elo only.
 
 Raw snapshots are stored once per division per day under `raw/football_data/match_results_in_progress/`. Outputs: `report.md`, `report.json` and `predictions.csv` (one line per match with probabilities, pick and result).
 
