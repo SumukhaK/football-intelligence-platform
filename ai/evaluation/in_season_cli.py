@@ -152,7 +152,8 @@ def _render_bootstrap(report: dict[str, Any]) -> list[str]:
     lines += [
         "",
         "Paired bootstrap of our model minus each benchmark on the same resampled",
-        "matches. Negative is better, except accuracy, where positive is better.",
+        "matches. Negative is better, except accuracy (percentage points), where",
+        "positive is better.",
         "",
         header,
         rule,
@@ -160,8 +161,9 @@ def _render_bootstrap(report: dict[str, Any]) -> list[str]:
     for name, deltas in report["deltas"].items():
         other = _NAMES[name.removeprefix("candidate_minus_")]
         cells = [
-            f"{d['mean']:+.4f} ({d['lower']:+.4f} to {d['upper']:+.4f})"
-            for d in deltas.values()
+            f"{_delta(m, d['mean'])} "
+            f"({_delta(m, d['lower'])} to {_delta(m, d['upper'])})"
+            for m, d in deltas.items()
         ]
         lines.append(f"| minus {other} | " + " | ".join(cells) + " |")
     return lines
@@ -170,6 +172,11 @@ def _render_bootstrap(report: dict[str, Any]) -> list[str]:
 def _fmt(metric: str, value: float) -> str:
     """Accuracy as a percentage, other metrics to three decimals."""
     return f"{value:.1%}" if metric == "accuracy" else f"{value:.3f}"
+
+
+def _delta(metric: str, value: float) -> str:
+    """Signed difference: accuracy in percentage points, others to three decimals."""
+    return f"{value * 100:+.1f}" if metric == "accuracy" else f"{value:+.3f}"
 
 
 def main(argv: list[str] | None = None) -> int:
