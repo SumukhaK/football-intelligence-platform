@@ -4,6 +4,7 @@
 
 **Supersedes:** [003](003-chronological-train-val-test-split.md) (split mechanism only)
 **Superseded by:** —
+**Amended by:** [017](017-refit-on-all-seasons-for-serving.md) (item 6: a serving refit may replace the served model; proposed)
 
 ## Context
 

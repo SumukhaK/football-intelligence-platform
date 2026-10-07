@@ -32,7 +32,7 @@ _DEFAULT_FEATURE_MATRIX = "datasets/features/feature_matrix.parquet"
 _DEFAULT_MODELS_DIR = "models"
 
 
-def _make_version() -> str:
+def make_version() -> str:
     """Generate a sortable UTC timestamp version string."""
     return datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
 
@@ -185,7 +185,7 @@ class TrainingPipeline:
         backend serves from, are left untouched.
         """
         config = self._config
-        version = _make_version()
+        version = make_version()
 
         feature_matrix_path = cwd / config.feature_matrix_path
         models_dir = cwd / config.models_dir

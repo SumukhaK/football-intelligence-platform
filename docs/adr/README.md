@@ -89,7 +89,7 @@ ADRs are never deleted.
 | [004](004-shap-for-explainability.md) | Use SHAP TreeExplainer for model explainability | Accepted |
 | [005](005-top-five-leagues-multi-source-data.md) | Expand training data to the top five leagues from multiple sources | Accepted (item 6 superseded by 012) |
 | [006](006-team-canonicalisation-and-match-dedup.md) | Canonical team names and match deduplication | Accepted |
-| [007](007-season-based-split-and-evaluation.md) | Season-based split and evaluation protocol | Accepted |
+| [007](007-season-based-split-and-evaluation.md) | Season-based split and evaluation protocol | Accepted (item 6 amended by 017, proposed) |
 | [008](008-server-side-match-features.md) | Compute match features on the server | Accepted (item 6 superseded by 012) |
 | [009](009-dixon-coles-goals-model.md) | Add a Dixon-Coles goals model for scoreline predictions | Accepted |
 | [010](010-compose-resources-for-ui-text.md) | Keep UI text in Compose Multiplatform resources | Accepted |
@@ -99,3 +99,4 @@ ADRs are never deleted.
 | [014](014-api-versioning-and-rate-limiting.md) | Version the API and add a rate limiter | Accepted |
 | [015](015-upcoming-fixtures-from-openfootball.md) | Upcoming fixtures from openfootball | Accepted |
 | [016](016-app-icon-and-kickoff-launch-screen.md) | App icon and the Kick-off launch screen | Accepted |
+| [017](017-refit-on-all-seasons-for-serving.md) | Refit on all seasons for serving | Proposed |
