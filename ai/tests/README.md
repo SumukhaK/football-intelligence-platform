@@ -34,8 +34,8 @@ Run everything with `uv run pytest`, or skip the integration tests with
 
 ## Contracts
 
-- Test files mirror source structure: `ingestion/loader.py` → `tests/ingestion/test_loader.py`.
+- Test files mirror source structure: `ingestion/backfill.py` → `tests/ingestion/test_backfill.py`.
 - No test touches external filesystems or network unless marked `@pytest.mark.integration`.
 - Tests are deterministic. No time-dependent or order-dependent behaviour.
-- Minimum coverage: 70% per package (enforced in CI).
+- Minimum coverage: 70% for the whole workspace (`fail_under` in `ai/pyproject.toml`, enforced in CI).
 - Data quality failures must be tested explicitly — every validation rule has a failing case.

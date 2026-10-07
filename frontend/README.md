@@ -86,7 +86,11 @@ data class NetworkConfig(
     val baseUrl: String = "http://10.0.2.2:8000",
     val apiVersion: String = "v2",
     val timeoutMs: Long = 30_000L,
+    val connectTimeoutMs: Long = 5_000L,
 )
 ```
+
+The short connect timeout makes an unreachable server fall back to saved data
+quickly; `timeoutMs` bounds a request once connected.
 
 Change this for physical device testing (use your machine's LAN IP).

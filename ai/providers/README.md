@@ -47,3 +47,7 @@ Platform-standard column names use lowercase snake_case:
 | Away expected goals | `away_xg` |
 | Home shots | `home_shots` |
 | Home shots on target | `home_shots_on_target` |
+| Bet365 pre-match odds (H/D/A) | `odds_b365_home`, `odds_b365_draw`, `odds_b365_away` |
+
+Odds are kept as an evaluation benchmark only; they are never model inputs
+(ADR 007).

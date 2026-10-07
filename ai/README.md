@@ -22,7 +22,9 @@ This directory owns:
 - The Dixon-Coles goals model behind scoreline insights.
 - The FastAPI backend (`backend/`), which serves all of the above.
 - Prompt templates and retrieval configuration.
-- Evaluation scripts: prediction accuracy, assistant faithfulness, hallucination rate.
+- Evaluation scripts for the match and goals models: season-split comparisons,
+  bookmaker benchmarks and in-season backtests. Structured assistant evaluation
+  (faithfulness, hallucination rate) is not built yet.
 
 ---
 
@@ -40,7 +42,7 @@ ai/
   schemas/              # Pydantic schema definitions for all datasets
   metadata/             # DatasetMetadata model and MetadataBuilder
   scripts/              # Operational CLI scripts (setup, pipeline triggers)
-  tests/                # Unit tests mirroring source structure
+  tests/                # Unit and integration tests mirroring source structure
   training/             # XGBoost training, season split, tuning
   evaluation/           # Model evaluation, backtests and in-season accuracy
   inference/            # Predictor and server-side match features used by the backend
@@ -50,7 +52,7 @@ ai/
   assistant/            # RAG assistant: ingestion, chunking, embeddings, retrieval, generation
   backend/              # FastAPI application (see backend/README.md at the repo root)
   docs/                 # Stage 8 and 10 demo guides and reports
-  rag/, prompts/, datasets/  # Empty; the RAG code lives in assistant/, prompts in playbook/
+  rag/, prompts/, datasets/  # Empty; the RAG code lives in assistant/, prompts in assistant/prompting/templates.py
   models/               # Serialised model artefacts (gitignored)
 ```
 
@@ -234,8 +236,8 @@ uv run python -m assistant.pipeline --rebuild
 
 - `ai/models/**/*.md` — model cards
 - `docs/adr/*.md` — architecture decision records
-- `docs/reports/*.md` — stage summaries
+- `docs/reports/*.md` — stage summaries and evaluation reports
 - `docs/*.md` — project documentation
-- `ai/models/latest/evaluation_report.json` — model evaluation
+- `ai/models/latest/evaluation_report.json`, `metrics.json`, `config.json` — served model evaluation and settings
 - `ai/explanations/global_summary.json` — SHAP global explanations
-- `datasets/features/feature_metadata.json` — feature descriptions
+- `datasets/features/feature_metadata.json`, `feature_generation_report.json` — feature descriptions
