@@ -546,6 +546,26 @@ ollama pull llama3.2
 **Outputs:**
 - `assistant/vector_store/` — persisted numpy vector store (embeddings + metadata)
 
+The chat model must support tool calling (`llama3.2` does), because the assistant calls the prediction, explanation and fixtures services (ADR 018).
+
+### `python -m evaluation.assistant_grounding`
+
+Asks the assistant for the model's prediction of upcoming fixtures in every league, calls `/v2/predict` and `/v2/explain` for the same matches, and checks each answer quotes the predicted outcome's probability and contains no number those responses or the question don't account for. One extra question names a team that doesn't exist. Exits non-zero if any case fails.
+
+```sh
+LIVE_REFRESH_HOUR=off uv run python -m evaluation.assistant_grounding --per-league 2
+```
+
+### `python -m evaluation.assistant_abstention`
+
+Asks 10 questions the knowledge base answers and 10 it doesn't, and checks the assistant answers the first set and replies "I don't have enough information in my knowledge base to answer that." to the second. Exits non-zero if any case fails.
+
+```sh
+LIVE_REFRESH_HOUR=off uv run python -m evaluation.assistant_abstention
+```
+
+Both need the trained model, match history, fixtures, the index and a running Ollama, so they run locally rather than in CI. `LIVE_REFRESH_HOUR=off` stops the app from downloading new data during the run.
+
 ---
 
 ## Android Build

@@ -100,3 +100,4 @@ ADRs are never deleted.
 | [015](015-upcoming-fixtures-from-openfootball.md) | Upcoming fixtures from openfootball | Accepted |
 | [016](016-app-icon-and-kickoff-launch-screen.md) | App icon and the Kick-off launch screen | Accepted |
 | [017](017-refit-on-all-seasons-for-serving.md) | Refit on all seasons for serving | Accepted |
+| [018](018-assistant-tool-calling.md) | Assistant tool calling over the API's own services | Accepted |
