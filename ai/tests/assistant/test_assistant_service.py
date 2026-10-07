@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+import json
+from typing import Any
+
 import pytest
 
+from assistant.generation.generator import ChatTurn, ToolCall
 from assistant.ingestion.document import Document
 from assistant.services.assistant_service import (
     AssistantService,
     VectorStoreEmptyError,
 )
+from assistant.tools.tool import Tool
 from tests.assistant.conftest import FakeEmbedder, FakeGenerator, VariedEmbedder
 
 
@@ -95,3 +100,86 @@ def test_service_low_confidence_on_no_info_answer(sample_docs) -> None:  # type:
     normal_service = _make_service(sample_docs, answer="Normal answer.")
     normal_resp = normal_service.chat("Random question?")
     assert resp.confidence < normal_resp.confidence
+
+
+class ScriptedToolGenerator:
+    """Tool-calling fake: plays back turns and records the messages it saw."""
+
+    def __init__(self, turns: list[ChatTurn]) -> None:
+        self._turns = list(turns)
+        self.calls: list[tuple[list[dict[str, Any]], list[dict[str, Any]]]] = []
+
+    def generate(self, messages: list[dict[str, str]]) -> str:
+        raise AssertionError("A tool-calling generator should be used via chat().")
+
+    def chat(
+        self, messages: list[dict[str, Any]], tools: list[dict[str, Any]]
+    ) -> ChatTurn:
+        self.calls.append((list(messages), tools))
+        return self._turns.pop(0)
+
+
+_PREDICTION = {"predicted_result": "H", "probability_home": 0.4712}
+
+
+def _predict_tool() -> Tool:
+    return Tool(
+        "predict_match",
+        "Match prediction.",
+        {"type": "object"},
+        lambda args: {**_PREDICTION, "home_team": args["home_team"]},
+    )
+
+
+def _tool_service(sample_docs: list[Document], generator: Any) -> AssistantService:
+    service = _make_service(sample_docs)
+    return AssistantService(
+        embedder=VariedEmbedder(dim=8),
+        generator=generator,
+        store=service._store,
+        model_name="llama3.2",
+        top_k=3,
+        tools=[_predict_tool()],
+    )
+
+
+def test_service_runs_tool_and_feeds_result_back(sample_docs) -> None:  # type: ignore[no-untyped-def]
+    """The model's tool call is run and its JSON result reaches the next turn."""
+    call = ToolCall("predict_match", {"home_team": "Arsenal", "away_team": "Leeds"})
+    generator = ScriptedToolGenerator(
+        [ChatTurn("", [call]), ChatTurn("Arsenal win at 47.1% [source: tool].")]
+    )
+
+    resp = _tool_service(sample_docs, generator).chat("Arsenal v Leeds?")
+
+    assert resp.answer == "Arsenal win at 47.1% [source: tool]."
+    offered = generator.calls[0][1]
+    assert offered[0]["function"]["name"] == "predict_match"
+    second_messages = generator.calls[1][0]
+    assert second_messages[-2]["tool_calls"][0]["function"]["name"] == "predict_match"
+    tool_message = second_messages[-1]
+    assert tool_message["role"] == "tool"
+    assert json.loads(tool_message["content"]) == {
+        **_PREDICTION,
+        "home_team": "Arsenal",
+    }
+
+
+def test_service_stops_calling_tools_after_the_cap(sample_docs) -> None:  # type: ignore[no-untyped-def]
+    """A model that keeps calling tools is asked for a final answer without them."""
+    call = ToolCall("predict_match", {"home_team": "Arsenal"})
+    generator = ScriptedToolGenerator(
+        [ChatTurn("", [call])] * 3 + [ChatTurn("Final answer.")]
+    )
+
+    resp = _tool_service(sample_docs, generator).chat("Arsenal?")
+
+    assert resp.answer == "Final answer."
+    assert len(generator.calls) == 4
+    assert generator.calls[-1][1] == []
+
+
+def test_service_without_tools_uses_plain_generation(sample_docs) -> None:  # type: ignore[no-untyped-def]
+    """With no tools configured the service keeps calling generate()."""
+    resp = _make_service(sample_docs, answer="Plain.").chat("Question?")
+    assert resp.answer == "Plain."
