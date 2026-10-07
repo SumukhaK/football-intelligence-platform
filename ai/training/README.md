@@ -6,7 +6,7 @@ XGBoost training pipeline for the match outcome prediction model.
 
 | Module | Responsibility |
 |---|---|
-| `configuration.py` | `TrainingConfig` — all hyper-parameters and path settings |
+| `configuration.py` | `TrainingConfig` — hyper-parameters, paths, and the pinned `MODEL_FEATURES` list |
 | `splitter.py` | Train/val/test splits; `get_feature_columns` checks the pinned features against the matrix |
 | `trainer.py` | `ModelTrainer` — fits XGBClassifier, wraps imputer and label encoder |
 | `persistence.py` | Save/load model via joblib; JSON helpers for config and metrics |
