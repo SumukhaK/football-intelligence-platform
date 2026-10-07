@@ -63,8 +63,11 @@ goals model was fitted at startup, so `POST /insights` works.
 ## GET /model
 
 Registry entry of the served model: `model_version`, `dataset_version`,
-`training_timestamp`, `git_commit` and test `metrics`. Returns 503 when no
-model is registered.
+`training_timestamp`, `git_commit` and `metrics`. Returns 503 when no
+model is registered. A model trained with a test season reports its test
+metrics (`accuracy`, `log_loss`, ...). The served refit (ADR 017) has no test
+season, so it reports its scores on the current season so far, named by season
+(`accuracy_2026_27`, `log_loss_2026_27`, `rps_2026_27`, `brier_2026_27`).
 
 ## GET /competitions
 
@@ -160,12 +163,12 @@ Response:
   "home_team": "Arsenal",
   "away_team": "Man City",
   "predicted_result": "H",
-  "probability_home": 0.393,
-  "probability_draw": 0.277,
-  "probability_away": 0.330,
-  "confidence": 0.393,
+  "probability_home": 0.410,
+  "probability_draw": 0.251,
+  "probability_away": 0.340,
+  "confidence": 0.410,
   "draw_possible": false,
-  "model_version": "20260928_123224"
+  "model_version": "20261007_154105"
 }
 ```
 

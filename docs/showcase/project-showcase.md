@@ -8,7 +8,7 @@ A complete technical write-up of the platform's design, engineering decisions, a
 
 The Football Intelligence Platform is an end-to-end AI system for Europe's top five football leagues. It ingests 26 seasons of match results (46,709 matches), engineers 42 leakage-safe pre-match features, trains and evaluates an XGBoost classifier, and explains every prediction with SHAP in plain football language. A Dixon-Coles goals model adds likely scorelines and goal markets. A versioned FastAPI backend serves all of this, refreshes its data daily without a restart, and rate limits clients. A local LLM assistant is grounded in the platform's own documents via RAG. A native Android app built with Compose Multiplatform opens on upcoming fixtures and keeps working offline.
 
-It was built in 12 stages up to release v1.0.0, then extended in v2.0.0, v2.0.1 and v2.1.0, by a single engineer, with every structural change recorded as an ADR. The result: 871 passing tests (798 Python, 73 Android), 16 ADRs, zero cloud dependency, and a reproducible pipeline. On the 2023/24 test season the model reaches 52.5% accuracy and a log loss of 0.976, against 55.0% and 0.955 for bookmakers.
+It was built in 12 stages up to release v1.0.0, then extended in v2.0.0, v2.0.1 and v2.1.0, by a single engineer, with every structural change recorded as an ADR. The result: 945 tests (872 Python, 73 Android), 18 ADRs, zero cloud dependency, and a reproducible pipeline. On the 2023/24 test season the model reaches 52.5% accuracy and a log loss of 0.976, against 55.0% and 0.955 for bookmakers.
 
 This document explains *why* each major component exists and the trade-offs behind it — not just what was built.
 
@@ -110,11 +110,12 @@ flowchart LR
     D --> E[Tune\nwalk-forward CV]
     E --> F[Train\nXGBoost + early stopping]
     F --> G[Evaluate\nvs bookmakers, bootstrap]
-    G --> H[Register\nJSON registry + git commit]
+    G --> R[Refit for serving\nall seasons to 2025/26]
+    R --> H[Register\nJSON registry + git commit]
     H --> I[Serve\nFastAPI /v2/predict]
 ```
 
-**Result:** 52.5% test accuracy on a 3-class problem (33.3% random baseline, 55.0% bookmakers), log loss 0.976 (bookmakers 0.955), ROC AUC 0.679. On 250 real 2026/27 matches up to 20 September 2026 the model scored 52.4%, against 51.6% for bookmaker favourites. Every run is versioned in the registry with its git commit and dataset version, so any prediction can be traced back to the code and data that produced its model.
+**Result:** 52.5% test accuracy on a 3-class problem (33.3% random baseline, 55.0% bookmakers), log loss 0.976 (bookmakers 0.955), ROC AUC 0.679. Those test figures come from the frozen-split model `20260928_123224`; the API serves `20261007_154105`, the same recipe refit on every season through 2025/26 (ADR 017). On 250 real 2026/27 matches up to 20 September 2026 the served refit scored 52.0% and the frozen model 52.4%, against 51.6% for Bet365's pre-match favourites; all three are level within the 95% bootstrap ranges. Every run is versioned in the registry with its git commit and dataset version, so any prediction can be traced back to the code and data that produced its model.
 
 ---
 
@@ -186,10 +187,10 @@ Compose Multiplatform keeps the UI layer (Composables, theme, navigation contrac
 
 | Layer | Approach | Count |
 |---|---|---|
-| AI, data pipeline and backend | Unit and API contract tests (`TestClient` with mocked AI services) | 762 |
-| Backend integration | `TestClient` with the **real** trained model — no mocks | 36 |
-| Android | ViewModels (test-first), repositories with Ktor `MockEngine`, cache, formatting | 66 |
-| **Total** | | **871** |
+| AI, data pipeline and backend | Unit and API contract tests (`TestClient` with mocked AI services) | 835 |
+| Backend integration | `TestClient` with the **real** trained model — no mocks | 37 |
+| Android | ViewModels (test-first), repositories with Ktor `MockEngine`, cache, formatting | 73 |
+| **Total** | | **945** |
 
 The integration suite deliberately avoids mocking the model — it asserts on real SHAP values being finite, real probabilities summing to 1.0, and latency staying under threshold. This catches bugs (numerical issues, serialization mismatches, performance regressions) that contract tests with mocks cannot.
 

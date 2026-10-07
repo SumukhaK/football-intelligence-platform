@@ -35,7 +35,7 @@ For the Android segments: an emulator running, app installed (`cd frontend && ./
 | 0:30–1:30 | "The app opens on upcoming fixtures, one tab per league, in my time zone." | Android app: Fixtures tab, switch from Premier League to Bundesliga |
 | 1:30–3:00 | "Pick a league and two teams, and the real model answers." | Predict tab → league → teams → **Predict Match Outcome** → show probabilities, the draw tag if shown, and the likely scores |
 | 3:00–4:00 | "Every prediction comes with an explanation — not a black box." | Tap **Explain** → show "Why the model leans this way" and "What counts against it" |
-| 4:00–5:00 | "It's close to the bookmakers using only public results, and 871 tests keep it honest." | Mention 52.5% vs 55.0% for bookmakers; open `docs/releases/v2.0.0.md` if asked |
+| 4:00–5:00 | "It's close to the bookmakers using only public results, and 945 tests keep it honest." | Mention 52.5% vs 55.0% for bookmakers; open `docs/releases/v2.0.0.md` if asked |
 
 **Expected outputs:** A fixtures list by date; a prediction with three probabilities and likely scores; a plain-language explanation.
 

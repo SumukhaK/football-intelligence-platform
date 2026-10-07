@@ -70,10 +70,10 @@ Confirm the AI workspace is clean before running any pipelines:
 uv run ruff check .          # Linting — should print: All checks passed!
 uv run black --check .       # Formatting — should print: N files would be left unchanged.
 uv run mypy .                # Type checking — should print: Success: no issues found in N source files
-uv run pytest                # Tests — 798 tests
+uv run pytest                # Tests — 872 tests
 ```
 
-`uv run pytest` runs all 798 tests, including the 37 integration tests. The integration tests need a trained model in `ai/models/latest/` (and one needs network access), so on a clean checkout run `uv run pytest -m "not integration"` (761 tests) until you have trained the model below.
+`uv run pytest` runs all 872 tests, including the 37 integration tests. The integration tests need a trained model in `ai/models/latest/` (and one needs network access), so on a clean checkout run `uv run pytest -m "not integration"` (835 tests) until you have trained the model below.
 
 ---
 
@@ -133,7 +133,9 @@ uv run python -m training.pipeline --feature-matrix ../datasets/features/top5/fe
 
 The pipeline prints the version, best iteration, features used, test accuracy, F1 and log loss, the run directory, and a final `Promoted:` line (`yes` unless you pass `--no-promote`). A promoted run replaces `models/latest/`.
 
-For reference, the served model (version `20260928_123224`) reached test accuracy 0.5245 and log loss 0.9762 on 2023/24, with best iteration 167. See `ai/models/latest/model_card.md` after training.
+For reference, the frozen-split model this command produced (version `20260928_123224`) reached test accuracy 0.5245 and log loss 0.9762 on 2023/24, with best iteration 167. See `ai/models/latest/model_card.md` after training.
+
+The live API serves a refit of that model on every season through 2025/26 (`20261007_154105`, 168 trees, ADR 017). To build and serve one, see `training.refit` and `training.promote_refit` in the [root README](../../README.md#running-the-ai-pipeline).
 
 ### Step 4 — Generate SHAP Explanations
 
@@ -316,7 +318,7 @@ After setup, verify the following:
 - [ ] `uv run ruff check .` — prints `All checks passed!`
 - [ ] `uv run black --check .` — prints `N files would be left unchanged.`
 - [ ] `uv run mypy .` — prints `Success: no issues found`
-- [ ] `uv run pytest` — all 798 tests pass (after training)
+- [ ] `uv run pytest` — all 872 tests pass (after training)
 - [ ] The backfill produces `datasets/processed/football_data/match_results_top5_v<ts>.csv`
 - [ ] Feature engineering produces `datasets/features/top5/feature_matrix.parquet`
 - [ ] Training produces `ai/models/latest/model.joblib` and `ai/models/latest/model_card.md`
