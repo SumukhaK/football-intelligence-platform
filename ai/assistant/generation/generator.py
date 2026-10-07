@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from dataclasses import dataclass, field
+from typing import Any, Protocol, runtime_checkable
 
 
 @runtime_checkable
@@ -11,6 +12,33 @@ class Generator(Protocol):
 
     def generate(self, messages: list[dict[str, str]]) -> str:
         """Return the model's response string."""
+        ...
+
+
+@dataclass(frozen=True)
+class ToolCall:
+    """One function call the chat model asked for."""
+
+    name: str
+    arguments: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class ChatTurn:
+    """The model's reply: text, or the tool calls it wants run first."""
+
+    content: str
+    tool_calls: list[ToolCall] = field(default_factory=list)
+
+
+@runtime_checkable
+class ToolCallingGenerator(Protocol):
+    """A generator that can also offer the model tools to call."""
+
+    def chat(
+        self, messages: list[dict[str, Any]], tools: list[dict[str, Any]]
+    ) -> ChatTurn:
+        """Return the model's turn, which may request tool calls."""
         ...
 
 
@@ -36,6 +64,12 @@ class OllamaGenerator:
 
     def generate(self, messages: list[dict[str, str]]) -> str:
         """Send messages to Ollama chat and return the response content."""
+        return self.chat(messages, tools=[]).content
+
+    def chat(
+        self, messages: list[dict[str, Any]], tools: list[dict[str, Any]]
+    ) -> ChatTurn:
+        """Send messages and tool schemas to Ollama chat and return its turn."""
         try:
             import ollama  # noqa: PLC0415  # type: ignore[import-untyped,no-redef]
 
@@ -43,16 +77,22 @@ class OllamaGenerator:
             response = client.chat(
                 model=self._model,
                 messages=messages,
+                tools=tools or None,
                 options={
                     "temperature": self._temperature,
                     "num_predict": self._max_tokens,
                 },
             )
-            return str(response.message.content)
         except Exception as exc:
             raise OllamaGenerationError(
                 f"Ollama generation failed (model={self._model}): {exc}"
             ) from exc
+        message = response.message
+        calls = [
+            ToolCall(call.function.name, dict(call.function.arguments))
+            for call in message.tool_calls or []
+        ]
+        return ChatTurn(content=str(message.content or ""), tool_calls=calls)
 
 
 class OllamaGenerationError(RuntimeError):

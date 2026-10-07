@@ -4,6 +4,7 @@
 
 **Supersedes:** [003](003-chronological-train-val-test-split.md) (split mechanism only)
 **Superseded by:** —
+**Amended by:** [017](017-refit-on-all-seasons-for-serving.md) (item 6: a serving refit may replace the served model)
 
 ## Context
 
@@ -33,7 +34,11 @@ Split by whole seasons, keep chronological order, and evaluate primarily on prob
 3. **Metrics.** Log loss and ranked probability score are primary. Brier score, accuracy, weighted F1
    and a calibration curve are secondary. All are reported overall and per league.
 4. **Baselines** on the same test rows: always home win, class priors, the current model, and
-   bookmaker implied probabilities from closing odds (normalised for overround).
+   bookmaker implied probabilities from Bet365 pre-match odds (football-data.co.uk
+   `B365H`/`B365D`/`B365A`, collected on Friday afternoons for weekend games and
+   Tuesday afternoons for midweek games, not closing odds), with the overround
+   removed proportionally. *Wording corrected on 2026-10-07 to match the code;
+   the earlier text said "closing odds".*
 5. **Like-for-like comparison with the current model** on both the 57 end-of-season 2023/24 EPL
    matches it was tested on and the full 2023/24 EPL season, with bootstrap confidence intervals.
 6. **Promotion rule.** A new model replaces the current one only if its log loss is better on the

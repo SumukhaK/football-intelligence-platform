@@ -17,6 +17,7 @@ explainability/
   explainer.py           # SHAPExplainer wrapping shap.TreeExplainer
   cache.py               # ExplainerCache — in-process, keyed by model version
   serializers.py         # FeatureContribution, LocalExplanation, GlobalSummary
+  feature_labels.py      # Fan-friendly feature names and value formatting for clients
   pipeline.py            # ExplainabilityPipeline + CLI entry point
   plots/
     __init__.py
@@ -41,7 +42,7 @@ Optional arguments:
 | Flag | Default | Description |
 |---|---|---|
 | `--model-path` | `models/latest/model.joblib` | Path to trained model |
-| `--feature-matrix` | `datasets/features/feature_matrix.parquet` | Feature matrix |
+| `--feature-matrix` | `datasets/features/feature_matrix.parquet` | Feature matrix (the five-league matrix is `../datasets/features/top5/feature_matrix.parquet`) |
 | `--explanations-dir` | `explanations` | Output directory |
 | `--n-top-features` | `10` | Top features per explanation |
 | `--n-local-samples` | `10` | Number of per-sample local explanations |

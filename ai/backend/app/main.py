@@ -101,13 +101,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             max_tokens=a_cfg.max_tokens,
         )
         from assistant.services.assistant_service import AssistantService
+        from backend.app.dependencies import get_served_competitions
+        from backend.app.services.assistant_tools import AssistantTools
 
+        tools = AssistantTools(app.state, get_served_competitions()).tools()
         ai_service = AssistantService(
             embedder=embedder,
             generator=generator,
             store=store,
             model_name=a_cfg.ollama_chat_model,
             top_k=a_cfg.top_k,
+            tools=tools,
         )
         app.state.chat_service = ChatService(ai_service)
         logger.info("Assistant service loaded: %d chunks in index.", store.size())

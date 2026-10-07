@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Any
 
 from assistant.embeddings.embedder import Embedder
-from assistant.generation.generator import Generator
+from assistant.generation.generator import Generator, ToolCallingGenerator
 from assistant.prompting.templates import build_messages
 from assistant.retrieval.retriever import RetrievedDoc, retrieve
 from assistant.retrieval.vector_store import VectorStore
+from assistant.tools.tool import Tool, run_tool
 
 logger = logging.getLogger(__name__)
 
@@ -36,12 +39,17 @@ class AssistantResponse:
 
 _EXCERPT_LENGTH = 200
 _NO_INFO_MARKER = "I don't have enough information"
+# A question needs one or two calls (prediction, then explanation); the cap
+# stops a model that keeps calling tools from looping forever.
+_MAX_TOOL_ROUNDS = 3
 
 
 class AssistantService:
     """Retrieval-augmented generation service for football questions.
 
     Composes: embed → retrieve → prompt → generate → structured response.
+    When given tools and a tool-calling generator, the model may call them
+    before answering, so its numbers come from the platform's own APIs.
     """
 
     def __init__(
@@ -51,13 +59,15 @@ class AssistantService:
         store: VectorStore,
         model_name: str,
         top_k: int = 5,
+        tools: Sequence[Tool] = (),
     ) -> None:
-        """Initialise with injected components."""
+        """Initialise with injected components and optional tools."""
         self._embedder = embedder
         self._generator = generator
         self._store = store
         self._model_name = model_name
         self._top_k = top_k
+        self._tools = tuple(tools)
 
     def chat(self, question: str) -> AssistantResponse:
         """Answer *question* using RAG over the local knowledge base.
@@ -79,8 +89,8 @@ class AssistantService:
         query_emb = self._embedder.embed([question])[0]
         retrieved: list[RetrievedDoc] = retrieve(query_emb, self._store, self._top_k)
 
-        messages = build_messages(question, retrieved)
-        answer = self._generator.generate(messages)
+        messages: list[dict[str, Any]] = list(build_messages(question, retrieved))
+        answer = self._answer(messages)
 
         sources = _build_sources(retrieved)
         confidence = _compute_confidence(retrieved, answer)
@@ -99,9 +109,38 @@ class AssistantService:
             retrieved_count=len(retrieved),
         )
 
+    def _answer(self, messages: list[dict[str, Any]]) -> str:
+        """Generate the answer, running any tool calls the model makes first."""
+        generator = self._generator
+        if not self._tools or not isinstance(generator, ToolCallingGenerator):
+            return generator.generate(messages)
+        schemas = [tool.schema() for tool in self._tools]
+        for _ in range(_MAX_TOOL_ROUNDS):
+            turn = generator.chat(messages, schemas)
+            if not turn.tool_calls:
+                return turn.content
+            messages.append(_assistant_message(turn.content, turn.tool_calls))
+            for call in turn.tool_calls:
+                logger.info("Tool call: %s %s", call.name, call.arguments)
+                result = run_tool(self._tools, call.name, call.arguments)
+                messages.append(
+                    {"role": "tool", "tool_name": call.name, "content": result}
+                )
+        return generator.chat(messages, []).content
+
 
 class VectorStoreEmptyError(RuntimeError):
     """Raised when the vector store has not been populated."""
+
+
+def _assistant_message(content: str, calls: Sequence[Any]) -> dict[str, Any]:
+    return {
+        "role": "assistant",
+        "content": content,
+        "tool_calls": [
+            {"function": {"name": c.name, "arguments": c.arguments}} for c in calls
+        ],
+    }
 
 
 def _build_sources(retrieved: list[RetrievedDoc]) -> list[SourceDocument]:

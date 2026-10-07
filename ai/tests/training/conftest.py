@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
 
 from training.configuration import TrainingConfig
+from training.pipeline import TrainingPipeline
 
 FEATURES = [
     "home_form_wins_last5",
@@ -61,3 +64,55 @@ def training_config() -> TrainingConfig:
         early_stopping_rounds=5,
         cv_folds=3,
     )
+
+
+REFIT_SEASONS = ["2019/20", "2020/21", "2021/22", "2022/23", "2023/24", "2024/25"]
+REFIT_FEATURES = ["home_elo_before", "away_elo_before"]
+_REFIT_MATRIX = "features/feature_matrix.parquet"
+
+
+def _write_refit_matrix(cwd: Path) -> str:
+    """Write a six-season matrix under ``cwd``; return its relative path."""
+    rng = np.random.default_rng(3)
+    frames = [
+        pd.DataFrame(
+            {
+                "match_date": pd.date_range(f"{2019 + i}-08-10", periods=40),
+                "season": season,
+                "competition": "Premier League",
+                "home_team": "A",
+                "away_team": "B",
+                "result": rng.choice(["H", "D", "A"], 40),
+                "home_elo_before": rng.uniform(1300, 1700, 40),
+                "away_elo_before": rng.uniform(1300, 1700, 40),
+            }
+        )
+        for i, season in enumerate(REFIT_SEASONS)
+    ]
+    path = cwd / _REFIT_MATRIX
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pd.concat(frames, ignore_index=True).to_parquet(path)
+    return _REFIT_MATRIX
+
+
+@pytest.fixture()
+def refit_matrix(tmp_path: Path) -> pd.DataFrame:
+    """The six-season matrix used by the refit tests."""
+    return pd.read_parquet(tmp_path / _write_refit_matrix(tmp_path))
+
+
+@pytest.fixture()
+def source_run(tmp_path: Path) -> Path:
+    """A season-split run that was not promoted, as the refit's source."""
+    config = TrainingConfig(
+        feature_columns=REFIT_FEATURES,
+        n_estimators=30,
+        early_stopping_rounds=3,
+        cv_folds=2,
+        split_strategy="season",
+        val_seasons=["2021/22"],
+        test_seasons=["2022/23"],
+        holdout_seasons=["2023/24"],
+        feature_matrix_path=_write_refit_matrix(tmp_path),
+    )
+    return Path(TrainingPipeline(config).run(tmp_path, promote=False)["run_dir"])

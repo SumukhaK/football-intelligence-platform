@@ -39,19 +39,8 @@ class ModelTrainer:
         X_train_imp = imputer.fit_transform(split.X_train)
         X_val_imp = imputer.transform(split.X_val)
 
-        num_class = len(label_encoder.classes_)
-        booster = xgb.XGBClassifier(
-            objective="multi:softprob",
-            num_class=num_class,
-            learning_rate=config.learning_rate,
-            max_depth=config.max_depth,
-            n_estimators=config.n_estimators,
-            subsample=config.subsample,
-            colsample_bytree=config.colsample_bytree,
-            random_state=config.random_seed,
-            eval_metric="mlogloss",
-            early_stopping_rounds=config.early_stopping_rounds,
-            verbosity=0,
+        booster = _make_booster(
+            config, len(label_encoder.classes_), config.early_stopping_rounds
         )
         booster.fit(
             X_train_imp,
@@ -74,6 +63,28 @@ class ModelTrainer:
             best_iteration=best_iter,
         )
 
+    def refit(
+        self, X: pd.DataFrame, y: pd.Series, config: TrainingConfig
+    ) -> TrainedModel:
+        """Fit on every row with exactly ``config.n_estimators`` trees.
+
+        There is no validation set, so no early stopping: the tree count must
+        come from an earlier run that had one.
+        """
+        label_encoder = LabelEncoder()
+        y_enc = label_encoder.fit_transform(y)
+        imputer = SimpleImputer(strategy="median")
+        booster = _make_booster(config, len(label_encoder.classes_), None)
+        booster.fit(imputer.fit_transform(X), y_enc, verbose=False)
+        return TrainedModel(
+            booster=booster,
+            label_encoder=label_encoder,
+            imputer=imputer,
+            feature_names=list(X.columns),
+            classes=[str(c) for c in label_encoder.classes_],
+            best_iteration=config.n_estimators - 1,
+        )
+
     def predict(
         self,
         model: TrainedModel,
@@ -85,3 +96,22 @@ class ModelTrainer:
         y_prob = model.booster.predict_proba(X_imp)
         y_labels: np.ndarray = model.label_encoder.inverse_transform(y_enc)
         return y_labels, y_prob
+
+
+def _make_booster(
+    config: TrainingConfig, num_class: int, early_stopping_rounds: int | None
+) -> xgb.XGBClassifier:
+    """Return an unfitted multi-class XGBoost classifier for ``config``."""
+    return xgb.XGBClassifier(
+        objective="multi:softprob",
+        num_class=num_class,
+        learning_rate=config.learning_rate,
+        max_depth=config.max_depth,
+        n_estimators=config.n_estimators,
+        subsample=config.subsample,
+        colsample_bytree=config.colsample_bytree,
+        random_state=config.random_seed,
+        eval_metric="mlogloss",
+        early_stopping_rounds=early_stopping_rounds,
+        verbosity=0,
+    )

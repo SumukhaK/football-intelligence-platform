@@ -2,17 +2,23 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from assistant.generation.generator import OllamaGenerationError, OllamaGenerator
+from assistant.generation.generator import (
+    OllamaGenerationError,
+    OllamaGenerator,
+    ToolCall,
+)
 
 
-def _make_chat_response(content: str) -> MagicMock:
+def _make_chat_response(content: str, tool_calls: list[Any] | None = None) -> MagicMock:
     resp = MagicMock()
     resp.message = MagicMock()
     resp.message.content = content
+    resp.message.tool_calls = tool_calls
     return resp
 
 
@@ -55,3 +61,37 @@ def test_generator_passes_options() -> None:
         _, kwargs = client.chat.call_args
         assert kwargs.get("options", {}).get("temperature") == 0.5
         assert kwargs.get("options", {}).get("num_predict") == 512
+
+
+def test_chat_passes_tools_and_parses_tool_calls() -> None:
+    """chat() offers the tool schemas and returns the calls the model makes."""
+    call = MagicMock()
+    call.function.name = "predict_match"
+    call.function.arguments = {"home_team": "Arsenal", "away_team": "Chelsea"}
+    tools = [{"type": "function", "function": {"name": "predict_match"}}]
+    with patch("ollama.Client") as mock_cls:
+        client = mock_cls.return_value
+        client.chat.return_value = _make_chat_response("", [call])
+
+        turn = OllamaGenerator(model="m", base_url="http://x:11434").chat(
+            [{"role": "user", "content": "Q"}], tools
+        )
+
+        assert client.chat.call_args.kwargs["tools"] == tools
+    assert turn.content == ""
+    assert turn.tool_calls == [
+        ToolCall("predict_match", {"home_team": "Arsenal", "away_team": "Chelsea"})
+    ]
+
+
+def test_generate_offers_no_tools() -> None:
+    """generate() keeps the plain chat call, without a tools list."""
+    with patch("ollama.Client") as mock_cls:
+        client = mock_cls.return_value
+        client.chat.return_value = _make_chat_response("ok")
+
+        OllamaGenerator(model="m", base_url="http://x:11434").generate(
+            [{"role": "user", "content": "Q"}]
+        )
+
+        assert client.chat.call_args.kwargs["tools"] is None

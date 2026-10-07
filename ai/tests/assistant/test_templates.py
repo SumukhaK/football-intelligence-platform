@@ -75,3 +75,9 @@ def test_default_cut_off_keeps_on_topic_chunks() -> None:
     """A chunk scoring like an answerable question (0.85) is kept by default."""
     doc = Document(id="x", text="Draw tag rule.", source="011.md", doc_type="adr")
     assert "Draw tag rule." in build_user_prompt("What is the draw tag?", [(doc, 0.85)])
+
+
+def test_system_prompt_requires_quoting_tool_numbers() -> None:
+    """SYSTEM_PROMPT tells the model to use tools and never compute numbers."""
+    assert "call the matching tool" in SYSTEM_PROMPT
+    assert "never estimate" in SYSTEM_PROMPT

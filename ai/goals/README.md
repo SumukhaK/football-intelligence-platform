@@ -10,6 +10,7 @@ extras.
 |---|---|
 | `dixon_coles.py` | `fit_dixon_coles` fits one league on matches strictly before a date: time-weighted Poisson goals with the Dixon-Coles low-score correction and L2 shrinkage. `DixonColesParams` holds the result and gives expected goals for a fixture. |
 | `score_grid.py` | `score_grid` turns expected goals into an 11×11 score grid; `outcome_probabilities`, `goal_markets`, `top_scores` and `expected_goals` read everything else from it. |
+| `insights.py` | `fixture_insight` bundles everything the app shows about a fixture's goals; `team_strengths` and `strength_reasons` explain them. |
 
 ## Conventions
 

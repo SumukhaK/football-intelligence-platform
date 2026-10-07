@@ -96,3 +96,15 @@ def test_paired_bootstrap_delta_is_deterministic() -> None:
     first = paired_bootstrap_delta(y, a, b, _CLASSES, n_resamples=50, seed=7)
     second = paired_bootstrap_delta(y, a, b, _CLASSES, n_resamples=50, seed=7)
     assert first == second
+
+
+def test_bootstrap_accuracy_delta_is_higher_minus_lower() -> None:
+    y = ["H", "A", "H", "D"]
+    right = np.array(
+        [[0.1, 0.2, 0.7], [0.7, 0.2, 0.1], [0.1, 0.2, 0.7], [0.1, 0.2, 0.7]]
+    )
+    wrong = right[:, ::-1]
+    delta = paired_bootstrap_delta(y, right, wrong, _CLASSES, metric="accuracy")
+    # Right picks 3 of 4 and reversed picks none, so A - B is about +0.75.
+    assert delta.mean == pytest.approx(0.75, abs=0.2)
+    assert delta.lower > 0

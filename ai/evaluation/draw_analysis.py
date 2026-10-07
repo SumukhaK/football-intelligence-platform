@@ -31,6 +31,9 @@ from training.persistence import load_json, load_model, save_json
 DRAW = "D"
 CALIBRATION_EDGES = [0.0, 0.20, 0.24, 0.27, 0.30, 0.33, 1.0]
 MARGINS = [0.0, 0.05, 0.09, 0.10, 0.12, 0.15, 0.20]
+# ADR 011: the "draw possible" tag and the share of matches it may flag.
+TAG_THRESHOLD = 0.28
+TAG_MAX_SHARE = 1 / 3
 
 
 def pick_with_draw_margin(
@@ -84,6 +87,33 @@ def draw_rule_tradeoff(
     return rows
 
 
+def draw_tag(
+    probs: np.ndarray, y_true: np.ndarray, classes: list[str], threshold: float
+) -> dict[str, float]:
+    """Share flagged by the draw tag and the draw rate with and without it."""
+    flagged = probs[:, classes.index(DRAW)] >= threshold
+    drew = np.asarray(y_true) == DRAW
+    return {
+        "threshold": threshold,
+        "flagged": round(float(flagged.mean()), 4),
+        "draw_rate_flagged": (
+            round(float(drew[flagged].mean()), 4) if flagged.any() else 0.0
+        ),
+        "draw_rate_others": (
+            round(float(drew[~flagged].mean()), 4) if (~flagged).any() else 0.0
+        ),
+    }
+
+
+def lowest_tag_threshold(probs: np.ndarray, classes: list[str]) -> float:
+    """Lowest threshold, in 0.01 steps, that flags under a third of matches."""
+    draw = probs[:, classes.index(DRAW)]
+    for step in range(15, 51):
+        if float((draw >= step / 100).mean()) < TAG_MAX_SHARE:
+            return step / 100
+    return 0.5
+
+
 def analyse_block(
     probs: np.ndarray, y_true: np.ndarray, classes: list[str]
 ) -> dict[str, Any]:
@@ -95,6 +125,8 @@ def analyse_block(
         "max_draw_probability": round(float(draw.max()), 3),
         "calibration": draw_calibration(probs, y_true, classes),
         "rule": draw_rule_tradeoff(probs, y_true, classes),
+        "tag": draw_tag(probs, y_true, classes, TAG_THRESHOLD),
+        "lowest_tag_threshold": lowest_tag_threshold(probs, classes),
     }
 
 
