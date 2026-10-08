@@ -57,7 +57,7 @@ class OutlookService:
         self._today = today
         self._history_simulations = history_simulations
         self._cache: dict[tuple[str, date], pd.DataFrame] = {}
-        # ponytail: one lock for every league; per-league locks if requests queue.
+        # One lock for every league; per-league locks if requests ever queue.
         self._lock = threading.Lock()
 
     @classmethod
