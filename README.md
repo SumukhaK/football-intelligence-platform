@@ -16,7 +16,7 @@ The Football Intelligence Platform ingests 26 seasons of match data from Europe'
 
 It is a complete, working system — not a notebook or a prototype. Twelve build stages take it from an empty repository to a tested, documented, end-to-end product: ingestion → validation → feature engineering → model training → explainability → a FastAPI backend → a locally-grounded RAG assistant → a Compose Multiplatform Android app → full integration testing.
 
-**1,050 tests: 970 Python and 80 Android. Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes results and fixtures daily without a restart, and the app keeps working offline with the last data it saw.**
+**1,135 tests: 970 Python and 165 Android. Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes results and fixtures daily without a restart, and the app keeps working offline with the last data it saw.**
 
 ---
 
@@ -45,9 +45,9 @@ This project demonstrates AI engineering as a discipline: not just "can I train 
 | **Per-prediction explainability** | SHAP `TreeExplainer` attaches feature-level attribution to every prediction, shown in plain football language ("Arsenal win rate at home · 68%") |
 | **Grounded AI assistant** | Local RAG pipeline (Ollama + numpy vector store) answers football questions using only retrieved platform data, with source citations, and calls the API's own prediction, explanation and fixtures services as tools for match questions (ADR 018); season questions (tables on any date with a goals-model projection, results, the next derby) go through a rule-based router to internal season tools (ADR 021) |
 | **Production-shaped backend** | Versioned FastAPI (`/v1` frozen, `/v2` current, ADR 014), server-side match features, upcoming fixtures, a daily in-process data refresh (ADR 013), a per-client rate limit, invite-only sign-in with consent for hosted deployments (ADR 022), structured errors, OpenAPI docs |
-| **Native Android client** | Compose Multiplatform app that opens on upcoming fixtures by league (tap one to predict it), with team crests, bottom navigation, a league picker, offline mode with saved data, pull to refresh, MVVM, StateFlow, Koin DI and previews for every screen |
+| **Native Android client** | Compose Multiplatform app with invite-only sign-in and a consent notice, that opens on upcoming fixtures by league (tap one to predict it), with team crests, bottom navigation, a league picker, offline mode with saved data, pull to refresh, MVVM, StateFlow, Koin DI and previews for every screen |
 | **Full reproducibility** | Entire pipeline (ingest → features → train → explain) runs in under 15 seconds from one CLI command |
-| **End-to-end test coverage** | 970 Python tests (including 37 integration tests against the real model, most of which skip on a machine without one) and 80 Android tests (ViewModels written test-first, repositories, network, cache, loader) |
+| **End-to-end test coverage** | 970 Python tests (including 37 integration tests against the real model, most of which skip on a machine without one) and 165 Android tests (ViewModels written test-first, repositories, network, cache, loader) |
 | **Zero cloud dependency** | Runs entirely on a laptop — no managed database, no cloud LLM, no hosted vector store |
 
 ---
@@ -116,7 +116,7 @@ flowchart TD
 .claude/            # AI agent project instructions (architecture rules, coding standards)
 docs/               # ADRs, stage reports, demo guides, release notes, showcase docs
 playbook/           # Reserved for prompt template docs (prompts live in ai/assistant/prompting/)
-frontend/           # Compose Multiplatform Android application (14 Gradle modules)
+frontend/           # Compose Multiplatform Android application (15 Gradle modules)
 backend/            # Placeholder: the backend lives in ai/backend/
 ai/                 # Python workspace: ingestion → features → training → explainability → RAG → API
 datasets/           # Raw, processed, and feature-engineered football data (versioned, not committed)
@@ -340,13 +340,20 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 
 The app calls API v2 at `http://10.0.2.2:8000/v2` (the Android emulator's alias for the host machine's localhost).
 
+The app opens on invite-only sign-in (ADR 022), whether or not the backend has `AUTH_REQUIRED` on. Create an invite, then enter the printed code on the Invite code tab with a password of at least 10 characters:
+
+```sh
+cd ai
+uv run python -m scripts.manage_accounts invite --email you@example.com
+```
+
 ### Running Tests
 
 ```sh
 # Python: 970 tests (the 37 integration tests need a trained model)
 cd ai && uv run pytest
 
-# Android: unit tests, lint and formatting (80 tests)
+# Android: unit tests, lint and formatting (165 tests)
 cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
 ```
 
