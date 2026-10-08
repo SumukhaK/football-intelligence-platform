@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.footballintelligence.core.model.PredictionResult
 import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.ErrorView
+import com.footballintelligence.core.ui.LeagueEmblem
 import com.footballintelligence.core.ui.LoadingView
 import com.footballintelligence.core.ui.OfflineBanner
 import com.footballintelligence.core.ui.RefreshableContent
@@ -120,42 +122,11 @@ private fun ResultContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            ),
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                if (result.competition.isNotBlank()) {
-                    Text(result.competition, style = MaterialTheme.typography.labelMedium)
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                    TeamCrest(result.homeTeam, size = 48.dp)
-                    TeamCrest(result.awayTeam, size = 48.dp)
-                }
-                Text(
-                    stringResource(Res.string.fixture, result.homeTeam, result.awayTeam),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Text(
-                    outcomeLabel(result.predictedResult, result.homeTeam, result.awayTeam),
-                    style = MaterialTheme.typography.displaySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                if (result.drawPossible) {
-                    DrawPossibleTag()
-                }
-                Text(
-                    stringResource(Res.string.confidence, percentOf(result.confidence)),
-                    style = MaterialTheme.typography.bodyLarge,
-                )
+        val winner = winningTeam(result.predictedResult, result.homeTeam, result.awayTeam)
+        Box {
+            ResultHeader(result, winner)
+            if (winner != null) {
+                Confetti(Modifier.matchParentSize())
             }
         }
 
@@ -172,6 +143,59 @@ private fun ResultContent(
         }
 
         InsightsSection(state = insightsState)
+    }
+}
+
+/** The result card. A predicted win shows the winner's crest large; a draw shows both. */
+@Composable
+private fun ResultHeader(result: PredictionResult, winner: String?) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+        ),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            if (result.competition.isNotBlank()) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    LeagueEmblem(result.competition, size = 20.dp)
+                    Text(result.competition, style = MaterialTheme.typography.labelMedium)
+                }
+            }
+            if (winner != null) {
+                TeamCrest(winner, size = 112.dp)
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                    TeamCrest(result.homeTeam, size = 48.dp)
+                    TeamCrest(result.awayTeam, size = 48.dp)
+                }
+            }
+            Text(
+                stringResource(Res.string.fixture, result.homeTeam, result.awayTeam),
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Text(
+                outcomeLabel(result.predictedResult, result.homeTeam, result.awayTeam),
+                style = MaterialTheme.typography.displaySmall,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            if (result.drawPossible) {
+                DrawPossibleTag()
+            }
+            Text(
+                stringResource(Res.string.confidence, percentOf(result.confidence)),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        }
     }
 }
 
