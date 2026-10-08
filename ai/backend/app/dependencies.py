@@ -7,6 +7,7 @@ These functions extract them and raise 503 if unavailable.
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Annotated
 
 from fastapi import Depends, Request
@@ -24,6 +25,7 @@ from backend.app.services.fixture_feature_service import FixtureFeatureService
 from backend.app.services.fixtures_service import FixturesService
 from backend.app.services.insights_service import InsightsService
 from backend.app.services.prediction_service import PredictionService
+from backend.app.services.team_crests import TeamCrests
 
 
 def get_prediction_service(request: Request) -> PredictionService:
@@ -126,6 +128,12 @@ def get_fixtures_service(request: Request) -> FixturesService:
     return service
 
 
+@lru_cache(maxsize=1)
+def get_team_crests() -> TeamCrests:
+    """Return the crest table, loaded on first use (ADR 020)."""
+    return TeamCrests.from_csv(get_settings().team_crests_path)
+
+
 PredictionServiceDep = Annotated[PredictionService, Depends(get_prediction_service)]
 ExplanationServiceDep = Annotated[ExplanationService, Depends(get_explanation_service)]
 OptionalFixtureFeatureServiceDep = Annotated[
@@ -140,3 +148,4 @@ OptionalInsightsServiceDep = Annotated[
     InsightsService | None, Depends(get_optional_insights_service)
 ]
 FixturesServiceDep = Annotated[FixturesService, Depends(get_fixtures_service)]
+TeamCrestsDep = Annotated[TeamCrests, Depends(get_team_crests)]
