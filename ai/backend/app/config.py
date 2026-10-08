@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     assistant_knowledge_root: Path = Path(".")
     assistant_top_k: int = 5
 
+    # Invite-only sign-in for every /v2 data route (ADR 022); on in the cloud.
+    auth_required: bool = False
+    accounts_path: Path = Path("accounts/accounts.json")
+
 
 _settings: Settings | None = None
 

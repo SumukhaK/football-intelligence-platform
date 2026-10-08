@@ -14,6 +14,8 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Season questions in the assistant: results, head-to-head and the next meeting (for example the next Manchester derby), and the league table on any date, with a goals-model projection of points, goals and clean sheets for dates still ahead. A rule-based router picks the tools and answers player and next-season questions without the model (ADR 021).
 - Assistant evals: a grounding check that answers quote `/v2/predict` without invented numbers, and an abstention check for "I don't know" (#65, #66).
 
+- Invite-only sign-in and consent for hosted deployments: invites, sessions, a consent notice, bans and `scripts.manage_accounts`. Off locally (`AUTH_REQUIRED`); on, it guards every `/v2` data route and drops `/v1` (ADR 022).
+
 ### Changed
 - The default chat model is `qwen2.5:7b-instruct` instead of `llama3.2`, which misquoted tool numbers and failed both assistant evals (ADR 019).
 
