@@ -34,6 +34,8 @@ object HttpClientFactory {
                     }
                 }
                 level = LogLevel.BODY
+                // Sign-in bodies hold passwords and session tokens; keep them out of logcat.
+                filter { !it.url.buildString().contains("/auth/") }
             }
             install(HttpTimeout) {
                 requestTimeoutMillis = config.timeoutMs
