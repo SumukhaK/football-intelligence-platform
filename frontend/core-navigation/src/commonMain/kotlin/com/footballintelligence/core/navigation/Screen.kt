@@ -7,6 +7,13 @@ sealed class Screen(val route: String) {
     data object PredictionResult : Screen("prediction_result")
     data object ExplainPrediction : Screen("explain_prediction")
     data object Assistant : Screen("assistant")
+    data object MyTeam : Screen("my_team")
+
+    /** First-launch favourite team picker; a future login screen goes before it. */
+    data object Onboarding : Screen("onboarding")
+
+    /** The favourite team picker opened from Settings. */
+    data object ChangeTeam : Screen("change_team")
     data object ModelInfo : Screen("model_info")
     data object Settings : Screen("settings")
     data object About : Screen("about")

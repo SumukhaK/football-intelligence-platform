@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Picker -->
+    <string name="picker_welcome_title">Welcome</string>
+    <string name="picker_change_title">Favourite team</string>
+    <string name="picker_welcome_intro">Pick your team and we will follow its next match for you.</string>
+    <string name="picker_league_heading">Choose a league</string>
+    <string name="picker_team_heading">Choose your %1$s team</string>
+    <string name="picker_teams_empty">No teams found for %1$s.</string>
+    <string name="cd_pick_league">Choose %1$s</string>
+    <string name="cd_pick_team">Make %1$s your team</string>
+
+    <!-- My Team -->
+    <string name="my_team_title">My Team</string>
+    <string name="next_match_heading">Your next match</string>
+    <string name="next_match_versus">%1$s vs %2$s</string>
+    <string name="next_match_when">%1$s · %2$s</string>
+    <string name="next_match_time_tbc">time TBC</string>
+    <string name="next_match_pick">Our pick: %1$s</string>
+    <string name="next_match_pick_chance">%1$d% chance</string>
+    <string name="outcome_win">Win</string>
+    <string name="outcome_draw">Draw</string>
+    <string name="outcome_loss">Loss</string>
+    <string name="next_match_draw_possible">Draw possible</string>
+    <string name="next_match_reasons">Why</string>
+    <string name="next_match_scorelines">Likeliest scores</string>
+    <string name="next_match_scoreline">%1$d-%2$d</string>
+    <string name="next_match_scoreline_chance">%1$d%</string>
+    <string name="next_match_clean_sheet">Clean sheet chance: %1$d%</string>
+    <string name="next_match_none">No upcoming match for %1$s yet. Check back when the next fixtures are published.</string>
+
+    <!-- Settings -->
+    <string name="settings_my_team_section">My Team</string>
+    <string name="settings_my_team">My team</string>
+    <string name="settings_my_team_value">%1$s, %2$s</string>
+    <string name="cd_change_my_team">Change favourite team, currently %1$s in %2$s</string>
+</resources>
