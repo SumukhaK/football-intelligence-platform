@@ -11,6 +11,7 @@ Verifies ingestion, validation, feature engineering, training, explainability, t
 ```
 tests/
   test_bootstrap.py          # Verifies packages import and dependencies are installed
+  conftest.py                # Shared fixtures
   test_config.py, test_leagues.py, test_storage.py
   ingestion/                 # Tests for ai/ingestion/ (backfill, live refresh, fixtures)
   providers/                 # Tests for ai/providers/
@@ -24,7 +25,8 @@ tests/
   inference/                 # Tests for ai/inference/
   explainability/            # Tests for ai/explainability/
   goals/                     # Tests for ai/goals/
-  assistant/                 # Tests for ai/assistant/
+  assistant/                 # Tests for ai/assistant/ (tools/ for the tool runner)
+  scripts/                   # Tests for ai/scripts/ (team crests, account management)
   backend/                   # Endpoint, versioning, rate limit and service tests for ai/backend/
   integration/               # End-to-end tests against the real model (marked integration)
 ```

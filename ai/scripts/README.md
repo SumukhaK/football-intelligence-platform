@@ -9,7 +9,7 @@ One-shot scripts that are run from the command line rather than imported as libr
 ## Contracts
 
 - Scripts are run with `uv run python -m scripts.<name>`; nothing imports them.
-- Each script has a `--help` flag and a usage example at the top.
+- Each script has a usage example at the top, and all but `build_team_crests` (which takes no options) have a `--help` flag.
 - Scripts must be idempotent where possible.
 - No script downloads data or modifies `datasets/raw/` without user confirmation.
 

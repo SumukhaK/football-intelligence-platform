@@ -21,7 +21,7 @@ Build an AI-first football analytics application that demonstrates practical AI 
 - Real-time match streaming. (A daily batch refresh of results and fixtures is in scope; see ADR 013 and ADR 015.)
 - Fine-tuning or LoRA training of any language model.
 - Multi-cloud deployment or Kubernetes orchestration.
-- Social features, user accounts, or authentication in early stages.
+- Social features, user accounts, or authentication in early stages. (Invite-only accounts and consent for hosted deployments were added later and are off by default locally; see ADR 022.)
 - Covering football leagues beyond the scoped dataset: the Premier League, Bundesliga, La Liga, Serie A and Ligue 1 (see ADR 005).
 - Becoming a production SaaS product.
 
@@ -278,7 +278,7 @@ Local development must work without any cloud services. All external dependencie
 
 ## 19. Project Stages
 
-These were the original stages. The project was built in 12 stages up to release v1.0.0 (`docs/reports/stage-NN-summary.md`), then extended in v2.0.0 and v2.0.1 (`docs/releases/`).
+These were the original stages. The project was built in 12 stages up to release v1.0.0 (`docs/reports/stage-NN-summary.md`), then extended in v2.0.0, v2.0.1 and v2.1.0 (`docs/releases/`).
 
 **Stage 1 — Data Foundation**
 Ingest raw football data, validate schemas, build a processed dataset ready for modelling.

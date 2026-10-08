@@ -26,6 +26,7 @@ Clean Architecture with strict layer separation.
 - **Dependencies:** FastAPI `Depends` functions that read from `app.state`.
 - **Lifespan:** Both models, the match history, goals models and fixtures load once at startup; the daily refresh reloads the data without a restart (ADR 013).
 - **Middleware:** A per-client sliding-window rate limiter (ADR 014).
+- **Sign-in:** Invite-only accounts in a JSON file; with `AUTH_REQUIRED=true` every `/v2` data route needs a signed-in user who accepted the notice (ADR 022).
 
 ---
 
@@ -35,8 +36,10 @@ Clean Architecture with strict layer separation.
 ai/backend/
   app/
     config.py           # pydantic-settings configuration
+    consent.py          # The notice users accept, and its version (ADR 022)
     dependencies.py     # Depends functions reading services from app.state
-    main.py             # App factory, lifespan, router mounting per version
+    main.py             # App factory and lifespan
+    routing.py          # Which routers are mounted under /v2, /v1 and unversioned
     exceptions/         # Domain errors and structured JSON handlers
     middleware/
       rate_limit.py     # Sliding-window rate limiter, 429 with Retry-After
@@ -50,10 +53,13 @@ ai/backend/
       explainability.py # POST /explain
       insights.py       # POST /insights
       assistant.py      # POST /assistant/chat
+      auth.py           # /auth/redeem-invite, /auth/login, /auth/logout, /me
+      crests.py         # Crest and emblem redirects (ADR 020)
       v1.py             # The frozen v1 contract on the original model
     schemas/            # Request and response models, one file per area
     services/           # Prediction, explanation, insights, fixtures,
-                        # match features, chat and daily refresh services
+                        # match features, chat, season, assistant tools,
+                        # crests, accounts and daily refresh services
 ```
 
 ---
@@ -86,6 +92,17 @@ League model (ADR 014). The full contract is in [docs/api.md](../docs/api.md).
 | POST   | /explain             | Prediction plus SHAP feature contributions          |
 | POST   | /insights            | Likely scores and goal markets (goals model)        |
 | POST   | /assistant/chat      | Retrieval-grounded answers                          |
+| GET    | /teams/{team}/crest  | Redirect to the team's crest (ADR 020)              |
+| GET    | /competitions/{competition}/emblem | Redirect to the league's emblem       |
+| POST   | /auth/redeem-invite  | Set a password with an invite code, sign in         |
+| POST   | /auth/login          | Sign in, returns a session token                    |
+| POST   | /auth/logout         | End the session                                     |
+| GET    | /me                  | The signed-in user and the notice                   |
+| POST   | /me/consent          | Accept the notice                                   |
+
+With `AUTH_REQUIRED=true`, the data routes need a bearer token and `/v1` and
+the unversioned paths are not mounted. Health, sign-in and the crest
+redirects stay open (ADR 022).
 
 ### Error Responses
 
@@ -96,8 +113,12 @@ All errors return structured JSON:
 
 | HTTP | Condition                                         |
 |------|---------------------------------------------------|
-| 422  | Validation failure, unknown league or team        |
-| 429  | Rate limit reached; `Retry-After` gives seconds   |
+| 400  | Invite code wrong, used or expired                |
+| 401  | Not signed in, or wrong email or password         |
+| 403  | Notice not accepted, or account blocked           |
+| 404  | No crest or emblem known for the name             |
+| 422  | Validation failure, unknown league or team, password too short |
+| 429  | Rate limit reached (`Retry-After` gives seconds), or too many failed sign-ins |
 | 503  | Model, match history, fixtures or assistant not loaded |
 | 500  | Unexpected server error                           |
 
@@ -105,10 +126,13 @@ All errors return structured JSON:
 
 ## Configuration
 
-Set via environment variables or `ai/.env`. Every setting, with its default and
-a comment, is listed in [`ai/.env.example`](../ai/.env.example): model paths
+Set via environment variables or `ai/.env`. The settings, with their defaults and
+comments, are listed in [`ai/.env.example`](../ai/.env.example): model paths
 for both API versions, data directories, served leagues, the daily refresh
-hour, the draw threshold, the rate limit and the assistant.
+hour, the draw threshold, the rate limit, the assistant, and sign-in
+(`AUTH_REQUIRED`, default `false`; `ACCOUNTS_PATH`, default
+`accounts/accounts.json`), and the crest tables (`TEAM_CRESTS_PATH`,
+`LEAGUE_EMBLEMS_PATH`).
 
 ---
 
@@ -122,8 +146,9 @@ cd ai
 uv run pytest tests/backend/ -v
 ```
 
-135 backend tests cover every endpoint in both versions, the rate limiter,
-fixtures, startup, error paths and the service units.
+224 backend tests cover every endpoint in both versions, the rate limiter,
+fixtures, sign-in, crests, the assistant's tools and season router, startup,
+error paths and the service units.
 
 ---
 

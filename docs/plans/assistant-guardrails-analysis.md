@@ -1,6 +1,6 @@
 # Assistant guardrails, limits and caching: analysis
 
-Analysis from 8 October 2026, with the decisions taken since. The season tools and router it called "answerable later" are built (ADR 021). The rest is tracker steps 3a, 3b and 6a in [hosting-execution-tracker.md](hosting-execution-tracker.md).
+Analysis from 8 October 2026, with the decisions taken since. The season tools and router it called "answerable later" are built (ADR 021), and so are invite-only accounts and consent (ADR 022), so "No user identity" below no longer holds where sign-in is on. The rest is tracker steps 3a, 3b and 6a in [hosting-execution-tracker.md](hosting-execution-tracker.md).
 
 ## Decisions (8 October 2026)
 

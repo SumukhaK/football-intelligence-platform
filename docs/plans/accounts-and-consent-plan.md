@@ -1,6 +1,6 @@
 # Accounts and Consent Plan
 
-Status: Proposed, 8 October 2026. Backend first; the Android screens follow once the API exists.
+Status: In progress. Proposed 8 October 2026; the backend is done (ADR 022). The Firestore store and the Android screens are still to do.
 Decisions behind it are recorded in the hosting plan's production AI target and in [hosting-execution-tracker.md](hosting-execution-tracker.md).
 
 ## Goal
@@ -50,17 +50,17 @@ Errors use the existing `{ "error", "detail" }` shape: 401 `Not signed in`, 403 
 
 ## Owner tools
 
-- `python -m scripts.create_invite --email friend@example.com` prints a one-time code to send privately.
-- `python -m scripts.manage_user --email ... --ban | --unban | --reset-password` for support.
+- `python -m scripts.manage_accounts invite --email friend@example.com` prints a one-time code to send privately. A new invite for an existing account resets its password.
+- `python -m scripts.manage_accounts ban --email ...` and `unban --email ...` for support.
 
 ## Build order (each a PR into develop)
 
 1. ADR 022: accounts, sessions and consent. Done; the Firestore store, with `google-cloud-firestore`, comes with the cloud storage step.
-2. Repository interface with JSON-file and Firestore implementations; tests against the file store.
-3. Account service: invites, password hashing, login lockout, sessions. Unit tests.
-4. Auth routes, the `/me` routes and a FastAPI dependency on the `/v2` data routers. Integration tests with `TestClient`. `docs/api.md` updated.
-5. Owner scripts.
-6. Consent notice text (version 1) and the 403 path. Tests.
+2. Repository interface with JSON-file and Firestore implementations; tests against the file store. Done for the JSON-file store; Firestore to go.
+3. Account service: invites, password hashing, login lockout, sessions. Unit tests. Done.
+4. Auth routes, the `/me` routes and a FastAPI dependency on the `/v2` data routers. Integration tests with `TestClient`. `docs/api.md` updated. Done.
+5. Owner scripts. Done (`scripts.manage_accounts`).
+6. Consent notice text (version 1) and the 403 path. Tests. Done.
 7. Android: sign-in, redeem-invite and consent screens, token storage, and handling for 401 and 403 responses (a separate frontend task).
 
 ## Open questions
