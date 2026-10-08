@@ -80,11 +80,11 @@ Backend first, then the Android screens. Details in [accounts-and-consent-plan.m
 - [ ] ADR for accounts, sessions, consent and Firestore.
 - [ ] Repository interface (Firestore, plus a JSON file store for local use and tests).
 - [ ] Invites, Argon2id passwords, login lockout, revocable sessions.
-- [ ] `/v2/auth/*`, `/v2/me`, `/v2/me/consent`; the assistant needs a session and current consent when `AUTH_REQUIRED` is on.
+- [ ] `/v2/auth/*`, `/v2/me`, `/v2/me/consent`; every `/v2` data route needs a session and current consent when `AUTH_REQUIRED` is on.
 - [ ] Owner scripts: create an invite, ban, unban, reset a password.
 - [ ] Android: redeem invite, sign in, consent screen, token storage, 401 and 403 handling.
 
-Done when: an invited friend can redeem an invite, agree to the notice and chat, and nobody else can.
+Done when: an invited friend can redeem an invite, agree to the notice and use the app, and nobody else can.
 Evidence: integration tests and a staging walkthrough.
 
 ## 3b. Guardrails gateway: safety, scope router, cache, limits
