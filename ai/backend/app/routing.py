@@ -15,6 +15,7 @@ from backend.app.routers import (
     health,
     insights,
     model,
+    outlook,
     prediction,
     teams,
     v1,
@@ -29,6 +30,7 @@ _V2_DATA = [
     competitions.router,
     insights.router,
     fixtures.router,
+    outlook.router,
 ]
 
 

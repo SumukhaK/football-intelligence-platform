@@ -26,6 +26,10 @@ class FixturesNotAvailableError(Exception):
     """Raised when no upcoming fixtures dataset is loaded."""
 
 
+class SeasonOutlookNotAvailableError(Exception):
+    """Raised when a season outlook cannot be computed from the loaded data."""
+
+
 class FeatureMissingError(Exception):
     """Raised when required feature columns are absent from the request."""
 
@@ -122,6 +126,17 @@ def fixtures_not_available_handler(_request: Request, exc: Exception) -> JSONRes
     return JSONResponse(
         status_code=503,
         content={"error": "Fixtures not available", "detail": str(exc)},
+    )
+
+
+def season_outlook_not_available_handler(
+    _request: Request, exc: Exception
+) -> JSONResponse:
+    """Return a 503 when the season outlook cannot be computed."""
+    logger.error("Season outlook not available: %s", exc)
+    return JSONResponse(
+        status_code=503,
+        content={"error": "Season outlook not available", "detail": str(exc)},
     )
 
 
