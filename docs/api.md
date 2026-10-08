@@ -276,6 +276,14 @@ the assistant calls tools that run the same services as `/v2/predict`,
 (ADR 018). `OLLAMA_CHAT_MODEL` must name a model that supports tool calling.
 The request and response bodies are unchanged.
 
+It can also answer season questions through internal tools: a team's results
+and next meetings, and the league table on any date of a season in the data,
+projected with the goals model when the date is still ahead (ADR 021). A
+rule-based router reads each question first. Questions about individual
+players or seasons that have not started get a fixed reply without calling
+the model; those responses have `"model": "router"`, `"sources": []` and
+`"confidence": 0.0`.
+
 ---
 
 ## Keeping match history current

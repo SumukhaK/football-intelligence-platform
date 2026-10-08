@@ -390,7 +390,7 @@ uv run pytest tests/training/test_trainer.py
 uv run pytest -m integration
 ```
 
-Expected: 873 tests pass with `uv run pytest`. 37 of them are integration tests, which need the trained model in `models/latest/`; `-m "not integration"` runs the other 836. Integration tests are not skipped by default.
+Expected: 932 tests pass with `uv run pytest`. 37 of them are integration tests, which need the trained model in `models/latest/`; `-m "not integration"` runs the other 895. Integration tests are not skipped by default.
 
 ---
 
@@ -564,7 +564,15 @@ Asks 10 questions the knowledge base answers and 10 it doesn't, and checks the a
 LIVE_REFRESH_HOUR=off uv run python -m evaluation.assistant_abstention
 ```
 
-Both need the trained model, match history, fixtures, the index and a running Ollama, so they run locally rather than in CI. `LIVE_REFRESH_HOUR=off` stops the app from downloading new data during the run.
+### `python -m evaluation.assistant_season`
+
+Asks seven season questions (a projected table after Boxing Day, a past champion, the next Manchester derby, most clean sheets and most goals this season, next season, a top scorer). For each it runs the season tool the answer should come from and checks the answer names the expected team and contains no number the tool, the question or today's date don't account for; the last two must be refused (ADR 021).
+
+```sh
+LIVE_REFRESH_HOUR=off uv run python -m evaluation.assistant_season
+```
+
+All three need the trained model, match history, fixtures, the index and a running Ollama, so they run locally rather than in CI. `LIVE_REFRESH_HOUR=off` stops the app from downloading new data during the run.
 
 ---
 

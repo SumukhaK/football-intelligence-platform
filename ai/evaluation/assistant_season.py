@@ -20,7 +20,9 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
+from backend.app.services.team_resolver import aliases, normalise
 from evaluation.assistant_grounding import ungrounded_numbers
+from inference.fixture_features import season_for_date
 
 Expected = Callable[[Callable[..., dict[str, Any]]], tuple[str, dict[str, Any]]]
 
@@ -57,10 +59,13 @@ def score_answer(
     today: date,
 ) -> SeasonResult:
     """Score ``answer`` against the tool output it should be grounded in."""
-    sources = [question, today.isoformat()]
+    current = season_for_date(today)
+    following = f"{int(current[:4]) + 1}/{(int(current[:4]) + 2) % 100:02d}"
+    # A refusal may name the current and next season.
+    sources = [question, today.isoformat(), current, following]
     if tool_output is not None:
         sources.append(json.dumps(tool_output))
-    named = expected_team is None or expected_team.lower() in answer.lower()
+    named = expected_team is None or mentions(answer, expected_team)
     return SeasonResult(
         question=question,
         answer=answer,
@@ -70,9 +75,16 @@ def score_answer(
     )
 
 
+def mentions(answer: str, team: str) -> bool:
+    """True when ``answer`` names ``team`` in any spelling ("Manchester City")."""
+    text = f" {normalise(answer)} "
+    return any(f" {key} " in text for key in aliases([team]))
+
+
 def _table_leader(column: str, competition: str, on: str | None) -> Expected:
     def expected(call: Callable[..., dict[str, Any]]) -> tuple[str, dict[str, Any]]:
-        args = {"competition": competition, **({"date": on} if on else {})}
+        when = _boxing_day() if on == "boxing day" else on
+        args = {"competition": competition, **({"date": when} if when else {})}
         output = call("league_table", **args)
         rows = output["table"]
         leader = max(rows, key=lambda row: row[column])
@@ -81,10 +93,16 @@ def _table_leader(column: str, competition: str, on: str | None) -> Expected:
     return expected
 
 
+def _boxing_day() -> str:
+    """The day after Boxing Day this season, once its games are played."""
+    start = int(season_for_date(date.today())[:4])
+    return date(start, 12, 27).isoformat()
+
+
 CASES = (
     SeasonCase(
         "Who will top the Premier League after the Boxing Day games?",
-        _table_leader("chance_first", "Premier League", "2026-12-27"),
+        _table_leader("chance_first", "Premier League", "boxing day"),
     ),
     SeasonCase(
         "Who won the Premier League in 2015/16?",
@@ -100,11 +118,11 @@ CASES = (
     ),
     SeasonCase(
         "Which Bundesliga team will keep the most clean sheets this season?",
-        _table_leader("chance_most_clean_sheets", "Bundesliga", "2027-06-30"),
+        _table_leader("chance_most_clean_sheets", "Bundesliga", "end"),
     ),
     SeasonCase(
         "Which Serie A team will score the most goals this season?",
-        _table_leader("chance_most_goals", "Serie A", "2027-06-30"),
+        _table_leader("chance_most_goals", "Serie A", "end"),
     ),
     SeasonCase("Who will win La Liga next season?", None),
     SeasonCase("Who will be the Premier League's top scorer this season?", None),

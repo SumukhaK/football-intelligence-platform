@@ -212,13 +212,21 @@ def _fixture(row: dict[str, Any]) -> dict[str, Any]:
 def _actual(
     competition: str, season: str, on: date | None, played: pd.DataFrame
 ) -> dict[str, Any]:
-    rows = _records(standings(played).reset_index())
+    table = standings(played)
     return {
         "competition": competition,
         "season": season,
         "kind": "actual",
         "as_of": str(on) if on else None,
-        "table": rows,
+        "leaders": _leaders(
+            table,
+            {
+                "top": "points",
+                "most_goals": "goals_for",
+                "most_clean_sheets": "clean_sheets",
+            },
+        ),
+        "table": _records(table.reset_index()),
     }
 
 
@@ -240,7 +248,27 @@ def _projected(
         "as_of": str(on),
         "fixtures_simulated": len(remaining),
         "method": "Each remaining fixture simulated 10,000 times with the goals model.",
+        # Small models misread long tables, so the answers to the common
+        # questions are spelled out.
+        "leaders": _leaders(
+            projection,
+            {
+                "most_likely_first": "chance_first",
+                "most_likely_most_goals": "chance_most_goals",
+                "most_likely_most_clean_sheets": "chance_most_clean_sheets",
+            },
+        ),
         "table": _records(projection.reset_index(names="team")),
+    }
+
+
+def _leaders(table: pd.DataFrame, columns: dict[str, str]) -> dict[str, Any]:
+    """The team leading each column, with its value; empty for an empty table."""
+    if table.empty:
+        return {}
+    return {
+        label: {"team": str(table[column].idxmax()), column: table[column].max().item()}
+        for label, column in columns.items()
     }
 
 

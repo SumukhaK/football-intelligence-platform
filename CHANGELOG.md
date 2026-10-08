@@ -11,6 +11,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - The assistant can call tools that run the prediction, SHAP explanation and fixtures services, so it quotes the served model's numbers instead of refusing match questions (#65, ADR 018).
+- Season questions in the assistant: results, head-to-head and the next meeting (for example the next Manchester derby), and the league table on any date, with a goals-model projection of points, goals and clean sheets for dates still ahead. A rule-based router picks the tools and answers player and next-season questions without the model (ADR 021).
 - Assistant evals: a grounding check that answers quote `/v2/predict` without invented numbers, and an abstention check for "I don't know" (#65, #66).
 
 ### Changed

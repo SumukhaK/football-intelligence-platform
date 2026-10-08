@@ -103,8 +103,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         from assistant.services.assistant_service import AssistantService
         from backend.app.dependencies import get_served_competitions
         from backend.app.services.assistant_tools import AssistantTools
+        from backend.app.services.season_router import SeasonRouter
 
-        tools = AssistantTools(app.state, get_served_competitions()).tools()
+        served = get_served_competitions()
+        tools = AssistantTools(app.state, served).tools()
         ai_service = AssistantService(
             embedder=embedder,
             generator=generator,
@@ -112,6 +114,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             model_name=a_cfg.ollama_chat_model,
             top_k=a_cfg.top_k,
             tools=tools,
+            router=SeasonRouter(app.state, served),
         )
         app.state.chat_service = ChatService(ai_service)
         logger.info("Assistant service loaded: %d chunks in index.", store.size())

@@ -14,6 +14,24 @@ import unicodedata
 from config.team_names import OPENFOOTBALL_TEAM_NAMES
 
 _NOISE = {"fc", "afc", "cf", "sc", "ac", "club", "de", "the"}
+# Common short names that neither the data nor openfootball use.
+NICKNAMES = {
+    "spurs": "Tottenham",
+    "man utd": "Man United",
+    "forest": "Nott'm Forest",
+    "nottingham forest": "Nott'm Forest",
+    "barca": "Barcelona",
+    "atletico": "Ath Madrid",
+    "atletico madrid": "Ath Madrid",
+    "athletic bilbao": "Ath Bilbao",
+    "real sociedad": "Sociedad",
+    "psg": "Paris SG",
+    "bayern": "Bayern Munich",
+    "bvb": "Dortmund",
+    "gladbach": "M'gladbach",
+    "juve": "Juventus",
+    "inter milan": "Inter",
+}
 
 
 class TeamNotFoundError(ValueError):
@@ -33,7 +51,7 @@ def resolve_team(name: str, known: list[str]) -> str:
     Raises:
         TeamNotFoundError: If nothing matches; the message suggests close names.
     """
-    keys = _keys(known)
+    keys = aliases(known)
     wanted = normalise(name)
     if wanted in keys:
         return keys[wanted]
@@ -43,9 +61,15 @@ def resolve_team(name: str, known: list[str]) -> str:
     raise TeamNotFoundError(f"No team called '{name}' in this league.{hint}")
 
 
-def _keys(known: list[str]) -> dict[str, str]:
-    """Normalised spelling to data name, for known teams and their full names."""
+def aliases(known: list[str]) -> dict[str, str]:
+    """Every normalised spelling of the ``known`` teams, mapped to their names.
+
+    Covers the data's names, openfootball's full club names and nicknames.
+    """
     keys = {normalise(team): team for team in known}
+    for nickname, team in NICKNAMES.items():
+        if team in known:
+            keys.setdefault(normalise(nickname), team)
     for names in OPENFOOTBALL_TEAM_NAMES.values():
         for full, team in names.items():
             if team in known:
