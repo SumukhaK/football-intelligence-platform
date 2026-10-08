@@ -37,6 +37,7 @@ import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
 import com.footballintelligence.core.ui.OfflineBanner
 import com.footballintelligence.core.ui.RefreshableContent
+import com.footballintelligence.core.ui.TeamCrest
 import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.prediction.resources.Res
 import com.footballintelligence.feature.prediction.resources.action_explain
@@ -134,6 +135,10 @@ private fun ResultContent(
             ) {
                 if (result.competition.isNotBlank()) {
                     Text(result.competition, style = MaterialTheme.typography.labelMedium)
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                    TeamCrest(result.homeTeam, size = 48.dp)
+                    TeamCrest(result.awayTeam, size = 48.dp)
                 }
                 Text(
                     stringResource(Res.string.fixture, result.homeTeam, result.awayTeam),
