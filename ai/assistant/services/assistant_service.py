@@ -105,11 +105,12 @@ class AssistantService:
         )
         if route is not None:
             self._run_calls(messages, route.calls)
-        answer = self._answer(messages)
+        return self._response(self._answer(messages), retrieved)
 
-        sources = _build_sources(retrieved)
+    def _response(
+        self, answer: str, retrieved: list[RetrievedDoc]
+    ) -> AssistantResponse:
         confidence = _compute_confidence(retrieved, answer)
-
         logger.info(
             "Chat: retrieved=%d confidence=%.2f model=%s",
             len(retrieved),
@@ -118,7 +119,7 @@ class AssistantService:
         )
         return AssistantResponse(
             answer=answer,
-            sources=sources,
+            sources=_build_sources(retrieved),
             confidence=confidence,
             model=self._model_name,
             retrieved_count=len(retrieved),
