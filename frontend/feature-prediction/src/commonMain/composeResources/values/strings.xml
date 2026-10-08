@@ -32,6 +32,7 @@
     <string name="insights_loading">Loading likely scores…</string>
     <string name="insights_unavailable">Likely scores are unavailable right now.</string>
     <string name="top_scores_title">Most likely scores</string>
+    <string name="top_scores_note">Each exact score is unlikely on its own. A win is spread over many scores (1–0, 2–0, 2–1…), while a draw mostly lands on 1–1 or 0–0, so a draw can top this list even when one side is the clear favourite.</string>
     <string name="score_line">%1$s–%2$s</string>
     <string name="cd_score_row">%1$s %2$s, %3$s %4$s: %5$s percent</string>
     <string name="expected_goals_title">Expected goals</string>
