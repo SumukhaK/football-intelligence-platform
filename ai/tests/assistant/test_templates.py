@@ -20,7 +20,7 @@ _DOC = Document(
 
 def test_system_prompt_is_nonempty() -> None:
     """SYSTEM_PROMPT contains the key grounding rule."""
-    assert "Answer ONLY from the results of tools" in SYSTEM_PROMPT
+    assert "ONLY from the context" in SYSTEM_PROMPT
     assert len(SYSTEM_PROMPT) > 100
 
 

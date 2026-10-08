@@ -65,6 +65,7 @@ _TABLE = re.compile(
     r"\b(table|standings|tops?|win league|won league|title|champions?|"
     r"relegat\w*|bottom|finish\w*|positions?|most goals|clean sheets?|points)\b"
 )
+_VERSUS = re.compile(r"\b(vs?|versus|against)\b")
 _WIN = re.compile(r"\b(wins?|won|winners?)\b")
 _SEASON_END = re.compile(
     r"\b(this season|end of season|wins?|won|winners?|title|champions?|"
@@ -112,6 +113,9 @@ class SeasonRouter:
             return Route(
                 reply=FUTURE_SEASON_REPLY.format(current=current, season=season)
             )
+        if len(teams) < 2 and _VERSUS.search(text):
+            # "Atlantis FC vs Arsenal": an unknown side; let the model report it.
+            return None
         if len(teams) >= 2:
             (team, team_league), (opponent, _) = teams[0], teams[1]
             return self._matches(text, service, team, team_league, opponent, season)
@@ -167,9 +171,12 @@ class SeasonRouter:
         season: str | None,
     ) -> Route:
         """Results and fixtures, plus a prediction of the next match when asked."""
-        calls = [_matches_call(team, league, opponent, season)]
+        predicting = season is None and _PREDICT.search(text) is not None
+        # When predicting, only the next match matters; a long list distracts.
+        limit = 1 if predicting else None
+        calls = [_matches_call(team, league, opponent, season, limit)]
         fixtures = getattr(self._state, "fixtures_service", None)
-        if season is None and fixtures is not None and _PREDICT.search(text):
+        if predicting and fixtures is not None:
             schedule = fixtures.schedule(league)
             upcoming = service.team_matches(team, league, schedule, opponent)
             nxt = (upcoming.get("upcoming") or [None])[0]
@@ -232,9 +239,15 @@ def _table_call(text: str, league: str, season: str | None, current: str) -> Too
 
 
 def _matches_call(
-    team: str, league: str, opponent: str | None, season: str | None
+    team: str,
+    league: str,
+    opponent: str | None,
+    season: str | None,
+    limit: int | None = None,
 ) -> ToolCall:
     args: dict[str, Any] = {"team": team, "competition": league}
+    if limit:
+        args["limit"] = limit
     if opponent:
         args["opponent"] = opponent
     if season:

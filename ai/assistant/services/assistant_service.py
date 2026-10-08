@@ -97,8 +97,11 @@ class AssistantService:
             return _routed_reply(route.reply)
         # A routed question already has its data; documents would only distract.
         retrieved = self._retrieve(question) if route is None else []
+        # Routed season questions need today's date to read their tool results;
+        # on other questions it made the 7B model refuse documented answers.
+        today = self._today() if route is not None else None
         messages: list[dict[str, Any]] = list(
-            build_messages(question, retrieved, today=self._today())
+            build_messages(question, retrieved, today=today)
         )
         if route is not None:
             self._run_calls(messages, route.calls)

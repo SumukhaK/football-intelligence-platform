@@ -91,7 +91,8 @@ class AssistantTools:
         result: dict[str, Any] = response.model_copy(
             update={"competition": competition}
         ).model_dump(mode="json")
-        return result
+        rounded: dict[str, Any] = _rounded(result)
+        return rounded
 
     def explain_match(self, args: Mapping[str, Any]) -> dict[str, Any]:
         """Run POST /v2/explain's service, keeping the top contributors only."""
@@ -101,7 +102,8 @@ class AssistantTools:
         result: dict[str, Any] = response.model_copy(
             update={"competition": competition}
         ).model_dump(mode="json", exclude={"all_contributions"})
-        return result
+        rounded: dict[str, Any] = _rounded(result)
+        return rounded
 
     def upcoming_fixtures(self, args: Mapping[str, Any]) -> dict[str, Any]:
         """Run GET /v2/fixtures' service for the requested league."""
@@ -163,6 +165,21 @@ def _fixtures_parameters(leagues: list[str]) -> dict[str, Any]:
         },
         "required": [],
     }
+
+
+def _rounded(value: Any) -> Any:
+    """Floats to 3 decimals, everywhere in a tool result.
+
+    Small models truncate long floats (0.64996 written as 64.99%) instead of
+    rounding them; three decimals still give a percentage to one decimal.
+    """
+    if isinstance(value, float):
+        return round(value, 3)
+    if isinstance(value, dict):
+        return {key: _rounded(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_rounded(item) for item in value]
+    return value
 
 
 def _limit(value: Any) -> int:

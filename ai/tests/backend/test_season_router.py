@@ -88,7 +88,10 @@ def test_derby_lists_meetings_and_predicts_the_next_one() -> None:
     """A named derby becomes head-to-head plus a prediction of the next meeting."""
     calls = _calls("Who wins the next Manchester derby?")
     assert calls == [
-        ToolCall("team_matches", {"team": "Man City", **PL, "opponent": "Man United"}),
+        ToolCall(
+            "team_matches",
+            {"team": "Man City", **PL, "limit": 1, "opponent": "Man United"},
+        ),
         ToolCall(
             "predict_match",
             {"home_team": "Man City", "away_team": "Man United", **PL},
@@ -135,3 +138,11 @@ def test_platform_questions_go_to_the_model(question: str) -> None:
 def test_no_history_means_no_routing() -> None:
     """Without match history the model handles everything, as before."""
     assert _router(season_service=None).route("Who won the league?") is None
+
+
+def test_unknown_opponent_is_left_to_the_model() -> None:
+    """With one side unrecognised, the router must not predict another match."""
+    assert (
+        _router().route("What does the model predict for Atlantis FC vs Arsenal?")
+        is None
+    )

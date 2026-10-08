@@ -151,3 +151,13 @@ def test_predict_match_maps_full_club_names() -> None:
     _call(state, "predict_match", home_team="Manchester City", away_team="Man United")
     sent = state.prediction_service.predict.call_args.args[0]
     assert (sent.home_team, sent.away_team) == ("Man City", "Man United")
+
+
+def test_tool_results_round_probabilities() -> None:
+    """Long floats are rounded so small models don't truncate them."""
+    state = _state()
+    state.prediction_service.predict.return_value = make_prediction_response(
+        prob_home=0.6499661, prob_draw=0.2269321, prob_away=0.1231018
+    )
+    result = _call(state, "predict_match", home_team="Arsenal", away_team="Chelsea")
+    assert (result["probability_home"], result["probability_draw"]) == (0.65, 0.227)

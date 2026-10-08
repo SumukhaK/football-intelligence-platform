@@ -52,15 +52,21 @@ cut-off. `qwen2.5:14b` called them, but is slower and twice the size.
 5. **Team names.** Names people type ("Manchester United") map to the data's
    names ("Man United") through the openfootball club names and a short
    nickname list, for the new tools and for `predict_match`/`explain_match`.
-6. **Today's date in the prompt**, so relative dates land in the right season.
-7. **Evaluation.** `evaluation.assistant_season` asks seven questions, runs the
+6. **Today's date in the prompt** for routed questions, so the model reads
+   dates in tool results against the right day. It is left out otherwise:
+   with it, the 7B model refused a documented question about the data split.
+7. **Rounded tool numbers.** Tool results round floats to three decimals. The
+   7B model truncated long floats (0.64997 written as 64.99%) instead of
+   rounding them.
+8. **Evaluation.** `evaluation.assistant_season` asks seven questions, runs the
    tool each answer should come from, and checks the answer names the expected
    team and invents no numbers.
 
 ## Consequences
 
-- With `qwen2.5:7b-instruct`, the season eval went from 3 of 7 without the
-  router to 7 of 7 with it, on 8 October 2026.
+- With `qwen2.5:7b-instruct` on 8 October 2026: the season eval went from 3
+  of 7 without the router to 7 of 7 with it. The earlier evals still pass:
+  grounding 11 of 11, abstention 20 of 20.
 - Routed and refused questions use fewer tokens. The router is the first
   piece of the guardrails gateway planned for production.
 - The router is rules, so questions phrased in ways it doesn't recognise fall

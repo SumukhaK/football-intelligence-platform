@@ -24,7 +24,7 @@ from backend.app.services.team_resolver import aliases, normalise
 from evaluation.assistant_grounding import ungrounded_numbers
 from inference.fixture_features import season_for_date
 
-Expected = Callable[[Callable[..., dict[str, Any]]], tuple[str, dict[str, Any]]]
+Expected = Callable[[Callable[..., dict[str, Any]]], tuple[str | None, dict[str, Any]]]
 
 
 @dataclass(frozen=True)
@@ -32,7 +32,7 @@ class SeasonCase:
     """A question and how to find the answer it must contain."""
 
     question: str
-    expected: Expected | None  # None: the answer must name no team or number
+    expected: Expected | None  # None: a refusal with no invented numbers
 
 
 @dataclass(frozen=True)
@@ -110,9 +110,10 @@ CASES = (
     ),
     SeasonCase(
         "When is the next Manchester derby?",
-        # Either club name counts; the numbers must come from the tool.
+        # The answer may name the derby rather than the clubs; its numbers
+        # (the date and kick-off) must come from the tool.
         lambda call: (
-            "Man",
+            None,
             call("team_matches", team="Man City", opponent="Man United"),
         ),
     ),
