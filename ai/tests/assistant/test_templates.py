@@ -79,5 +79,15 @@ def test_default_cut_off_keeps_on_topic_chunks() -> None:
 
 def test_system_prompt_requires_quoting_tool_numbers() -> None:
     """SYSTEM_PROMPT tells the model to use tools and never compute numbers."""
-    assert "call the matching tool" in SYSTEM_PROMPT
+    assert "call the matching" in SYSTEM_PROMPT
     assert "never estimate" in SYSTEM_PROMPT
+
+
+def test_build_messages_starts_the_user_turn_with_today() -> None:
+    """Given a date, the model is told today's date before the question."""
+    from datetime import date
+
+    msgs = build_messages(
+        "Who tops the league after Boxing Day?", [], today=date(2026, 10, 8)
+    )
+    assert msgs[1]["content"].startswith("Today's date: 2026-10-08.")

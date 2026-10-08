@@ -119,6 +119,8 @@ def _run(client: Any, per_league: int) -> list[CaseResult]:
             )
             outputs = [client.post(path, json=match).json() for path in _ENDPOINTS]
             answer = _ask(client, question)
+            # The fixture itself (date, kick-off) is a fair source too.
+            outputs.append(fixture)
             results.append(score_prediction_answer(question, answer, outputs))
     question = f"What does the model predict for {_UNKNOWN_TEAM} vs Arsenal?"
     error = client.post(

@@ -58,9 +58,15 @@ def _call(state: SimpleNamespace, name: str, **args: object) -> dict[str, object
 
 
 def test_tools_are_named_for_the_endpoints() -> None:
-    """The assistant is offered prediction, explanation and fixtures tools."""
+    """The assistant is offered the API tools and the season tools."""
     names = [tool.name for tool in _tools(_state())]
-    assert names == ["predict_match", "explain_match", "upcoming_fixtures"]
+    assert names == [
+        "predict_match",
+        "explain_match",
+        "upcoming_fixtures",
+        "team_matches",
+        "league_table",
+    ]
 
 
 def test_predict_match_returns_the_prediction_service_output() -> None:
@@ -135,3 +141,23 @@ def test_missing_service_is_a_tool_error() -> None:
     tool = _tools(state)[0]
     with pytest.raises(ToolError, match="Prediction model is not loaded"):
         tool.handler({"home_team": "Arsenal", "away_team": "Leeds"})
+
+
+def test_predict_match_maps_full_club_names() -> None:
+    """Names as users type them reach the model as the data's names."""
+    state = _state()
+    state.season_service = MagicMock()
+    state.season_service.teams.return_value = ["Man City", "Man United"]
+    _call(state, "predict_match", home_team="Manchester City", away_team="Man United")
+    sent = state.prediction_service.predict.call_args.args[0]
+    assert (sent.home_team, sent.away_team) == ("Man City", "Man United")
+
+
+def test_tool_results_round_probabilities() -> None:
+    """Long floats are rounded so small models don't truncate them."""
+    state = _state()
+    state.prediction_service.predict.return_value = make_prediction_response(
+        prob_home=0.6499661, prob_draw=0.2269321, prob_away=0.1231018
+    )
+    result = _call(state, "predict_match", home_team="Arsenal", away_team="Chelsea")
+    assert (result["probability_home"], result["probability_draw"]) == (0.65, 0.227)

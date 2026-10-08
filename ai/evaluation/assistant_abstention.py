@@ -16,6 +16,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from backend.app.services.season_router import FUTURE_SEASON_REPLY, PLAYER_REPLY
+
 REFUSAL = "I don't have enough information in my knowledge base to answer that."
 
 ANSWERABLE = (
@@ -60,8 +62,9 @@ class CaseResult:
 
 
 def is_refusal(answer: str) -> bool:
-    """True when ``answer`` is the system prompt's "I don't know" reply."""
-    return REFUSAL.rstrip(".") in answer
+    """True for the prompt's "I don't know" reply or a router's fixed refusal."""
+    fixed = (PLAYER_REPLY, FUTURE_SEASON_REPLY.split("{", 1)[0])
+    return REFUSAL.rstrip(".") in answer or answer.startswith(fixed)
 
 
 def _ask(client: Any, question: str) -> str:

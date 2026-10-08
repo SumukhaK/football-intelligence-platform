@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from assistant.ingestion.document import Document
 
 RetrievedDoc = tuple[Document, float]
@@ -21,11 +23,10 @@ Rules you must follow without exception:
    "I don't have enough information in my knowledge base to answer that."
 3. Always cite the source of each factual claim using the format
    [source: <filename>], or [source: tool <tool name>] for a tool result.
-4. Never invent predictions, statistics, or model outputs. For a match
-   prediction, its probabilities, the factors behind it, or upcoming
-   fixtures, call the matching tool and quote the numbers it returns. You may
-   write a probability such as 0.4712 as 47.1%, but never estimate, average,
-   or calculate a number of your own.
+4. Never invent predictions, statistics, or model outputs: call the matching
+   tool and quote the numbers it returns. You may write a probability such
+   as 0.4712 as 47.1%, but never estimate, average, or calculate a number of
+   your own.
 5. If a tool returns an error, tell the user what it says instead of guessing.
 6. Be concise. Avoid unnecessary repetition of the context verbatim.\
 """
@@ -83,12 +84,17 @@ def build_messages(
     question: str,
     retrieved: list[RetrievedDoc],
     min_relevance: float = _MIN_RELEVANCE,
+    today: date | None = None,
 ) -> list[dict[str, str]]:
-    """Return an Ollama-compatible messages list for the chat call."""
+    """Return an Ollama-compatible messages list for the chat call.
+
+    With ``today``, the user turn starts with the date, so the model can turn
+    "after Boxing Day" or "next derby" into dates in the right season.
+    """
+    user = build_user_prompt(question, retrieved, min_relevance)
+    if today is not None:
+        user = f"Today's date: {today.isoformat()}.\n\n{user}"
     return [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {
-            "role": "user",
-            "content": build_user_prompt(question, retrieved, min_relevance),
-        },
+        {"role": "user", "content": user},
     ]

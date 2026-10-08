@@ -51,6 +51,11 @@ class InsightsService:
         """True when ``competition`` has a fitted goals model."""
         return competition in self._leagues
 
+    def params(self, competition: str) -> DixonColesParams | None:
+        """The league's fitted goals model, or None when it has none."""
+        league = self._leagues.get(competition)
+        return league.params if league else None
+
     @property
     def model_versions(self) -> dict[str, str]:
         """Goals-model version per league."""

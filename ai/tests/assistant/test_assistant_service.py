@@ -13,6 +13,7 @@ from assistant.services.assistant_service import (
     AssistantService,
     VectorStoreEmptyError,
 )
+from assistant.tools.routing import Route
 from assistant.tools.tool import Tool
 from tests.assistant.conftest import FakeEmbedder, FakeGenerator, VariedEmbedder
 
@@ -183,3 +184,60 @@ def test_service_without_tools_uses_plain_generation(sample_docs) -> None:  # ty
     """With no tools configured the service keeps calling generate()."""
     resp = _make_service(sample_docs, answer="Plain.").chat("Question?")
     assert resp.answer == "Plain."
+
+
+class _FixedRouter:
+    def __init__(self, route: Route | None) -> None:
+        self._route = route
+
+    def route(self, question: str) -> Route | None:
+        return self._route
+
+
+class _CountingEmbedder(VariedEmbedder):
+    calls = 0
+
+    def embed(self, texts: list[str]) -> Any:
+        _CountingEmbedder.calls += 1
+        return super().embed(texts)
+
+
+def _routed_service(
+    sample_docs: list[Document], generator: Any, route: Route | None
+) -> AssistantService:
+    base = _make_service(sample_docs)
+    return AssistantService(
+        embedder=_CountingEmbedder(dim=8),
+        generator=generator,
+        store=base._store,
+        model_name="qwen2.5",
+        tools=[_predict_tool()],
+        router=_FixedRouter(route),
+    )
+
+
+def test_router_reply_skips_retrieval_and_the_model(sample_docs) -> None:  # type: ignore[no-untyped-def]
+    """A fixed reply is returned as is, with no embedding or generation."""
+    generator = ScriptedToolGenerator([])
+    _CountingEmbedder.calls = 0
+    service = _routed_service(sample_docs, generator, Route(reply="No players."))
+
+    resp = service.chat("Who is the top scorer?")
+
+    assert (resp.answer, resp.model, resp.sources) == ("No players.", "router", [])
+    assert generator.calls == []
+    assert _CountingEmbedder.calls == 0
+
+
+def test_routed_calls_run_before_the_model_answers(sample_docs) -> None:  # type: ignore[no-untyped-def]
+    """Routed tool results are in the conversation the model first sees."""
+    generator = ScriptedToolGenerator([ChatTurn("Arsenal at 47.1%.")])
+    route = Route(calls=[ToolCall("predict_match", {"home_team": "Arsenal"})])
+
+    resp = _routed_service(sample_docs, generator, route).chat("Arsenal next?")
+
+    assert resp.answer == "Arsenal at 47.1%."
+    assert resp.retrieved_count == 0
+    first_messages = generator.calls[0][0]
+    assert first_messages[-1]["role"] == "tool"
+    assert json.loads(first_messages[-1]["content"])["home_team"] == "Arsenal"
