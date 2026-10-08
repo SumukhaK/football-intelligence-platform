@@ -8,7 +8,7 @@ Presentation layer. Depends on `core-common`, `core-model`, `core-network`, `cor
 
 ## Contents
 
-- `SettingsScreen` — the backend status card (passed in by the app) and links to Model Info and About.
+- `SettingsScreen` — the backend status card (passed in by the app), links to Model Info and About, the My team row (passed in by the app) and Sign out (ADR 022).
 - `SettingsViewModel`, `ModelInfoScreen` — model version, dataset version and the metrics recorded for it in the model registry.
 - `AboutScreen` — app and project information.
 - `ModelInfoRepository` — reads `GET /v2/model`.

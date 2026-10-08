@@ -6,7 +6,7 @@ A complete technical write-up of the platform's design, engineering decisions, a
 
 ## Executive Summary
 
-The Football Intelligence Platform is an end-to-end AI system for Europe's top five football leagues. It ingests 26 seasons of match results (46,709 matches), engineers 42 leakage-safe pre-match features, trains and evaluates an XGBoost classifier, and explains every prediction with SHAP in plain football language. A Dixon-Coles goals model adds likely scorelines and goal markets. A versioned FastAPI backend serves all of this, refreshes its data daily without a restart, rate limits clients, and can require invite-only sign-in and consent when hosted. A local LLM assistant is grounded in the platform's own documents via RAG, and calls the API's own prediction, fixtures and season services as tools. A native Android app built with Compose Multiplatform opens on upcoming fixtures (tap one to predict it), shows team crests, and keeps working offline.
+The Football Intelligence Platform is an end-to-end AI system for Europe's top five football leagues. It ingests 26 seasons of match results (46,709 matches), engineers 42 leakage-safe pre-match features, trains and evaluates an XGBoost classifier, and explains every prediction with SHAP in plain football language. A Dixon-Coles goals model adds likely scorelines and goal markets. A versioned FastAPI backend serves all of this, refreshes its data daily without a restart, rate limits clients, and can require invite-only sign-in and consent when hosted. A local LLM assistant is grounded in the platform's own documents via RAG, and calls the API's own prediction, fixtures and season services as tools. A native Android app built with Compose Multiplatform signs in with an invite, opens on upcoming fixtures (tap one to predict it), shows team crests, and keeps working offline.
 
 It was built in 12 stages up to release v1.0.0, then extended in v2.0.0, v2.0.1 and v2.1.0, by a single engineer, with every structural change recorded as an ADR. The result: 1,135 tests (970 Python, 165 Android), 23 ADRs, zero cloud dependency, and a reproducible pipeline. On the 2023/24 test season the model reaches 52.5% accuracy and a log loss of 0.976, against 55.0% and 0.955 for bookmakers.
 
@@ -198,7 +198,7 @@ Compose Multiplatform keeps the UI layer (Composables, theme, navigation contrac
 |---|---|---|
 | AI, data pipeline and backend | Unit and API contract tests (`TestClient` with mocked AI services) | 933 |
 | Backend integration | `TestClient` with the **real** trained model — no mocks | 37 |
-| Android | ViewModels (test-first), repositories with Ktor `MockEngine`, cache, formatting | 80 |
+| Android | ViewModels (test-first), repositories with Ktor `MockEngine`, cache, session token, formatting | 165 |
 | **Total** | | **1,050** |
 
 The integration suite deliberately avoids mocking the model — it asserts on real SHAP values being finite, real probabilities summing to 1.0, and latency staying under threshold. This catches bugs (numerical issues, serialization mismatches, performance regressions) that contract tests with mocks cannot.
@@ -265,6 +265,6 @@ Not built yet, and each a deliberate scope decision:
 - Retrieval hit rate and faithfulness metrics for the assistant, run in CI (the grounding, abstention and season evals need Ollama and run locally).
 - Player-level data (lineups, injuries) from a reliable source.
 - Automated monitoring of live accuracy and calibration, with drift alerts.
-- Sign-in screens in the Android app (the backend's accounts exist, ADR 022), HTTPS for public deployment; a shared rate-limit store behind a load balancer.
+- A shared account store for several server instances (ADR 022), HTTPS for public deployment; a shared rate-limit store behind a load balancer.
 - Automatic retries with backoff for downloads and LLM calls.
 - Fine-tuning or LoRA training of any language model stays out of scope — a deliberate choice, not a gap.
