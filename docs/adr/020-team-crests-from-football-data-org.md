@@ -1,4 +1,4 @@
-# ADR 020 — Team Crests from football-data.org
+# ADR 020 — Team Crests and League Emblems from football-data.org
 
 **Status:** Accepted
 
@@ -8,8 +8,8 @@
 ## Context
 
 The app shows team names as plain text on the fixtures list, the prediction
-form and the prediction result. Showing each club's crest beside its name makes
-those screens quicker to scan.
+form and the prediction result. Showing each club's crest beside its name, and
+each league's emblem beside the league, makes those screens quicker to scan.
 
 The repository already holds crest URLs in two raw sources, both from the
 Kaggle downloads in ADR 005 (not committed):
@@ -30,23 +30,26 @@ repository or the app bundle.
    commercial API whose CDN we have no subscription for, and its data stops in
    2022, so it misses newer and promoted teams.
 2. `datasets/schemas/team_crests.csv` maps each canonical team name (ADR 006)
-   to a crest URL. It holds URLs only, never images. It is rebuilt with
+   to a crest URL, and `league_emblems.csv` maps each served league to its
+   emblem from the snapshot's `competition.emblem` column. Both use
+   `name,crest_url` columns. It holds URLs only, never images. It is rebuilt with
    `uv run python -m scripts.build_team_crests`, which matches teams by the games
    they played (league, date ±1 day and score) rather than by spelling, so no
    alias table is needed. Only PNG crests are kept because the Android image
    loader has no SVG decoder.
 3. `GET /v2/teams/{team}/crest` redirects (307) to the team's crest, or returns
-   404 `{"error": "No crest", ...}` when the table has none. The app builds that
+   404 `{"error": "No crest", ...}` when the table has none.
+   `GET /v2/competitions/{competition}/emblem` does the same for leagues. The app builds that
    URL from its network config and never needs a crest field in other
    responses.
 4. The app shows crests with Coil (already a dependency of `core-ui`) through a
-   `TeamCrest` composable. A plain shield icon shows while loading and for
+   `TeamCrest` and `LeagueEmblem` composables. A plain shield icon shows while loading and for
    teams without a crest. Crests are decorative; the team name stays as the
    text and the accessible label.
 
 ## Consequences
 
-- No response schema changes; one new endpoint.
+- No response schema changes; two new endpoints.
 - The images are hot-linked from `crests.football-data.org`. If that host
   changes its URLs or blocks hot-linking, the app falls back to the shield and
   `team_crests.csv` needs rebuilding from a fresh snapshot.

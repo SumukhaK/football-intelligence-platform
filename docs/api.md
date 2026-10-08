@@ -118,6 +118,13 @@ Redirects (307) to the team's crest PNG on `crests.football-data.org`
 { "error": "No crest", "detail": "No crest is known for 'Atlantis'." }
 ```
 
+## GET /competitions/{competition}/emblem
+
+Redirects (307) to the league's emblem PNG on `crests.football-data.org`
+(ADR 020). `competition` is a name as `/competitions` returns it, URL-encoded
+(`/v2/competitions/Serie%20A/emblem`). A league without a known emblem returns
+the same 404 `No crest` body as `/teams/{team}/crest`.
+
 ## GET /fixtures
 
 A league's scheduled matches from today on, earliest first (ADR 015). Pass
