@@ -43,11 +43,11 @@ This project demonstrates AI engineering as a discipline: not just "can I train 
 | **Match outcome prediction** | XGBoost classifier predicting Home Win / Draw / Away Win for all five leagues, with a "draw possible" tag for tight games (ADR 011) |
 | **Scorelines and goal markets** | Time-weighted Dixon-Coles goals model per league: five most likely scores, expected goals, both teams to score, over/under lines and clean sheets (ADR 009) |
 | **Per-prediction explainability** | SHAP `TreeExplainer` attaches feature-level attribution to every prediction, shown in plain football language ("Arsenal win rate at home · 68%") |
-| **Grounded AI assistant** | Local RAG pipeline (Ollama + numpy vector store) answers football questions using only retrieved platform data, with source citations, and calls the API's own prediction, explanation and fixtures services as tools for match questions (ADR 018) |
-| **Production-shaped backend** | Versioned FastAPI (`/v1` frozen, `/v2` current, ADR 014), server-side match features, upcoming fixtures, a daily in-process data refresh (ADR 013), a per-client rate limit, structured errors, OpenAPI docs |
-| **Native Android client** | Compose Multiplatform app that opens on upcoming fixtures by league, with bottom navigation, a league picker, offline mode with saved data, pull to refresh, MVVM, StateFlow, Koin DI and previews for every screen |
+| **Grounded AI assistant** | Local RAG pipeline (Ollama + numpy vector store) answers football questions using only retrieved platform data, with source citations, and calls the API's own prediction, explanation and fixtures services as tools for match questions (ADR 018); season questions (tables on any date with a goals-model projection, results, the next derby) go through a rule-based router to internal season tools (ADR 021) |
+| **Production-shaped backend** | Versioned FastAPI (`/v1` frozen, `/v2` current, ADR 014), server-side match features, upcoming fixtures, a daily in-process data refresh (ADR 013), a per-client rate limit, invite-only sign-in with consent for hosted deployments (ADR 022), structured errors, OpenAPI docs |
+| **Native Android client** | Compose Multiplatform app that opens on upcoming fixtures by league (tap one to predict it), with team crests, bottom navigation, a league picker, offline mode with saved data, pull to refresh, MVVM, StateFlow, Koin DI and previews for every screen |
 | **Full reproducibility** | Entire pipeline (ingest → features → train → explain) runs in under 15 seconds from one CLI command |
-| **End-to-end test coverage** | 872 Python tests (including 37 integration tests against the real model, most of which skip on a machine without one) and 73 Android tests (ViewModels written test-first, repositories, network, cache, loader) |
+| **End-to-end test coverage** | 970 Python tests (including 37 integration tests against the real model, most of which skip on a machine without one) and 80 Android tests (ViewModels written test-first, repositories, network, cache, loader) |
 | **Zero cloud dependency** | Runs entirely on a laptop — no managed database, no cloud LLM, no hosted vector store |
 
 ---
@@ -237,6 +237,8 @@ The assistant is instructed, by system prompt, to answer **only** from retrieved
 
 **Tool calling (ADR 018).** For a match prediction, its explanation or a league's upcoming fixtures, the model calls `predict_match`, `explain_match` or `upcoming_fixtures`. These run the same services as `/v2/predict`, `/v2/explain` and `/v2/fixtures`, in-process, so the assistant quotes exactly what the API returns from the live model, cited as `[source: tool <name>]`. `OLLAMA_CHAT_MODEL` must name a model that supports tool calling (the default `qwen2.5:7b-instruct` does).
 
+**Season tools and router (ADR 021).** Two internal tools answer season questions: `team_matches` (results, head-to-head and the next meeting this season) and `league_table` (the table on any date; for a date still ahead, each remaining fixture is simulated 10,000 times with the goals model to give expected points, goals and clean sheets and the chance of finishing first, top four or bottom three). A rule-based router reads every question first: player and next-season questions get a fixed reply without the model, and table, results and derby questions get their tool calls decided in code, so the 7B model only writes the answer. Season eval (`evaluation.assistant_season`): **7 of 7**, against 3 of 7 without the router.
+
 **Evaluation** (run locally on 7 October 2026 with `qwen2.5:7b-instruct`; both need Ollama and the trained model, so CI runs only their scoring tests):
 
 - **Tool calling** (`evaluation.assistant_grounding`): **11 of 11** correct, against 1 of 11 without tools. That is ten upcoming fixtures across the five leagues, where the answer must quote the probability `/v2/predict` gives and no number the API didn't return, plus a team that doesn't exist, where it must not invent numbers.
@@ -261,7 +263,7 @@ flowchart TD
     class E serve
 ```
 
-The app opens on upcoming fixtures, grouped by day, with one tab per league and the Premier League first; kick-off times are in the phone's time zone. A bottom bar switches between Fixtures, Predict, Assistant and Settings. Prediction starts with a league picker filled from `GET /v2/competitions`, and the result shows win/draw/loss probabilities, a draw tag for tight games, and the goals model's likely scores and goal markets. Every answer is saved: without a connection the app shows the last data it had under an offline banner, and pulling down fetches fresh data. Errors are explained in plain language. See [frontend/README.md](frontend/README.md) for the full module graph.
+The app opens on upcoming fixtures, grouped by day, with one tab per league and the Premier League first; kick-off times are in the phone's time zone. Tapping a fixture opens its prediction. Team crests and league emblems come from football-data.org through the API's redirects (ADR 020). A bottom bar switches between Fixtures, Predict, Assistant and Settings. Prediction starts with a league picker filled from `GET /v2/competitions`, and the result shows win/draw/loss probabilities, a draw tag for tight games, and the goals model's likely scores and goal markets. Every answer is saved: without a connection the app shows the last data it had under an offline banner, and pulling down fetches fresh data. Errors are explained in plain language. See [frontend/README.md](frontend/README.md) for the full module graph.
 
 ## Backend Services
 
@@ -277,9 +279,13 @@ FastAPI serves two API versions (ADR 014), documented automatically via OpenAPI 
 | `/v2/predict` | POST | Win/draw/loss prediction; the server computes features from history (ADR 008) |
 | `/v2/explain` | POST | Prediction plus SHAP attribution in plain football language |
 | `/v2/insights` | POST | Likely scores, expected goals and goal markets from the goals model |
-| `/v2/assistant/chat` | POST | RAG-grounded football Q&A |
+| `/v2/assistant/chat` | POST | RAG-grounded football Q&A, with tools and a season router |
+| `/v2/teams/{team}/crest`, `/v2/competitions/{name}/emblem` | GET | Redirect to the crest or emblem image (ADR 020) |
+| `/v2/auth/*`, `/v2/me` | POST/GET | Invite-only sign-in and consent (ADR 022) |
 
-`/v1` and the unversioned paths keep the v1.0.0 contract: the original Premier League model and the original response fields, so older clients keep working. Requests name a league with an optional `competition` and default to the Premier League (ADR 012). Each client may make 120 requests a minute before a `429` (`RATE_LIMIT_PER_MINUTE`). Dependency injection happens once at FastAPI lifespan startup, and the daily refresh swaps in new results and fixtures without a restart (ADR 013). Structured errors: `503` (service unavailable), `429` (rate limit), `422` (unknown league or team, validation), `500` (unexpected, logged).
+With `AUTH_REQUIRED=true` (staging and production), every `/v2` data route needs a signed-in user who has accepted the consent notice, and `/v1` is not mounted; health, docs, sign-in and crest images stay open. It is off by default, so local development needs no account.
+
+`/v1` and the unversioned paths keep the v1.0.0 contract: the original Premier League model and the original response fields, so older clients keep working. Requests name a league with an optional `competition` and default to the Premier League (ADR 012). Each client may make 120 requests a minute before a `429` (`RATE_LIMIT_PER_MINUTE`). Dependency injection happens once at FastAPI lifespan startup, and the daily refresh swaps in new results and fixtures without a restart (ADR 013). Structured errors: `503` (service unavailable), `429` (rate limit), `401`/`403` (not signed in, consent required, blocked), `422` (unknown league or team, validation), `500` (unexpected, logged).
 
 ---
 
