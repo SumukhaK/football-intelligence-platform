@@ -14,6 +14,7 @@ import com.footballintelligence.feature.prediction.repository.PredictionReposito
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -303,5 +304,50 @@ class PredictionViewModelTest {
 
         coVerify(exactly = 2) { repository.competitions() }
         coVerify(exactly = 2) { repository.teams("Premier League") }
+    }
+
+    @Test
+    fun `a fixture from home predicts its teams in its league`() {
+        coEvery { repository.teams("Premier League") } returns NetworkResult.Success(teams)
+        coEvery { repository.teams("Bundesliga") } returns NetworkResult.Success(bundesligaTeams)
+        val request = PredictionRequest("Bayern Munich", "Leipzig", competition = "Bundesliga")
+        coEvery { repository.predict(request) } returns NetworkResult.Success(prediction)
+        coEvery { repository.insights(request) } returns NetworkResult.Success(insights)
+        val viewModel = PredictionViewModel(repository)
+
+        viewModel.predictFixture("Bundesliga", "Bayern Munich", "Leipzig")
+
+        coVerify(exactly = 1) { repository.predict(request) }
+        assertEquals(PredictionInputUiState.Success(prediction), viewModel.predictionState.value)
+        assertEquals("Bayern Munich" to "Leipzig", viewModel.presetTeams.value)
+        assertEquals(
+            CompetitionsUiState.Success(leagues.competitions, selected = "Bundesliga"),
+            viewModel.competitionsState.value,
+        )
+        assertEquals(
+            TeamsUiState.Success("2026/27", bundesligaTeams.teams),
+            viewModel.teamsState.value,
+        )
+    }
+
+    @Test
+    fun `a fixture opened before the leagues load keeps its league`() {
+        val pending = CompletableDeferred<NetworkResult<CompetitionsResponse>>()
+        coEvery { repository.competitions() } coAnswers { pending.await() }
+        coEvery { repository.teams("Bundesliga") } returns NetworkResult.Success(bundesligaTeams)
+        val request = PredictionRequest("Bayern Munich", "Leipzig", competition = "Bundesliga")
+        coEvery { repository.predict(request) } returns NetworkResult.Success(prediction)
+        coEvery { repository.insights(request) } returns NetworkResult.Success(insights)
+        val viewModel = PredictionViewModel(repository)
+
+        viewModel.predictFixture("Bundesliga", "Bayern Munich", "Leipzig")
+        pending.complete(NetworkResult.Success(leagues))
+
+        coVerify(exactly = 1) { repository.predict(request) }
+        coVerify(exactly = 0) { repository.teams("Premier League") }
+        assertEquals(
+            CompetitionsUiState.Success(leagues.competitions, selected = "Bundesliga"),
+            viewModel.competitionsState.value,
+        )
     }
 }
