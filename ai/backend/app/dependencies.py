@@ -20,12 +20,12 @@ from backend.app.exceptions import (
     ModelNotAvailableError,
 )
 from backend.app.services.competitions import ServedCompetitions
+from backend.app.services.crest_table import CrestTable
 from backend.app.services.explanation_service import ExplanationService
 from backend.app.services.fixture_feature_service import FixtureFeatureService
 from backend.app.services.fixtures_service import FixturesService
 from backend.app.services.insights_service import InsightsService
 from backend.app.services.prediction_service import PredictionService
-from backend.app.services.team_crests import TeamCrests
 
 
 def get_prediction_service(request: Request) -> PredictionService:
@@ -129,9 +129,15 @@ def get_fixtures_service(request: Request) -> FixturesService:
 
 
 @lru_cache(maxsize=1)
-def get_team_crests() -> TeamCrests:
-    """Return the crest table, loaded on first use (ADR 020)."""
-    return TeamCrests.from_csv(get_settings().team_crests_path)
+def get_team_crests() -> CrestTable:
+    """Return the team crest table, loaded on first use (ADR 020)."""
+    return CrestTable.from_csv(get_settings().team_crests_path)
+
+
+@lru_cache(maxsize=1)
+def get_league_emblems() -> CrestTable:
+    """Return the league emblem table, loaded on first use (ADR 020)."""
+    return CrestTable.from_csv(get_settings().league_emblems_path)
 
 
 PredictionServiceDep = Annotated[PredictionService, Depends(get_prediction_service)]
@@ -148,4 +154,5 @@ OptionalInsightsServiceDep = Annotated[
     InsightsService | None, Depends(get_optional_insights_service)
 ]
 FixturesServiceDep = Annotated[FixturesService, Depends(get_fixtures_service)]
-TeamCrestsDep = Annotated[TeamCrests, Depends(get_team_crests)]
+TeamCrestsDep = Annotated[CrestTable, Depends(get_team_crests)]
+LeagueEmblemsDep = Annotated[CrestTable, Depends(get_league_emblems)]

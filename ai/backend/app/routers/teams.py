@@ -56,10 +56,14 @@ def teams(
 )
 def team_crest(team: str, crests: TeamCrestsDep) -> Response:
     """Redirect to the team's crest, or 404 when it has none."""
-    url = crests.url(team)
+    return crest_redirect(crests.url(team), team)
+
+
+def crest_redirect(url: str | None, name: str) -> Response:
+    """A 307 to ``url``, or a structured 404 naming ``name`` when there is none."""
     if url is None:
         return JSONResponse(
             status_code=404,
-            content={"error": "No crest", "detail": f"No crest is known for '{team}'."},
+            content={"error": "No crest", "detail": f"No crest is known for '{name}'."},
         )
     return RedirectResponse(url, status_code=307)
