@@ -194,9 +194,9 @@ Interactive API docs are at `http://localhost:8000/docs`. The full contract is i
 The assistant requires [Ollama](https://ollama.com) running locally with two models pulled.
 
 ```sh
-# Pull models (one-time, ~4 GB)
+# Pull models (one-time, ~5 GB)
 ollama pull nomic-embed-text
-ollama pull llama3.2
+ollama pull qwen2.5:7b-instruct
 
 # Build the knowledge index
 uv run python -m assistant.pipeline --rebuild

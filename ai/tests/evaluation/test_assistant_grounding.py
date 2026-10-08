@@ -73,6 +73,18 @@ def test_quotes_prediction_uses_the_predicted_outcome() -> None:
 def test_unknown_team_answer_must_not_invent_numbers() -> None:
     """For a team the API rejects, any probability in the answer is invented."""
     question = "What does the model predict for Atlantis FC vs Arsenal?"
+    error = {
+        "error": "Unknown team",
+        "detail": "'Atlantis FC' did not play in 2026-2027",
+    }
     honest = "Atlantis FC is not in the Premier League, so I can't predict it."
-    assert score_unknown_team_answer(question, honest).passed
-    assert not score_unknown_team_answer(question, "Arsenal 65% to win.").passed
+    assert score_unknown_team_answer(question, honest, error).passed
+    assert not score_unknown_team_answer(question, "Arsenal 65% to win.", error).passed
+
+
+def test_unknown_team_answer_may_repeat_the_api_error() -> None:
+    """The season named in the API's error is not an invented number."""
+    question = "What does the model predict for Atlantis FC vs Arsenal?"
+    error = {"error": "Unknown team", "detail": "'Atlantis FC' did not play in 2026/27"}
+    answer = "Atlantis FC did not play in the Premier League 2026/27."
+    assert score_unknown_team_answer(question, answer, error).passed

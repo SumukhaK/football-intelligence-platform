@@ -18,7 +18,7 @@ uv run python -m scripts.refresh_fixtures --confirm # upcoming fixtures, if you 
 LIVE_REFRESH_HOUR=off uv run uvicorn backend.app.main:app --host 0.0.0.0 --reload
 ```
 
-Optional (for the assistant demo): Ollama running with `nomic-embed-text` and `llama3.2` pulled, and the assistant index built (`uv run python -m assistant.pipeline --rebuild`).
+Optional (for the assistant demo): Ollama running with `nomic-embed-text` and `qwen2.5:7b-instruct` pulled, and the assistant index built (`uv run python -m assistant.pipeline --rebuild`).
 
 For the Android segments: an emulator running, app installed (`cd frontend && ./gradlew assembleDebug && adb install app/build/outputs/apk/debug/app-debug.apk`).
 

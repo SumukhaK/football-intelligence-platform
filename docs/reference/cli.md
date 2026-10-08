@@ -390,7 +390,7 @@ uv run pytest tests/training/test_trainer.py
 uv run pytest -m integration
 ```
 
-Expected: 798 tests pass with `uv run pytest`. 37 of them are integration tests, which need the trained model in `models/latest/`; `-m "not integration"` runs the other 761. Integration tests are not skipped by default.
+Expected: 873 tests pass with `uv run pytest`. 37 of them are integration tests, which need the trained model in `models/latest/`; `-m "not integration"` runs the other 836. Integration tests are not skipped by default.
 
 ---
 
@@ -470,7 +470,7 @@ Set them in `ai/.env` (copy `ai/.env.example`). Every value below is the default
 | `LOG_LEVEL` | `INFO` | Logging level |
 | `RATE_LIMIT_PER_MINUTE` | `120` | Requests per minute per client before a 429; `off` turns it off (ADR 014) |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
-| `OLLAMA_CHAT_MODEL` | `llama3.2` | Chat generation model |
+| `OLLAMA_CHAT_MODEL` | `qwen2.5:7b-instruct` | Chat generation model |
 | `OLLAMA_EMBED_MODEL` | `nomic-embed-text` | Embedding model |
 | `ASSISTANT_VECTOR_STORE_PATH` | `assistant/vector_store` | Persisted index path |
 | `ASSISTANT_KNOWLEDGE_ROOT` | `.` | Root folder of the assistant's knowledge documents |
@@ -538,7 +538,7 @@ Both print `Index built: <N> chunks in <vector store path>`. Without `--rebuild`
 **Prerequisites:**
 ```sh
 ollama pull nomic-embed-text
-ollama pull llama3.2
+ollama pull qwen2.5:7b-instruct
 ```
 
 **Environment variables:** `assistant.pipeline` reads `OLLAMA_BASE_URL`, `OLLAMA_CHAT_MODEL` and `OLLAMA_EMBED_MODEL` like the backend, plus `VECTOR_STORE_PATH` (default `assistant/vector_store`) and `KNOWLEDGE_BASE_ROOT` (default `.`). The backend names those two `ASSISTANT_VECTOR_STORE_PATH` and `ASSISTANT_KNOWLEDGE_ROOT`; keep them pointing at the same place.
@@ -546,7 +546,7 @@ ollama pull llama3.2
 **Outputs:**
 - `assistant/vector_store/` — persisted numpy vector store (embeddings + metadata)
 
-The chat model must support tool calling (`llama3.2` does), because the assistant calls the prediction, explanation and fixtures services (ADR 018).
+The chat model must support tool calling (`qwen2.5:7b-instruct` does; see ADR 019 for why it is the default), because the assistant calls the prediction, explanation and fixtures services (ADR 018).
 
 ### `python -m evaluation.assistant_grounding`
 

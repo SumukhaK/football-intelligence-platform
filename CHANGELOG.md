@@ -13,8 +13,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The assistant can call tools that run the prediction, SHAP explanation and fixtures services, so it quotes the served model's numbers instead of refusing match questions (#65, ADR 018).
 - Assistant evals: a grounding check that answers quote `/v2/predict` without invented numbers, and an abstention check for "I don't know" (#65, #66).
 
+### Changed
+- The default chat model is `qwen2.5:7b-instruct` instead of `llama3.2`, which misquoted tool numbers and failed both assistant evals (ADR 019).
+
 ### Fixed
 - The assistant's relevance cut-off let every retrieved chunk through; it now drops chunks that don't match the question (#66).
+- The grounding eval no longer flags numbers the assistant repeats from the API's own error message.
 
 ---
 
