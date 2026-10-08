@@ -10,15 +10,21 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Annotated
 
-from fastapi import Depends, Request
+from fastapi import Depends, Header, Request
 
 from backend.app.config import get_settings
+from backend.app.consent import CONSENT_VERSION
 from backend.app.exceptions import (
     FixtureFeaturesNotAvailableError,
     FixturesNotAvailableError,
     InsightsNotAvailableError,
     ModelNotAvailableError,
 )
+from backend.app.services.account_service import (
+    AccountService,
+    ConsentRequiredError,
+)
+from backend.app.services.account_store import User
 from backend.app.services.competitions import ServedCompetitions
 from backend.app.services.crest_table import CrestTable
 from backend.app.services.explanation_service import ExplanationService
@@ -156,3 +162,38 @@ OptionalInsightsServiceDep = Annotated[
 FixturesServiceDep = Annotated[FixturesService, Depends(get_fixtures_service)]
 TeamCrestsDep = Annotated[CrestTable, Depends(get_team_crests)]
 LeagueEmblemsDep = Annotated[CrestTable, Depends(get_league_emblems)]
+
+
+def get_account_service(request: Request) -> AccountService:
+    """Return the AccountService created with the app (ADR 022)."""
+    service: AccountService = request.app.state.account_service
+    return service
+
+
+AccountServiceDep = Annotated[AccountService, Depends(get_account_service)]
+
+
+def bearer_token(authorization: str | None) -> str | None:
+    """The token in an ``Authorization: Bearer <token>`` header, if any."""
+    scheme, _, token = (authorization or "").partition(" ")
+    if scheme.lower() != "bearer" or not token.strip():
+        return None
+    return token.strip()
+
+
+def get_signed_in_user(
+    accounts: AccountServiceDep,
+    authorization: Annotated[str | None, Header()] = None,
+) -> User:
+    """The user behind the bearer token; 401 or 403 when there is none."""
+    return accounts.authenticate(bearer_token(authorization))
+
+
+SignedInUserDep = Annotated[User, Depends(get_signed_in_user)]
+
+
+def require_consented_user(user: SignedInUserDep) -> User:
+    """The signed-in user, who must have accepted the current notice."""
+    if user.consent_version != CONSENT_VERSION:
+        raise ConsentRequiredError("Accept the current notice to continue.")
+    return user

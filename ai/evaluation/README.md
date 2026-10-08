@@ -20,6 +20,7 @@ Metrics, cross-validation, plots, and structured report models for the XGBoost p
 | `goals_metrics.py` | Scoreline, goal-market and outcome metrics for goals-model forecasts |
 | `goals_evaluation_cli.py` | Tunes and scores the goals model against a Poisson baseline, bookmakers and XGBoost |
 | `assistant_grounding.py` | Asks the assistant for upcoming fixtures' predictions and checks it quotes `/v2/predict` without inventing numbers (CLI; ADR 018) |
+| `assistant_season.py` | Checks season answers (tables, projections, results, derbies) name the team the season tools give and invent no numbers (CLI; ADR 021) |
 | `assistant_abstention.py` | Checks the assistant answers questions its knowledge base covers and says "I don't know" to ones it doesn't (CLI) |
 | `reports.py` | Frozen Pydantic models: `SplitMetrics`, `CVReport`, `EvaluationReport` |
 

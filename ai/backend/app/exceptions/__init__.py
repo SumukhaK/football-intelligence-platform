@@ -158,3 +158,15 @@ def unexpected_error_handler(_request: Request, exc: Exception) -> JSONResponse:
             "detail": "An unexpected error occurred.",
         },
     )
+
+
+def auth_error_handler(_request: Request, exc: Exception) -> JSONResponse:
+    """Return an account error with its own status (ADR 022)."""
+    from backend.app.services.account_service import AuthError  # noqa: PLC0415
+
+    assert isinstance(exc, AuthError)
+    logger.info("Account error: %s", exc.error)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": exc.error, "detail": str(exc)},
+    )

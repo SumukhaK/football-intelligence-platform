@@ -20,7 +20,7 @@ Android client for the Football Intelligence Platform. Built with Compose Multip
 
 ```
 app/                   — Application entry point, NavHost, bottom bar, Koin assembly
-feature-home/          — Fixtures by league (the first screen) and the backend status card
+feature-home/          — Fixtures by league (the first screen; tap one to predict it) and the backend status card
 feature-prediction/    — Prediction, Result, and Explain screens
 feature-assistant/     — AI Assistant chat screen
 feature-settings/      — Settings, Model Information, and About screens

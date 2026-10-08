@@ -224,7 +224,7 @@ assistant/
   retrieval/      # VectorStore (numpy, file-persisted) + cosine retrieve()
   prompting/      # System prompt + build_messages()
   generation/     # Generator protocols + OllamaGenerator (plain and tool-calling chat)
-  tools/          # Tool definition and run_tool(): the functions the model may call
+  tools/          # Tool definition, run_tool() and the Router protocol (routing.py)
   services/       # AssistantService — retrieve, prompt, run tool calls, answer
   pipeline.py     # AssistantPipeline facade: build_index / load_index / query
   configuration.py  # AssistantSettings (pydantic-settings)

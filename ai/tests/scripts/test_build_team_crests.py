@@ -9,7 +9,7 @@ from scripts.build_team_crests import match_crests
 A, B, C = (f"https://crests.football-data.org/{n}.png" for n in (1, 2, 3))
 
 
-def games(*rows: tuple[str, int, int, str, str]) -> pd.DataFrame:
+def games(*rows: tuple[str, int | None, int | None, str, str]) -> pd.DataFrame:
     columns = ["date", "home_goals", "away_goals", "home_crest", "away_crest"]
     return pd.DataFrame(rows, columns=columns).assign(competition="Serie A")
 

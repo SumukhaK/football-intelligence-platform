@@ -22,6 +22,7 @@ from backend.app.exceptions import (
     UnknownCompetitionError,
     UnknownTeamError,
     assistant_not_available_handler,
+    auth_error_handler,
     feature_missing_handler,
     fixture_features_not_available_handler,
     fixtures_not_available_handler,
@@ -32,18 +33,9 @@ from backend.app.exceptions import (
     unknown_team_handler,
 )
 from backend.app.middleware.rate_limit import RateLimitMiddleware, SlidingWindowLimiter
-from backend.app.routers import (
-    assistant,
-    competitions,
-    explainability,
-    fixtures,
-    health,
-    insights,
-    model,
-    prediction,
-    teams,
-    v1,
-)
+from backend.app.routing import include_routers
+from backend.app.services.account_service import AccountService, AuthError
+from backend.app.services.account_store import JsonAccountStore
 from model_registry.registry import ModelRegistry
 
 logger = logging.getLogger(__name__)
@@ -103,8 +95,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         from assistant.services.assistant_service import AssistantService
         from backend.app.dependencies import get_served_competitions
         from backend.app.services.assistant_tools import AssistantTools
+        from backend.app.services.season_router import SeasonRouter
 
-        tools = AssistantTools(app.state, get_served_competitions()).tools()
+        served = get_served_competitions()
+        tools = AssistantTools(app.state, served).tools()
         ai_service = AssistantService(
             embedder=embedder,
             generator=generator,
@@ -112,6 +106,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             model_name=a_cfg.ollama_chat_model,
             top_k=a_cfg.top_k,
             tools=tools,
+            router=SeasonRouter(app.state, served),
         )
         app.state.chat_service = ChatService(ai_service)
         logger.info("Assistant service loaded: %d chunks in index.", store.size())
@@ -197,6 +192,18 @@ def _load_match_data(app: FastAPI) -> None:
         settings.matches_dir, settings.served_competitions
     )
     app.state.fixtures_service = _load_fixtures(settings.fixtures_dir)
+    app.state.season_service = _load_season(settings.matches_dir)
+
+
+def _load_season(directory: Path) -> object | None:
+    """Load match history for the assistant's season tools; None if unavailable."""
+    try:
+        from backend.app.services.season_service import SeasonService
+
+        return SeasonService.from_directory(directory)
+    except Exception as exc:  # noqa: BLE001 — the season tools report it instead
+        logger.warning("Season history not loaded from %s: %s", directory, exc)
+        return None
 
 
 def _start_live_refresh(app: FastAPI) -> asyncio.Task[None] | None:
@@ -335,38 +342,17 @@ def create_app() -> FastAPI:
     app.add_exception_handler(UnknownCompetitionError, unknown_competition_handler)
     app.add_exception_handler(InsightsNotAvailableError, insights_not_available_handler)
     app.add_exception_handler(FixturesNotAvailableError, fixtures_not_available_handler)
+    app.add_exception_handler(AuthError, auth_error_handler)
     app.add_exception_handler(Exception, unexpected_error_handler)
 
-    _include_routers(app)
+    app.state.account_service = AccountService(JsonAccountStore(settings.accounts_path))
+    include_routers(app, settings.auth_required)
     if settings.rate_limit_per_minute is not None:
         app.add_middleware(
             RateLimitMiddleware,
             limiter=SlidingWindowLimiter(settings.rate_limit_per_minute),
         )
     return app
-
-
-def _include_routers(app: FastAPI) -> None:
-    """Mount v2 under /v2, and v1 under /v1 and the unversioned paths (ADR 014).
-
-    Unversioned paths stay on v1 so clients built for release v1.0.0 keep
-    working. They are hidden from the docs, which list /v1 and /v2.
-    """
-    shared = [health.router, assistant.router]
-    v2_only = [
-        model.router,
-        prediction.router,
-        explainability.router,
-        teams.router,
-        competitions.router,
-        insights.router,
-        fixtures.router,
-    ]
-    for router in shared + v2_only:
-        app.include_router(router, prefix="/v2")
-    for router in [*shared, v1.router]:
-        app.include_router(router, prefix="/v1")
-        app.include_router(router, include_in_schema=False)
 
 
 app = create_app()

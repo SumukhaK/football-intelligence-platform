@@ -66,6 +66,7 @@ fun PredictionScreen(
     modifier: Modifier = Modifier,
     isRefreshing: Boolean = false,
     onRefresh: () -> Unit = {},
+    presetTeams: Pair<String, String>? = null,
 ) {
     Scaffold(
         topBar = {
@@ -114,6 +115,7 @@ fun PredictionScreen(
                                 league = league,
                                 season = teamsState.season,
                                 teams = teamsState.teams,
+                                presetTeams = presetTeams,
                                 onPredict = onPredict,
                             )
                         }
@@ -130,12 +132,17 @@ private fun PredictionInputContent(
     league: String,
     season: String,
     teams: List<String>,
+    presetTeams: Pair<String, String>?,
     onPredict: (homeTeam: String, awayTeam: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Keyed on the list so a reloaded team list never leaves a stale selection.
-    var homeTeam by rememberSaveable(teams) { mutableStateOf(teams[0]) }
-    var awayTeam by rememberSaveable(teams) { mutableStateOf(teams[1]) }
+    var homeTeam by rememberSaveable(teams, presetTeams) {
+        mutableStateOf(presetTeams?.first?.takeIf { it in teams } ?: teams[0])
+    }
+    var awayTeam by rememberSaveable(teams, presetTeams) {
+        mutableStateOf(presetTeams?.second?.takeIf { it in teams } ?: teams[1])
+    }
 
     Column(
         modifier = modifier

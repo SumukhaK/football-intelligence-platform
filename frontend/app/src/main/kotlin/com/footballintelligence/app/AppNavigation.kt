@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -63,6 +64,19 @@ private fun NavHostController.navigateTo(destination: TopLevelDestination) {
     }
 }
 
+private const val FIXTURE_KEY = "fixture"
+
+/**
+ * Opens the predict tab fresh for a fixture tapped on home: any earlier
+ * prediction flow is dropped, then the new screen predicts the fixture.
+ */
+private fun NavHostController.openFixture(league: String, homeTeam: String, awayTeam: String) {
+    clearBackStack(Screen.Prediction.route)
+    navigateTo(TopLevelDestination.PREDICT)
+    getBackStackEntry(Screen.Prediction.route).savedStateHandle[FIXTURE_KEY] =
+        arrayListOf(league, homeTeam, awayTeam)
+}
+
 @Composable
 private fun AppNavHost(navController: NavHostController, modifier: Modifier) {
     NavHost(
@@ -83,11 +97,18 @@ private fun AppNavHost(navController: NavHostController, modifier: Modifier) {
                 onRetry = vm::retry,
                 isRefreshing = isRefreshing,
                 onRefresh = vm::refresh,
+                onFixtureClick = { navController.openFixture(selectedLeague, it.homeTeam, it.awayTeam) },
             )
         }
 
-        composable(Screen.Prediction.route) {
+        composable(Screen.Prediction.route) { entry ->
             val vm: PredictionViewModel = koinViewModel()
+            LaunchedEffect(entry) {
+                entry.savedStateHandle.remove<ArrayList<String>>(FIXTURE_KEY)?.let { (league, home, away) ->
+                    vm.predictFixture(league, home, away)
+                }
+            }
+            val presetTeams by vm.presetTeams.collectAsState()
             val state by vm.predictionState.collectAsState()
             val teamsState by vm.teamsState.collectAsState()
             val competitionsState by vm.competitionsState.collectAsState()
@@ -97,7 +118,7 @@ private fun AppNavHost(navController: NavHostController, modifier: Modifier) {
                 competitionsState = competitionsState,
                 teamsState = teamsState,
                 onSelectCompetition = vm::selectCompetition,
-                onPredict = vm::predict,
+                onPredict = { home, away -> vm.predict(home, away) },
                 onRetryTeams = vm::loadTeams,
                 onNavigateToResult = {
                     navController.navigate(Screen.PredictionResult.route)
@@ -105,6 +126,7 @@ private fun AppNavHost(navController: NavHostController, modifier: Modifier) {
                 onBack = { navController.popBackStack() },
                 isRefreshing = isRefreshing,
                 onRefresh = vm::refreshTeams,
+                presetTeams = presetTeams,
             )
         }
 
