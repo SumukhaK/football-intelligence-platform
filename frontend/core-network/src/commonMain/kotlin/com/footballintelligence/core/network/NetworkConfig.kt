@@ -21,4 +21,8 @@ data class NetworkConfig(
     /** URL of [team]'s crest; the server redirects it to the image (ADR 020). */
     fun crestUrl(team: String): String =
         "$baseUrl/$apiVersion/teams/${team.encodeURLPathPart()}/crest"
+
+    /** URL of [competition]'s emblem; the server redirects it to the image (ADR 020). */
+    fun emblemUrl(competition: String): String =
+        "$baseUrl/$apiVersion/competitions/${competition.encodeURLPathPart()}/emblem"
 }

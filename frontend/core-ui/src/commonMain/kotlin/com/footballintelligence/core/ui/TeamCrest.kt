@@ -18,19 +18,33 @@ import coil.compose.AsyncImage
  */
 val LocalCrestUrl = staticCompositionLocalOf<(String) -> String?> { { null } }
 
+/** Turns a league name into its emblem image URL (ADR 020), like [LocalCrestUrl]. */
+val LocalEmblemUrl = staticCompositionLocalOf<(String) -> String?> { { null } }
+
 /**
  * A team's crest, with a plain shield while it loads or when the team has none.
  * Decorative: the team's name is always shown or announced beside it.
  */
 @Composable
 fun TeamCrest(team: String, modifier: Modifier = Modifier, size: Dp = 24.dp) {
+    CrestImage(LocalCrestUrl.current(team), modifier.size(size))
+}
+
+/** A league's emblem, decorative like [TeamCrest]. */
+@Composable
+fun LeagueEmblem(league: String, modifier: Modifier = Modifier, size: Dp = 24.dp) {
+    CrestImage(LocalEmblemUrl.current(league), modifier.size(size))
+}
+
+@Composable
+private fun CrestImage(url: String?, modifier: Modifier) {
     val placeholder = rememberVectorPainter(Icons.Outlined.Shield)
     AsyncImage(
-        model = LocalCrestUrl.current(team),
+        model = url,
         contentDescription = null,
         placeholder = placeholder,
         error = placeholder,
         fallback = placeholder,
-        modifier = modifier.size(size),
+        modifier = modifier,
     )
 }

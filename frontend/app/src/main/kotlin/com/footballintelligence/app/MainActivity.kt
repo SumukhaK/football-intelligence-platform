@@ -10,6 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import com.footballintelligence.core.designsystem.FootballTheme
 import com.footballintelligence.core.network.NetworkConfig
 import com.footballintelligence.core.ui.LocalCrestUrl
+import com.footballintelligence.core.ui.LocalEmblemUrl
 import org.koin.android.ext.android.inject
 
 /** Entry point activity. Hosts the root NavHost inside [FootballTheme]. */
@@ -23,7 +24,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             FootballTheme {
-                CompositionLocalProvider(LocalCrestUrl provides networkConfig::crestUrl) {
+                CompositionLocalProvider(
+                    LocalCrestUrl provides networkConfig::crestUrl,
+                    LocalEmblemUrl provides networkConfig::emblemUrl,
+                ) {
                     val navController = rememberNavController()
                     AppNavigation(navController = navController)
                 }
