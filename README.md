@@ -240,8 +240,8 @@ The assistant is instructed, by system prompt, to answer **only** from retrieved
 **Evaluation** (run locally on 7 October 2026 with `qwen2.5:7b-instruct`; both need Ollama and the trained model, so CI runs only their scoring tests):
 
 - **Tool calling** (`evaluation.assistant_grounding`): **11 of 11** correct, against 1 of 11 without tools. That is ten upcoming fixtures across the five leagues, where the answer must quote the probability `/v2/predict` gives and no number the API didn't return, plus a team that doesn't exist, where it must not invent numbers.
-- **Choosing the model (ADR 019):** `llama3.2` (3B, the previous default) scored 5 of 11 and 15 of 20, misquoting probabilities and refusing answerable questions; `qwen2.5:14b-instruct` matched the 7B model. The 7B model is the default as the smallest that passes both.
 - **Saying "I don't know"** (`evaluation.assistant_abstention`): **20 of 20**: 10 of 10 off-topic questions refused with the exact phrase and 10 of 10 answerable ones answered. This 7B model also scored 20 of 20 with the old, ineffective cut-off; the 0.81 cut-off matters most for smaller models.
+- **Choosing the model (ADR 019):** `llama3.2` (3B, the previous default) scored 5 of 11 and 15 of 20, misquoting probabilities and refusing answerable questions; `qwen2.5:14b-instruct` matched the 7B model. The 7B model is the default as the smallest that passes both.
 
 ## Android Application
 
