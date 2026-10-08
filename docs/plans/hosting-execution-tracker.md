@@ -13,9 +13,12 @@ Status values: `Not started`, `In progress`, `Blocked (reason)`, `Done (date)`.
 | 1 | Host the API: container and private staging | 2, 3 | Not started |
 | 2 | Connect storage and secrets | 3, 7 | Not started |
 | 3 | Connect the hosted LLM | 1 | Not started |
+| 3a | Invite-only accounts and consent | [plan](accounts-and-consent-plan.md) | Not started |
+| 3b | Guardrails gateway: safety, scope router, cache, limits | [analysis](assistant-guardrails-analysis.md) | Not started |
 | 4 | Observability: logs, traces, metrics, alerts | 6 | Not started |
 | 5 | CI/CD with the eval gate | 6 | Not started |
 | 6 | Cold-start and idle-wake measurement | 4 | Not started |
+| 6a | Closed beta on staging | 5 | Not started |
 | 7 | Production service and the Android app | 5 | Not started |
 | 8 | Online quality monitoring | 6 | Not started |
 | 9 | Self-hosted model window | 7b | Not started |
@@ -27,7 +30,7 @@ Status values: `Not started`, `In progress`, `Blocked (reason)`, `Done (date)`.
 
 ## 0. Baseline, accounts and budget guardrails
 
-- [ ] ADR 020: cloud serving, provider adapters, immutable snapshots, refresh scheduling.
+- [ ] Next free ADR (check develop and open PRs): cloud serving, provider adapters, immutable snapshots, refresh scheduling.
 - [ ] Local baseline: lint, types, tests; startup time and peak RAM with `LIVE_REFRESH_HOUR=off`.
 - [ ] Snapshot manifest: model, registry, datasets, fixtures, index; hashes and sizes.
 - [ ] GCP project with billing; budget $10 with alerts at $2, $5, $8.
@@ -70,6 +73,33 @@ Evidence: the manifest check failing on a deliberately wrong snapshot.
 Done when: staging chat answers with citations and quotes the API's numbers, and both evals pass.
 Evidence: eval output saved under `docs/reports/`.
 
+## 3a. Invite-only accounts and consent
+
+Backend first, then the Android screens. Details in [accounts-and-consent-plan.md](accounts-and-consent-plan.md).
+
+- [ ] ADR for accounts, sessions, consent and Firestore.
+- [ ] Repository interface (Firestore, plus a JSON file store for local use and tests).
+- [ ] Invites, Argon2id passwords, login lockout, revocable sessions.
+- [ ] `/v2/auth/*`, `/v2/me`, `/v2/me/consent`; the assistant needs a session and current consent when `AUTH_REQUIRED` is on.
+- [ ] Owner scripts: create an invite, ban, unban, reset a password.
+- [ ] Android: redeem invite, sign in, consent screen, token storage, 401 and 403 handling.
+
+Done when: an invited friend can redeem an invite, agree to the notice and chat, and nobody else can.
+Evidence: integration tests and a staging walkthrough.
+
+## 3b. Guardrails gateway: safety, scope router, cache, limits
+
+The season router (ADR 021) is the first piece.
+
+- [ ] Safety check before the model; three strikes means a permanent ban that revokes sessions.
+- [ ] Scope router extended beyond season questions.
+- [ ] Answer cache keyed on the normalised question, data snapshot, model and prompt version.
+- [ ] Daily token budget per user and a global daily budget; **off in staging**, on in prod from beta numbers.
+- [ ] Remaining allowance returned to the app; rules sheet and info button in the Assistant screen.
+
+Done when: a harmful question adds a strike without a model call, and in prod an over-budget user is refused before any tokens are spent.
+Evidence: tests and staging logs.
+
 ## 4. Observability: logs, traces, metrics, alerts
 
 - [ ] Request ID on every request and log line.
@@ -98,6 +128,16 @@ Evidence: a pipeline run blocked by a deliberately broken prompt.
 
 Done when: `docs/reports/hosting-cold-start.md` exists with the numbers.
 Evidence: that report.
+
+## 6a. Closed beta on staging
+
+- [ ] Staging build variant: its own application ID, build number and a "-stg" app name, pointing at the staging URL.
+- [ ] APK shared directly with invited friends.
+- [ ] Usage recorded per consented user: questions per day, tokens, latency, refusals, router and cache hits, tool use. Question text only with opt-in.
+- [ ] Weekly summary to set production budgets and limits.
+
+Done when: two weeks of beta usage are summarised and the prod limits are chosen from them.
+Evidence: `docs/reports/beta-usage.md`.
 
 ## 7. Production service and the Android app
 
