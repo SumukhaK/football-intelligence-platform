@@ -55,6 +55,18 @@ Prints the number of upcoming fixtures per league and the written path, or `FAIL
 
 ---
 
+### `python -m scripts.build_team_crests`
+
+Rebuilds `datasets/schemas/team_crests.csv` and `league_emblems.csv`, the crest URL per team and league that the crest redirects serve (ADR 020). Takes no options.
+
+```sh
+uv run python -m scripts.build_team_crests
+```
+
+Reads the newest `match_results_top5_v*.csv`, the newest fixtures file and the football-data.org snapshot at `../datasets/raw/kaggle/adrianjuliusaluoch_live_results/football_matches.parquet`. Teams are matched by the games they played, from 2022/23 on, not by spelling. Prints the number of crests and emblems written and the teams left without a crest; the app shows a placeholder for those.
+
+---
+
 ### `python -m scripts.backfill_football_data`
 
 Backfills many seasons for the top five leagues (ADR 005), checks every season's integrity (ADR 006), and writes one combined dataset. Runs as a dry run unless `--confirm` is given.
@@ -268,6 +280,19 @@ uv run python -m evaluation.goals_evaluation_cli
 
 ---
 
+### `python -m evaluation.draw_analysis`
+
+Checks how well the model's draw probabilities are calibrated, and what a "pick a draw when it is close to the favourite" rule would cost in accuracy, per season block. Writes JSON and prints `Wrote <path>`.
+
+| Flag | Default | Description |
+|---|---|---|
+| `--model PATH` | `models/latest/model.joblib` | Model to analyse. |
+| `--feature-matrix PATH` | `../datasets/features/top5/feature_matrix.parquet` | That model's feature matrix. |
+| `--in-season CSV` | none | `predictions.csv` from `evaluation.in_season_cli`. |
+| `--output PATH` | `models/evaluation/draw_analysis.json` | Report path. |
+
+---
+
 ### Experiments
 
 Two one-off experiments that retrain with the served model's configuration and compare log loss with a paired bootstrap. Neither takes any options, and neither changes the served model. Both read `../datasets/features/top5/feature_matrix.parquet` and `models/latest/config.json`.
@@ -357,7 +382,28 @@ Run dir:        <path>/models/runs/<timestamp>
 Promoted:       yes
 ```
 
-`Promoted:` reads `no` when `--no-promote` is given. For reference, the served model `20260928_123224` has test accuracy 0.5245, test log loss 0.9762 and best iteration 167 (`models/latest/model_card.md`).
+`Promoted:` reads `no` when `--no-promote` is given. For reference, the season-split run `20260928_123224` has test accuracy 0.5245, test log loss 0.9762 and best iteration 167 (`models/runs/20260928_123224/model_card.md`). The served model, `20261007_154105`, is a refit of that run (ADR 017; see below).
+
+---
+
+### Serving refit (ADR 017)
+
+Three steps retrain a season-split run on every completed season and serve it. Each prints `ERROR: <reason>` and exits with code 1 on failure.
+
+```sh
+# 1. Retrain on all seasons up to --last-season (default 2025/26) with the
+#    source run's settings and best tree count. Writes models/runs/<v>/ only.
+uv run python -m training.refit --source-run models/runs/20260928_123224
+
+# 2. Score the refit and the source run on the season so far, using the
+#    features saved by evaluation.in_season_cli
+uv run python -m evaluation.refit_backtest   --rows models/backtests/<in-season run>/features/feature_matrix.parquet   --frozen-run models/runs/20260928_123224 --refit-run models/runs/<v>
+
+# 3. Copy the refit to models/latest/ and register it with its backtest scores
+uv run python -m training.promote_refit --run models/runs/<v>   --backtest models/backtests/refit_<v>/report.json
+```
+
+`evaluation.refit_backtest` also takes `--season` (default `2026/27`), `--through` (default `2026-09-20`) and `--output-dir`. `training.promote_refit` takes `--models-dir` (default `models`). The refit has no test season, so the registry holds its current-season scores (`accuracy_2026_27`, ...), and test and holdout results stay quoted from the source run.
 
 ---
 
@@ -477,6 +523,8 @@ Set them in `ai/.env` (copy `ai/.env.example`). Every value below is the default
 | `ASSISTANT_TOP_K` | `5` | Top-K chunks to retrieve per query |
 | `AUTH_REQUIRED` | `false` | Require invite-only sign-in and consent on every `/v2` data route, and drop `/v1` (ADR 022) |
 | `ACCOUNTS_PATH` | `accounts/accounts.json` | Local accounts file (hashes only; gitignored) |
+| `TEAM_CRESTS_PATH` | `../datasets/schemas/team_crests.csv` | Team name → crest URL (ADR 020) |
+| `LEAGUE_EMBLEMS_PATH` | `../datasets/schemas/league_emblems.csv` | League name → emblem URL (ADR 020) |
 
 **Endpoints:**
 
@@ -493,8 +541,14 @@ Set them in `ai/.env` (copy `ai/.env.example`). Every value below is the default
 | `POST` | `/v2/explain` | Prediction + full SHAP feature contributions |
 | `POST` | `/v2/insights` | Likely scores, expected goals and goal markets from the goals model |
 | `POST` | `/v2/assistant/chat` | RAG assistant chat (requires Ollama + built index) |
+| `GET` | `/v2/teams/{team}/crest` | Redirect to the team's crest image (ADR 020) |
+| `GET` | `/v2/competitions/{competition}/emblem` | Redirect to the league's emblem image (ADR 020) |
+| `POST` | `/v2/auth/redeem-invite`, `/v2/auth/login`, `/v2/auth/logout` | Invite-only sign-in (ADR 022) |
+| `GET` / `POST` | `/v2/me`, `/v2/me/consent` | The signed-in user, and accepting the notice |
 | `GET` | `/docs` | Swagger UI — interactive API documentation |
 | `GET` | `/redoc` | ReDoc — alternative API documentation |
+
+With `AUTH_REQUIRED=true`, every `/v2` data route needs `Authorization: Bearer <token>`, and `/v1` and the unversioned paths are not mounted. Health, sign-in and the crest redirects stay open.
 
 Each client may make 120 requests a minute (`RATE_LIMIT_PER_MINUTE`). Beyond that the server answers `429` with a `Retry-After` header. Health checks and the docs are never limited.
 
@@ -517,6 +571,18 @@ curl -s -X POST http://localhost:8000/v2/predict \
 ```
 
 `POST /v2/explain` takes the same body and adds SHAP feature contributions. Team names must match `/v2/teams?competition=<league>`.
+
+### `python -m scripts.manage_accounts`
+
+Invites people and bans or unbans accounts in `ACCOUNTS_PATH` (ADR 022).
+
+```sh
+uv run python -m scripts.manage_accounts invite --email sam@example.com
+uv run python -m scripts.manage_accounts ban --email sam@example.com
+uv run python -m scripts.manage_accounts unban --email sam@example.com
+```
+
+`invite` prints a one-time code valid for 7 days; send it to the person privately. They redeem it in the app with a password of at least 10 characters. Inviting an existing account again lets them reset their password. `ban` and `unban` print the account's new status, or exit with code 1 when there is no account for the email.
 
 ---
 

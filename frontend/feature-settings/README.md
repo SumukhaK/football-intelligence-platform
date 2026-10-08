@@ -4,7 +4,7 @@ Settings: backend status, model information and About.
 
 ## Ownership
 
-Presentation layer. Depends on `core-ui`, `core-design-system`, `core-navigation`.
+Presentation layer. Depends on `core-common`, `core-model`, `core-network`, `core-ui`, `core-design-system`, `core-navigation`.
 
 ## Contents
 

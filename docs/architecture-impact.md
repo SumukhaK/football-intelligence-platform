@@ -2,7 +2,7 @@
 
 How each stage built on the previous one, what capability it introduced, and what it enabled downstream.
 
-> **Historical view.** This page describes the architecture as it stood after Stage 7 and is kept as a record. Some choices have changed since: the chronological split from ADR 003 was replaced by the season-based split in [ADR 007](adr/007-season-based-split-and-evaluation.md). For later changes (five leagues, server-side match features, the goals model, API versioning and more) see [ADRs 005–015](adr/README.md).
+> **Historical view.** This page describes the architecture as it stood after Stage 7 and is kept as a record. Some choices have changed since: the chronological split from ADR 003 was replaced by the season-based split in [ADR 007](adr/007-season-based-split-and-evaluation.md). For later changes (five leagues, server-side match features, the goals model, API versioning, team crests, assistant tools, accounts and more) see [ADRs 005–022](adr/README.md).
 
 ---
 

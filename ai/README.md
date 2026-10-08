@@ -19,13 +19,14 @@ This directory owns:
 - XGBoost model training and serialisation.
 - SHAP explainability — every prediction includes a SHAP explanation.
 - Retrieval-augmented generation pipeline using Ollama.
-- The Dixon-Coles goals model behind scoreline insights.
+- The Dixon-Coles goals model behind scoreline insights and league table projections.
 - The FastAPI backend (`backend/`), which serves all of the above.
 - Prompt templates and retrieval configuration.
 - Evaluation scripts for the match and goals models: season-split comparisons,
   bookmaker benchmarks and in-season backtests. For the assistant: a grounding
-  check that it quotes the API's predictions without inventing numbers, and an
-  abstention check that it says "I don't know" when it should.
+  check that it quotes the API's predictions without inventing numbers, a season
+  check for table, projection, result and derby answers, and an abstention check
+  that it says "I don't know" when it should.
 
 ---
 
@@ -48,7 +49,7 @@ ai/
   evaluation/           # Model evaluation, backtests and in-season accuracy
   inference/            # Predictor and server-side match features used by the backend
   explainability/       # SHAP explainability pipeline and fan-friendly feature labels
-  goals/                # Dixon-Coles goals model: likely scores and goal markets
+  goals/                # Dixon-Coles goals model: likely scores, goal markets, league table projections
   model_registry/       # JSON model registry with git commit traceability
   assistant/            # RAG assistant: ingestion, chunking, embeddings, retrieval, generation
   backend/              # FastAPI application (see backend/README.md at the repo root)
@@ -214,7 +215,10 @@ The `assistant/` package implements the RAG pipeline for the Football Intelligen
 Assistant. Besides retrieved documents, the chat model can call tools that run the
 backend's prediction, SHAP and fixtures services, so it quotes the served model's
 numbers (ADR 018; the tools are built in `backend/app/services/assistant_tools.py`).
-It is structured as a series of composable stages:
+Season questions (tables, projections, results, derbies) use two more tools,
+`team_matches` and `league_table`, and a rule-based router picks the tool calls
+before the model answers (ADR 021; `backend/app/services/season_tools.py` and
+`season_router.py`). It is structured as a series of composable stages:
 
 ```
 assistant/
@@ -234,8 +238,12 @@ assistant/
 
 ```sh
 ollama pull nomic-embed-text
+ollama pull qwen2.5:7b-instruct
 uv run python -m assistant.pipeline --rebuild
 ```
+
+The default chat model is `qwen2.5:7b-instruct` (ADR 019); set
+`OLLAMA_CHAT_MODEL` to use another.
 
 ### Knowledge sources loaded
 

@@ -1,6 +1,6 @@
 # Hosting Execution Tracker
 
-Status: Not started. Created 8 October 2026.
+Status: In progress (step 3a). Created 8 October 2026.
 Design and detail: [hosting-plans.md](hosting-plans.md). This file is the order of work and its status.
 
 Work one step at a time, one PR into `develop` per step (or per sub-step when it grows). A step is done only when its "Done when" checks pass and its evidence is saved. Update the Status column and the date in the same PR.

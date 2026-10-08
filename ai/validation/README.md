@@ -11,6 +11,8 @@ stage. This package provides:
 - `SchemaValidator` (`schema_validator.py`) — Pydantic-schema-based column compatibility checks.
 - `season_integrity.py` — per league season checks (ADR 006): every team hosts every
   other team once, no duplicated fixtures, season labels and results agree with the score.
+  `check_partial_season` runs the same checks on a season in progress, without the
+  match and schedule counts.
 
 Validation failures are explicit errors, not silent skips.
 

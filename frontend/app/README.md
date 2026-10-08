@@ -9,15 +9,15 @@ Presentation layer. This module knows about all feature modules. No feature modu
 ## Contents
 
 - `FootballApplication` — Application subclass. Starts Koin and Napier logging in debug builds.
-- `MainActivity` — hosts the app inside `FootballTheme`.
-- `AppNavigation` — the single NavHost, wrapped in a scaffold with the bottom bar.
+- `MainActivity` — shows the launch screen, then hosts the app inside `FootballTheme` and provides `LocalCrestUrl` and `LocalEmblemUrl` from `NetworkConfig`.
+- `AppNavigation` — the single NavHost, wrapped in a scaffold with the bottom bar. A fixture tapped on home opens the Predict tab and predicts it.
 - `TopLevelDestination`, `BottomNavBar` — Fixtures, Predict, Assistant and Settings.
 - `di/AppModule` — HTTP client, response cache and API service.
 
 ## Responsibilities
 
 - Application lifecycle entry point.
-- Koin module assembly — the DI graph is declared here, not in feature modules.
+- Koin module assembly — the network module is declared here; each feature module declares its own module in `di/`, and the app starts them all.
 - The root NavHost and bottom navigation.
 
 ## Constraints

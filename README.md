@@ -2,7 +2,7 @@
 
 **An AI-first football analytics platform — from raw match data to an explainable, grounded, mobile-native prediction experience.**
 
-[![CI](https://img.shields.io/badge/CI-passing-brightgreen)](.github/workflows) [![Tests](https://img.shields.io/badge/tests-945-brightgreen)](docs/reports/) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Python](https://img.shields.io/badge/python-3.12-blue)](ai/pyproject.toml) [![Kotlin](https://img.shields.io/badge/kotlin-Compose%20Multiplatform-purple)](frontend/)
+[![CI](https://img.shields.io/badge/CI-passing-brightgreen)](.github/workflows) [![Tests](https://img.shields.io/badge/tests-1050-brightgreen)](docs/reports/) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Python](https://img.shields.io/badge/python-3.12-blue)](ai/pyproject.toml) [![Kotlin](https://img.shields.io/badge/kotlin-Compose%20Multiplatform-purple)](frontend/)
 
 [![Watch the 3-minute demo](docs/showcase/demo-video/thumbnail.png)](https://github.com/SumukhaK/football-intelligence-platform/releases/download/v2.0.0/football-intelligence-demo.mp4)
 
@@ -16,7 +16,7 @@ The Football Intelligence Platform ingests 26 seasons of match data from Europe'
 
 It is a complete, working system — not a notebook or a prototype. Twelve build stages take it from an empty repository to a tested, documented, end-to-end product: ingestion → validation → feature engineering → model training → explainability → a FastAPI backend → a locally-grounded RAG assistant → a Compose Multiplatform Android app → full integration testing.
 
-**945 tests: 872 Python and 73 Android. Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes results and fixtures daily without a restart, and the app keeps working offline with the last data it saw.**
+**1,050 tests: 970 Python and 80 Android. Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes results and fixtures daily without a restart, and the app keeps working offline with the last data it saw.**
 
 ---
 
@@ -104,7 +104,7 @@ flowchart TD
 | **Backend** | FastAPI, Pydantic v2, `pydantic-settings`, uvicorn |
 | **Mobile** | Kotlin, Compose Multiplatform, Ktor client, Koin DI, AndroidX Navigation Compose, Material 3 |
 | **Tooling** | uv (Python dependency management), Gradle 8.8, Ruff, Black, MyPy, Detekt, Spotless |
-| **Testing** | pytest (872 tests), JUnit 5, MockK, Ktor MockEngine (73 tests) |
+| **Testing** | pytest (970 tests), JUnit 5, MockK, Ktor MockEngine (80 tests) |
 | **CI/CD** | GitHub Actions |
 
 ---
@@ -116,7 +116,7 @@ flowchart TD
 .claude/            # AI agent project instructions (architecture rules, coding standards)
 docs/               # ADRs, stage reports, demo guides, release notes, showcase docs
 playbook/           # Reserved for prompt template docs (prompts live in ai/assistant/prompting/)
-frontend/           # Compose Multiplatform Android application (13 Gradle modules)
+frontend/           # Compose Multiplatform Android application (14 Gradle modules)
 backend/            # Placeholder: the backend lives in ai/backend/
 ai/                 # Python workspace: ingestion → features → training → explainability → RAG → API
 datasets/           # Raw, processed, and feature-engineered football data (versioned, not committed)
@@ -280,7 +280,7 @@ FastAPI serves two API versions (ADR 014), documented automatically via OpenAPI 
 | `/v2/explain` | POST | Prediction plus SHAP attribution in plain football language |
 | `/v2/insights` | POST | Likely scores, expected goals and goal markets from the goals model |
 | `/v2/assistant/chat` | POST | RAG-grounded football Q&A, with tools and a season router |
-| `/v2/teams/{team}/crest`, `/v2/competitions/{name}/emblem` | GET | Redirect to the crest or emblem image (ADR 020) |
+| `/v2/teams/{team}/crest`, `/v2/competitions/{competition}/emblem` | GET | Redirect to the crest or emblem image (ADR 020) |
 | `/v2/auth/*`, `/v2/me` | POST/GET | Invite-only sign-in and consent (ADR 022) |
 
 With `AUTH_REQUIRED=true` (staging and production), every `/v2` data route needs a signed-in user who has accepted the consent notice, and `/v1` is not mounted; health, docs, sign-in and crest images stay open. It is off by default, so local development needs no account.
@@ -343,10 +343,10 @@ The app calls API v2 at `http://10.0.2.2:8000/v2` (the Android emulator's alias 
 ### Running Tests
 
 ```sh
-# Python: 872 tests (the 37 integration tests need a trained model)
+# Python: 970 tests (the 37 integration tests need a trained model)
 cd ai && uv run pytest
 
-# Android: unit tests, lint and formatting (73 tests)
+# Android: unit tests, lint and formatting (80 tests)
 cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
 ```
 
@@ -357,7 +357,7 @@ cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
 | Document | Purpose |
 |---|---|
 | [Documentation Index](docs/README.md) | Full documentation map |
-| [ADR Index](docs/adr/README.md) | All 18 architectural decision records |
+| [ADR Index](docs/adr/README.md) | All 22 architectural decision records |
 | [Stage Reports](docs/reports/) | Detailed report for every build stage (1–12) |
 | [Demo Scripts](docs/demo/README.md) | Per-stage manual verification guides |
 | [Showcase Demo](docs/showcase/demo-script.md) | 5, 10 and 20-minute demo scripts and a [screenshot checklist](docs/showcase/screenshots/README.md) |

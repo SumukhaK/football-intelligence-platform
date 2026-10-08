@@ -33,9 +33,9 @@ For the Android segments: an emulator running, app installed (`cd frontend && ./
 |---|---|---|
 | 0:00–0:30 | "This is an AI football analytics platform for Europe's top five leagues — it predicts matches, explains every prediction, and answers questions about its own data, all running locally." | Show the running backend terminal |
 | 0:30–1:30 | "The app opens on upcoming fixtures, one tab per league, in my time zone." | Android app: Fixtures tab, switch from Premier League to Bundesliga |
-| 1:30–3:00 | "Pick a league and two teams, and the real model answers." | Predict tab → league → teams → **Predict Match Outcome** → show probabilities, the draw tag if shown, and the likely scores |
+| 1:30–3:00 | "Tap a fixture, or pick a league and two teams, and the real model answers." | Tap a fixture (or Predict tab → league → teams → **Predict Match Outcome**) → show probabilities, the draw tag if shown, and the likely scores |
 | 3:00–4:00 | "Every prediction comes with an explanation — not a black box." | Tap **Explain** → show "Why the model leans this way" and "What counts against it" |
-| 4:00–5:00 | "It's close to the bookmakers using only public results, and 945 tests keep it honest." | Mention 52.5% vs 55.0% for bookmakers; open `docs/releases/v2.0.0.md` if asked |
+| 4:00–5:00 | "It's close to the bookmakers using only public results, and 1,050 tests keep it honest." | Mention 52.5% vs 55.0% for bookmakers; open `docs/releases/v2.0.0.md` if asked |
 
 **Expected outputs:** A fixtures list by date; a prediction with three probabilities and likely scores; a plain-language explanation.
 
@@ -52,8 +52,8 @@ For the Android segments: an emulator running, app installed (`cd frontend && ./
 | 1:00–2:30 | Data: 46,709 matches, five leagues, leakage-safe features, season-based split. | Open [ADR 007](../adr/007-season-based-split-and-evaluation.md) |
 | 2:30–4:00 | Model + explainability: "52.5% on a test season, 33% random, 55% bookmakers; every prediction explained via SHAP." | `/docs` → `POST /v2/predict` then `POST /v2/explain`, or curl (below) |
 | 4:00–6:00 | Android app: fixtures, prediction → result → explain, then offline mode. | Live on emulator; stop the backend and pull to refresh to show the offline banner |
-| 6:00–7:30 | AI assistant: grounded RAG, not a raw LLM call. | Ask "What is the model's test accuracy?" → show the cited source |
-| 7:30–9:00 | Testing philosophy: mocked contract tests vs. real-model integration tests. | `uv run pytest tests/integration/ -v` — 36 tests against the real model |
+| 6:00–7:30 | AI assistant: grounded RAG and tools, not a raw LLM call. | Ask "What is the model's test accuracy?" → show the cited source; then ask for the Premier League table after Boxing Day |
+| 7:30–9:00 | Testing philosophy: mocked contract tests vs. real-model integration tests. | `uv run pytest tests/integration/ -v` — 37 tests against the real model |
 | 9:00–10:00 | Wrap-up: architecture diagram, ADRs, versioned API. | Show the root README architecture diagram |
 
 ```sh
@@ -76,11 +76,11 @@ curl -s -X POST localhost:8000/v2/predict -H "Content-Type: application/json" \
 | 1:30–4:00 | Data pipeline: provider abstraction, immutable raw files, season-integrity validation, leakage prevention via `.shift(1)`, Kahn's topological sort for feature dependencies. | Walk through `ai/feature_engineering/`; reference [ADR 006](../adr/006-team-canonicalisation-and-match-dedup.md) |
 | 4:00–7:00 | Model training and evaluation: season split, walk-forward tuning, bookmaker benchmark, bootstrap promotion rule, the draw analysis. | Open `docs/reports/multi-league-retraining-comparison.md` and `docs/reports/draw-handling.md` |
 | 7:00–10:00 | Explainability and scores: why `TreeExplainer` over LIME, the `ExplainerCache`, fan-friendly labels; the Dixon-Coles goals model. | Show `POST /v2/explain` and `POST /v2/insights` responses |
-| 10:00–13:00 | RAG pipeline: chunking, embedding, retrieval, source-constrained prompting, graceful 503 degradation. | Ask the assistant a question; then stop Ollama and show the same request returning a clean 503 |
+| 10:00–13:00 | RAG pipeline: chunking, embedding, retrieval, source-constrained prompting, tool calls and the season router (ADR 018, 021), graceful 503 degradation. | Ask the assistant a question; then stop Ollama and show the same request returning a clean 503 |
 | 13:00–16:00 | Backend architecture: lifespan DI, server-side features, daily refresh without restart, `/v1` vs `/v2`, rate limiting, 422 vs 503 vs 429. | Walk through `ai/backend/app/main.py`; call `/predict` (v1 model) and `/v2/predict` (current model) side by side |
 | 16:00–18:00 | Android architecture: MVVM with StateFlow, Koin DI, the caching decorator for offline mode, ViewModel sharing across Prediction → Result → Explain. | Walk through `frontend/core-network/.../CachingFootballApiService.kt` and `PredictionViewModel.kt` |
-| 18:00–19:30 | Testing strategy: 762 unit and contract tests vs. 36 real-model integration tests, plus 73 Android tests. | `uv run pytest -m "not integration"` then `uv run pytest tests/integration/ -v` |
-| 19:30–20:00 | Known limitations and what's next: no authentication, no automated assistant evaluation, results-only data. | Reference the "Future Scope" section of [project-showcase.md](project-showcase.md) |
+| 18:00–19:30 | Testing strategy: 933 unit and contract tests vs. 37 real-model integration tests, plus 80 Android tests. | `uv run pytest -m "not integration"` then `uv run pytest tests/integration/ -v` |
+| 19:30–20:00 | Known limitations and what's next: no sign-in in the app yet (the backend's is off by default, ADR 022), assistant evals that need a local Ollama, results-only data. | Reference the "Future Scope" section of [project-showcase.md](project-showcase.md) |
 
 **Expected outputs:** All of the above, plus visible proof of graceful degradation (503 without crashing) and a clear two-tier test run.
 

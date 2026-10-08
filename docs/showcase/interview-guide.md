@@ -1,6 +1,6 @@
 # Interview Guide — Football Intelligence Platform
 
-50 questions an interviewer might ask about this project (as of release v2.0.1), organised by topic, each with a suggested answer, the reasoning behind it, and the trade-offs worth raising proactively.
+50 questions an interviewer might ask about this project (as of release v2.1.0 and the work merged since), organised by topic, each with a suggested answer, the reasoning behind it, and the trade-offs worth raising proactively.
 
 ---
 
@@ -276,7 +276,7 @@
 
 **Reasoning:** A deliberate architectural constraint, not a budget workaround — local-first is a stated project value.
 
-**Trade-off:** A local 3B-ish parameter model is less capable at open-ended reasoning than a frontier hosted model — acceptable because the task (source-constrained QA) doesn't require frontier-level reasoning.
+**Trade-off:** A local 7B model is less capable at open-ended reasoning than a frontier hosted model — acceptable because the task (source-constrained QA) doesn't require frontier-level reasoning.
 
 ---
 
@@ -292,7 +292,7 @@
 
 ### 32. How do you prevent the assistant from hallucinating?
 
-**Answer:** Three layers: (1) retrieval — only relevant chunks are fetched via cosine similarity, (2) relevance filtering — low-similarity chunks are dropped before they reach the prompt, (3) a system prompt that explicitly instructs source-only answering and to say "I don't know" rather than guess. The combination means the model is structurally constrained, not just politely asked, to stay grounded.
+**Answer:** Three layers: (1) retrieval — only relevant chunks are fetched via cosine similarity, (2) relevance filtering — low-similarity chunks are dropped before they reach the prompt, (3) a system prompt that explicitly instructs source-only answering and to say "I don't know" rather than guess, and (4) tools: match and season numbers come from the API's own services, never the model ([ADR 018](../adr/018-assistant-tool-calling.md), [ADR 021](../adr/021-season-tools-and-router.md)). The combination means the model is structurally constrained, not just politely asked, to stay grounded.
 
 **Reasoning:** No single layer is sufficient alone — retrieval can return weak matches, and prompting alone doesn't guarantee compliance, so the layers are defence-in-depth.
 
@@ -308,7 +308,7 @@
 
 ### 34. How would you evaluate whether the assistant's answers are actually faithful to the retrieved context?
 
-**Answer:** Not yet implemented as an automated metric — currently relies on manual spot-checking and the structural guarantees (retrieval + filtering + prompt). A proper evaluation would build a ground-truth Q&A set and score faithfulness (e.g., via an LLM-as-judge comparing the answer against only the retrieved chunks, or simpler n-gram/entailment overlap checks). This is explicitly listed as future scope.
+**Answer:** Partly done. Three local evals run against Ollama: grounding (answers quote `/v2/predict` and invent no numbers, 11/11), abstention (answers what the documents cover, refuses the rest, 20/20) and season answers (7/7). Faithfulness to retrieved document chunks is not scored yet; that would need a ground-truth Q&A set and an LLM-as-judge or entailment check, and is listed as future scope.
 
 **Reasoning:** Honest acknowledgment of what's structurally enforced versus what's empirically measured — these are different guarantees and shouldn't be conflated.
 
@@ -382,7 +382,7 @@
 
 ### 43. How would you add authentication to this backend?
 
-**Answer:** FastAPI's `Depends` system makes this straightforward to add without restructuring — an `api_key` or JWT-validation dependency could be added to each router and injected the same way the AI services already are. Not implemented here because the project's explicit scope excludes authentication for early stages (per `.claude/CLAUDE.md` non-goals) and the system is designed for local development, not public deployment.
+**Answer:** It now has it, for hosted deployments ([ADR 022](../adr/022-invite-only-accounts-and-consent.md)): invite-only accounts, scrypt password hashes from the standard library, opaque 30-day session tokens stored as hashes, a login lockout and a consent notice. With `AUTH_REQUIRED=true` every `/v2` data route needs a token and current consent, and `/v1` is not mounted. It is off by default, so local development is unchanged. The Android app has no sign-in screens yet.
 
 **Reasoning:** Distinguishes "didn't think about it" from "deliberately scoped out, with a clear extension path."
 
@@ -390,7 +390,7 @@
 
 ### 44. What would break first if this backend had to handle real production traffic?
 
-**Answer:** Authentication is missing entirely, so anyone who can reach the server can use it. There is a rate limiter (120 requests per minute per client, 429 with `Retry-After`, [ADR 014](../adr/014-api-versioning-and-rate-limiting.md)), but it lives in memory per process, so behind a load balancer each instance would count separately. The assistant is the heaviest path, since a local LLM answer can take many seconds. First steps: API keys, a shared rate-limit store such as Redis, HTTPS, and a queue or separate limit for the assistant.
+**Answer:** Sign-in exists but is off by default, and the account store is a single JSON file, which suits one process only. There is a rate limiter (120 requests per minute per client, 429 with `Retry-After`, [ADR 014](../adr/014-api-versioning-and-rate-limiting.md)), but it lives in memory per process, so behind a load balancer each instance would count separately. The assistant is the heaviest path, since a local LLM answer can take many seconds. First steps: a shared account store, a shared rate-limit store such as Redis, HTTPS, and a queue or separate limit for the assistant.
 
 ---
 
@@ -440,6 +440,6 @@
 
 ### 50. If you had another two weeks on this project, what would you build next?
 
-**Answer:** (1) An evaluation set for the assistant — questions with expected sources — to measure retrieval hit rate, faithfulness and refusals on every change. (2) A weekly monitoring job that scores the live season's matches and alerts when log loss or calibration drifts outside the cross-validation range. (3) Retries with backoff for the daily downloads and a timeout plus one retry for LLM calls.
+**Answer:** (1) Retrieval hit rate and faithfulness metrics for the assistant, on top of the grounding, abstention and season evals, run on every change. (2) A weekly monitoring job that scores the live season's matches and alerts when log loss or calibration drifts outside the cross-validation range. (3) Retries with backoff for the daily downloads and a timeout plus one retry for LLM calls.
 
 **Reasoning:** The prediction path is measured and honest already; the assistant and live monitoring are the least measured parts, so they come first.

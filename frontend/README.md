@@ -14,6 +14,7 @@ Android client for the Football Intelligence Platform. Built with Compose Multip
 | AndroidX ViewModel | 2.8.3 | Lifecycle-scoped state holders |
 | Kotlinx Serialization | 1.7.1 | JSON serialisation for API DTOs |
 | Napier | 2.7.1 | KMP-compatible logging |
+| Coil | 2.7.0 | Team crest and league emblem images |
 | JUnit 5 + MockK + Turbine | — | Unit testing |
 
 ## Module Structure
@@ -29,7 +30,7 @@ core-network/          — Ktor API service, offline response cache, HTTP client
 core-model/            — Domain models and network result types
 core-design-system/    — Material 3 theme and colour palette
 core-navigation/       — Screen routes sealed class
-core-ui/               — Shared UI components (loading, errors, offline banner, pull to refresh)
+core-ui/               — Shared UI components (loading, errors, offline banner, pull to refresh, team crests)
 core-common/           — Dispatchers and date/time formatting
 core-testing/, feature-match/ — empty, nothing depends on them
 ```
@@ -92,7 +93,8 @@ The app follows MVVM with strict layer separation:
 UI state is a sealed class per screen with `Loading`, `Success`, and `Error` variants.
 
 Screen text lives in each module's `src/commonMain/composeResources/values/strings.xml`
-and is read with `stringResource(Res.string.key)`. Every screen has previews in its
+and is read with `stringResource(Res.string.key)`. The app name and bottom bar
+labels are the exception: they live in `app/src/main/res/values/strings.xml`. Every screen has previews in its
 module's `androidMain` source set, wrapped in `PreviewSurface` (ADR 010).
 
 ## Backend Base URL
@@ -109,6 +111,8 @@ data class NetworkConfig(
 ```
 
 The short connect timeout makes an unreachable server fall back to saved data
-quickly; `timeoutMs` bounds a request once connected.
+quickly; `timeoutMs` bounds a request once connected. `crestUrl(team)` and
+`emblemUrl(competition)` build the crest and emblem image URLs from the same
+base URL (ADR 020).
 
 Change this for physical device testing (use your machine's LAN IP).
