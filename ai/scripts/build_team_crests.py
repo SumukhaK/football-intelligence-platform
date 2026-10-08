@@ -1,4 +1,6 @@
-"""Build ``datasets/schemas/team_crests.csv``: canonical team name → crest URL.
+"""Build the crest tables: team and league name → image URL.
+
+Writes ``datasets/schemas/team_crests.csv`` and ``league_emblems.csv``.
 
 Crest URLs come from the football-data.org snapshot in the Kaggle "live
 results" download (ADR 020). That source names teams its own way, so each
@@ -10,6 +12,8 @@ canonical name is matched by the games it played rather than by spelling:
 2. Fixtures (this season's promoted teams have no results yet) join on league
    and date, and only games where one side's crest is already known vote for
    the other side.
+
+League emblems are read straight from the snapshot's competition columns.
 
 Teams left unmatched are printed; the app shows a placeholder for them.
 
@@ -31,15 +35,15 @@ SNAPSHOT = Path(
 RESULTS_DIR = Path("../datasets/processed/football_data")
 FIXTURES_DIR = Path("../datasets/processed/openfootball")
 OUTPUT = Path("../datasets/schemas/team_crests.csv")
+LEAGUE_OUTPUT = Path("../datasets/schemas/league_emblems.csv")
 FIRST_SEASON = "2022/23"
 MIN_SHARE = 0.6
 LEAGUE_NAMES = {"Primera Division": "La Liga"}
 DAY_OFFSETS = (0, 1, -1)
 
 
-def load_snapshot(path: Path) -> pd.DataFrame:
+def load_snapshot(raw: pd.DataFrame) -> pd.DataFrame:
     """The snapshot's games with our league names, UTC dates and PNG crests."""
-    raw = pd.read_parquet(path)
     games = pd.DataFrame(
         {
             "competition": raw["competition.name"].replace(LEAGUE_NAMES),
@@ -55,6 +59,17 @@ def load_snapshot(path: Path) -> pd.DataFrame:
         ".png"
     )
     return games[png].drop_duplicates()
+
+
+def league_emblems(raw: pd.DataFrame, leagues: set[str]) -> pd.DataFrame:
+    """One ``name,crest_url`` row per league in ``leagues``."""
+    table = pd.DataFrame(
+        {
+            "name": raw["competition.name"].replace(LEAGUE_NAMES),
+            "crest_url": raw["competition.emblem"],
+        }
+    ).drop_duplicates("name")
+    return table[table["name"].isin(leagues)].sort_values("name")
 
 
 def join_on_dates(
@@ -119,18 +134,20 @@ def match_crests(
 
 
 def main() -> None:
-    """Write the crest table and list the teams left without a crest."""
+    """Write both crest tables and list the teams left without a crest."""
     results = pd.read_csv(sorted(RESULTS_DIR.glob("match_results_top5_v*.csv"))[-1])
     results = results[results["season"] >= FIRST_SEASON]
     fixtures = pd.read_csv(find_latest_fixtures(FIXTURES_DIR))
-    crests = match_crests(results, fixtures, load_snapshot(SNAPSHOT))
-    table = pd.DataFrame(
-        sorted(crests.items()), columns=["canonical_name", "crest_url"]
-    )
+    raw = pd.read_parquet(SNAPSHOT)
+    crests = match_crests(results, fixtures, load_snapshot(raw))
+    table = pd.DataFrame(sorted(crests.items()), columns=["name", "crest_url"])
     table.to_csv(OUTPUT, index=False)
+    leagues = league_emblems(raw, set(results["competition"]))
+    leagues.to_csv(LEAGUE_OUTPUT, index=False)
     teams = set(results["home_team"]) | set(fixtures["home_team"])
     teams |= set(fixtures["away_team"])
     print(f"Wrote {len(table)} crests to {OUTPUT}")
+    print(f"Wrote {len(leagues)} league emblems to {LEAGUE_OUTPUT}")
     print("No crest:", ", ".join(sorted(teams - crests.keys())) or "none")
 
 

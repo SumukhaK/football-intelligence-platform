@@ -19,7 +19,7 @@ One-shot scripts that are run from the command line rather than imported as libr
 - `ingest_football_data.py` — ingest a single football-data.co.uk file.
 - `refresh_live_dataset.py` — add the season so far to the served dataset by hand (the backend also does this daily).
 - `refresh_fixtures.py` — download upcoming fixtures by hand (ADR 015).
-- `build_team_crests.py` — rebuild `datasets/schemas/team_crests.csv`, the crest URL per team (ADR 020).
+- `build_team_crests.py` — rebuild `datasets/schemas/team_crests.csv` and `league_emblems.csv`, the crest URL per team and league (ADR 020).
 
 - `draw_feature_experiment.py` — retrains with six candidate draw features and reports the log-loss change; the features were not adopted (`docs/reports/draw-handling.md`).
 
