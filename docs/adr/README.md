@@ -102,3 +102,6 @@ ADRs are never deleted.
 | [017](017-refit-on-all-seasons-for-serving.md) | Refit on all seasons for serving | Accepted |
 | [018](018-assistant-tool-calling.md) | Assistant tool calling over the API's own services | Accepted |
 | [019](019-default-chat-model-qwen2-5-7b.md) | qwen2.5 7B as the default chat model | Accepted |
+| [020](020-team-crests-from-football-data-org.md) | Team crests and league emblems from football-data.org | Accepted |
+| [021](021-season-tools-and-router.md) | Season tools and a rule-based router for the assistant | Accepted |
+| [022](022-invite-only-accounts-and-consent.md) | Invite-only accounts, sessions and consent | Accepted |

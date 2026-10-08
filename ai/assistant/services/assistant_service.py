@@ -3,15 +3,17 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from datetime import date
 from typing import Any
 
 from assistant.embeddings.embedder import Embedder
-from assistant.generation.generator import Generator, ToolCallingGenerator
+from assistant.generation.generator import Generator, ToolCall, ToolCallingGenerator
 from assistant.prompting.templates import build_messages
 from assistant.retrieval.retriever import RetrievedDoc, retrieve
 from assistant.retrieval.vector_store import VectorStore
+from assistant.tools.routing import Router
 from assistant.tools.tool import Tool, run_tool
 
 logger = logging.getLogger(__name__)
@@ -60,14 +62,18 @@ class AssistantService:
         model_name: str,
         top_k: int = 5,
         tools: Sequence[Tool] = (),
+        today: Callable[[], date] = date.today,
+        router: Router | None = None,
     ) -> None:
-        """Initialise with injected components and optional tools."""
+        """Initialise with injected components, optional tools and a router."""
         self._embedder = embedder
         self._generator = generator
         self._store = store
         self._model_name = model_name
         self._top_k = top_k
         self._tools = tuple(tools)
+        self._today = today
+        self._router = router
 
     def chat(self, question: str) -> AssistantResponse:
         """Answer *question* using RAG over the local knowledge base.
@@ -86,15 +92,25 @@ class AssistantService:
                 "Run the assistant pipeline to build the index first."
             )
 
-        query_emb = self._embedder.embed([question])[0]
-        retrieved: list[RetrievedDoc] = retrieve(query_emb, self._store, self._top_k)
+        route = self._router.route(question) if self._router else None
+        if route is not None and route.reply is not None:
+            return _routed_reply(route.reply)
+        # A routed question already has its data; documents would only distract.
+        retrieved = self._retrieve(question) if route is None else []
+        # Routed season questions need today's date to read their tool results;
+        # on other questions it made the 7B model refuse documented answers.
+        today = self._today() if route is not None else None
+        messages: list[dict[str, Any]] = list(
+            build_messages(question, retrieved, today=today)
+        )
+        if route is not None:
+            self._run_calls(messages, route.calls)
+        return self._response(self._answer(messages), retrieved)
 
-        messages: list[dict[str, Any]] = list(build_messages(question, retrieved))
-        answer = self._answer(messages)
-
-        sources = _build_sources(retrieved)
+    def _response(
+        self, answer: str, retrieved: list[RetrievedDoc]
+    ) -> AssistantResponse:
         confidence = _compute_confidence(retrieved, answer)
-
         logger.info(
             "Chat: retrieved=%d confidence=%.2f model=%s",
             len(retrieved),
@@ -103,11 +119,28 @@ class AssistantService:
         )
         return AssistantResponse(
             answer=answer,
-            sources=sources,
+            sources=_build_sources(retrieved),
             confidence=confidence,
             model=self._model_name,
             retrieved_count=len(retrieved),
         )
+
+    def _retrieve(self, question: str) -> list[RetrievedDoc]:
+        query_emb = self._embedder.embed([question])[0]
+        return retrieve(query_emb, self._store, self._top_k)
+
+    def _run_calls(
+        self,
+        messages: list[dict[str, Any]],
+        calls: Sequence[ToolCall],
+        content: str = "",
+    ) -> None:
+        """Run tool calls and append them and their results to ``messages``."""
+        messages.append(_assistant_message(content, calls))
+        for call in calls:
+            logger.info("Tool call: %s %s", call.name, call.arguments)
+            result = run_tool(self._tools, call.name, call.arguments)
+            messages.append({"role": "tool", "tool_name": call.name, "content": result})
 
     def _answer(self, messages: list[dict[str, Any]]) -> str:
         """Generate the answer, running any tool calls the model makes first."""
@@ -119,18 +152,20 @@ class AssistantService:
             turn = generator.chat(messages, schemas)
             if not turn.tool_calls:
                 return turn.content
-            messages.append(_assistant_message(turn.content, turn.tool_calls))
-            for call in turn.tool_calls:
-                logger.info("Tool call: %s %s", call.name, call.arguments)
-                result = run_tool(self._tools, call.name, call.arguments)
-                messages.append(
-                    {"role": "tool", "tool_name": call.name, "content": result}
-                )
+            self._run_calls(messages, turn.tool_calls, turn.content)
         return generator.chat(messages, []).content
 
 
 class VectorStoreEmptyError(RuntimeError):
     """Raised when the vector store has not been populated."""
+
+
+def _routed_reply(reply: str) -> AssistantResponse:
+    """A fixed reply chosen by the router; no model or retrieval was used."""
+    logger.info("Chat: answered by the router without the model.")
+    return AssistantResponse(
+        answer=reply, sources=[], confidence=0.0, model="router", retrieved_count=0
+    )
 
 
 def _assistant_message(content: str, calls: Sequence[Any]) -> dict[str, Any]:

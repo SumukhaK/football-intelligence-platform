@@ -33,6 +33,34 @@ answers 429 `{ "error": "Too many requests", "detail": "..." }` with a
 
 ---
 
+## Sign-in and consent
+
+With `AUTH_REQUIRED=true` (staging and production), every `/v2` data route needs `Authorization: Bearer <token>` from a signed-in user who has accepted the current notice. `/v2/health`, `/docs`, `/redoc`, `/openapi.json`, the crest and emblem redirects (image loaders send no token) and the routes below stay open. `/v1` and unversioned paths are not mounted, because they would bypass sign-in. `AUTH_REQUIRED` is off by default, so local development needs no token (ADR 022).
+
+Accounts are invite-only. The owner creates an invite with `uv run python -m scripts.manage_accounts invite --email <email>`.
+
+| Method | Path | Body | Returns |
+|---|---|---|---|
+| POST | `/v2/auth/redeem-invite` | `email`, `code`, `password` (10+ characters) | `{ "token", "expires_at" }`. Creates the account, or resets its password with a new invite, and ends older sessions. |
+| POST | `/v2/auth/login` | `email`, `password` | `{ "token", "expires_at" }`. Sessions last 30 days. |
+| POST | `/v2/auth/logout` | none | 204; ends the session behind the token. |
+| GET | `/v2/me` | none | `email`, `consent_required`, `consent_version`, `consent_text`, `store_questions` |
+| POST | `/v2/me/consent` | `version`, `store_questions` (default false) | The updated `/v2/me` body |
+
+Errors:
+
+| Status | `error` | When |
+|---|---|---|
+| 400 | `Invalid invite` | The code is wrong, already used, or older than 7 days. |
+| 401 | `Not signed in` | No token, or an unknown, expired or revoked one. |
+| 401 | `Invalid credentials` | Wrong email or password; the message never says which. |
+| 403 | `Consent required` | The current notice has not been accepted, or `version` is not the current one. |
+| 403 | `Account blocked` | The account is banned. |
+| 422 | `Password too short` | Fewer than 10 characters. |
+| 429 | `Too many attempts` | 5 failed sign-ins for the email within 15 minutes; it is locked for 15 minutes. |
+
+---
+
 ## GET /health
 
 Service status.
@@ -107,6 +135,23 @@ choose the league; the default is the Premier League. An unknown league returns
 ```
 
 Returns 503 when match history is not loaded.
+
+## GET /teams/{team}/crest
+
+Redirects (307) to the team's crest PNG on `crests.football-data.org`
+(ADR 020). `team` is a name as `/teams` or `/fixtures` returns it, URL-encoded
+(`/v2/teams/Nott'm%20Forest/crest`). A team without a known crest returns 404:
+
+```json
+{ "error": "No crest", "detail": "No crest is known for 'Atlantis'." }
+```
+
+## GET /competitions/{competition}/emblem
+
+Redirects (307) to the league's emblem PNG on `crests.football-data.org`
+(ADR 020). `competition` is a name as `/competitions` returns it, URL-encoded
+(`/v2/competitions/Serie%20A/emblem`). A league without a known emblem returns
+the same 404 `No crest` body as `/teams/{team}/crest`.
 
 ## GET /fixtures
 
@@ -275,6 +320,14 @@ the assistant calls tools that run the same services as `/v2/predict`,
 `/v2/explain` and `/v2/fixtures`, so it quotes the latest model's numbers
 (ADR 018). `OLLAMA_CHAT_MODEL` must name a model that supports tool calling.
 The request and response bodies are unchanged.
+
+It can also answer season questions through internal tools: a team's results
+and next meetings, and the league table on any date of a season in the data,
+projected with the goals model when the date is still ahead (ADR 021). A
+rule-based router reads each question first. Questions about individual
+players or seasons that have not started get a fixed reply without calling
+the model; those responses have `"model": "router"`, `"sources": []` and
+`"confidence": 0.0`.
 
 ---
 

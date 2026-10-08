@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -33,9 +34,11 @@ import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
 import com.footballintelligence.core.ui.OfflineBanner
 import com.footballintelligence.core.ui.RefreshableContent
+import com.footballintelligence.core.ui.TeamCrest
 import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.home.resources.Res
 import com.footballintelligence.feature.home.resources.cd_fixture
+import com.footballintelligence.feature.home.resources.cd_fixture_predict
 import com.footballintelligence.feature.home.resources.cd_league_tab
 import com.footballintelligence.feature.home.resources.fixture_time_tbc
 import com.footballintelligence.feature.home.resources.fixtures_empty
@@ -43,7 +46,7 @@ import com.footballintelligence.feature.home.resources.fixtures_versus
 import com.footballintelligence.feature.home.resources.home_title
 import org.jetbrains.compose.resources.stringResource
 
-/** Home screen: upcoming fixtures by date, one tab per league. */
+/** Home screen: upcoming fixtures by date, one tab per league; tapping one predicts it. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -56,6 +59,7 @@ fun HomeScreen(
     isRefreshing: Boolean = false,
     onRefresh: () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
+    onFixtureClick: (FixtureRow) -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -85,7 +89,7 @@ fun HomeScreen(
                 ) {
                     Column {
                         OfflineBanner(uiState.savedAt)
-                        FixtureList(uiState.days, selectedLeague)
+                        FixtureList(uiState.days, selectedLeague, onFixtureClick)
                     }
                 }
             }
@@ -112,7 +116,7 @@ private fun LeagueTabs(leagues: List<String>, selected: String, onSelect: (Strin
 }
 
 @Composable
-private fun FixtureList(days: List<FixtureDay>, league: String) {
+private fun FixtureList(days: List<FixtureDay>, league: String, onFixtureClick: (FixtureRow) -> Unit) {
     if (days.isEmpty()) {
         Text(
             stringResource(Res.string.fixtures_empty, league),
@@ -137,20 +141,28 @@ private fun FixtureList(days: List<FixtureDay>, league: String) {
                 )
             }
             items(day.fixtures, key = { "${day.label}|${it.homeTeam}|${it.awayTeam}" }) {
-                FixtureCard(it)
+                FixtureCard(it, onClick = { onFixtureClick(it) })
             }
         }
     }
 }
 
 @Composable
-private fun FixtureCard(fixture: FixtureRow) {
+private fun FixtureCard(fixture: FixtureRow, onClick: () -> Unit) {
     val time = fixture.time ?: stringResource(Res.string.fixture_time_tbc)
     val description = stringResource(Res.string.cd_fixture, fixture.homeTeam, fixture.awayTeam, time)
+    val clickLabel = stringResource(Res.string.cd_fixture_predict)
     Card(
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .clearAndSetSemantics { contentDescription = description },
+            .clearAndSetSemantics {
+                contentDescription = description
+                onClick(label = clickLabel) {
+                    onClick()
+                    true
+                }
+            },
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -170,11 +182,13 @@ private fun FixtureCard(fixture: FixtureRow) {
                 textAlign = TextAlign.End,
                 modifier = Modifier.weight(0.35f),
             )
+            TeamCrest(fixture.homeTeam)
             Text(
                 stringResource(Res.string.fixtures_versus),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            TeamCrest(fixture.awayTeam)
             Text(
                 fixture.awayTeam,
                 style = MaterialTheme.typography.bodyLarge,

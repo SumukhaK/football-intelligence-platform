@@ -37,6 +37,14 @@ class PredictionViewModel(
 
     private var lastRequest: PredictionRequest? = null
 
+    /** The league of a fixture opened from home, selected once the leagues load. */
+    private var fixtureLeague: String? = null
+
+    private val _presetTeams = MutableStateFlow<Pair<String, String>?>(null)
+
+    /** Home and away teams the team pickers start on, set when a fixture is opened. */
+    val presetTeams: StateFlow<Pair<String, String>?> = _presetTeams.asStateFlow()
+
     private val _insightsState = MutableStateFlow<InsightsUiState>(InsightsUiState.Idle)
     val insightsState: StateFlow<InsightsUiState> = _insightsState.asStateFlow()
 
@@ -52,7 +60,9 @@ class PredictionViewModel(
                 is NetworkResult.Success -> {
                     _competitionsState.value = CompetitionsUiState.Success(
                         competitions = result.data.competitions,
-                        selected = result.data.default,
+                        selected = fixtureLeague
+                            ?.takeIf { league -> result.data.competitions.any { it.name == league } }
+                            ?: result.data.default,
                     )
                     loadTeams()
                 }
@@ -75,7 +85,7 @@ class PredictionViewModel(
 
     /** Loads the selected league's teams, or retries loading the leagues. */
     fun loadTeams() {
-        val league = selectedCompetition()
+        val league = selectedCompetition
         if (league == null) {
             loadCompetitions()
             return
@@ -87,16 +97,26 @@ class PredictionViewModel(
     }
 
     /**
+     * Opens a fixture tapped on the home list: selects its league, presets its
+     * teams and predicts it straight away.
+     */
+    fun predictFixture(league: String, homeTeam: String, awayTeam: String) {
+        fixtureLeague = league
+        _presetTeams.value = homeTeam to awayTeam
+        val competitions = _competitionsState.value
+        if (competitions is CompetitionsUiState.Success && competitions.selected != league) {
+            selectCompetition(league)
+        }
+        predict(homeTeam, awayTeam, league)
+    }
+
+    /**
      * Requests a prediction and, in parallel, the goals insights for the same
      * fixture. An insights failure never affects the prediction.
      */
-    fun predict(homeTeam: String, awayTeam: String) {
+    fun predict(homeTeam: String, awayTeam: String, competition: String? = selectedCompetition) {
         _predictionState.value = PredictionInputUiState.Loading
-        val request = PredictionRequest(
-            homeTeam = homeTeam,
-            awayTeam = awayTeam,
-            competition = selectedCompetition(),
-        )
+        val request = PredictionRequest(homeTeam = homeTeam, awayTeam = awayTeam, competition = competition)
         lastRequest = request
         loadInsights(request)
         viewModelScope.launch {
@@ -111,16 +131,11 @@ class PredictionViewModel(
         }
     }
 
-    /** Requests a SHAP explanation for the current prediction's teams. */
+    /** Requests a SHAP explanation for the current prediction's fixture. */
     fun explain() {
-        val current = _predictionState.value
-        if (current !is PredictionInputUiState.Success) return
+        if (_predictionState.value !is PredictionInputUiState.Success) return
+        val request = lastRequest ?: return
         _explanationState.value = ExplanationUiState.Loading
-        val request = PredictionRequest(
-            homeTeam = current.result.homeTeam,
-            awayTeam = current.result.awayTeam,
-            competition = selectedCompetition(),
-        )
         viewModelScope.launch {
             _explanationState.value = when (val result = repository.explain(request)) {
                 is NetworkResult.Success -> ExplanationUiState.Success(
@@ -161,7 +176,7 @@ class PredictionViewModel(
                 _competitionsState.value =
                     CompetitionsUiState.Success(result.data.competitions, selected)
             }
-            val league = selectedCompetition()
+            val league = selectedCompetition
             if (league != null) _teamsState.value = teamsState(repository.teams(league))
             _isRefreshing.value = false
         }
@@ -174,8 +189,8 @@ class PredictionViewModel(
         _insightsState.value = InsightsUiState.Idle
     }
 
-    private fun selectedCompetition(): String? =
-        (_competitionsState.value as? CompetitionsUiState.Success)?.selected
+    private val selectedCompetition: String?
+        get() = (_competitionsState.value as? CompetitionsUiState.Success)?.selected
 
     private fun loadInsights(request: PredictionRequest) {
         _insightsState.value = InsightsUiState.Loading

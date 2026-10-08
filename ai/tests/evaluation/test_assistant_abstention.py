@@ -39,3 +39,11 @@ def test_run_cases_asks_every_question() -> None:
     assert len(results) == len(ANSWERABLE) + len(UNANSWERABLE)
     assert [r.should_refuse for r in results].count(True) == len(UNANSWERABLE)
     client.post.assert_any_call("/v2/assistant/chat", json={"message": ANSWERABLE[0]})
+
+
+def test_router_refusals_count_as_refusals() -> None:
+    """The router's fixed replies for players and next season are refusals."""
+    from backend.app.services.season_router import PLAYER_REPLY
+
+    assert is_refusal(PLAYER_REPLY)
+    assert is_refusal("I can only answer about the current season (2026/27) ...")
