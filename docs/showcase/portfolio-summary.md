@@ -66,7 +66,7 @@ Beyond the ADRs: Clean Architecture with one-directional dependencies in both th
 
 ## Engineering Practices
 
-- **1,050 tests** — 970 Python (including 37 against the real trained model) and 80 Android (ViewModels written test-first).
+- **1,135 tests** — 970 Python (including 37 against the real trained model) and 165 Android (ViewModels written test-first).
 - **Strict typing** — MyPy on the Python codebase; Kotlin with `val`-by-default and exhaustive `when`.
 - **Conventional commits, ADRs and reports** — every structural decision is recorded; every experiment has a report with the command to reproduce it.
 - **One concern per pull request**, self-reviewed against a written checklist.

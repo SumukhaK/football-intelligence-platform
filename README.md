@@ -104,7 +104,7 @@ flowchart TD
 | **Backend** | FastAPI, Pydantic v2, `pydantic-settings`, uvicorn |
 | **Mobile** | Kotlin, Compose Multiplatform, Ktor client, Koin DI, AndroidX Navigation Compose, Material 3 |
 | **Tooling** | uv (Python dependency management), Gradle 8.8, Ruff, Black, MyPy, Detekt, Spotless |
-| **Testing** | pytest (970 tests), JUnit 5, MockK, Ktor MockEngine (80 tests) |
+| **Testing** | pytest (970 tests), JUnit 5, MockK, Ktor MockEngine (165 tests) |
 | **CI/CD** | GitHub Actions |
 
 ---

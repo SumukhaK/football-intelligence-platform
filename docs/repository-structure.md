@@ -152,9 +152,9 @@ A few other folders (`ai/`, `architecture/`, `backend/` and similar) are empty p
 - `build-logic/` — shared Gradle convention plugins.
 - `gradle/` — Gradle wrapper and version catalog.
 
-**Modules:** 14 Gradle modules: `app`, 7 core modules and 6 feature modules (see `settings.gradle.kts`).
+**Modules:** 15 Gradle modules: `app`, 7 core modules and 7 feature modules (see `settings.gradle.kts`).
 
-**Module graph:** Feature modules depend on core modules. Feature modules never depend on each other. `app` depends on the four features in use (home, prediction, assistant, settings); `feature-match` and `feature-team` are empty and not wired in.
+**Module graph:** Feature modules depend on core modules. Feature modules never depend on each other. `app` depends on the six features in use (home, prediction, assistant, settings, team, auth); `feature-match` is empty and not wired in.
 
 **Does not own:** business logic (that belongs in domain/service classes), network configuration beyond Ktor setup (that belongs in `core-network`), or ML inference (that belongs in `ai/` and is exposed through the API in `ai/backend/`).
 

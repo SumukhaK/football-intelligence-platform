@@ -13,7 +13,7 @@ Status values: `Not started`, `In progress`, `Blocked (reason)`, `Done (date)`.
 | 1 | Host the API: container and private staging | 2, 3 | Not started |
 | 2 | Connect storage and secrets | 3, 7 | Not started |
 | 3 | Connect the hosted LLM | 1 | Not started |
-| 3a | Invite-only accounts and consent | [plan](accounts-and-consent-plan.md) | In progress (backend done; Firestore store and Android screens to go) |
+| 3a | Invite-only accounts and consent | [plan](accounts-and-consent-plan.md) | In progress (backend and Android screens done; Firestore store to go) |
 | 3b | Guardrails gateway: safety, scope router, cache, limits | [analysis](assistant-guardrails-analysis.md) | Not started |
 | 4 | Observability: logs, traces, metrics, alerts | 6 | Not started |
 | 5 | CI/CD with the eval gate | 6 | Not started |
@@ -82,7 +82,7 @@ Backend first, then the Android screens. Details in [accounts-and-consent-plan.m
 - [x] Invites, scrypt passwords, login lockout, revocable sessions.
 - [x] `/v2/auth/*`, `/v2/me`, `/v2/me/consent`; every `/v2` data route needs a session and current consent when `AUTH_REQUIRED` is on.
 - [x] Owner script: invite (also resets a password), ban, unban.
-- [ ] Android: redeem invite, sign in, consent screen, token storage, 401 and 403 handling.
+- [x] Android: redeem invite, sign in, consent screen, token storage, 401 and 403 handling (#84).
 
 Done when: an invited friend can redeem an invite, agree to the notice and use the app, and nobody else can.
 Evidence: integration tests and a staging walkthrough.

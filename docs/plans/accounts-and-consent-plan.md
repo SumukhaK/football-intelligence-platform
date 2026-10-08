@@ -1,6 +1,6 @@
 # Accounts and Consent Plan
 
-Status: In progress. Proposed 8 October 2026; the backend is done (ADR 022). The Firestore store and the Android screens are still to do.
+Status: In progress. Proposed 8 October 2026; the backend (ADR 022) and the Android screens (#84) are done. The Firestore store is still to do.
 Decisions behind it are recorded in the hosting plan's production AI target and in [hosting-execution-tracker.md](hosting-execution-tracker.md).
 
 ## Goal
@@ -45,7 +45,7 @@ Errors use the existing `{ "error", "detail" }` shape: 401 `Not signed in`, 403 
 - **Login guessing:** after 5 failed logins for an email within 15 minutes, that email is locked for 15 minutes. Wrong email and wrong password get the same message.
 - **Passwords:** minimum 10 characters, hashed with `hashlib.scrypt`, so no new dependency.
 - **Invite codes:** 128-bit random, single use, expire after 7 days.
-- **Transport:** HTTPS in the cloud (Cloud Run provides it). The app stores the token in Android's encrypted storage.
+- **Transport:** HTTPS in the cloud (Cloud Run provides it). The app keeps the token in its private SharedPreferences with app backup turned off, so it never leaves the device. It is not encrypted at rest yet: the repo has no encryption library, and adding one needs its own decision.
 - **Logs:** no passwords, codes, tokens or question text unless the user opted in.
 
 ## Owner tools
@@ -61,7 +61,7 @@ Errors use the existing `{ "error", "detail" }` shape: 401 `Not signed in`, 403 
 4. Auth routes, the `/me` routes and a FastAPI dependency on the `/v2` data routers. Integration tests with `TestClient`. `docs/api.md` updated. Done.
 5. Owner scripts. Done (`scripts.manage_accounts`).
 6. Consent notice text (version 1) and the 403 path. Tests. Done.
-7. Android: sign-in, redeem-invite and consent screens, token storage, and handling for 401 and 403 responses (a separate frontend task).
+7. Android: sign-in, redeem-invite and consent screens, token storage, and handling for 401 and 403 responses. Done (#84): a 401 signs out from anywhere. A 403 `Consent required` during a session shows as an ordinary error until the next launch asks again.
 
 ## Open questions
 
