@@ -101,3 +101,4 @@ ADRs are never deleted.
 | [016](016-app-icon-and-kickoff-launch-screen.md) | App icon and the Kick-off launch screen | Accepted |
 | [017](017-refit-on-all-seasons-for-serving.md) | Refit on all seasons for serving | Accepted |
 | [018](018-assistant-tool-calling.md) | Assistant tool calling over the API's own services | Accepted |
+| [019](019-default-chat-model-qwen2-5-7b.md) | qwen2.5 7B as the default chat model | Accepted |

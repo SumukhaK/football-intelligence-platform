@@ -53,9 +53,9 @@ and data.
 - On 7 October 2026 with `qwen2.5:7b-instruct`, the evaluation passed 11 of 11
   cases with tools (10 fixtures plus the unknown team) against 1 of 11 without
   them, where every fixture question was refused.
-- The configured default model, `llama3.2`, supports tool calling. A model
-  that does not will error on the first chat, so `OLLAMA_CHAT_MODEL` must name
-  a tool-capable model.
+- The default chat model supports tool calling (`llama3.2` at the time,
+  `qwen2.5:7b-instruct` since ADR 019). A model that does not will error on
+  the first chat, so `OLLAMA_CHAT_MODEL` must name a tool-capable model.
 - A prediction answer can take two or three model calls instead of one.
 - The chat response's `confidence` is still the retrieval score, so an answer
   grounded in a tool result can show low confidence.

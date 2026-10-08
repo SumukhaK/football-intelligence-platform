@@ -48,7 +48,7 @@ Beyond the ADRs: Clean Architecture with one-directional dependencies in both th
 - **XGBoost classifier** — `multi:softprob`, 42 pre-match features, 46,709 matches, tuned by season walk-forward CV. Test 2023/24: 52.5% accuracy and log loss 0.976 (random 33.3%; bookmakers 55.0% and 0.955). Live 2026/27 check: 52.4% against 51.6% for bookmaker favourites.
 - **SHAP explainability** — per-prediction attribution through `POST /v2/explain`, with fan-friendly labels for every feature.
 - **Dixon-Coles goals model** — likely scores, expected goals and goal markets through `POST /v2/insights`, refitted daily.
-- **Retrieval-Augmented Generation** — Ollama embeddings (`nomic-embed-text`) into a numpy vector store, cosine retrieval, and a source-constrained system prompt feeding `llama3.2`.
+- **Retrieval-Augmented Generation** — Ollama embeddings (`nomic-embed-text`) into a numpy vector store, cosine retrieval, and a source-constrained system prompt feeding `qwen2.5:7b-instruct`, which can also call the prediction, SHAP and fixtures services as tools.
 - **Local-first AI** — no hosted LLM API, no managed vector database. Everything runs on the developer's machine.
 
 ---

@@ -272,7 +272,7 @@
 
 ### 30. Why Ollama instead of OpenAI/Anthropic API?
 
-**Answer:** Keeps the entire system runnable offline with zero per-request cost and zero data leaving the developer's machine — directly supporting the project's "no cloud dependency" goal. `llama3.2` is small enough to run on a laptop while still being capable enough for grounded, source-constrained QA.
+**Answer:** Keeps the entire system runnable offline with zero per-request cost and zero data leaving the developer's machine — directly supporting the project's "no cloud dependency" goal. `qwen2.5:7b-instruct` is the smallest local model that passed both assistant evals (ADR 019); the 3B `llama3.2` it replaced misquoted tool numbers.
 
 **Reasoning:** A deliberate architectural constraint, not a budget workaround — local-first is a stated project value.
 

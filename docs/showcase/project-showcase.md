@@ -150,7 +150,7 @@ flowchart TD
     E --> F
     F --> G{Relevance\nfilter}
     G --> H[System Prompt\nsource-only]
-    H --> I[OllamaGenerator\nllama3.2]
+    H --> I[OllamaGenerator\nqwen2.5 7B]
     I --> J[Answer + Citations]
 ```
 

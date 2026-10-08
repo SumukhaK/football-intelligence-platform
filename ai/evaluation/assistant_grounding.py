@@ -85,13 +85,18 @@ def score_prediction_answer(
     )
 
 
-def score_unknown_team_answer(question: str, answer: str) -> CaseResult:
-    """Score an answer about a team the API rejects: it must not invent numbers."""
+def score_unknown_team_answer(
+    question: str, answer: str, api_error: Mapping[str, Any]
+) -> CaseResult:
+    """Score an answer about a team the API rejects: it must not invent numbers.
+
+    Numbers in the API's error, such as the season it names, may be repeated.
+    """
     return CaseResult(
         question=question,
         answer=answer,
         quoted_prediction=True,
-        ungrounded=ungrounded_numbers(answer, [question]),
+        ungrounded=ungrounded_numbers(answer, [question, json.dumps(api_error)]),
     )
 
 
@@ -116,7 +121,10 @@ def _run(client: Any, per_league: int) -> list[CaseResult]:
             answer = _ask(client, question)
             results.append(score_prediction_answer(question, answer, outputs))
     question = f"What does the model predict for {_UNKNOWN_TEAM} vs Arsenal?"
-    results.append(score_unknown_team_answer(question, _ask(client, question)))
+    error = client.post(
+        _ENDPOINTS[0], json={"home_team": _UNKNOWN_TEAM, "away_team": "Arsenal"}
+    ).json()
+    results.append(score_unknown_team_answer(question, _ask(client, question), error))
     return results
 
 

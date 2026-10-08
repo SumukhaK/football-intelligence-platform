@@ -100,7 +100,7 @@ flowchart TD
 |---|---|
 | **ML / Data** | Python 3.12, XGBoost 3.3, scikit-learn 1.9, SciPy (goals model), pandas, NumPy, PyArrow |
 | **Explainability** | SHAP 0.52 (`TreeExplainer`), Matplotlib |
-| **AI Assistant** | Ollama (`llama3.2`, `nomic-embed-text`), numpy vector store, custom RAG pipeline |
+| **AI Assistant** | Ollama (`qwen2.5:7b-instruct`, `nomic-embed-text`), numpy vector store, custom RAG pipeline |
 | **Backend** | FastAPI, Pydantic v2, `pydantic-settings`, uvicorn |
 | **Mobile** | Kotlin, Compose Multiplatform, Ktor client, Koin DI, AndroidX Navigation Compose, Material 3 |
 | **Tooling** | uv (Python dependency management), Gradle 8.8, Ruff, Black, MyPy, Detekt, Spotless |
@@ -217,7 +217,7 @@ flowchart LR
     F[User Question] --> G[Retriever\ntop-k chunks]
     E --> G
     G --> H[System Prompt\nsource-only answering]
-    H --> I[OllamaGenerator\nllama3.2]
+    H --> I[OllamaGenerator\nqwen2.5 7B]
     I <--> T[Tools\npredict_match · explain_match · upcoming_fixtures\nsame services as /v2]
     I --> J[Answer + Citations]
 
@@ -235,12 +235,13 @@ flowchart LR
 
 The assistant is instructed, by system prompt, to answer **only** from retrieved context or tool results. Chunks scoring below 0.81 are dropped before generation, so an off-topic question reaches the model with no context and gets the prompt's fixed "I don't have enough information" reply. If Ollama isn't running, the backend degrades gracefully — `POST /assistant/chat` returns `503`, never a crash.
 
-**Tool calling (ADR 018).** For a match prediction, its explanation or a league's upcoming fixtures, the model calls `predict_match`, `explain_match` or `upcoming_fixtures`. These run the same services as `/v2/predict`, `/v2/explain` and `/v2/fixtures`, in-process, so the assistant quotes exactly what the API returns from the live model, cited as `[source: tool <name>]`. `OLLAMA_CHAT_MODEL` must name a model that supports tool calling (the default `llama3.2` does).
+**Tool calling (ADR 018).** For a match prediction, its explanation or a league's upcoming fixtures, the model calls `predict_match`, `explain_match` or `upcoming_fixtures`. These run the same services as `/v2/predict`, `/v2/explain` and `/v2/fixtures`, in-process, so the assistant quotes exactly what the API returns from the live model, cited as `[source: tool <name>]`. `OLLAMA_CHAT_MODEL` must name a model that supports tool calling (the default `qwen2.5:7b-instruct` does).
 
 **Evaluation** (run locally on 7 October 2026 with `qwen2.5:7b-instruct`; both need Ollama and the trained model, so CI runs only their scoring tests):
 
 - **Tool calling** (`evaluation.assistant_grounding`): **11 of 11** correct, against 1 of 11 without tools. That is ten upcoming fixtures across the five leagues, where the answer must quote the probability `/v2/predict` gives and no number the API didn't return, plus a team that doesn't exist, where it must not invent numbers.
-- **Saying "I don't know"** (`evaluation.assistant_abstention`): **20 of 20**: 10 of 10 off-topic questions refused with the exact phrase and 10 of 10 answerable ones answered. This 7B model also scored 20 of 20 with the old, ineffective cut-off; the 0.81 cut-off matters most for smaller models such as `llama3.2`, which has not been run through this check yet.
+- **Choosing the model (ADR 019):** `llama3.2` (3B, the previous default) scored 5 of 11 and 15 of 20, misquoting probabilities and refusing answerable questions; `qwen2.5:14b-instruct` matched the 7B model. The 7B model is the default as the smallest that passes both.
+- **Saying "I don't know"** (`evaluation.assistant_abstention`): **20 of 20**: 10 of 10 off-topic questions refused with the exact phrase and 10 of 10 answerable ones answered. This 7B model also scored 20 of 20 with the old, ineffective cut-off; the 0.81 cut-off matters most for smaller models.
 
 ## Android Application
 
@@ -319,7 +320,7 @@ To enable the AI assistant (optional, requires [Ollama](https://ollama.com)):
 
 ```sh
 ollama pull nomic-embed-text
-ollama pull llama3.2
+ollama pull qwen2.5:7b-instruct
 uv run python -m assistant.pipeline --rebuild
 ```
 
@@ -391,7 +392,7 @@ MIT License. See [LICENSE](LICENSE).
 - [football-data.co.uk](https://www.football-data.co.uk/) for Premier League, Bundesliga, La Liga, Serie A and Ligue 1 results, 2000/01 onwards.
 - [openfootball](https://github.com/openfootball/football.json) for public-domain season schedules used for upcoming fixtures.
 - Kaggle datasets by armin2080, enricocattaneo and adrianjuliusaluoch, used to test xG, FIFA ratings and Champions League rest days ([report](docs/reports/kaggle-extras.md)).
-- [Ollama](https://ollama.com) for local LLM serving (`llama3.2`, `nomic-embed-text`).
+- [Ollama](https://ollama.com) for local LLM serving (`qwen2.5:7b-instruct`, `nomic-embed-text`).
 - [SHAP](https://github.com/shap/shap) for the `TreeExplainer` implementation underpinning all explainability features.
 - [XGBoost](https://xgboost.readthedocs.io/), [JetBrains Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/), and [FastAPI](https://fastapi.tiangolo.com/) as the core frameworks this project is built on.
 

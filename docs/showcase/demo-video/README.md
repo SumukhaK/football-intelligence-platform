@@ -43,7 +43,6 @@ English subtitles are burned into the video and also provided as
 - **Narration.** An AI voice (`en-GB-RyanNeural` via `edge-tts`) reads the
   script. Each subtitle is one narrated sentence, timed to its audio.
 - **Assistant.** In the video, the assistant runs `qwen2.5:7b-instruct` in
-  Ollama, not the default `llama3.2`, because that is the model installed on
-  the recording machine. It takes about 45 seconds per answer on that
+  Ollama, now the default chat model (ADR 019). It takes about 45 seconds per answer on that
   laptop's GPU, which is longer than the app's 30-second timeout. That is why
   the assistant is shown answering in the terminal.
