@@ -1,4 +1,4 @@
-package com.footballintelligence.feature.team
+package com.footballintelligence.core.model
 
 /** The fan's chosen league and team, saved on the device. */
 data class FavouriteTeam(val league: String, val team: String)

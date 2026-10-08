@@ -1,6 +1,8 @@
 package com.footballintelligence.feature.team
 
 import androidx.lifecycle.ViewModel
+import com.footballintelligence.core.model.FavouriteTeam
+import com.footballintelligence.core.model.FavouriteTeamStore
 
 /**
  * The saved favourite team, for the app's start screen and the Settings

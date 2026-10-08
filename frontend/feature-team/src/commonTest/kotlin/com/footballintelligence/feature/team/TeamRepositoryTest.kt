@@ -1,6 +1,7 @@
 package com.footballintelligence.feature.team
 
 import com.footballintelligence.core.model.ErrorKind
+import com.footballintelligence.core.model.FavouriteTeam
 import com.footballintelligence.core.model.Fixture
 import com.footballintelligence.core.model.FixturesResponse
 import com.footballintelligence.core.model.NetworkResult

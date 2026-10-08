@@ -1,6 +1,8 @@
 package com.footballintelligence.feature.team
 
 import android.content.SharedPreferences
+import com.footballintelligence.core.model.FavouriteTeam
+import com.footballintelligence.core.model.FavouriteTeamStore
 
 /** [FavouriteTeamStore] in the app's private SharedPreferences. */
 class PreferencesFavouriteTeamStore(private val prefs: SharedPreferences) : FavouriteTeamStore {

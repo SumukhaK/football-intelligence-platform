@@ -1,6 +1,7 @@
 package com.footballintelligence.feature.team.repository
 
 import com.footballintelligence.core.model.ExplanationResult
+import com.footballintelligence.core.model.FavouriteTeam
 import com.footballintelligence.core.model.Fixture
 import com.footballintelligence.core.model.Insights
 import com.footballintelligence.core.model.NetworkResult
@@ -8,7 +9,6 @@ import com.footballintelligence.core.model.PredictionRequest
 import com.footballintelligence.core.model.PredictionResult
 import com.footballintelligence.core.model.TeamsResponse
 import com.footballintelligence.core.network.FootballApiService
-import com.footballintelligence.feature.team.FavouriteTeam
 
 /** Data for the favourite team: its league's teams, its fixtures and match forecasts. */
 interface TeamRepository {

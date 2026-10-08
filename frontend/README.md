@@ -38,7 +38,8 @@ On first launch the app asks for a favourite league, then a team from it, on
 one screen with two steps: a grid of league emblems, then the league's crests.
 The chosen emblem morphs into the team step's header (a shared element
 transition) and back. The choice is saved in SharedPreferences and the picker
-is not shown again. A bottom bar switches between Fixtures, Predict,
+is not shown again. Fixtures opens on the favourite league's tab, listed first. A bottom bar
+switches between Fixtures, Predict,
 My Team and Assistant; a settings icon at the top right of each opens Settings.
 My Team shows the favourite team's next match: kick-off, the win/draw/loss pick
 with its top three reasons, the three likeliest scores and the clean-sheet

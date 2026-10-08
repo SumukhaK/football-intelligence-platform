@@ -1,7 +1,7 @@
 package com.footballintelligence.feature.team.di
 
 import android.content.Context
-import com.footballintelligence.feature.team.FavouriteTeamStore
+import com.footballintelligence.core.model.FavouriteTeamStore
 import com.footballintelligence.feature.team.FavouriteTeamViewModel
 import com.footballintelligence.feature.team.MyTeamViewModel
 import com.footballintelligence.feature.team.PreferencesFavouriteTeamStore

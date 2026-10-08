@@ -17,15 +17,19 @@ import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.util.Locale
 
-/** ViewModel for [HomeScreen]: upcoming fixtures of the selected league. */
+/**
+ * ViewModel for [HomeScreen]: upcoming fixtures of the selected league. The
+ * fan's [favouriteLeague], when saved, is the first tab and opens selected.
+ */
 class HomeViewModel(
     private val repository: FixturesRepository,
+    favouriteLeague: String? = null,
     private val zone: ZoneId = ZoneId.systemDefault(),
     private val locale: Locale = Locale.getDefault(),
 ) : ViewModel() {
 
     /** League tabs, in display order. */
-    val leagues: List<String> = SERVED_LEAGUES
+    val leagues: List<String> = SERVED_LEAGUES.sortedByDescending { it == favouriteLeague }
 
     private val _selectedLeague = MutableStateFlow(leagues.first())
     val selectedLeague: StateFlow<String> = _selectedLeague.asStateFlow()

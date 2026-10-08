@@ -3,6 +3,8 @@ package com.footballintelligence.feature.team
 import com.footballintelligence.core.model.ErrorKind
 import com.footballintelligence.core.model.ExpectedGoals
 import com.footballintelligence.core.model.ExplanationResult
+import com.footballintelligence.core.model.FavouriteTeam
+import com.footballintelligence.core.model.FavouriteTeamStore
 import com.footballintelligence.core.model.FeatureContribution
 import com.footballintelligence.core.model.Fixture
 import com.footballintelligence.core.model.GoalMarkets

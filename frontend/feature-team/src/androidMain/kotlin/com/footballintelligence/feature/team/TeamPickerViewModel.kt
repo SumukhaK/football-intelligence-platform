@@ -2,6 +2,8 @@ package com.footballintelligence.feature.team
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.footballintelligence.core.model.FavouriteTeam
+import com.footballintelligence.core.model.FavouriteTeamStore
 import com.footballintelligence.core.model.NetworkResult
 import com.footballintelligence.core.model.SERVED_LEAGUES
 import com.footballintelligence.feature.team.repository.TeamRepository

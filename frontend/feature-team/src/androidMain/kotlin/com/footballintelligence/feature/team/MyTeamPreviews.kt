@@ -2,6 +2,7 @@ package com.footballintelligence.feature.team
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import com.footballintelligence.core.model.FavouriteTeam
 import com.footballintelligence.core.model.SERVED_LEAGUES
 import com.footballintelligence.core.ui.PreviewSurface
 

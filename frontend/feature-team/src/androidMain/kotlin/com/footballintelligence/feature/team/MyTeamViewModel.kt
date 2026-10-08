@@ -3,6 +3,7 @@ package com.footballintelligence.feature.team
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.footballintelligence.core.common.formatSavedAt
+import com.footballintelligence.core.model.FavouriteTeamStore
 import com.footballintelligence.core.model.Fixture
 import com.footballintelligence.core.model.NetworkResult
 import com.footballintelligence.core.model.PredictionRequest

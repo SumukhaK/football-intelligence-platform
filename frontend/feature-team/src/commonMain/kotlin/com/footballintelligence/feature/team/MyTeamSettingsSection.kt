@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.footballintelligence.core.model.FavouriteTeam
 import com.footballintelligence.core.ui.TeamCrest
 import com.footballintelligence.feature.team.resources.Res
 import com.footballintelligence.feature.team.resources.cd_change_my_team

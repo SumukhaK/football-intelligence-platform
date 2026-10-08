@@ -1,5 +1,7 @@
 package com.footballintelligence.feature.team
 
+import com.footballintelligence.core.model.FavouriteTeam
+import com.footballintelligence.core.model.FavouriteTeamStore
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals

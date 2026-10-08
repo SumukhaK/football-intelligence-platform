@@ -1,6 +1,7 @@
 package com.footballintelligence.feature.team
 
 import android.content.SharedPreferences
+import com.footballintelligence.core.model.FavouriteTeam
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
