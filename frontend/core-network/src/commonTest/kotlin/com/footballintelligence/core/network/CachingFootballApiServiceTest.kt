@@ -12,6 +12,9 @@ import com.footballintelligence.core.model.ModelInfo
 import com.footballintelligence.core.model.NetworkResult
 import com.footballintelligence.core.model.PredictionRequest
 import com.footballintelligence.core.model.PredictionResult
+import com.footballintelligence.core.model.TeamOutlook
+import com.footballintelligence.core.model.TeamProjection
+import com.footballintelligence.core.model.TeamStrength
 import com.footballintelligence.core.model.TeamsResponse
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -55,6 +58,8 @@ class CachingFootballApiServiceTest {
         override suspend fun getInsights(request: PredictionRequest): NetworkResult<Insights> =
             error("unused")
         override suspend fun chat(request: ChatRequest): NetworkResult<ChatResponse> = error("unused")
+        override suspend fun getTeamOutlook(team: String, competition: String) =
+            answer(outlook.copy(team = team, competition = competition))
     }
 
     private val cache = MemoryCache()
@@ -105,7 +110,31 @@ class CachingFootballApiServiceTest {
         assertEquals(ErrorKind.REJECTED, (result as NetworkResult.Error).kind)
     }
 
+    @Test
+    fun `each team's outlook is saved on its own`() = runTest {
+        service.getTeamOutlook("Arsenal", "Premier League")
+        api.online = false
+        val saved = service.getTeamOutlook("Arsenal", "Premier League") as NetworkResult.Success
+        assertEquals("Arsenal", saved.data.team)
+        assertTrue(service.getTeamOutlook("Chelsea", "Premier League") is NetworkResult.Error)
+    }
+
     private companion object {
+        val projection = TeamProjection("Arsenal", 13, 74.2, 2, 0.231, 0.792, 0.0)
+        val outlook = TeamOutlook(
+            competition = "Premier League",
+            season = "2026/27",
+            team = "Arsenal",
+            asOf = "2026-10-08",
+            modelVersion = "dc-2026-10-08",
+            simulations = 10_000,
+            historySimulations = 2_000,
+            projection = projection,
+            strengths = TeamStrength(1.23, 0.69),
+            table = listOf(projection),
+            history = emptyList(),
+        )
+
         val prediction = PredictionResult(
             homeTeam = "Arsenal",
             awayTeam = "Chelsea",

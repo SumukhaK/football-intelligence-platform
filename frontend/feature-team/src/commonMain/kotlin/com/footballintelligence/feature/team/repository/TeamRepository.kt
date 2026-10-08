@@ -7,6 +7,7 @@ import com.footballintelligence.core.model.Insights
 import com.footballintelligence.core.model.NetworkResult
 import com.footballintelligence.core.model.PredictionRequest
 import com.footballintelligence.core.model.PredictionResult
+import com.footballintelligence.core.model.TeamOutlook
 import com.footballintelligence.core.model.TeamsResponse
 import com.footballintelligence.core.network.FootballApiService
 
@@ -19,6 +20,9 @@ interface TeamRepository {
     suspend fun predict(request: PredictionRequest): NetworkResult<PredictionResult>
     suspend fun explain(request: PredictionRequest): NetworkResult<ExplanationResult>
     suspend fun insights(request: PredictionRequest): NetworkResult<Insights>
+
+    /** The team's projected season finish and how its chances moved (ADR 023). */
+    suspend fun getOutlook(favourite: FavouriteTeam): NetworkResult<TeamOutlook>
 }
 
 /** Production implementation backed by [FootballApiService]. */
@@ -42,4 +46,7 @@ class DefaultTeamRepository(
     override suspend fun explain(request: PredictionRequest): NetworkResult<ExplanationResult> = api.explain(request)
 
     override suspend fun insights(request: PredictionRequest): NetworkResult<Insights> = api.getInsights(request)
+
+    override suspend fun getOutlook(favourite: FavouriteTeam): NetworkResult<TeamOutlook> =
+        api.getTeamOutlook(favourite.team, favourite.league)
 }

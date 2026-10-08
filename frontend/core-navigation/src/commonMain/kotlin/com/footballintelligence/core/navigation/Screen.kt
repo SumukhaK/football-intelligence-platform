@@ -9,6 +9,9 @@ sealed class Screen(val route: String) {
     data object Assistant : Screen("assistant")
     data object MyTeam : Screen("my_team")
 
+    /** The projected league table behind My Team's season outlook. */
+    data object SeasonTable : Screen("season_table")
+
     /** First-launch favourite team picker; a future login screen goes before it. */
     data object Onboarding : Screen("onboarding")
 

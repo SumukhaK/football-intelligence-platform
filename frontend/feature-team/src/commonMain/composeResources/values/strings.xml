@@ -29,6 +29,38 @@
     <string name="next_match_clean_sheet">Clean sheet chance: %1$d%</string>
     <string name="next_match_none">No upcoming match for %1$s yet. Check back when the next fixtures are published.</string>
 
+    <!-- Season outlook -->
+    <string name="outlook_heading">Season outlook</string>
+    <string name="outlook_projection">Projected to finish #%1$d with %2$d points</string>
+    <string name="outlook_points_now">%1$d points so far</string>
+    <string name="outlook_title">Title</string>
+    <string name="outlook_top_four">Top four</string>
+    <string name="outlook_relegation">Relegation</string>
+    <string name="outlook_percent">%1$d%</string>
+    <string name="cd_outlook_tile">%1$s chance: %2$d%</string>
+    <string name="outlook_chart_heading">Chances through the season</string>
+    <string name="outlook_chart_axis">Matches played: %1$d to %2$d</string>
+    <string name="cd_outlook_chart">Title chance went from %1$d% to %2$d%, top four from %3$d% to %4$d%, relegation from %5$d% to %6$d%.</string>
+    <string name="outlook_chart_note">Each point used only the results known at the time.</string>
+    <string name="outlook_strength_heading">Compared with an average side</string>
+    <string name="outlook_attack">Goals scored</string>
+    <string name="outlook_defence">Goals conceded</string>
+    <string name="outlook_times">%1$s×</string>
+    <string name="outlook_open_table">See projected table</string>
+    <string name="cd_open_table">Open the projected league table</string>
+    <string name="outlook_retry">Try again</string>
+
+    <!-- Projected table -->
+    <string name="table_title">Projected table</string>
+    <string name="table_position">#</string>
+    <string name="table_team">Team</string>
+    <string name="table_points_now">Now</string>
+    <string name="table_points_projected">Proj</string>
+    <string name="table_title_chance">Title</string>
+    <string name="table_top_four">Top 4</string>
+    <string name="table_relegation">Rel</string>
+    <string name="cd_table_row">%1$d, %2$s: %3$d points now, %4$d projected; title %5$d%, top four %6$d%, relegation %7$d%</string>
+
     <!-- Settings -->
     <string name="settings_my_team_section">My Team</string>
     <string name="settings_my_team">My team</string>
