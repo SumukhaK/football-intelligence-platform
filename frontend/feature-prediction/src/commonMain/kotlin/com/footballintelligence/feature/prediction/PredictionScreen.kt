@@ -31,9 +31,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.ErrorView
+import com.footballintelligence.core.ui.LeagueEmblem
 import com.footballintelligence.core.ui.LoadingView
 import com.footballintelligence.core.ui.OfflineBanner
 import com.footballintelligence.core.ui.RefreshableContent
+import com.footballintelligence.core.ui.TeamCrest
 import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.prediction.resources.Res
 import com.footballintelligence.feature.prediction.resources.action_predict
@@ -216,6 +218,7 @@ internal fun LeaguePicker(
             selectedTeam = state.selected,
             teams = state.competitions.map { it.name },
             onTeamSelected = onSelect,
+            icon = { LeagueEmblem(it) },
         )
     }
 }
@@ -227,6 +230,7 @@ private fun TeamDropdown(
     selectedTeam: String,
     teams: List<String>,
     onTeamSelected: (String) -> Unit,
+    icon: @Composable (String) -> Unit = { TeamCrest(it) },
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     val dropdownDescription = stringResource(Res.string.cd_team_dropdown, label, selectedTeam)
@@ -239,6 +243,7 @@ private fun TeamDropdown(
             onValueChange = {},
             readOnly = true,
             label = { Text(label) },
+            leadingIcon = { icon(selectedTeam) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier
                 .fillMaxWidth()
@@ -252,6 +257,7 @@ private fun TeamDropdown(
             teams.forEach { team ->
                 DropdownMenuItem(
                     text = { Text(team) },
+                    leadingIcon = { icon(team) },
                     onClick = {
                         onTeamSelected(team)
                         expanded = false

@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     datasets_dir: Path = Path("../datasets")
     # Upcoming fixtures, rebuilt by the daily refresh (ADR 015).
     fixtures_dir: Path = Path("../datasets/processed/openfootball")
+    # Team and league name → crest URL (ADR 020).
+    team_crests_path: Path = Path("../datasets/schemas/team_crests.csv")
+    league_emblems_path: Path = Path("../datasets/schemas/league_emblems.csv")
     # Local hour of the daily data refresh (ADR 013); set to `off` to turn it off.
     live_refresh_hour: int | None = Field(default=6, ge=0, le=23)
     # Leagues the API serves (ADR 012); requests naming no league get the default.

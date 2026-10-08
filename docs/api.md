@@ -35,7 +35,7 @@ answers 429 `{ "error": "Too many requests", "detail": "..." }` with a
 
 ## Sign-in and consent
 
-With `AUTH_REQUIRED=true` (staging and production), every `/v2` data route needs `Authorization: Bearer <token>` from a signed-in user who has accepted the current notice. `/v2/health`, `/docs`, `/redoc`, `/openapi.json` and the routes below stay open. `/v1` and unversioned paths are not mounted, because they would bypass sign-in. `AUTH_REQUIRED` is off by default, so local development needs no token (ADR 022).
+With `AUTH_REQUIRED=true` (staging and production), every `/v2` data route needs `Authorization: Bearer <token>` from a signed-in user who has accepted the current notice. `/v2/health`, `/docs`, `/redoc`, `/openapi.json`, the crest and emblem redirects (image loaders send no token) and the routes below stay open. `/v1` and unversioned paths are not mounted, because they would bypass sign-in. `AUTH_REQUIRED` is off by default, so local development needs no token (ADR 022).
 
 Accounts are invite-only. The owner creates an invite with `uv run python -m scripts.manage_accounts invite --email <email>`.
 
@@ -135,6 +135,23 @@ choose the league; the default is the Premier League. An unknown league returns
 ```
 
 Returns 503 when match history is not loaded.
+
+## GET /teams/{team}/crest
+
+Redirects (307) to the team's crest PNG on `crests.football-data.org`
+(ADR 020). `team` is a name as `/teams` or `/fixtures` returns it, URL-encoded
+(`/v2/teams/Nott'm%20Forest/crest`). A team without a known crest returns 404:
+
+```json
+{ "error": "No crest", "detail": "No crest is known for 'Atlantis'." }
+```
+
+## GET /competitions/{competition}/emblem
+
+Redirects (307) to the league's emblem PNG on `crests.football-data.org`
+(ADR 020). `competition` is a name as `/competitions` returns it, URL-encoded
+(`/v2/competitions/Serie%20A/emblem`). A league without a known emblem returns
+the same 404 `No crest` body as `/teams/{team}/crest`.
 
 ## GET /fixtures
 

@@ -33,6 +33,7 @@ import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
 import com.footballintelligence.core.ui.OfflineBanner
 import com.footballintelligence.core.ui.RefreshableContent
+import com.footballintelligence.core.ui.TeamCrest
 import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.home.resources.Res
 import com.footballintelligence.feature.home.resources.cd_fixture
@@ -177,11 +178,13 @@ private fun FixtureCard(fixture: FixtureRow, onClick: () -> Unit) {
                 textAlign = TextAlign.End,
                 modifier = Modifier.weight(0.35f),
             )
+            TeamCrest(fixture.homeTeam)
             Text(
                 stringResource(Res.string.fixtures_versus),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            TeamCrest(fixture.awayTeam)
             Text(
                 fixture.awayTeam,
                 style = MaterialTheme.typography.bodyLarge,

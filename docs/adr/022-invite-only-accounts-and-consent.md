@@ -40,7 +40,8 @@ first sign-in, and question text stored only on opt-in.
    answer 403 `Consent required` until the user accepts the current version.
    Acceptance stores the version, the time and the `store_questions` choice.
 6. **Scope.** With `AUTH_REQUIRED=true`, every `/v2` data route needs a
-   session and current consent. `/v2/health`, the docs and the auth routes
+   session and current consent. `/v2/health`, the docs, the auth routes and
+   the crest and emblem redirects (ADR 020; image loaders send no token)
    stay open. `/v1` and unversioned paths are not mounted at all, because
    leaving them open would bypass sign-in. `AUTH_REQUIRED` is off by default,
    so local development works as before.

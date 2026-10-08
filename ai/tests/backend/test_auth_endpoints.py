@@ -144,3 +144,9 @@ def test_sign_in_is_off_by_default(client: TestClient) -> None:
     """Locally (AUTH_REQUIRED unset) everything works without a token."""
     assert client_passes_guard(client.get("/v2/competitions"))
     assert client.get("/v1/health").status_code == 200
+
+
+def test_crest_images_stay_open(app_client: TestClient) -> None:
+    """Image loaders send no token, so crest redirects need no sign-in."""
+    response = app_client.get("/v2/teams/Arsenal/crest", follow_redirects=False)
+    assert response.status_code in (307, 404)

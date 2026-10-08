@@ -7,6 +7,7 @@ These functions extract them and raise 503 if unavailable.
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Annotated
 
 from fastapi import Depends, Header, Request
@@ -25,6 +26,7 @@ from backend.app.services.account_service import (
 )
 from backend.app.services.account_store import User
 from backend.app.services.competitions import ServedCompetitions
+from backend.app.services.crest_table import CrestTable
 from backend.app.services.explanation_service import ExplanationService
 from backend.app.services.fixture_feature_service import FixtureFeatureService
 from backend.app.services.fixtures_service import FixturesService
@@ -132,6 +134,18 @@ def get_fixtures_service(request: Request) -> FixturesService:
     return service
 
 
+@lru_cache(maxsize=1)
+def get_team_crests() -> CrestTable:
+    """Return the team crest table, loaded on first use (ADR 020)."""
+    return CrestTable.from_csv(get_settings().team_crests_path)
+
+
+@lru_cache(maxsize=1)
+def get_league_emblems() -> CrestTable:
+    """Return the league emblem table, loaded on first use (ADR 020)."""
+    return CrestTable.from_csv(get_settings().league_emblems_path)
+
+
 PredictionServiceDep = Annotated[PredictionService, Depends(get_prediction_service)]
 ExplanationServiceDep = Annotated[ExplanationService, Depends(get_explanation_service)]
 OptionalFixtureFeatureServiceDep = Annotated[
@@ -146,6 +160,8 @@ OptionalInsightsServiceDep = Annotated[
     InsightsService | None, Depends(get_optional_insights_service)
 ]
 FixturesServiceDep = Annotated[FixturesService, Depends(get_fixtures_service)]
+TeamCrestsDep = Annotated[CrestTable, Depends(get_team_crests)]
+LeagueEmblemsDep = Annotated[CrestTable, Depends(get_league_emblems)]
 
 
 def get_account_service(request: Request) -> AccountService:
