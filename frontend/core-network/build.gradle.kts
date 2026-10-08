@@ -14,6 +14,7 @@ kotlin {
             implementation(libs.bundles.ktor.client)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.napier)
+            implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
             implementation(libs.ktor.client.mock)
