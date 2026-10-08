@@ -51,6 +51,8 @@ Maintained by the project architect. The implementation engineer updates documen
 
 | Document | Description |
 |---|---|
+| [Hosting Plans](plans/hosting-plans.md) | Free-tier deployment, cold starts and step-by-step operations plan |
+| [Hosting Execution Tracker](plans/hosting-execution-tracker.md) | Ordered deployment steps with status, exit checks and the evidence each step produces |
 | [Next Phase Plan](plans/next-phase-plan.md) | Testing gaps, draw handling, scoreline predictions: order, design, impact analysis |
 | [Five Leagues Plan](plans/five-leagues-plan.md) | Serving all five leagues in the API and app |
 | [Multi-League Retraining Plan](plans/multi-league-retraining-plan.md) | Goal, data profile and phased plan for retraining on top-5 league data |
