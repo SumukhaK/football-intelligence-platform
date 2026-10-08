@@ -79,8 +79,8 @@ curl -s -X POST localhost:8000/v2/predict -H "Content-Type: application/json" \
 | 10:00–13:00 | RAG pipeline: chunking, embedding, retrieval, source-constrained prompting, tool calls and the season router (ADR 018, 021), graceful 503 degradation. | Ask the assistant a question; then stop Ollama and show the same request returning a clean 503 |
 | 13:00–16:00 | Backend architecture: lifespan DI, server-side features, daily refresh without restart, `/v1` vs `/v2`, rate limiting, 422 vs 503 vs 429. | Walk through `ai/backend/app/main.py`; call `/predict` (v1 model) and `/v2/predict` (current model) side by side |
 | 16:00–18:00 | Android architecture: MVVM with StateFlow, Koin DI, the caching decorator for offline mode, ViewModel sharing across Prediction → Result → Explain. | Walk through `frontend/core-network/.../CachingFootballApiService.kt` and `PredictionViewModel.kt` |
-| 18:00–19:30 | Testing strategy: 933 unit and contract tests vs. 37 real-model integration tests, plus 80 Android tests. | `uv run pytest -m "not integration"` then `uv run pytest tests/integration/ -v` |
-| 19:30–20:00 | Known limitations and what's next: no sign-in in the app yet (the backend's is off by default, ADR 022), assistant evals that need a local Ollama, results-only data. | Reference the "Future Scope" section of [project-showcase.md](project-showcase.md) |
+| 18:00–19:30 | Testing strategy: 933 unit and contract tests vs. 37 real-model integration tests, plus 165 Android tests. | `uv run pytest -m "not integration"` then `uv run pytest tests/integration/ -v` |
+| 19:30–20:00 | Known limitations and what's next: the account store is a single JSON file (one process only, ADR 022), assistant evals that need a local Ollama, results-only data. | Reference the "Future Scope" section of [project-showcase.md](project-showcase.md) |
 
 **Expected outputs:** All of the above, plus visible proof of graceful degradation (503 without crashing) and a clear two-tier test run.
 

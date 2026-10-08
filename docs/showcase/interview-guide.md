@@ -382,7 +382,7 @@
 
 ### 43. How would you add authentication to this backend?
 
-**Answer:** It now has it, for hosted deployments ([ADR 022](../adr/022-invite-only-accounts-and-consent.md)): invite-only accounts, scrypt password hashes from the standard library, opaque 30-day session tokens stored as hashes, a login lockout and a consent notice. With `AUTH_REQUIRED=true` every `/v2` data route needs a token and current consent, and `/v1` is not mounted. It is off by default, so local development is unchanged. The Android app has no sign-in screens yet.
+**Answer:** It now has it, for hosted deployments ([ADR 022](../adr/022-invite-only-accounts-and-consent.md)): invite-only accounts, scrypt password hashes from the standard library, opaque 30-day session tokens stored as hashes, a login lockout and a consent notice. With `AUTH_REQUIRED=true` every `/v2` data route needs a token and current consent, and `/v1` is not mounted. It is off by default on the server. The Android app always opens on sign-in, with a Sign in tab and an Invite code tab, then shows the notice if it still needs accepting; it sends the token on every request and returns to sign-in on any 401.
 
 **Reasoning:** Distinguishes "didn't think about it" from "deliberately scoped out, with a clear extension path."
 

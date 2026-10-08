@@ -37,6 +37,7 @@ dependencies {
     implementation(project(":feature-assistant"))
     implementation(project(":feature-settings"))
     implementation(project(":feature-team"))
+    implementation(project(":feature-auth"))
 
     implementation(compose.runtime)
     implementation(compose.ui)

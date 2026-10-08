@@ -10,10 +10,14 @@ import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-/** Creates a configured Ktor [HttpClient] for the Football Intelligence API. */
+/**
+ * Creates a configured Ktor [HttpClient] for the Football Intelligence API.
+ * Every request carries [session]'s token (ADR 022).
+ */
 object HttpClientFactory {
-    fun create(config: NetworkConfig): HttpClient =
+    fun create(config: NetworkConfig, session: AuthSession): HttpClient =
         HttpClient {
+            install(bearerAuth(session))
             install(ContentNegotiation) {
                 json(
                     Json {
@@ -30,6 +34,8 @@ object HttpClientFactory {
                     }
                 }
                 level = LogLevel.BODY
+                // Sign-in bodies hold passwords and session tokens; keep them out of logcat.
+                filter { !it.url.buildString().contains("/auth/") }
             }
             install(HttpTimeout) {
                 requestTimeoutMillis = config.timeoutMs

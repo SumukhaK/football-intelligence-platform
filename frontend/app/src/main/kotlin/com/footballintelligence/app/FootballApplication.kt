@@ -3,6 +3,7 @@ package com.footballintelligence.app
 import android.app.Application
 import com.footballintelligence.app.di.networkModule
 import com.footballintelligence.feature.assistant.di.assistantModule
+import com.footballintelligence.feature.auth.di.authModule
 import com.footballintelligence.feature.home.di.homeModule
 import com.footballintelligence.feature.prediction.di.predictionModule
 import com.footballintelligence.feature.settings.di.settingsModule
@@ -30,6 +31,7 @@ class FootballApplication : Application() {
                 assistantModule,
                 settingsModule,
                 teamModule,
+                authModule,
             )
         }
     }

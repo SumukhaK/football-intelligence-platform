@@ -126,7 +126,7 @@ class KtorFootballApiService(
  * separately as an unexpected error.
  */
 @Suppress("TooGenericExceptionCaught")
-private suspend inline fun <T> guarded(call: () -> NetworkResult<T>): NetworkResult<T> =
+internal suspend inline fun <T> guarded(call: () -> NetworkResult<T>): NetworkResult<T> =
     try {
         call()
     } catch (e: SerializationException) {
@@ -135,16 +135,16 @@ private suspend inline fun <T> guarded(call: () -> NetworkResult<T>): NetworkRes
         NetworkResult.Error(message = e.message ?: "Unknown network error", kind = ErrorKind.OFFLINE)
     }
 
-private suspend inline fun <reified T> HttpResponse.decode(): NetworkResult<T> =
-    if (status.isSuccess()) {
-        NetworkResult.Success(body())
-    } else {
-        NetworkResult.Error(
-            message = serverDetail() ?: "HTTP ${status.value}: ${status.description}",
-            code = status.value,
-            kind = errorKindFor(status.value),
-        )
-    }
+internal suspend inline fun <reified T> HttpResponse.decode(): NetworkResult<T> =
+    if (status.isSuccess()) NetworkResult.Success(body()) else toError()
+
+/** This failed response as an error, keeping the server's explanation. */
+internal suspend fun HttpResponse.toError(): NetworkResult.Error =
+    NetworkResult.Error(
+        message = serverDetail() ?: "HTTP ${status.value}: ${status.description}",
+        code = status.value,
+        kind = errorKindFor(status.value),
+    )
 
 /** The `detail` of the backend's structured error body, if it has one. */
 private suspend fun HttpResponse.serverDetail(): String? =

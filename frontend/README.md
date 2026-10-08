@@ -26,7 +26,8 @@ feature-prediction/    — Prediction, Result, and Explain screens
 feature-assistant/     — AI Assistant chat screen
 feature-settings/      — Settings, Model Information, and About screens
 feature-team/          — Favourite team picker (first launch and Settings) and the My Team tab
-core-network/          — Ktor API service, offline response cache, HTTP client factory
+feature-auth/          — Sign in, invite code and consent screens, and the saved session token (ADR 022)
+core-network/          — Ktor API service, auth API and session, offline response cache, HTTP client factory
 core-model/            — Domain models and network result types
 core-design-system/    — Material 3 theme and colour palette
 core-navigation/       — Screen routes sealed class
@@ -34,6 +35,17 @@ core-ui/               — Shared UI components (loading, errors, offline banner
 core-common/           — Dispatchers and date/time formatting
 core-testing/, feature-match/ — empty, nothing depends on them
 ```
+
+The app opens on sign-in (ADR 022): a green header over a sheet with two
+tabs, Sign in and Invite code, which can be tapped or swiped. Invite code sets
+a password with the one-time code from the owner. The session token is kept in
+private SharedPreferences (app backup is off, so it never leaves the device)
+and sent as `Authorization: Bearer <token>` on every request. After sign-in the
+app calls `GET /v2/me`; if the current notice still needs accepting it shows
+the notice from the server with a "Store my question text" switch (off by
+default). Any request answered 401 forgets the token and returns to sign-in,
+and Settings has a Sign out entry. Without a connection the app skips the
+notice check and shows saved data.
 
 On first launch the app asks for a favourite league, then a team from it, on
 one screen with two steps: a grid of league emblems, then the league's crests.
@@ -60,6 +72,12 @@ on a screen fetches fresh data.
 ## Running Locally
 
 1. Start the FastAPI backend (see [`backend/README.md`](../backend/README.md)). It must be reachable on `localhost:8000`.
+   Sign-in works the same whether `AUTH_REQUIRED` is on or off. Create an invite to sign in with, then use the
+   printed code on the Invite code tab:
+   ```bash
+   cd ai
+   uv run python -m scripts.manage_accounts invite --email you@example.com
+   ```
 
 2. Launch an Android emulator (API 26+). The app calls API v2 at `http://10.0.2.2:8000/v2` (emulator localhost alias).
 

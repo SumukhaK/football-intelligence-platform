@@ -17,7 +17,7 @@ private val sampleModelInfo = ModelInfo(
 @Composable
 private fun SettingsPreview() {
     PreviewSurface {
-        SettingsScreen(onModelInfoClick = {}, onAboutClick = {}, onBack = {})
+        SettingsScreen(onModelInfoClick = {}, onAboutClick = {}, onBack = {}, onSignOut = {})
     }
 }
 

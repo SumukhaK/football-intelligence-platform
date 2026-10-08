@@ -8,7 +8,7 @@
 
 The Football Intelligence Platform is a complete, working AI system for Europe's top five football leagues. It predicts match outcomes, explains every prediction in plain football language, estimates likely scores, lists upcoming fixtures, answers natural-language questions grounded in its own documents and data (including league tables, results and season projections), and serves all of this through a native Android app. One engineer built it end to end: 12 stages up to v1.0.0, then the v2 releases.
 
-It is not a notebook or a prototype. It is a tested (1,050 tests), documented, reproducible system that runs entirely on a laptop with zero cloud dependency: a Python ML pipeline, a versioned FastAPI backend, a local RAG assistant powered by Ollama, and a Compose Multiplatform Android client. A [3-minute demo video](demo-video/README.md) shows it end to end.
+It is not a notebook or a prototype. It is a tested (1,135 tests), documented, reproducible system that runs entirely on a laptop with zero cloud dependency: a Python ML pipeline, a versioned FastAPI backend, a local RAG assistant powered by Ollama, and a Compose Multiplatform Android client. A [3-minute demo video](demo-video/README.md) shows it end to end.
 
 **The goal was never "build a model." It was "ship a model as a trustworthy, explainable, usable product."**
 
@@ -66,7 +66,7 @@ Beyond the ADRs: Clean Architecture with one-directional dependencies in both th
 
 ## Engineering Practices
 
-- **1,050 tests** — 970 Python (including 37 against the real trained model) and 80 Android (ViewModels written test-first).
+- **1,135 tests** — 970 Python (including 37 against the real trained model) and 165 Android (ViewModels written test-first).
 - **Strict typing** — MyPy on the Python codebase; Kotlin with `val`-by-default and exhaustive `when`.
 - **Conventional commits, ADRs and reports** — every structural decision is recorded; every experiment has a report with the command to reproduce it.
 - **One concern per pull request**, self-reviewed against a written checklist.

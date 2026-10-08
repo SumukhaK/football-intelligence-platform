@@ -16,6 +16,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Team crests and league emblems next to names, via `/v2/teams/{team}/crest` and `/v2/competitions/{competition}/emblem` redirects, and a crest celebration for a predicted win (#74, ADR 020).
 - Assistant evals: a grounding check that answers quote `/v2/predict` without invented numbers, and an abstention check for "I don't know" (#65, #66).
 - Invite-only sign-in and consent for hosted deployments: invites, sessions, a consent notice, bans and `scripts.manage_accounts`. Off locally (`AUTH_REQUIRED`); on, it guards every `/v2` data route and drops `/v1` (#79, ADR 022).
+- Android sign-in: a Sign in / Invite code screen under a green header, a consent notice after the first sign-in with an opt-in for storing question text, and Sign out in Settings. The app sends the session token on every request and returns to sign-in on a 401 (#84, ADR 022).
 
 ### Changed
 - The default chat model is `qwen2.5:7b-instruct` instead of `llama3.2`, which misquoted tool numbers and failed both assistant evals (ADR 019).
