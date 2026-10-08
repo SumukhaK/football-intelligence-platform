@@ -132,6 +132,8 @@ class AccountService:
         """Sign in with a password; locks the email after repeated failures."""
         user = self._store.get_user(_normalise(email))
         if user is None:
+            # Hash anyway, so response time doesn't reveal which emails exist.
+            _check_password(password, _DUMMY_HASH)
             raise InvalidCredentialsError("Wrong email or password.")
         now = self._clock()
         if user.locked_until and datetime.fromisoformat(user.locked_until) > now:
@@ -238,6 +240,9 @@ def _hash_password(password: str) -> str:
     salt = secrets.token_bytes(16)
     key = hashlib.scrypt(password.encode(), salt=salt, **_SCRYPT)
     return f"scrypt${salt.hex()}${key.hex()}"
+
+
+_DUMMY_HASH = _hash_password("not a real password")
 
 
 def _check_password(password: str, stored: str) -> bool:
