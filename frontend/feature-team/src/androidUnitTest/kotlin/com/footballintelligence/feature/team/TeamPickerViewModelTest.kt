@@ -36,6 +36,7 @@ class TeamPickerViewModelTest {
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         coEvery { repository.getTeams("Serie A") } returns serieATeams
+        every { store.load() } returns null
     }
 
     @AfterEach
@@ -96,22 +97,48 @@ class TeamPickerViewModelTest {
     }
 
     @Test
-    fun `switching league from settings saves the new team and relaunches`() = runTest {
-        val vm = viewModel(PickerFlow.CHANGE_LEAGUE)
-        assertEquals(PickerStep.League(SERVED_LEAGUES), vm.step.value)
+    fun `onboarding starts with nothing checked`() {
+        every { store.load() } returns null
+        val vm = viewModel(PickerFlow.ONBOARDING)
+        assertEquals(PickerStep.League(SERVED_LEAGUES, selected = null), vm.step.value)
         vm.selectLeague("Serie A")
-        vm.selectTeam("Napoli")
-        verify { store.save(FavouriteTeam("Serie A", "Napoli")) }
-        assertEquals(PickerOutcome.RELAUNCH, vm.outcome.first())
+        assertEquals(PickerStep.Team("Serie A", TeamsUiState.Success(serieA), selected = null), vm.step.value)
     }
 
     @Test
-    fun `switching team starts on the saved league's teams and relaunches`() = runTest {
+    fun `changing from settings shows the saved league and team checked`() {
         every { store.load() } returns FavouriteTeam("Serie A", "Inter")
-        val vm = viewModel(PickerFlow.CHANGE_TEAM)
-        assertEquals(PickerStep.Team("Serie A", TeamsUiState.Success(serieA)), vm.step.value)
-        vm.selectTeam("Milan")
-        verify { store.save(FavouriteTeam("Serie A", "Milan")) }
+        val vm = viewModel(PickerFlow.CHANGE)
+        assertEquals(PickerStep.League(SERVED_LEAGUES, selected = "Serie A"), vm.step.value)
+        vm.selectLeague("Serie A")
+        assertEquals(PickerStep.Team("Serie A", TeamsUiState.Success(serieA), selected = "Inter"), vm.step.value)
+    }
+
+    @Test
+    fun `another league's teams have nothing checked`() {
+        every { store.load() } returns FavouriteTeam("Premier League", "Arsenal")
+        val vm = viewModel(PickerFlow.CHANGE)
+        vm.selectLeague("Serie A")
+        assertEquals(PickerStep.Team("Serie A", TeamsUiState.Success(serieA), selected = null), vm.step.value)
+    }
+
+    @Test
+    fun `back keeps the saved league checked`() {
+        every { store.load() } returns FavouriteTeam("Serie A", "Inter")
+        val vm = viewModel(PickerFlow.CHANGE)
+        vm.selectLeague("Serie A")
+        vm.backToLeagues()
+        assertEquals(PickerStep.League(SERVED_LEAGUES, selected = "Serie A"), vm.step.value)
+    }
+
+    @Test
+    fun `picking a team from settings saves it, checks it and relaunches`() = runTest {
+        every { store.load() } returns FavouriteTeam("Serie A", "Inter")
+        val vm = viewModel(PickerFlow.CHANGE)
+        vm.selectLeague("Serie A")
+        vm.selectTeam("Napoli")
+        verify { store.save(FavouriteTeam("Serie A", "Napoli")) }
+        assertEquals("Napoli", (vm.step.value as PickerStep.Team).selected)
         assertEquals(PickerOutcome.RELAUNCH, vm.outcome.first())
     }
 }

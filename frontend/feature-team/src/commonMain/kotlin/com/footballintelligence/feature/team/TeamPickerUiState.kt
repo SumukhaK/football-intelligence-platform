@@ -2,16 +2,13 @@ package com.footballintelligence.feature.team
 
 import com.footballintelligence.core.model.ErrorKind
 
-/** Why the picker was opened, which decides its first step and what saving does. */
+/** Why the picker was opened, which decides what saving does. */
 enum class PickerFlow {
     /** First launch: league, then team, then into the app. */
     ONBOARDING,
 
-    /** From Settings, starting at the league step. */
-    CHANGE_LEAGUE,
-
-    /** From Settings, starting at the team step of the saved league. */
-    CHANGE_TEAM,
+    /** From Settings: the saved league and team start checked, and saving relaunches. */
+    CHANGE,
 }
 
 /** What the app does once a team is saved. */
@@ -23,10 +20,13 @@ enum class PickerOutcome {
     RELAUNCH,
 }
 
-/** The picker's current step: choosing a league, or a team in that league. */
+/**
+ * The picker's current step: choosing a league, or a team in that league.
+ * [selected] is the saved choice, shown checked; null when nothing is saved.
+ */
 sealed class PickerStep {
-    data class League(val leagues: List<String>) : PickerStep()
-    data class Team(val league: String, val teams: TeamsUiState) : PickerStep()
+    data class League(val leagues: List<String>, val selected: String? = null) : PickerStep()
+    data class Team(val league: String, val teams: TeamsUiState, val selected: String? = null) : PickerStep()
 }
 
 /** One league's teams for the team step. */

@@ -46,6 +46,8 @@ private fun MyTeamLoadingPreview() = MyTeam(MyTeamUiState.Loading)
 @Composable
 private fun MyTeamErrorPreview() = MyTeam(MyTeamUiState.Error("Could not reach the server."))
 
+private val serieA = listOf("Inter", "Milan", "Napoli", "Roma")
+
 @Composable
 private fun Picker(step: PickerStep, isOnboarding: Boolean = true) = PreviewSurface {
     TeamPickerScreen(
@@ -65,8 +67,16 @@ private fun PickerLeaguesPreview() = Picker(PickerStep.League(SERVED_LEAGUES))
 
 @Preview
 @Composable
+private fun PickerLeaguesCheckedPreview() =
+    Picker(PickerStep.League(SERVED_LEAGUES, selected = "Serie A"), isOnboarding = false)
+
+@Preview
+@Composable
 private fun PickerTeamsPreview() =
-    Picker(PickerStep.Team("Serie A", TeamsUiState.Success(listOf("Inter", "Milan", "Napoli"))), isOnboarding = false)
+    Picker(
+        PickerStep.Team("Serie A", TeamsUiState.Success(serieA), selected = "Inter"),
+        isOnboarding = false,
+    )
 
 @Preview
 @Composable
@@ -75,7 +85,7 @@ private fun PickerTeamsErrorPreview() = Picker(PickerStep.Team("Serie A", TeamsU
 @Preview
 @Composable
 private fun SettingsSectionPreview() = PreviewSurface {
-    MyTeamSettingsSection(FavouriteTeam("Premier League", "Arsenal"), onChangeLeague = {}, onChangeTeam = {})
+    MyTeamSettingsSection(FavouriteTeam("Premier League", "Arsenal"), onChange = {})
 }
 
 @Preview

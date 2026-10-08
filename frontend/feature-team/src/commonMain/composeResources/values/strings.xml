@@ -31,8 +31,7 @@
 
     <!-- Settings -->
     <string name="settings_my_team_section">My Team</string>
-    <string name="settings_league">League</string>
-    <string name="settings_team">Team</string>
-    <string name="cd_change_league">Change league, currently %1$s</string>
-    <string name="cd_change_team">Change team, currently %1$s</string>
+    <string name="settings_my_team">My team</string>
+    <string name="settings_my_team_value">%1$s, %2$s</string>
+    <string name="cd_change_my_team">Change favourite team, currently %1$s in %2$s</string>
 </resources>

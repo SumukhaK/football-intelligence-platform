@@ -11,11 +11,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.navArgument
 import com.footballintelligence.core.navigation.Screen
 import com.footballintelligence.core.ui.SettingsButton
 import com.footballintelligence.feature.assistant.AssistantScreen
@@ -116,12 +114,9 @@ private fun AppNavHost(navController: NavHostController, startDestination: Strin
             )
         }
 
-        composable(
-            Screen.ChangeTeam.route,
-            arguments = listOf(navArgument(FLOW_ARG) { type = NavType.StringType }),
-        ) { entry ->
+        composable(Screen.ChangeTeam.route) {
             TeamPickerRoute(
-                flow = PickerFlow.valueOf(checkNotNull(entry.arguments?.getString(FLOW_ARG))),
+                flow = PickerFlow.CHANGE,
                 onLeave = { navController.popBackStack() },
                 onOnboardingFinished = {},
             )
@@ -253,12 +248,7 @@ private fun AppNavHost(navController: NavHostController, startDestination: Strin
                     team.favourite?.let {
                         MyTeamSettingsSection(
                             favourite = it,
-                            onChangeLeague = {
-                                navController.navigate(Screen.ChangeTeam.route(PickerFlow.CHANGE_LEAGUE.name))
-                            },
-                            onChangeTeam = {
-                                navController.navigate(Screen.ChangeTeam.route(PickerFlow.CHANGE_TEAM.name))
-                            },
+                            onChange = { navController.navigate(Screen.ChangeTeam.route) },
                         )
                     }
                 },
@@ -283,5 +273,3 @@ private fun AppNavHost(navController: NavHostController, startDestination: Strin
         }
     }
 }
-
-private const val FLOW_ARG = "flow"

@@ -12,10 +12,8 @@ sealed class Screen(val route: String) {
     /** First-launch favourite team picker; a future login screen goes before it. */
     data object Onboarding : Screen("onboarding")
 
-    /** The favourite team picker opened from Settings; [flow] names where it starts. */
-    data object ChangeTeam : Screen("change_team/{flow}") {
-        fun route(flow: String): String = "change_team/$flow"
-    }
+    /** The favourite team picker opened from Settings. */
+    data object ChangeTeam : Screen("change_team")
     data object ModelInfo : Screen("model_info")
     data object Settings : Screen("settings")
     data object About : Screen("about")

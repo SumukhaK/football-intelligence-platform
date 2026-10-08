@@ -13,14 +13,18 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
-/** ViewModel for [TeamPickerScreen]: a league step, then that league's teams. */
+/**
+ * ViewModel for [TeamPickerScreen]: a league step, then that league's teams.
+ * Opened from Settings, the saved league and team start checked.
+ */
 class TeamPickerViewModel(
     private val flow: PickerFlow,
     private val repository: TeamRepository,
     private val store: FavouriteTeamStore,
 ) : ViewModel() {
 
-    private val leagues = PickerStep.League(SERVED_LEAGUES)
+    private val saved = if (flow == PickerFlow.CHANGE) store.load() else null
+    private val leagues = PickerStep.League(SERVED_LEAGUES, selected = saved?.league)
 
     private val _step = MutableStateFlow<PickerStep>(leagues)
     val step: StateFlow<PickerStep> = _step.asStateFlow()
@@ -30,13 +34,10 @@ class TeamPickerViewModel(
     /** Emits once a team is saved; the app then leaves onboarding or relaunches. */
     val outcome: Flow<PickerOutcome> = outcomes.receiveAsFlow()
 
-    init {
-        if (flow == PickerFlow.CHANGE_TEAM) store.load()?.let { selectLeague(it.league) }
-    }
-
     /** Moves to [league]'s teams. */
     fun selectLeague(league: String) {
-        val loading = PickerStep.Team(league, TeamsUiState.Loading)
+        val selected = saved?.team?.takeIf { saved.league == league }
+        val loading = PickerStep.Team(league, TeamsUiState.Loading, selected)
         _step.value = loading
         viewModelScope.launch {
             val teams = when (val result = repository.getTeams(league)) {
@@ -45,7 +46,7 @@ class TeamPickerViewModel(
                 is NetworkResult.Loading -> TeamsUiState.Loading
             }
             // The fan may have gone back to the leagues while this loaded.
-            if (_step.value == loading) _step.value = PickerStep.Team(league, teams)
+            if (_step.value == loading) _step.value = loading.copy(teams = teams)
         }
     }
 
@@ -57,10 +58,11 @@ class TeamPickerViewModel(
         _step.value = leagues
     }
 
-    /** Saves [team] of the league on screen as the favourite. */
+    /** Checks [team] of the league on screen and saves it as the favourite. */
     fun selectTeam(team: String) {
-        val league = (_step.value as? PickerStep.Team)?.league ?: return
-        store.save(FavouriteTeam(league, team))
+        val step = _step.value as? PickerStep.Team ?: return
+        _step.value = step.copy(selected = team)
+        store.save(FavouriteTeam(step.league, team))
         outcomes.trySend(
             if (flow == PickerFlow.ONBOARDING) PickerOutcome.ONBOARDING_FINISHED else PickerOutcome.RELAUNCH,
         )

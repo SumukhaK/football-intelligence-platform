@@ -35,14 +35,17 @@ core-testing/, feature-match/ — empty, nothing depends on them
 ```
 
 On first launch the app asks for a favourite league, then a team from it, on
-one screen with two steps. The choice is saved in SharedPreferences and the
-picker is not shown again. A bottom bar switches between Fixtures, Predict,
+one screen with two steps: a grid of league emblems, then the league's crests.
+The chosen emblem morphs into the team step's header (a shared element
+transition) and back. The choice is saved in SharedPreferences and the picker
+is not shown again. A bottom bar switches between Fixtures, Predict,
 My Team and Assistant; a settings icon at the top right of each opens Settings.
 My Team shows the favourite team's next match: kick-off, the win/draw/loss pick
 with its top three reasons, the three likeliest scores and the clean-sheet
 chance. A match leaves the card two hours after kick-off. Settings shows the
-saved league and team; changing either reopens the picker and, once saved,
-restarts the app so every screen loads the new team. Every
+saved team in one My team row; it reopens the picker with the saved league and
+team checked and, once a team is saved, restarts the app so every screen loads
+the new team. Every
 API response is saved in the app's cache directory; when the server can't be
 reached, screens show the saved data under an offline banner, and pulling down
 on a screen fetches fresh data.
