@@ -2,15 +2,11 @@
 
 from __future__ import annotations
 
-import logging
-
 from fastapi import APIRouter, Request
 
 from backend.app.exceptions import AssistantNotAvailableError
 from backend.app.schemas.assistant import ChatRequest, ChatResponse
 from backend.app.services.chat_service import ChatService
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Assistant"])
 
@@ -37,11 +33,14 @@ def _get_chat_service(request: Request) -> ChatService:
         "The assistant never invents facts beyond the retrieved context."
     ),
 )
-async def chat(
+def chat(
     request_body: ChatRequest,
     request: Request,
 ) -> ChatResponse:
-    """Answer a football intelligence question using RAG."""
+    """Answer a football intelligence question using RAG.
+
+    A plain ``def`` so FastAPI runs the blocking model call in its thread pool,
+    and the question is never logged (users opt in to storing it, ADR 022).
+    """
     service = _get_chat_service(request)
-    logger.info("Assistant chat: message=%r", request_body.message[:80])
     return service.chat(request_body)
