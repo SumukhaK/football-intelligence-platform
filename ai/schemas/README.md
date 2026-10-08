@@ -11,9 +11,8 @@ Defines the contract for every dataset the platform ingests and produces. Schema
 - Every dataset has exactly one schema class derived from `pydantic.BaseModel`.
 - Schemas use strict types. No `Any`. No optional fields without a documented reason.
 - A schema change requires a new version. Old schemas are not deleted while data using them exists.
-- JSON Schema exports live alongside the Pydantic models and are regenerated on change.
 
 ## Contents
 
-- `match.py` — `ProcessedMatch`, the canonical match row, and `MatchNormalizer`.
+- `match.py` — `RawMatch`, the provider-normalised football-data.co.uk row; `ProcessedMatch`, the canonical match row; and `MatchNormalizer`, which turns one into the other.
 - `fixture.py` — `ProcessedFixture`, one upcoming match in the fixtures dataset (ADR 015).

@@ -28,5 +28,5 @@ Scripts are one-off or operational tools that do not belong in the application c
 
 ## Status
 
-Empty. Operational scripts live in `ai/scripts/`: backfill, live refresh and
-fixtures refresh.
+Empty. Operational scripts live in `ai/scripts/`: backfill, live refresh,
+fixtures refresh, crest tables and account management.

@@ -45,7 +45,7 @@ football-intelligence-platform/
 
 **Owns:**
 - `workflows/` — GitHub Actions CI definitions.
-- `ISSUE_TEMPLATE/` — structured issue templates (bug report, task, ADR request).
+- `ISSUE_TEMPLATE/` — issue templates (today only an ADR request template).
 - `PULL_REQUEST_TEMPLATE.md` — standard PR description template.
 - `CODEOWNERS` — code ownership assignments.
 
@@ -74,10 +74,11 @@ football-intelligence-platform/
 - `goals/` — Dixon-Coles goals model, score grid and goal-market insights (ADR 009).
 - `assistant/` — the retrieval-grounded assistant: chunking, embeddings, vector store, retrieval, prompt templates (`assistant/prompting/templates.py`) and generation.
 - `model_registry/` — JSON-backed local model registry with versioned `ModelEntry` records.
-- `backend/` — the FastAPI application in `backend/app/`: `routers/`, `services/`, `schemas/`, `middleware/` (rate limiter) and `exceptions/`.
-- `scripts/` — operational CLI scripts: `backfill_football_data`, `ingest_football_data`, `refresh_live_dataset`, `refresh_fixtures`, and two experiment scripts (`draw_feature_experiment`, `kaggle_extras_experiment`).
+- `backend/` — the FastAPI application in `backend/app/`: `routers/`, `services/`, `schemas/`, `middleware/` (rate limiter), `exceptions/`, `routing.py` (which routers are mounted where, ADR 014 and ADR 022), `dependencies.py` and `consent.py` (the consent notice, ADR 022).
+- `scripts/` — operational CLI scripts: `backfill_football_data`, `ingest_football_data`, `refresh_live_dataset`, `refresh_fixtures`, `build_team_crests` (ADR 020), `manage_accounts` (ADR 022), and two experiment scripts (`draw_feature_experiment`, `kaggle_extras_experiment`).
 - `models/` — trained model output (runs, `latest/`, `registry.json`). Gitignored: only `.gitkeep` is tracked. See `ai/models/` below.
 - `explanations/` — SHAP explanation output. Gitignored.
+- `accounts/` — the account store (`accounts/accounts.json`, ADR 022), created when accounts are used. Gitignored.
 - `datasets/` — where the pipelines read and write by default when run from `ai/` without explicit paths (the README Quick Start passes `../datasets` instead). Only `.gitkeep` is tracked; the shared data lives in the root `datasets/`.
 - `rag/`, `prompts/` — empty placeholders (`.gitkeep` only). The assistant code lives in `assistant/`.
 - `tests/` — unit, backend and integration tests mirroring the source package structure.
@@ -104,7 +105,7 @@ The FastAPI code lives in `ai/backend/app/` so it can import the model, feature 
 - `raw/` — immutable source data exactly as received from providers. Never overwrite; version by timestamp.
 - `processed/` — canonical `ProcessedMatch` CSVs produced by the ingestion pipeline.
 - `features/` — the feature matrix (`feature_matrix.parquet`) and feature metadata produced by the feature engineering pipeline. `features/top5/` holds the five-league features the current model uses; the files directly in `features/` are the original single-season Premier League features.
-- `schemas/` — reviewed reference tables such as `team_aliases.csv` (ADR 006).
+- `schemas/` — reviewed reference tables: `team_aliases.csv` (ADR 006), `team_crests.csv` and `league_emblems.csv` (ADR 020).
 
 Only metadata and reports are tracked. CSV and Parquet data files are gitignored and generated locally.
 
@@ -125,12 +126,13 @@ Only metadata and reports are tracked. CSV and Parquet data files are gitignored
 - `adr/` — Architectural Decision Records. One file per decision, numbered sequentially.
 - `reports/` — stage completion summaries with executive summary, design decisions, tests, and metrics.
 - `releases/` — release notes and readiness reports.
-- `plans/` — plans for the multi-league work and the next phase.
+- `plans/` — plans for the multi-league work, the next phase, hosting, accounts and consent, and assistant guardrails.
 - `setup/` — installation and quick-start guides.
 - `reference/` — CLI command reference.
 - `api.md` — the full API contract for both versions.
 - `showcase/` — project write-up, portfolio summary, interview guide, demo video notes and screenshots.
 - `demo/` — demo scripts for each completed stage, aimed at technical interviewers.
+- `design/` — design concepts (`icon-splash-concepts.html`, ADR 016).
 - `README.md` — documentation index.
 
 A few other folders (`ai/`, `architecture/`, `backend/` and similar) are empty placeholders.

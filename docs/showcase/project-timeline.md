@@ -274,4 +274,10 @@ Those are the counts at v1.0.0.
 
 ---
 
-**Today: 6 releases, 18 ADRs, 945 tests (872 Python, 73 Android). One engineer.**
+## Since v2.1.0 (on `develop`, not yet released)
+
+**Deliverables (ADRs 017–022):** the served model refit on every season to 2025/26 (ADR 017); assistant tools for predictions, explanations and fixtures (ADR 018), with `qwen2.5:7b-instruct` as the default chat model (ADR 019); season tools and a rule-based router for tables, results and derbies (ADR 021); grounding, abstention and season evals; team crests and league emblems (ADR 020); tap a fixture to predict it; invite-only sign-in and consent for hosted deployments, off locally (ADR 022).
+
+---
+
+**Today: 6 releases, 22 ADRs, 1,050 tests (970 Python, 80 Android). One engineer.**

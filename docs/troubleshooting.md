@@ -192,7 +192,7 @@ The same applies to `explainability.pipeline`: pass `--feature-matrix ../dataset
 
 ## Pytest Issues
 
-### Fewer than 872 tests pass
+### Fewer than 970 tests pass
 
 **Cause:** `uv sync --extra dev` was not run, or a test file has a syntax error.
 
@@ -226,6 +226,14 @@ This is not the default: `uv run pytest` runs every test, including integration 
 **Cause:** A client made more than 120 requests in one minute (`RATE_LIMIT_PER_MINUTE`).
 
 **Fix:** Wait the number of seconds in the `Retry-After` header and retry. For local load testing, raise the limit or set `RATE_LIMIT_PER_MINUTE=off` in `ai/.env`. Health checks and the docs are never limited.
+
+---
+
+### `401 Not signed in` or `403 Consent required`
+
+**Cause:** `AUTH_REQUIRED=true`, so every `/v2` data route needs a session token from a signed-in user who has accepted the current notice (ADR 022). In this mode `/v1` and the unversioned paths are not mounted and return 404.
+
+**Fix:** Sign in with `POST /v2/auth/login` and send `Authorization: Bearer <token>`, then accept the notice with `POST /v2/me/consent`. New users need an invite: `uv run python -m scripts.manage_accounts invite --email <email>`. For local development, leave `AUTH_REQUIRED` unset (it defaults to `false`). See [`docs/api.md`](api.md#sign-in-and-consent).
 
 ---
 
@@ -345,7 +353,7 @@ chmod +x frontend/gradlew
 
 ### Frontend checks did not run on a pull request
 
-**Cause:** The frontend workflows run only on pull requests into `main` (and pushes to `main`) that change `frontend/`. Pull requests into other branches skip them.
+**Cause:** The frontend workflows run only on pull requests into `develop` or `main` (and pushes to them) that change `frontend/`. Pull requests into other branches, such as a feature branch, skip them.
 
 **Fix:** Run the same checks locally from `frontend/`:
 ```sh

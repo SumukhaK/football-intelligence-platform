@@ -120,7 +120,8 @@ Maintained by the project architect. The implementation engineer updates documen
 docs/
   adr/            # Architectural Decision Records
   demo/           # Stage-by-stage demo scripts for technical interviews
-  plans/          # Plans for the follow-on phase after Stage 12
+  design/         # Design concepts (app icon and launch screen, ADR 016)
+  plans/          # Plans for the work after Stage 12 (leagues, hosting, accounts, guardrails)
   reference/      # CLI command reference
   releases/       # Release notes and readiness reports
   reports/        # Stage summaries and model/data experiment reports
