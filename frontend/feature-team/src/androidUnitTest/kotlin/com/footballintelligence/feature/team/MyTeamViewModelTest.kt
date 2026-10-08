@@ -111,7 +111,11 @@ class MyTeamViewModelTest {
         MyTeamViewModel(repository, store, { at }, ZoneId.of("Europe/London"), Locale.US)
 
     @BeforeEach
-    fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
+    fun setUp() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+        // The season outlook has its own tests in SeasonOutlookViewModelTest.
+        coEvery { repository.getOutlook(any()) } returns NetworkResult.Error("unused")
+    }
 
     @AfterEach
     fun tearDown() = Dispatchers.resetMain()

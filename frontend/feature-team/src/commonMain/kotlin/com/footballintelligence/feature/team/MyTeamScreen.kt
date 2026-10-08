@@ -28,12 +28,17 @@ import com.footballintelligence.feature.team.resources.my_team_title
 import com.footballintelligence.feature.team.resources.next_match_none
 import org.jetbrains.compose.resources.stringResource
 
-/** My Team: the favourite team's next match. [actions] go at the top right of the app bar. */
+/**
+ * My Team: the favourite team's next match, then its season outlook, which
+ * opens the projected table. [actions] go at the top right of the app bar.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyTeamScreen(
     uiState: MyTeamUiState,
+    outlookState: SeasonOutlookUiState,
     onRetry: () -> Unit,
+    onOpenTable: () -> Unit,
     modifier: Modifier = Modifier,
     isRefreshing: Boolean = false,
     onRefresh: () -> Unit = {},
@@ -62,6 +67,7 @@ fun MyTeamScreen(
                 )
                 is MyTeamUiState.Success -> Refreshable(uiState.savedAt, isRefreshing, onRefresh) {
                     NextMatchCard(uiState.match)
+                    SeasonOutlookSection(outlookState, onOpenTable, onRetry)
                 }
                 is MyTeamUiState.NoUpcomingMatch -> Refreshable(uiState.savedAt, isRefreshing, onRefresh) {
                     Text(
@@ -70,6 +76,7 @@ fun MyTeamScreen(
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
                     )
+                    SeasonOutlookSection(outlookState, onOpenTable, onRetry)
                 }
             }
         }

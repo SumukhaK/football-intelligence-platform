@@ -35,6 +35,7 @@ import com.footballintelligence.feature.team.MyTeamScreen
 import com.footballintelligence.feature.team.MyTeamSettingsSection
 import com.footballintelligence.feature.team.MyTeamViewModel
 import com.footballintelligence.feature.team.PickerFlow
+import com.footballintelligence.feature.team.ProjectedTableScreen
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -125,10 +126,13 @@ private fun AppNavHost(navController: NavHostController, startDestination: Strin
         composable(Screen.MyTeam.route) {
             val vm: MyTeamViewModel = koinViewModel()
             val state by vm.state.collectAsState()
+            val outlook by vm.outlookState.collectAsState()
             val isRefreshing by vm.isRefreshing.collectAsState()
             MyTeamScreen(
                 uiState = state,
+                outlookState = outlook,
                 onRetry = vm::retry,
+                onOpenTable = { navController.navigate(Screen.SeasonTable.route) },
                 isRefreshing = isRefreshing,
                 onRefresh = vm::refresh,
                 actions = settingsAction,
@@ -150,6 +154,18 @@ private fun AppNavHost(navController: NavHostController, startDestination: Strin
                 onRefresh = vm::refresh,
                 actions = settingsAction,
                 onFixtureClick = { navController.openFixture(selectedLeague, it.homeTeam, it.awayTeam) },
+            )
+        }
+
+        composable(Screen.SeasonTable.route) {
+            val vm: MyTeamViewModel = koinViewModel(
+                viewModelStoreOwner = navController.getBackStackEntry(Screen.MyTeam.route),
+            )
+            val outlook by vm.outlookState.collectAsState()
+            ProjectedTableScreen(
+                uiState = outlook,
+                onRetry = vm::retry,
+                onBack = { navController.popBackStack() },
             )
         }
 

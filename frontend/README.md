@@ -44,7 +44,12 @@ switches between Fixtures, Predict,
 My Team and Assistant; a settings icon at the top right of each opens Settings.
 My Team shows the favourite team's next match: kick-off, the win/draw/loss pick
 with its top three reasons, the three likeliest scores and the clean-sheet
-chance. A match leaves the card two hours after kick-off. Settings shows the
+chance. A match leaves the card two hours after kick-off. Below it, Season outlook shows the projected
+finish from `GET /v2/teams/{team}/outlook` (ADR 023): position and points,
+the title, top-four and relegation chances, a chart of those chances
+through the season (each point used only results known then) and attack and
+defence strengths. Tapping it opens the projected table with the team
+highlighted. Settings shows the
 saved team in one My team row; it reopens the picker with the saved league and
 team checked and, once a team is saved, restarts the app so every screen loads
 the new team. Every

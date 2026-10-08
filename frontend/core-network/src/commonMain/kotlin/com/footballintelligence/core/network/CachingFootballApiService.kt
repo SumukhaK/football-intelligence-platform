@@ -28,6 +28,7 @@ interface ResponseCache {
  * an error has something to say, and old data would hide it. Replayed results
  * carry [NetworkResult.Success.cachedAt]. Chat is never cached.
  */
+@Suppress("TooManyFunctions") // One method per API endpoint, mirroring FootballApiService.
 class CachingFootballApiService(
     private val delegate: FootballApiService,
     private val cache: ResponseCache,
@@ -54,6 +55,9 @@ class CachingFootballApiService(
 
     override suspend fun getInsights(request: PredictionRequest) =
         cached("insights|${request.key()}") { delegate.getInsights(request) }
+
+    override suspend fun getTeamOutlook(team: String, competition: String) =
+        cached("outlook|$competition|$team") { delegate.getTeamOutlook(team, competition) }
 
     override suspend fun chat(request: ChatRequest): NetworkResult<ChatResponse> = delegate.chat(request)
 

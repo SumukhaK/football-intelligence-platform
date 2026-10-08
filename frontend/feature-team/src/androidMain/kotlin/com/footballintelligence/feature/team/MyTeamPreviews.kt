@@ -24,7 +24,8 @@ private val sampleMatch = NextMatch(
 )
 
 @Composable
-private fun MyTeam(state: MyTeamUiState) = PreviewSurface { MyTeamScreen(uiState = state, onRetry = {}) }
+private fun MyTeam(state: MyTeamUiState, outlook: SeasonOutlookUiState = SeasonOutlookUiState.Success(sampleOutlook)) =
+    PreviewSurface { MyTeamScreen(uiState = state, outlookState = outlook, onRetry = {}, onOpenTable = {}) }
 
 @Preview
 @Composable
@@ -92,3 +93,61 @@ private fun SettingsSectionPreview() = PreviewSurface {
 @Preview
 @Composable
 private fun NextMatchCardPreview() = PreviewSurface { NextMatchCard(sampleMatch) }
+
+private val sampleOutlook = SeasonOutlook(
+    team = "Arsenal",
+    position = 2,
+    currentPoints = 13,
+    expectedPoints = 75,
+    titlePercent = 23,
+    topFourPercent = 79,
+    relegationPercent = 0,
+    attack = 1.23,
+    defence = 0.69,
+    history = listOf(
+        ChancePoint(0, 0.18f, 0.71f, 0.01f),
+        ChancePoint(1, 0.21f, 0.74f, 0.01f),
+        ChancePoint(3, 0.17f, 0.69f, 0.0f),
+        ChancePoint(5, 0.23f, 0.79f, 0.0f),
+    ),
+    table = listOf(
+        TableRow(1, "Man City", 15, 80, 51, 95, 0, isFavourite = false),
+        TableRow(2, "Arsenal", 13, 75, 23, 79, 0, isFavourite = true),
+        TableRow(3, "Liverpool", 12, 71, 14, 66, 0, isFavourite = false),
+    ),
+)
+
+@Preview(heightDp = 1400)
+@Composable
+private fun MyTeamWithOutlookPreview() = MyTeam(MyTeamUiState.Success(sampleMatch))
+
+@Composable
+private fun Outlook(state: SeasonOutlookUiState) = PreviewSurface {
+    SeasonOutlookSection(state, onOpenTable = {}, onRetry = {})
+}
+
+@Preview(heightDp = 700)
+@Composable
+private fun SeasonOutlookPreview() = Outlook(SeasonOutlookUiState.Success(sampleOutlook))
+
+@Preview
+@Composable
+private fun SeasonOutlookLoadingPreview() = Outlook(SeasonOutlookUiState.Loading)
+
+@Preview
+@Composable
+private fun SeasonOutlookErrorPreview() = Outlook(SeasonOutlookUiState.Error("Season outlook not available"))
+
+@Preview
+@Composable
+private fun ChanceChartPreview() = PreviewSurface { ChanceChart(sampleOutlook.history) }
+
+@Preview
+@Composable
+private fun ProjectedTablePreview() = PreviewSurface {
+    ProjectedTableScreen(
+        SeasonOutlookUiState.Success(sampleOutlook, savedAt = "8 Oct, 09:00"),
+        onRetry = {},
+        onBack = {},
+    )
+}

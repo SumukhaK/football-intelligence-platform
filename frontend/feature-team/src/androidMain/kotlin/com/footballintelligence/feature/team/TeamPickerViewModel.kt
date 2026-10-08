@@ -33,6 +33,9 @@ class TeamPickerViewModel(
 
     private val outcomes = Channel<PickerOutcome>(Channel.BUFFERED)
 
+    // A quick second tap must not save again or leave the picker twice.
+    private var saving = false
+
     /** Emits once a team is saved; the app then leaves onboarding or relaunches. */
     val outcome: Flow<PickerOutcome> = outcomes.receiveAsFlow()
 
@@ -63,6 +66,8 @@ class TeamPickerViewModel(
     /** Checks [team] of the league on screen and saves it as the favourite. */
     fun selectTeam(team: String) {
         val step = _step.value as? PickerStep.Team ?: return
+        if (saving) return
+        saving = true
         _step.value = step.copy(selected = team)
         store.save(FavouriteTeam(step.league, team))
         outcomes.trySend(

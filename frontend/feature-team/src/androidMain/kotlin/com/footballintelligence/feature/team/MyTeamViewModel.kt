@@ -20,7 +20,8 @@ import java.util.Locale
 
 /**
  * ViewModel for [MyTeamScreen]: the favourite team's next unplayed fixture,
- * its pick, the reasons behind it and the goals model's view.
+ * its pick, the reasons behind it and the goals model's view, plus its season
+ * outlook, which the projected table screen shares.
  */
 class MyTeamViewModel(
     private val repository: TeamRepository,
@@ -35,6 +36,9 @@ class MyTeamViewModel(
     private val _state = MutableStateFlow<MyTeamUiState>(MyTeamUiState.Loading)
     val state: StateFlow<MyTeamUiState> = _state.asStateFlow()
 
+    private val _outlookState = MutableStateFlow<SeasonOutlookUiState>(SeasonOutlookUiState.Loading)
+    val outlookState: StateFlow<SeasonOutlookUiState> = _outlookState.asStateFlow()
+
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
@@ -44,17 +48,31 @@ class MyTeamViewModel(
 
     fun retry() {
         _state.value = MyTeamUiState.Loading
+        _outlookState.value = SeasonOutlookUiState.Loading
         viewModelScope.launch { _state.value = fetch() }
+        viewModelScope.launch { _outlookState.value = fetchOutlook() }
     }
 
     /** Pull to refresh: reloads while the current content stays on screen. */
     fun refresh() {
         _isRefreshing.value = true
         viewModelScope.launch {
+            val outlook = async { fetchOutlook() }
             _state.value = fetch()
+            _outlookState.value = outlook.await()
             _isRefreshing.value = false
         }
     }
+
+    private suspend fun fetchOutlook(): SeasonOutlookUiState =
+        when (val result = repository.getOutlook(favourite)) {
+            is NetworkResult.Success -> SeasonOutlookUiState.Success(
+                outlook = seasonOutlook(result.data),
+                savedAt = result.cachedAt?.let { formatSavedAt(it) },
+            )
+            is NetworkResult.Error -> SeasonOutlookUiState.Error(result.message, result.kind)
+            is NetworkResult.Loading -> SeasonOutlookUiState.Loading
+        }
 
     private suspend fun fetch(): MyTeamUiState =
         when (val result = repository.getTeamFixtures(favourite)) {

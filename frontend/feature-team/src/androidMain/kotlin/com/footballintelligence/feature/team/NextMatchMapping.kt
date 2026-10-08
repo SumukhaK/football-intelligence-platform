@@ -17,7 +17,7 @@ import java.time.ZoneId
 import java.util.Locale
 import kotlin.math.roundToInt
 
-// ponytail: a fixed length covers 90 minutes, half-time and stoppage time; the
+// A fixed length covers 90 minutes, half-time and stoppage time; the
 // server drops the fixture the next day anyway.
 private val MATCH_LENGTH: Duration = Duration.ofHours(2)
 private const val REASONS_SHOWN = 3

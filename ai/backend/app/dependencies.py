@@ -19,6 +19,7 @@ from backend.app.exceptions import (
     FixturesNotAvailableError,
     InsightsNotAvailableError,
     ModelNotAvailableError,
+    SeasonOutlookNotAvailableError,
 )
 from backend.app.services.account_service import (
     AccountService,
@@ -31,6 +32,7 @@ from backend.app.services.explanation_service import ExplanationService
 from backend.app.services.fixture_feature_service import FixtureFeatureService
 from backend.app.services.fixtures_service import FixturesService
 from backend.app.services.insights_service import InsightsService
+from backend.app.services.outlook_service import OutlookService
 from backend.app.services.prediction_service import PredictionService
 
 
@@ -134,6 +136,19 @@ def get_fixtures_service(request: Request) -> FixturesService:
     return service
 
 
+def get_outlook_service(request: Request) -> OutlookService:
+    """Return the OutlookService loaded at startup or by the daily refresh.
+
+    Raises SeasonOutlookNotAvailableError if no match history is loaded.
+    """
+    service: OutlookService | None = getattr(request.app.state, "outlook_service", None)
+    if service is None:
+        raise SeasonOutlookNotAvailableError(
+            "Match history is not loaded. Check MATCHES_DIR in configuration."
+        )
+    return service
+
+
 @lru_cache(maxsize=1)
 def get_team_crests() -> CrestTable:
     """Return the team crest table, loaded on first use (ADR 020)."""
@@ -161,6 +176,7 @@ OptionalInsightsServiceDep = Annotated[
 ]
 FixturesServiceDep = Annotated[FixturesService, Depends(get_fixtures_service)]
 TeamCrestsDep = Annotated[CrestTable, Depends(get_team_crests)]
+OutlookServiceDep = Annotated[OutlookService, Depends(get_outlook_service)]
 LeagueEmblemsDep = Annotated[CrestTable, Depends(get_league_emblems)]
 
 

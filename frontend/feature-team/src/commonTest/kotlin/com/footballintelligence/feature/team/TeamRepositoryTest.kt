@@ -58,6 +58,13 @@ class TeamRepositoryTest {
     }
 
     @Test
+    fun `the outlook is asked for the team in its league`() = runTest {
+        val error = NetworkResult.Error("503")
+        coEvery { api.getTeamOutlook("Arsenal", "Premier League") } returns error
+        assertEquals(error, repository.getOutlook(arsenal))
+    }
+
+    @Test
     fun `predict, explain and insights delegate to the api`() = runTest {
         val request = PredictionRequest("Arsenal", "Leeds", "Premier League")
         val error = NetworkResult.Error("503")

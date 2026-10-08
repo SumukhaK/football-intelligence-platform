@@ -20,6 +20,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -96,6 +97,17 @@ class TeamPickerViewModelTest {
         vm.selectTeam("Inter")
         verify { store.save(FavouriteTeam("Serie A", "Inter")) }
         assertEquals(PickerOutcome.ONBOARDING_FINISHED, vm.outcome.first())
+    }
+
+    @Test
+    fun `a second tap after a team is saved does nothing`() = runTest {
+        val vm = viewModel(PickerFlow.ONBOARDING)
+        vm.selectLeague("Serie A")
+        vm.selectTeam("Inter")
+        vm.selectTeam("Milan")
+        verify(exactly = 1) { store.save(any()) }
+        assertEquals(PickerOutcome.ONBOARDING_FINISHED, vm.outcome.first())
+        assertEquals(null, withTimeoutOrNull(100) { vm.outcome.first() })
     }
 
     @Test

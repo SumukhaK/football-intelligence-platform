@@ -19,6 +19,7 @@ from backend.app.exceptions import (
     FixturesNotAvailableError,
     InsightsNotAvailableError,
     ModelNotAvailableError,
+    SeasonOutlookNotAvailableError,
     UnknownCompetitionError,
     UnknownTeamError,
     assistant_not_available_handler,
@@ -28,6 +29,7 @@ from backend.app.exceptions import (
     fixtures_not_available_handler,
     insights_not_available_handler,
     model_not_available_handler,
+    season_outlook_not_available_handler,
     unexpected_error_handler,
     unknown_competition_handler,
     unknown_team_handler,
@@ -193,6 +195,7 @@ def _load_match_data(app: FastAPI) -> None:
     )
     app.state.fixtures_service = _load_fixtures(settings.fixtures_dir)
     app.state.season_service = _load_season(settings.matches_dir)
+    app.state.outlook_service = _load_outlook(settings.matches_dir)
 
 
 def _load_season(directory: Path) -> object | None:
@@ -203,6 +206,17 @@ def _load_season(directory: Path) -> object | None:
         return SeasonService.from_directory(directory)
     except Exception as exc:  # noqa: BLE001 — the season tools report it instead
         logger.warning("Season history not loaded from %s: %s", directory, exc)
+        return None
+
+
+def _load_outlook(directory: Path) -> object | None:
+    """Load match history for team season outlooks; None if unavailable."""
+    try:
+        from backend.app.services.outlook_service import OutlookService
+
+        return OutlookService.from_directory(directory)
+    except Exception as exc:  # noqa: BLE001 — /teams/{team}/outlook answers 503 instead
+        logger.warning("Season outlook history not loaded from %s: %s", directory, exc)
         return None
 
 
@@ -342,6 +356,9 @@ def create_app() -> FastAPI:
     app.add_exception_handler(UnknownCompetitionError, unknown_competition_handler)
     app.add_exception_handler(InsightsNotAvailableError, insights_not_available_handler)
     app.add_exception_handler(FixturesNotAvailableError, fixtures_not_available_handler)
+    app.add_exception_handler(
+        SeasonOutlookNotAvailableError, season_outlook_not_available_handler
+    )
     app.add_exception_handler(AuthError, auth_error_handler)
     app.add_exception_handler(Exception, unexpected_error_handler)
 

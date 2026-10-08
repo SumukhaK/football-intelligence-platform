@@ -105,3 +105,4 @@ ADRs are never deleted.
 | [020](020-team-crests-from-football-data-org.md) | Team crests and league emblems from football-data.org | Accepted |
 | [021](021-season-tools-and-router.md) | Season tools and a rule-based router for the assistant | Accepted |
 | [022](022-invite-only-accounts-and-consent.md) | Invite-only accounts, sessions and consent | Accepted |
+| [023](023-team-season-outlook-endpoint.md) | Team season outlook endpoint | Accepted |

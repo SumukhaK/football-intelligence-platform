@@ -12,6 +12,7 @@ import com.footballintelligence.core.model.ModelInfo
 import com.footballintelligence.core.model.NetworkResult
 import com.footballintelligence.core.model.PredictionRequest
 import com.footballintelligence.core.model.PredictionResult
+import com.footballintelligence.core.model.TeamOutlook
 import com.footballintelligence.core.model.TeamsResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -22,6 +23,7 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.http.encodeURLPathPart
 import io.ktor.http.isSuccess
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -37,6 +39,9 @@ interface FootballApiService {
     suspend fun explain(request: PredictionRequest): NetworkResult<ExplanationResult>
     suspend fun getInsights(request: PredictionRequest): NetworkResult<Insights>
     suspend fun chat(request: ChatRequest): NetworkResult<ChatResponse>
+
+    /** [team]'s projected season finish in [competition] (ADR 023). */
+    suspend fun getTeamOutlook(team: String, competition: String): NetworkResult<TeamOutlook>
 }
 
 /** Ktor-backed implementation of [FootballApiService]. */
@@ -93,6 +98,13 @@ class KtorFootballApiService(
             client.post("$base/insights") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
+            }.decode()
+        }
+
+    override suspend fun getTeamOutlook(team: String, competition: String): NetworkResult<TeamOutlook> =
+        guarded {
+            client.get("$base/teams/${team.encodeURLPathPart()}/outlook") {
+                parameter("competition", competition)
             }.decode()
         }
 

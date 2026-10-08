@@ -98,7 +98,7 @@ class SeasonService:
             "results": [_result(row) for row in _latest(played, limit)],
         }
         if season == current:
-            remaining = _unplayed(schedule, played_all=played)
+            remaining = unplayed(schedule, played_all=played)
             remaining = remaining[_involves(remaining, team, opponent)]
             result["upcoming"] = [_fixture(r) for r in _first(remaining, limit)]
             if opponent and not result["upcoming"]:
@@ -131,7 +131,7 @@ class SeasonService:
             return _actual(competition, season, on or last_played, played)
         if params is None:
             raise SeasonQueryError(f"No goals model to project {competition}.")
-        remaining = _unplayed(schedule, played_all=played)
+        remaining = unplayed(schedule, played_all=played)
         remaining = remaining[remaining["match_date"] <= on.isoformat()]
         return _projected(competition, season, on, played, remaining, params)
 
@@ -171,7 +171,7 @@ def _involves(frame: pd.DataFrame, team: str, opponent: str | None) -> pd.Series
     return mask
 
 
-def _unplayed(schedule: pd.DataFrame, played_all: pd.DataFrame) -> pd.DataFrame:
+def unplayed(schedule: pd.DataFrame, played_all: pd.DataFrame) -> pd.DataFrame:
     """Scheduled matches not yet in the results (each pairing is played once)."""
     done = set(zip(played_all["home_team"], played_all["away_team"], strict=True))
     pairs = zip(schedule["home_team"], schedule["away_team"], strict=True)
