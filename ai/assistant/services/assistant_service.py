@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from datetime import date
 from typing import Any
 
 from assistant.embeddings.embedder import Embedder
@@ -60,6 +61,7 @@ class AssistantService:
         model_name: str,
         top_k: int = 5,
         tools: Sequence[Tool] = (),
+        today: Callable[[], date] = date.today,
     ) -> None:
         """Initialise with injected components and optional tools."""
         self._embedder = embedder
@@ -68,6 +70,7 @@ class AssistantService:
         self._model_name = model_name
         self._top_k = top_k
         self._tools = tuple(tools)
+        self._today = today
 
     def chat(self, question: str) -> AssistantResponse:
         """Answer *question* using RAG over the local knowledge base.
@@ -89,7 +92,9 @@ class AssistantService:
         query_emb = self._embedder.embed([question])[0]
         retrieved: list[RetrievedDoc] = retrieve(query_emb, self._store, self._top_k)
 
-        messages: list[dict[str, Any]] = list(build_messages(question, retrieved))
+        messages: list[dict[str, Any]] = list(
+            build_messages(question, retrieved, today=self._today())
+        )
         answer = self._answer(messages)
 
         sources = _build_sources(retrieved)

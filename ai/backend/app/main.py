@@ -197,6 +197,18 @@ def _load_match_data(app: FastAPI) -> None:
         settings.matches_dir, settings.served_competitions
     )
     app.state.fixtures_service = _load_fixtures(settings.fixtures_dir)
+    app.state.season_service = _load_season(settings.matches_dir)
+
+
+def _load_season(directory: Path) -> object | None:
+    """Load match history for the assistant's season tools; None if unavailable."""
+    try:
+        from backend.app.services.season_service import SeasonService
+
+        return SeasonService.from_directory(directory)
+    except Exception as exc:  # noqa: BLE001 — the season tools report it instead
+        logger.warning("Season history not loaded from %s: %s", directory, exc)
+        return None
 
 
 def _start_live_refresh(app: FastAPI) -> asyncio.Task[None] | None:

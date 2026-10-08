@@ -24,6 +24,8 @@ from backend.app.exceptions import (
 from backend.app.schemas.prediction import PredictionRequest
 from backend.app.services.competitions import ServedCompetitions
 from backend.app.services.fixture_feature_service import resolve_features
+from backend.app.services.season_tools import SeasonTools
+from backend.app.services.team_resolver import TeamNotFoundError, resolve_team
 
 _EXPECTED_ERRORS = (
     FeatureMissingError,
@@ -47,7 +49,13 @@ class AssistantTools:
         self._competitions = competitions
 
     def tools(self) -> list[Tool]:
-        """Return the prediction, explanation and fixtures tools."""
+        """Return the prediction, explanation, fixtures and season tools."""
+        return [
+            *self._api_tools(),
+            *SeasonTools(self._state, self._competitions).tools(),
+        ]
+
+    def _api_tools(self) -> list[Tool]:
         names = list(self._competitions.names)
         match = _match_parameters(names)
         return [
@@ -68,7 +76,8 @@ class AssistantTools:
             ),
             Tool(
                 "upcoming_fixtures",
-                "A league's next scheduled matches, earliest first.",
+                "A league's next scheduled matches, earliest first. For one team's "
+                "fixtures or the next meeting of two teams, use team_matches.",
                 _fixtures_parameters(names),
                 _expected(self.upcoming_fixtures),
             ),
@@ -113,14 +122,24 @@ class AssistantTools:
     def _resolve(
         self, args: Mapping[str, Any]
     ) -> tuple[PredictionRequest, str, dict[str, float]]:
+        competition = self._competitions.resolve(args.get("competition") or None)
         request = PredictionRequest(
-            home_team=args.get("home_team", ""),
-            away_team=args.get("away_team", ""),
-            competition=args.get("competition") or None,
+            home_team=self._team_name(args.get("home_team", ""), competition),
+            away_team=self._team_name(args.get("away_team", ""), competition),
+            competition=competition,
         )
-        competition = self._competitions.resolve(request.competition)
         fixtures = getattr(self._state, "fixture_feature_service", None)
         return request, competition, resolve_features(request, fixtures, competition)
+
+    def _team_name(self, name: str, competition: str) -> str:
+        """The data's spelling of ``name``, or ``name`` unchanged if unknown."""
+        season = getattr(self._state, "season_service", None)
+        if season is None or not name:
+            return name
+        try:
+            return resolve_team(name, season.teams(competition))
+        except (TeamNotFoundError, ValueError):
+            return name
 
 
 def _match_parameters(leagues: list[str]) -> dict[str, Any]:

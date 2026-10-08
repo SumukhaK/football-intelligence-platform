@@ -2,30 +2,36 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from assistant.ingestion.document import Document
 
 RetrievedDoc = tuple[Document, float]
 
 SYSTEM_PROMPT = """\
 You are the Football Intelligence Assistant for the Football Intelligence \
-Platform. You answer questions about football match predictions, model \
-performance, SHAP explanations, and football analytics.
+Platform. You answer two kinds of questions:
+- Football questions about the Premier League, Bundesliga, La Liga, Serie A
+  and Ligue 1: match predictions and their reasons, fixtures, results,
+  head-to-head meetings, league tables on any date of this or a past season,
+  and which teams will score most goals or keep most clean sheets. Answer
+  these with your tools. The knowledge base context holds no match data.
+- Questions about the platform itself (its model, data, evaluation and
+  design). Answer these from the knowledge base context.
 
 Rules you must follow without exception:
-1. Answer ONLY from the context provided in this conversation: the knowledge
-   base context and the results of tools you call. Do not use any outside
-   knowledge, statistics, or facts beyond that.
-2. Before saying you cannot answer, check whether one of your tools can. If
-   neither the context nor a tool result answers the question, respond with
-   exactly:
+1. Answer ONLY from the results of tools you call and the knowledge base
+   context. Do not use any outside knowledge, statistics, or facts.
+2. For a football question, call a tool before deciding you cannot answer.
+   If neither a tool result nor the context answers the question, respond
+   with exactly:
    "I don't have enough information in my knowledge base to answer that."
 3. Always cite the source of each factual claim using the format
    [source: <filename>], or [source: tool <tool name>] for a tool result.
-4. Never invent predictions, statistics, or model outputs. For a match
-   prediction, its probabilities, the factors behind it, or upcoming
-   fixtures, call the matching tool and quote the numbers it returns. You may
-   write a probability such as 0.4712 as 47.1%, but never estimate, average,
-   or calculate a number of your own.
+4. Never invent predictions, statistics, or model outputs: call the matching
+   tool and quote the numbers it returns. You may write a probability such
+   as 0.4712 as 47.1%, but never estimate, average, or calculate a number of
+   your own.
 5. If a tool returns an error, tell the user what it says instead of guessing.
 6. Be concise. Avoid unnecessary repetition of the context verbatim.\
 """
@@ -39,6 +45,10 @@ Rules you must follow without exception:
 
 _CONTEXT_HEADER = "--- KNOWLEDGE BASE CONTEXT ---"
 _CONTEXT_FOOTER = "--- END OF CONTEXT ---"
+_TOOL_HINT = (
+    "Note: the context above only describes the platform. If it does not "
+    "answer the question, call a tool if one can."
+)
 # Scores are (cosine + 1) / 2, and nomic-embed-text puts every chunk of this
 # index at 0.73 or above, so 0.50 let everything through. Measured on the
 # questions in evaluation/assistant_abstention.py: in-scope questions top out
@@ -76,6 +86,10 @@ def build_user_prompt(
     lines.append(_CONTEXT_FOOTER)
     lines.append("")
     lines.append(f"Question: {question}")
+    lines.append("")
+    # Without this, small models refuse football questions whenever some
+    # platform document scores above the cut-off, instead of calling a tool.
+    lines.append(_TOOL_HINT)
     return "\n".join(lines)
 
 
@@ -83,12 +97,17 @@ def build_messages(
     question: str,
     retrieved: list[RetrievedDoc],
     min_relevance: float = _MIN_RELEVANCE,
+    today: date | None = None,
 ) -> list[dict[str, str]]:
-    """Return an Ollama-compatible messages list for the chat call."""
+    """Return an Ollama-compatible messages list for the chat call.
+
+    With ``today``, the user turn starts with the date, so the model can turn
+    "after Boxing Day" or "next derby" into dates in the right season.
+    """
+    user = build_user_prompt(question, retrieved, min_relevance)
+    if today is not None:
+        user = f"Today's date: {today.isoformat()}.\n\n{user}"
     return [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {
-            "role": "user",
-            "content": build_user_prompt(question, retrieved, min_relevance),
-        },
+        {"role": "user", "content": user},
     ]
