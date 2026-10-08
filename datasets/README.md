@@ -18,7 +18,7 @@ datasets/
               #   football_data/ results · openfootball/ fixtures · kaggle/ experiment inputs
   processed/  # Validated datasets: football_data/ matches (top 5, live) · openfootball/ fixtures
   features/   # Feature matrices and their metadata (metadata is committed)
-  schemas/    # Reference data: team_aliases.csv canonical team names (committed)
+  schemas/    # Reference data: team_aliases.csv canonical team names, team_crests.csv crest URLs (committed)
   interim/    # Intermediate outputs between transformation steps
   external/   # Third-party reference data
 ```
@@ -41,5 +41,5 @@ datasets/
 - `interim/` — gitignored. Reproducible from raw data.
 - `processed/` — gitignored by default. Committed only when explicitly versioned for a release.
 - `external/` — gitignored. Sourced from documented external locations.
-- `schemas/team_aliases.csv` and feature metadata under `features/` — always committed.
+- `schemas/team_aliases.csv`, `schemas/team_crests.csv` and feature metadata under `features/` — always committed.
 - Schema definitions in `ai/schemas/` — always committed.
