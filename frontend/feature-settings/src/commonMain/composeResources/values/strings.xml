@@ -9,6 +9,9 @@
     <string name="about_title">About</string>
     <string name="about_summary">App version and project information</string>
     <string name="cd_open_about">Open about screen</string>
+    <string name="section_account">Account</string>
+    <string name="sign_out">Sign out</string>
+    <string name="sign_out_summary">You'll need your password to sign in again</string>
 
     <!-- About -->
     <string name="app_name">Football Intelligence</string>

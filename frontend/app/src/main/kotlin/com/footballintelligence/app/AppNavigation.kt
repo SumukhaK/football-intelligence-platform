@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -18,6 +19,7 @@ import com.footballintelligence.core.navigation.Screen
 import com.footballintelligence.core.ui.SettingsButton
 import com.footballintelligence.feature.assistant.AssistantScreen
 import com.footballintelligence.feature.assistant.AssistantViewModel
+import com.footballintelligence.feature.auth.SignOutViewModel
 import com.footballintelligence.feature.home.BackendStatusSection
 import com.footballintelligence.feature.home.BackendStatusViewModel
 import com.footballintelligence.feature.home.HomeScreen
@@ -41,14 +43,19 @@ import org.koin.androidx.compose.koinViewModel
 /**
  * Root of the app: the navigation graph, with a bottom bar on the top-level
  * screens (fixtures, predict, my team, assistant) and Settings behind the
- * top bar's settings icon. The first launch starts with onboarding.
+ * top bar's settings icon. The app starts at sign-in without a session, else
+ * at the notice check (ADR 022); then onboarding on first launch, else home.
  */
 @Composable
-fun AppNavigation(navController: NavHostController) {
+fun AppNavigation(navController: NavHostController, signedIn: Boolean) {
     val favourite: FavouriteTeamViewModel = koinViewModel()
-    val start = if (favourite.needsOnboarding) Screen.Onboarding.route else Screen.Home.route
+    val firstRoute = if (favourite.needsOnboarding) Screen.Onboarding.route else Screen.Home.route
+    // Read once: NavHost rebuilds its graph if the start destination changes.
+    val start = remember { if (signedIn) Screen.Consent.route else Screen.Auth.route }
+    FollowSession(navController, signedIn)
     val entry by navController.currentBackStackEntryAsState()
-    val current = TopLevelDestination.forRoute(entry?.destination?.route)
+    val route = entry?.destination?.route
+    val current = TopLevelDestination.forRoute(route)
     Scaffold(
         bottomBar = {
             if (current != null) {
@@ -59,9 +66,8 @@ fun AppNavigation(navController: NavHostController) {
         AppNavHost(
             navController,
             start,
-            Modifier
-                .padding(padding)
-                .consumeWindowInsets(padding),
+            firstRoute,
+            if (route in FULL_SCREEN_ROUTES) Modifier else Modifier.padding(padding).consumeWindowInsets(padding),
         )
     }
 }
@@ -98,7 +104,12 @@ private fun NavHostController.openFixture(league: String, homeTeam: String, away
 }
 
 @Composable
-private fun AppNavHost(navController: NavHostController, startDestination: String, modifier: Modifier) {
+private fun AppNavHost(
+    navController: NavHostController,
+    startDestination: String,
+    firstRoute: String,
+    modifier: Modifier,
+) {
     val settingsAction: @Composable RowScope.() -> Unit = {
         SettingsButton(onClick = { navController.navigate(Screen.Settings.route) })
     }
@@ -107,6 +118,8 @@ private fun AppNavHost(navController: NavHostController, startDestination: Strin
         startDestination = startDestination,
         modifier = modifier,
     ) {
+        authRoutes(onReady = { navController.restartAt(firstRoute) })
+
         composable(Screen.Onboarding.route) {
             TeamPickerRoute(
                 flow = PickerFlow.ONBOARDING,
@@ -255,10 +268,12 @@ private fun AppNavHost(navController: NavHostController, startDestination: Strin
             val vm: BackendStatusViewModel = koinViewModel()
             val status by vm.state.collectAsState()
             val team: FavouriteTeamViewModel = koinViewModel()
+            val account: SignOutViewModel = koinViewModel()
             SettingsScreen(
                 onModelInfoClick = { navController.navigate(Screen.ModelInfo.route) },
                 onAboutClick = { navController.navigate(Screen.About.route) },
                 onBack = { navController.popBackStack() },
+                onSignOut = account::signOut,
                 status = { BackendStatusSection(status, onRetry = vm::retry) },
                 myTeam = {
                     team.favourite?.let {
