@@ -3,6 +3,7 @@ package com.footballintelligence.feature.prediction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -64,12 +65,14 @@ fun PredictionScreen(
     modifier: Modifier = Modifier,
     isRefreshing: Boolean = false,
     onRefresh: () -> Unit = {},
+    actions: @Composable RowScope.() -> Unit = {},
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(Res.string.prediction_title)) },
                 navigationIcon = { BackButton(onClick = onBack) },
+                actions = actions,
             )
         },
         modifier = modifier,

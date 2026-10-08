@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Info
@@ -38,7 +40,8 @@ import org.jetbrains.compose.resources.stringResource
 
 /**
  * Settings screen with links to Model Info and About. [status] is shown first;
- * the app passes the backend status card.
+ * the app passes the backend status card. [myTeam] follows the links; the app
+ * passes the favourite team section.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +51,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     status: @Composable () -> Unit = {},
+    myTeam: @Composable () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -64,6 +68,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -106,6 +111,7 @@ fun SettingsScreen(
                     )
                 }
             }
+            myTeam()
         }
     }
 }

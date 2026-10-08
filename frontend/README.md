@@ -24,16 +24,25 @@ feature-home/          — Fixtures by league (the first screen) and the backend
 feature-prediction/    — Prediction, Result, and Explain screens
 feature-assistant/     — AI Assistant chat screen
 feature-settings/      — Settings, Model Information, and About screens
+feature-team/          — Favourite team picker (first launch and Settings) and the My Team tab
 core-network/          — Ktor API service, offline response cache, HTTP client factory
 core-model/            — Domain models and network result types
 core-design-system/    — Material 3 theme and colour palette
 core-navigation/       — Screen routes sealed class
 core-ui/               — Shared UI components (loading, errors, offline banner, pull to refresh)
 core-common/           — Dispatchers and date/time formatting
-core-testing/, feature-match/, feature-team/ — empty, nothing depends on them
+core-testing/, feature-match/ — empty, nothing depends on them
 ```
 
-A bottom bar switches between Fixtures, Predict, Assistant and Settings. Every
+On first launch the app asks for a favourite league, then a team from it, on
+one screen with two steps. The choice is saved in SharedPreferences and the
+picker is not shown again. A bottom bar switches between Fixtures, Predict,
+My Team and Assistant; a settings icon at the top right of each opens Settings.
+My Team shows the favourite team's next match: kick-off, the win/draw/loss pick
+with its top three reasons, the three likeliest scores and the clean-sheet
+chance. A match leaves the card two hours after kick-off. Settings shows the
+saved league and team; changing either reopens the picker and, once saved,
+restarts the app so every screen loads the new team. Every
 API response is saved in the app's cache directory; when the server can't be
 reached, screens show the saved data under an offline banner, and pulling down
 on a screen fetches fresh data.

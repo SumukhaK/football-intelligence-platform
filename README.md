@@ -261,7 +261,7 @@ flowchart TD
     class E serve
 ```
 
-The app opens on upcoming fixtures, grouped by day, with one tab per league and the Premier League first; kick-off times are in the phone's time zone. A bottom bar switches between Fixtures, Predict, Assistant and Settings. Prediction starts with a league picker filled from `GET /v2/competitions`, and the result shows win/draw/loss probabilities, a draw tag for tight games, and the goals model's likely scores and goal markets. Every answer is saved: without a connection the app shows the last data it had under an offline banner, and pulling down fetches fresh data. Errors are explained in plain language. See [frontend/README.md](frontend/README.md) for the full module graph.
+The app opens on upcoming fixtures, grouped by day, with one tab per league and the Premier League first; kick-off times are in the phone's time zone. On first launch the app asks for a favourite league and team. A bottom bar switches between Fixtures, Predict, My Team and Assistant, with Settings behind a top-right icon. My Team shows the favourite team's next match with its pick, top three reasons, likeliest scores and clean-sheet chance. Prediction starts with a league picker filled from `GET /v2/competitions`, and the result shows win/draw/loss probabilities, a draw tag for tight games, and the goals model's likely scores and goal markets. Every answer is saved: without a connection the app shows the last data it had under an offline banner, and pulling down fetches fresh data. Errors are explained in plain language. See [frontend/README.md](frontend/README.md) for the full module graph.
 
 ## Backend Services
 

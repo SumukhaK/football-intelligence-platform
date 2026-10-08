@@ -36,6 +36,7 @@ dependencies {
     implementation(project(":feature-prediction"))
     implementation(project(":feature-assistant"))
     implementation(project(":feature-settings"))
+    implementation(project(":feature-team"))
 
     implementation(compose.runtime)
     implementation(compose.ui)
