@@ -108,6 +108,16 @@ choose the league; the default is the Premier League. An unknown league returns
 
 Returns 503 when match history is not loaded.
 
+## GET /teams/{team}/crest
+
+Redirects (307) to the team's crest PNG on `crests.football-data.org`
+(ADR 020). `team` is a name as `/teams` or `/fixtures` returns it, URL-encoded
+(`/v2/teams/Nott'm%20Forest/crest`). A team without a known crest returns 404:
+
+```json
+{ "error": "No crest", "detail": "No crest is known for 'Atlantis'." }
+```
+
 ## GET /fixtures
 
 A league's scheduled matches from today on, earliest first (ADR 015). Pass
