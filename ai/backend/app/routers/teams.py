@@ -2,14 +2,9 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Query, Response
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi import APIRouter, Query
 
-from backend.app.dependencies import (
-    FixtureFeatureServiceDep,
-    ServedCompetitionsDep,
-    TeamCrestsDep,
-)
+from backend.app.dependencies import FixtureFeatureServiceDep, ServedCompetitionsDep
 from backend.app.schemas.teams import TeamsResponse
 
 router = APIRouter(tags=["Teams"])
@@ -38,32 +33,3 @@ def teams(
 ) -> TeamsResponse:
     """Return the league's latest season and teams."""
     return service.teams(competitions.resolve(competition))
-
-
-@router.get(
-    "/teams/{team}/crest",
-    response_class=RedirectResponse,
-    status_code=307,
-    summary="Redirect to a team's crest image",
-    description=(
-        "Redirects to the team's crest PNG, hosted by football-data.org (ADR 020). "
-        "`team` is a name as GET /teams or GET /fixtures returns it."
-    ),
-    responses={
-        307: {"description": "Redirect to the crest image."},
-        404: {"description": "No crest is known for this team."},
-    },
-)
-def team_crest(team: str, crests: TeamCrestsDep) -> Response:
-    """Redirect to the team's crest, or 404 when it has none."""
-    return crest_redirect(crests.url(team), team)
-
-
-def crest_redirect(url: str | None, name: str) -> Response:
-    """A 307 to ``url``, or a structured 404 naming ``name`` when there is none."""
-    if url is None:
-        return JSONResponse(
-            status_code=404,
-            content={"error": "No crest", "detail": f"No crest is known for '{name}'."},
-        )
-    return RedirectResponse(url, status_code=307)

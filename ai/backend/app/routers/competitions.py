@@ -2,17 +2,14 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Response
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter
 
 from backend.app.dependencies import (
     FixtureFeatureServiceDep,
-    LeagueEmblemsDep,
     OptionalInsightsServiceDep,
     ServedCompetitionsDep,
 )
 from backend.app.exceptions import FixtureFeaturesNotAvailableError
-from backend.app.routers.teams import crest_redirect
 from backend.app.schemas.competitions import CompetitionsResponse, CompetitionSummary
 
 router = APIRouter(tags=["Teams"])
@@ -52,22 +49,3 @@ def competitions(
             )
         )
     return CompetitionsResponse(default=served.default, competitions=summaries)
-
-
-@router.get(
-    "/competitions/{competition}/emblem",
-    response_class=RedirectResponse,
-    status_code=307,
-    summary="Redirect to a league's emblem image",
-    description=(
-        "Redirects to the league's emblem PNG, hosted by football-data.org "
-        "(ADR 020). `competition` is a name as GET /competitions returns it."
-    ),
-    responses={
-        307: {"description": "Redirect to the emblem image."},
-        404: {"description": "No emblem is known for this league."},
-    },
-)
-def league_emblem(competition: str, emblems: LeagueEmblemsDep) -> Response:
-    """Redirect to the league's emblem, or 404 when it has none."""
-    return crest_redirect(emblems.url(competition), competition)
