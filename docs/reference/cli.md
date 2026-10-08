@@ -390,7 +390,7 @@ uv run pytest tests/training/test_trainer.py
 uv run pytest -m integration
 ```
 
-Expected: 935 tests pass with `uv run pytest`. 37 of them are integration tests, which need the trained model in `models/latest/`; `-m "not integration"` runs the other 898. Integration tests are not skipped by default.
+Expected: 958 tests pass with `uv run pytest`. 37 of them are integration tests, which need the trained model in `models/latest/`; `-m "not integration"` runs the other 921. Integration tests are not skipped by default.
 
 ---
 
@@ -475,6 +475,8 @@ Set them in `ai/.env` (copy `ai/.env.example`). Every value below is the default
 | `ASSISTANT_VECTOR_STORE_PATH` | `assistant/vector_store` | Persisted index path |
 | `ASSISTANT_KNOWLEDGE_ROOT` | `.` | Root folder of the assistant's knowledge documents |
 | `ASSISTANT_TOP_K` | `5` | Top-K chunks to retrieve per query |
+| `AUTH_REQUIRED` | `false` | Require invite-only sign-in and consent on every `/v2` data route, and drop `/v1` (ADR 022) |
+| `ACCOUNTS_PATH` | `accounts/accounts.json` | Local accounts file (hashes only; gitignored) |
 
 **Endpoints:**
 
