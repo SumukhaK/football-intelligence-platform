@@ -514,6 +514,9 @@ Set them in `ai/.env` (copy `ai/.env.example`). Every value below is the default
 | `DRAW_POSSIBLE_THRESHOLD` | `0.28` | Draw probability at or above which `draw_possible` is true (ADR 011) |
 | `API_VERSION` | `2.0.0` | API version string returned in `/health` |
 | `LOG_LEVEL` | `INFO` | Logging level |
+| `LOG_FORMAT` | `text` | `json` writes one JSON object per log line in the telemetry contract's format (ADR 024) |
+| `GCP_PROJECT_ID` | unset | Google Cloud project, used for the trace field on JSON log lines |
+| `K_REVISION` | unset | Set by Cloud Run; logged as `revision` on JSON log lines |
 | `RATE_LIMIT_PER_MINUTE` | `120` | Requests per minute per client before a 429; `off` turns it off (ADR 014) |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
 | `OLLAMA_CHAT_MODEL` | `qwen2.5:7b-instruct` | Chat generation model |

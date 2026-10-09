@@ -10,6 +10,10 @@ writes to its logs and traces, and what the ops console may read from them.
   of the event catalogue. `ai/tests/docs/test_telemetry_contract.py` checks
   that it lists the same events as the markdown catalogue.
 
+The backend implements it in `ai/shared/telemetry/` and
+`ai/backend/app/middleware/request_context.py`. Set `LOG_FORMAT=json` to get
+the contract's log lines; plain text stays the local default.
+
 Contract version: **1.0.0**. The decision behind it is
 [ADR 024](../adr/024-structured-telemetry-and-opentelemetry.md).
 

@@ -36,6 +36,7 @@ This directory owns:
 ai/
   config/               # Settings (pydantic-settings) and path layout
   shared/               # Common types, exceptions, and constants
+    telemetry/          # Request IDs, JSON log lines and the event catalogue (ADR 024)
   providers/            # Data provider adapters (football-data.co.uk used; FBref, Understat adapters)
   ingestion/            # Downloader, storage, season backfill, daily live refresh, fixtures (openfootball)
   validation/           # DataFrame-level rules and schema compatibility checks
