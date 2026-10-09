@@ -114,6 +114,8 @@ Evidence: tests and staging logs.
 
 ## 4. Observability: logs, traces, metrics, alerts
 
+Contract: [telemetry contract](../observability/telemetry-contract.md) and [ADR 024](../adr/024-structured-telemetry-and-opentelemetry.md).
+
 - [ ] Request ID on every request and log line.
 - [ ] OpenTelemetry traces: retrieval, each tool call, generation, to Cloud Trace.
 - [ ] Metrics: p50/p95 latency, tokens, cost per answer, tool-call rate, refusal rate, provider errors and 429s.
