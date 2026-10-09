@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -50,6 +51,12 @@ class Settings(BaseSettings):
     draw_possible_threshold: float = DEFAULT_DRAW_POSSIBLE_THRESHOLD
     api_version: str = "2.0.0"
     log_level: str = "INFO"
+    # `json` writes the telemetry contract's log lines (ADR 024); `text` is for
+    # reading logs by eye locally.
+    log_format: Literal["text", "json"] = "text"
+    gcp_project_id: str | None = None
+    # Cloud Run sets K_REVISION; it is null locally.
+    revision: str | None = Field(default=None, validation_alias="K_REVISION")
 
     ollama_base_url: str = "http://localhost:11434"
     ollama_chat_model: str = "qwen2.5:7b-instruct"

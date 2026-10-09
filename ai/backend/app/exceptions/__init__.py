@@ -7,6 +7,9 @@ import logging
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
+from shared.telemetry.context import get_request_id
+from shared.telemetry.request_id import REQUEST_ID_HEADER
+
 logger = logging.getLogger(__name__)
 
 
@@ -166,12 +169,15 @@ def feature_missing_handler(_request: Request, exc: Exception) -> JSONResponse:
 def unexpected_error_handler(_request: Request, exc: Exception) -> JSONResponse:
     """Return a 500 for any unhandled exception — no stack trace exposed."""
     logger.exception("Unexpected error: %s", exc)
+    # This handler runs outside RequestContextMiddleware, so it adds the header.
+    request_id = get_request_id()
     return JSONResponse(
         status_code=500,
         content={
             "error": "Internal server error",
             "detail": "An unexpected error occurred.",
         },
+        headers={REQUEST_ID_HEADER: request_id} if request_id else None,
     )
 
 

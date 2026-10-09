@@ -31,6 +31,15 @@ one-minute window (default 120; `off` turns it off). Beyond that the server
 answers 429 `{ "error": "Too many requests", "detail": "..." }` with a
 `Retry-After` header in seconds. Health checks and the docs are never limited.
 
+## Request IDs
+
+Every response, including 429 and 500 responses, carries an `X-Request-ID`
+header. If the request sent `X-Request-ID` and its value is 8 to 64 characters
+from `A-Z a-z 0-9 . _ -`, the same value is returned; otherwise the server
+creates one (32 lowercase hex characters). The server's log lines for that
+request carry the same ID, so quote it when reporting a problem
+([telemetry contract](observability/telemetry-contract.md), ADR 024).
+
 ---
 
 ## Sign-in and consent

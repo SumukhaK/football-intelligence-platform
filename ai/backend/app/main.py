@@ -35,19 +35,22 @@ from backend.app.exceptions import (
     unknown_team_handler,
 )
 from backend.app.middleware.rate_limit import RateLimitMiddleware, SlidingWindowLimiter
+from backend.app.middleware.request_context import RequestContextMiddleware
 from backend.app.routing import include_routers
 from backend.app.services.account_service import AccountService, AuthError
 from backend.app.services.account_store import JsonAccountStore
 from model_registry.registry import ModelRegistry
+from shared.telemetry.setup import configure_logging
 
 logger = logging.getLogger(__name__)
+# The `service` field on every JSON log line (telemetry contract section 1).
+TELEMETRY_SERVICE = "football-api"
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Load AI services at startup; release at shutdown."""
     settings = get_settings()
-    logging.basicConfig(level=settings.log_level.upper())
     logger.info("Starting Football Intelligence backend v%s", settings.api_version)
 
     app.state.prediction_service = None
@@ -329,6 +332,17 @@ def _load_insights(directory: Path, competitions: list[str]) -> object | None:
 def create_app() -> FastAPI:
     """Construct and return the FastAPI application."""
     settings = get_settings()
+    # Here rather than in lifespan, so uvicorn's startup lines are formatted too.
+    configure_logging(
+        settings.log_level,
+        settings.log_format,
+        {
+            "service": TELEMETRY_SERVICE,
+            "api_version": settings.api_version,
+            "revision": settings.revision,
+            "gcp_project_id": settings.gcp_project_id,
+        },
+    )
 
     app = FastAPI(
         title="Football Intelligence Platform API",
@@ -369,6 +383,8 @@ def create_app() -> FastAPI:
             RateLimitMiddleware,
             limiter=SlidingWindowLimiter(settings.rate_limit_per_minute),
         )
+    # Added last so it is the outermost layer and 429s get an ID too.
+    app.add_middleware(RequestContextMiddleware)
     return app
 
 

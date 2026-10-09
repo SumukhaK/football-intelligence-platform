@@ -43,6 +43,7 @@ ai/backend/
     exceptions/         # Domain errors and structured JSON handlers
     middleware/
       rate_limit.py     # Sliding-window rate limiter, 429 with Retry-After
+      request_context.py # X-Request-ID on every response; one http.request log event
     routers/
       health.py         # GET /health
       model.py          # GET /model
