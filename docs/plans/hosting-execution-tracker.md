@@ -11,7 +11,7 @@ Status values: `Not started`, `In progress`, `Blocked (reason)`, `Done (date)`.
 
 | # | Step | Plan phase | Status |
 |---|---|---|---|
-| 0a | Chat route fix | this tracker | Not started |
+| 0a | Chat route fix | this tracker | Done (8 October 2026) |
 | 0 | Baseline, accounts and budget guardrails | 0, 3.1 | Not started |
 | 1 | Host the API: container and private staging | 2, 3 | Not started |
 | 2 | Connect storage and secrets | 3, 7 | Not started |
@@ -36,7 +36,7 @@ Status values: `Not started`, `In progress`, `Blocked (reason)`, `Done (date)`.
 
 Can land any time, before step 0.
 
-- [ ] Chat route no longer blocks the event loop; raw message logging removed.
+- [x] Chat route no longer blocks the event loop; raw message logging removed.
 
 Done when: the chat route runs the model call off the event loop and no question text is logged unless the user opted in ([accounts plan](accounts-and-consent-plan.md)).
 Evidence: tests.

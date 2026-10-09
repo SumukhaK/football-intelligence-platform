@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from typing import Any
+from unittest.mock import DEFAULT, MagicMock, patch
 
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -105,3 +109,33 @@ def test_chat_service_error_returns_503(
     mock_chat_service.chat.side_effect = AssistantNotAvailableError("Ollama down")
     response = client.post("/assistant/chat", json={"message": "Tell me something."})
     assert response.status_code == 503
+
+
+def test_chat_runs_off_the_event_loop(
+    client: TestClient, mock_chat_service: MagicMock
+) -> None:
+    """The blocking chat call runs in a worker thread, not on the event loop."""
+    loop_running: list[bool] = []
+
+    def record_loop(*_: Any) -> object:
+        try:
+            asyncio.get_running_loop()
+            loop_running.append(True)
+        except RuntimeError:
+            loop_running.append(False)
+        return DEFAULT
+
+    mock_chat_service.chat.side_effect = record_loop
+    response = client.post("/assistant/chat", json={"message": "Who scores most?"})
+    assert response.status_code == 200
+    assert loop_running == [False]
+
+
+def test_chat_does_not_log_the_question(
+    client: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    """No log record contains the user's question text."""
+    question = "zebra-canary-question-7731"
+    with caplog.at_level(logging.DEBUG):
+        client.post("/assistant/chat", json={"message": question})
+    assert all(question not in record.getMessage() for record in caplog.records)
