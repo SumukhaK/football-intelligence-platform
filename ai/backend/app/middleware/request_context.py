@@ -12,6 +12,7 @@ import time
 from collections.abc import Callable
 
 from starlette.datastructures import Headers, MutableHeaders
+from starlette.requests import Request
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from shared.telemetry.context import reset_request_id, set_request_id
@@ -20,6 +21,17 @@ from shared.telemetry.request_id import REQUEST_ID_HEADER, parse_or_create
 
 logger = logging.getLogger(__name__)
 UNMATCHED_ROUTE = "<unmatched>"
+INTERNAL_ERROR = "Internal server error"
+
+
+def record_error_code(request: Request, error_code: str) -> None:
+    """Remember the ``error`` value sent to the client, for ``http.request``."""
+    request.state.error_code = error_code
+
+
+def _error_code(scope: Scope) -> str | None:
+    code = scope.get("state", {}).get("error_code")
+    return code if isinstance(code, str) else None
 
 
 def route_template(scope: Scope) -> str:
@@ -65,14 +77,16 @@ class RequestContextMiddleware:
         try:
             await self._app(scope, receive, send_with_id)
         except Exception:
-            self._log_request(scope, 500, started)
+            self._log_request(scope, 500, started, INTERNAL_ERROR)
             # The request ID stays set: Starlette's catch-all 500 handler runs
             # outside this middleware and needs it for its log line and header.
             raise
-        self._log_request(scope, status, started)
+        self._log_request(scope, status, started, _error_code(scope))
         reset_request_id(token)
 
-    def _log_request(self, scope: Scope, status: int, started: float) -> None:
+    def _log_request(
+        self, scope: Scope, status: int, started: float, error_code: str | None
+    ) -> None:
         emit(
             logger,
             EventName.HTTP_REQUEST,
@@ -81,5 +95,5 @@ class RequestContextMiddleware:
             route=route_template(scope),
             status=status,
             duration_ms=round((self._clock() - started) * 1000),
-            error_code=None,
+            error_code=error_code,
         )

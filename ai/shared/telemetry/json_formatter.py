@@ -70,8 +70,14 @@ class JsonFormatter(logging.Formatter):
             "contract_version": CONTRACT_VERSION,
             "attributes": getattr(record, "attributes", {}),
         }
+        attributes = line["attributes"]
+        if isinstance(attributes, dict) and "exception_type" in attributes:
+            line["exception_type"] = attributes["exception_type"]
         if record.exc_info and record.exc_info[0] is not None:
             kind = record.exc_info[0]
             line["exception_type"] = f"{kind.__module__}.{kind.__qualname__}"
-            line["stack_trace"] = self.formatException(record.exc_info)
+            if line["event"] == "app.crash":
+                # Error Reporting groups lines whose message starts with a traceback.
+                line["stack_trace"] = self.formatException(record.exc_info)
+                line["message"] = line["stack_trace"]
         return json.dumps(line, default=str)

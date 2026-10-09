@@ -39,6 +39,8 @@ ai/backend/
     consent.py          # The notice users accept, and its version (ADR 022)
     dependencies.py     # Depends functions reading services from app.state
     main.py             # App factory and lifespan
+    loaders.py          # Builds each component's service at startup
+    startup_telemetry.py # component.load, data.freshness and fallback events
     routing.py          # Which routers are mounted under /v2, /v1 and unversioned
     exceptions/         # Domain errors and structured JSON handlers
     middleware/

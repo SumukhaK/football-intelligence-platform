@@ -46,7 +46,8 @@ def get_prediction_service(request: Request) -> PredictionService:
     )
     if service is None:
         raise ModelNotAvailableError(
-            "Prediction model is not loaded. Check MODEL_PATH in configuration."
+            "Prediction model is not loaded. Check MODEL_PATH in configuration.",
+            component="prediction_model",
         )
     return service
 
@@ -61,7 +62,8 @@ def get_explanation_service(request: Request) -> ExplanationService:
     )
     if service is None:
         raise ModelNotAvailableError(
-            "Explanation service is not loaded. Check MODEL_PATH in configuration."
+            "Explanation service is not loaded. Check MODEL_PATH in configuration.",
+            component="explanation",
         )
     return service
 
@@ -84,7 +86,8 @@ def get_fixture_feature_service(request: Request) -> FixtureFeatureService:
     service = get_optional_fixture_feature_service(request)
     if service is None:
         raise FixtureFeaturesNotAvailableError(
-            "Match history is not loaded. Check MATCHES_DIR in configuration."
+            "Match history is not loaded. Check MATCHES_DIR in configuration.",
+            component="match_history",
         )
     return service
 
@@ -99,7 +102,8 @@ def get_insights_service(request: Request) -> InsightsService:
     )
     if service is None:
         raise InsightsNotAvailableError(
-            "Goals model is not fitted. Check MATCHES_DIR in configuration."
+            "Goals model is not fitted. Check MATCHES_DIR in configuration.",
+            component="goals_model",
         )
     return service
 
@@ -131,7 +135,8 @@ def get_fixtures_service(request: Request) -> FixturesService:
     if service is None:
         raise FixturesNotAvailableError(
             "No fixtures loaded yet. Run scripts.refresh_fixtures or wait for "
-            "the daily refresh."
+            "the daily refresh.",
+            component="fixtures",
         )
     return service
 
@@ -144,7 +149,8 @@ def get_outlook_service(request: Request) -> OutlookService:
     service: OutlookService | None = getattr(request.app.state, "outlook_service", None)
     if service is None:
         raise SeasonOutlookNotAvailableError(
-            "Match history is not loaded. Check MATCHES_DIR in configuration."
+            "Match history is not loaded. Check MATCHES_DIR in configuration.",
+            component="season_outlook",
         )
     return service
 

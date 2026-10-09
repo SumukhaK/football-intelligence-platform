@@ -55,6 +55,8 @@ class Settings(BaseSettings):
     # reading logs by eye locally.
     log_format: Literal["text", "json"] = "text"
     gcp_project_id: str | None = None
+    # Key for the user_ref and client_ref hashes in logs; a secret in the cloud.
+    telemetry_salt: str = "local-dev-salt"
     # Cloud Run sets K_REVISION; it is null locally.
     revision: str | None = Field(default=None, validation_alias="K_REVISION")
 

@@ -99,3 +99,11 @@ def test_an_explicit_level_wins(caplog: pytest.LogCaptureFixture) -> None:
     with caplog.at_level(logging.DEBUG, logger=LOGGER.name):
         emit(LOGGER, EventName.FALLBACK, "Quiet", level=logging.DEBUG)
     assert caplog.records[0].levelno == logging.DEBUG
+
+
+def test_emit_can_attach_an_exception(caplog: pytest.LogCaptureFixture) -> None:
+    error = KeyError("missing")
+    with caplog.at_level(logging.ERROR, logger=LOGGER.name):
+        emit(LOGGER, EventName.APP_CRASH, "Crashed", exc_info=error, route="/x")
+    assert caplog.records[0].exc_info is not None
+    assert caplog.records[0].exc_info[1] is error
