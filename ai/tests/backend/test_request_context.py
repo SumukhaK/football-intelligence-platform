@@ -15,7 +15,6 @@ from fastapi.testclient import TestClient
 from backend.app.exceptions import unexpected_error_handler
 from backend.app.middleware.rate_limit import RateLimitMiddleware, SlidingWindowLimiter
 from backend.app.middleware.request_context import RequestContextMiddleware
-from shared.telemetry.context import get_request_id
 from shared.telemetry.json_formatter import JsonFormatter
 
 ROUTE_LOGGER = logging.getLogger("tests.request_context.route")
@@ -46,7 +45,9 @@ def _app(limit: int = 100) -> TestClient:
     def boom() -> dict[str, str]:
         raise RuntimeError("boom")
 
-    app.add_middleware(RateLimitMiddleware, limiter=SlidingWindowLimiter(limit))
+    app.add_middleware(
+        RateLimitMiddleware, limiter=SlidingWindowLimiter(limit), salt="test-salt"
+    )
     app.add_middleware(RequestContextMiddleware, clock=StepClock())
     return TestClient(app, raise_server_exceptions=False)
 
@@ -101,7 +102,7 @@ def test_a_500_has_the_header_and_its_body_is_unchanged() -> None:
     }
 
 
-def test_a_log_line_inside_the_route_carries_the_id() -> None:
+def _json_lines(logger: logging.Logger, path: str, request_id: str) -> list[Any]:
     stream = io.StringIO()
     handler = logging.StreamHandler(stream)
     handler.setFormatter(
@@ -112,27 +113,26 @@ def test_a_log_line_inside_the_route_carries_the_id() -> None:
             gcp_project_id=None,
         )
     )
-    ROUTE_LOGGER.addHandler(handler)
-    ROUTE_LOGGER.setLevel(logging.INFO)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
     try:
-        _app().get("/teams/arsenal", headers={"X-Request-ID": "inside-1"})
+        _app().get(path, headers={"X-Request-ID": request_id})
     finally:
-        ROUTE_LOGGER.removeHandler(handler)
-    line = json.loads(stream.getvalue())
+        logger.removeHandler(handler)
+    return [json.loads(line) for line in stream.getvalue().splitlines()]
+
+
+def test_a_log_line_inside_the_route_carries_the_id() -> None:
+    (line,) = _json_lines(ROUTE_LOGGER, "/teams/arsenal", "inside-1")
     assert line["message"] == "Inside the route"
     assert line["request_id"] == "inside-1"
 
 
-def test_the_500_handler_log_line_carries_the_id(
-    logs: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    seen: list[str | None] = []
-    monkeypatch.setattr(
-        "backend.app.exceptions.logger.exception",
-        lambda *_: seen.append(get_request_id()),
-    )
-    _app().get("/boom", headers={"X-Request-ID": "crashed-2"})
-    assert seen == ["crashed-2"]
+def test_the_500_handler_log_line_carries_the_id() -> None:
+    exceptions_logger = logging.getLogger("backend.app.exceptions")
+    lines = _json_lines(exceptions_logger, "/boom", "crashed-2")
+    (crash,) = [line for line in lines if line["event"] == "app.crash"]
+    assert crash["request_id"] == "crashed-2"
 
 
 def test_one_http_request_event_per_request(logs: pytest.LogCaptureFixture) -> None:
@@ -190,3 +190,15 @@ def test_the_real_app_logs_path_parameters_as_a_template(
         "/v2/teams/{team}/outlook",
         "/v1/health",
     ]
+
+
+def test_a_429_logs_its_error_code(logs: pytest.LogCaptureFixture) -> None:
+    client = _app(limit=1)
+    client.get("/teams/arsenal")
+    client.get("/teams/arsenal")
+    assert [r["error_code"] for r in _requests(logs)] == [None, "Too many requests"]
+
+
+def test_a_crash_logs_its_error_code(logs: pytest.LogCaptureFixture) -> None:
+    _app().get("/boom")
+    assert [r["error_code"] for r in _requests(logs)] == ["Internal server error"]

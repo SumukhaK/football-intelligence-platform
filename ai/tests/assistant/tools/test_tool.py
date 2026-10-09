@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from assistant.tools.tool import Tool, ToolError, run_tool
+from assistant.tools.tool import Tool, ToolError, run_tool, run_tool_checked
 
 
 def _echo(args: Mapping[str, Any]) -> dict[str, Any]:
@@ -64,3 +64,12 @@ def test_run_tool_propagates_unexpected_errors() -> None:
     """Bugs in a handler are loud, not hidden from the caller."""
     with pytest.raises(RuntimeError, match="bug"):
         run_tool(TOOLS, "crashes", {})
+
+
+def test_run_tool_checked_reports_the_error_it_hides() -> None:
+    """The model sees the same JSON; the caller also learns that it failed."""
+    failed = run_tool_checked(TOOLS, "fails", {})
+    assert failed.content == run_tool(TOOLS, "fails", {})
+    assert failed.error == "'Atlantis' did not play in Premier League 2026-2027"
+    assert run_tool_checked(TOOLS, "echo", {}).error is None
+    assert run_tool_checked(TOOLS, "guess", {}).error == "Unknown tool 'guess'."

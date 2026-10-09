@@ -67,14 +67,26 @@ def test_request_id_comes_from_the_context() -> None:
     assert data["request_id"] == "req-12345678"
 
 
-def test_exception_fields_are_added() -> None:
+def _raised(**extra: Any) -> logging.LogRecord:
     try:
         raise KeyError("missing")
     except KeyError:
-        record = _record(exc_info=sys.exc_info())
-    data = _format(record)
+        return _record(exc_info=sys.exc_info(), **extra)
+
+
+def test_error_lines_carry_the_exception_type() -> None:
+    data = _format(_raised())
     assert data["exception_type"] == "builtins.KeyError"
+    assert data["message"] == "Hello you"
+    assert "stack_trace" not in data
+
+
+def test_crash_lines_carry_the_traceback_as_their_message() -> None:
+    data = _format(_raised(event="app.crash", attributes={"route": "/x"}))
+    assert data["exception_type"] == "builtins.KeyError"
+    assert data["message"].startswith("Traceback (most recent call last):")
     assert "KeyError: 'missing'" in data["stack_trace"]
+    assert data["message"] == data["stack_trace"]
 
 
 def test_lines_without_exceptions_have_no_exception_fields() -> None:

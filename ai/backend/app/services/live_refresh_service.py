@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from shared.telemetry.events import EventName, emit
+
 logger = logging.getLogger(__name__)
 
 
@@ -69,13 +71,34 @@ class LiveRefreshService:
             dataset = self._refresh()
             self._reload()
         except Exception as exc:  # noqa: BLE001 — keep serving the old data
-            logger.warning("Live data refresh failed: %s", exc)
             outcome = RefreshOutcome(attempted, None, str(exc))
         else:
-            logger.info("Live data refreshed: %s", dataset.name)
             outcome = RefreshOutcome(attempted, dataset, None)
+        self._log(outcome)
         self.last_outcome = outcome
         return outcome
+
+    def _log(self, outcome: RefreshOutcome) -> None:
+        """Log ``refresh.run``, and the fallback to old data when it failed."""
+        took = self._clock() - outcome.attempted_at
+        emit(
+            logger,
+            EventName.REFRESH_RUN,
+            "Daily data refresh failed" if outcome.error else "Daily data refreshed",
+            status="failed" if outcome.error else "ok",
+            duration_ms=round(took.total_seconds() * 1000),
+            dataset=outcome.dataset.name if outcome.dataset else None,
+            error=outcome.error,
+        )
+        if outcome.error:
+            emit(
+                logger,
+                EventName.FALLBACK,
+                "Keeping the previous match data",
+                from_path="fresh_match_data",
+                to_path="previous_match_data",
+                cause="refresh_failed",
+            )
 
     async def run_daily(self, hour: int, due_now: bool) -> None:
         """Refresh now if ``due_now``, then every day at ``hour``:00."""

@@ -77,8 +77,14 @@ def emit(
     message: str,
     *,
     level: int | None = None,
+    exc_info: BaseException | None = None,
     **attributes: Any,
 ) -> None:
     """Log event ``name`` with ``attributes``, at the contract's level by default."""
     chosen = severity(name, attributes) if level is None else level
-    logger.log(chosen, message, extra={"event": name.value, "attributes": attributes})
+    logger.log(
+        chosen,
+        message,
+        exc_info=exc_info,
+        extra={"event": name.value, "attributes": attributes},
+    )

@@ -14,6 +14,24 @@ The backend implements it in `ai/shared/telemetry/` and
 `ai/backend/app/middleware/request_context.py`. Set `LOG_FORMAT=json` to get
 the contract's log lines; plain text stays the local default.
 
+Where each event is emitted:
+
+| Event | Where |
+|---|---|
+| `http.request` | `backend/app/middleware/request_context.py` |
+| `app.error`, `app.crash`, `component.degraded` | `backend/app/exceptions/__init__.py` |
+| `component.load`, `data.freshness`, `fallback` (data) | `backend/app/startup_telemetry.py`, called from `main.py` |
+| `ratelimit.rejected` | `backend/app/middleware/rate_limit.py` |
+| `auth.event` | `backend/app/services/account_service.py` |
+| `refresh.run`, `fallback` (refresh) | `backend/app/services/live_refresh_service.py` |
+| `assistant.answer`, `assistant.tool`, `assistant.abstain`, `fallback` (tools) | `assistant/services/assistant_service.py` |
+
+`dependency.call` and `retry` come with tracing (M5); `guardrail.event` with
+hosting step 3b. `ai/tests/shared/telemetry/test_contract_conformance.py`
+checks every event the tests emit against `telemetry-events.json`, and
+`ai/tests/backend/test_log_privacy.py` checks that no question or email is
+logged.
+
 Contract version: **1.0.0**. The decision behind it is
 [ADR 024](../adr/024-structured-telemetry-and-opentelemetry.md).
 

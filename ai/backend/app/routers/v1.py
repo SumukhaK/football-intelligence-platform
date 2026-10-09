@@ -51,7 +51,8 @@ def get_v1_prediction_service(request: Request) -> PredictionService:
     )
     if service is None:
         raise ModelNotAvailableError(
-            "The v1 model is not loaded. Check V1_MODEL_PATH in configuration."
+            "The v1 model is not loaded. Check V1_MODEL_PATH in configuration.",
+            component="prediction_model_v1",
         )
     return service
 
@@ -63,7 +64,8 @@ def get_v1_explanation_service(request: Request) -> ExplanationService:
     )
     if service is None:
         raise ModelNotAvailableError(
-            "The v1 explainer is not loaded. Check V1_MODEL_PATH in configuration."
+            "The v1 explainer is not loaded. Check V1_MODEL_PATH in configuration.",
+            component="explanation",
         )
     return service
 

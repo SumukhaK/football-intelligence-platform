@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from typing import Any
 
 import pytest
@@ -241,3 +242,128 @@ def test_routed_calls_run_before_the_model_answers(sample_docs) -> None:  # type
     first_messages = generator.calls[0][0]
     assert first_messages[-1]["role"] == "tool"
     assert json.loads(first_messages[-1]["content"])["home_team"] == "Arsenal"
+
+
+# ---------------------------------------------------------------------------
+# Telemetry
+# ---------------------------------------------------------------------------
+
+Events = Callable[[str], list[tuple[str, dict[str, Any]]]]
+
+
+class _StepClock:
+    """Each call moves time on by a quarter of a second."""
+
+    def __init__(self) -> None:
+        self.now = 0.0
+
+    def __call__(self) -> float:
+        self.now += 0.25
+        return self.now
+
+
+def _clocked(service: AssistantService) -> AssistantService:
+    service._clock = _StepClock()
+    return service
+
+
+def _answer(events: Events) -> dict[str, Any]:
+    ((severity, attributes),) = events("assistant.answer")
+    assert severity == "INFO"
+    return attributes
+
+
+def test_answer_from_retrieval_is_logged(sample_docs, events: Events) -> None:  # type: ignore[no-untyped-def]
+    service = _clocked(_make_service(sample_docs, answer="Accuracy is 56%."))
+    service.chat("What is the model accuracy?")
+    attributes = _answer(events)
+    assert attributes["path"] == "model"
+    assert attributes["question_chars"] == len("What is the model accuracy?")
+    assert attributes["retrieved_count"] == 3
+    assert isinstance(attributes["top_score"], float)
+    assert attributes["tool_rounds"] == 0
+    assert attributes["model"] == "llama3.2"
+    assert attributes["duration_ms"] == 250
+    assert (attributes["prompt_tokens"], attributes["cost_usd"]) == (None, None)
+    assert events("assistant.abstain") == []
+
+
+def test_tool_calls_are_logged(sample_docs, events: Events) -> None:  # type: ignore[no-untyped-def]
+    call = ToolCall("predict_match", {"home_team": "Arsenal"})
+    generator = ScriptedToolGenerator([ChatTurn("", [call]), ChatTurn("Done.")])
+    _clocked(_tool_service(sample_docs, generator)).chat("Arsenal?")
+    assert events("assistant.tool") == [
+        (
+            "INFO",
+            {
+                "tool": "predict_match",
+                "status": "ok",
+                "duration_ms": 250,
+                "error": None,
+            },
+        )
+    ]
+    attributes = _answer(events)
+    assert (attributes["path"], attributes["tool_rounds"]) == ("model_with_tools", 1)
+
+
+def test_a_failed_tool_is_a_warning(sample_docs, events: Events) -> None:  # type: ignore[no-untyped-def]
+    call = ToolCall("made_up_tool", {})
+    generator = ScriptedToolGenerator([ChatTurn("", [call]), ChatTurn("Sorry.")])
+    _tool_service(sample_docs, generator).chat("Arsenal?")
+    ((severity, attributes),) = events("assistant.tool")
+    assert (severity, attributes["status"]) == ("WARNING", "error")
+    assert attributes["error"] == "Unknown tool 'made_up_tool'."
+
+
+def test_the_tool_round_limit_falls_back(sample_docs, events: Events) -> None:  # type: ignore[no-untyped-def]
+    call = ToolCall("predict_match", {"home_team": "Arsenal"})
+    generator = ScriptedToolGenerator(
+        [ChatTurn("", [call])] * 3 + [ChatTurn("Final answer.")]
+    )
+    _tool_service(sample_docs, generator).chat("Arsenal?")
+    assert events("fallback") == [
+        (
+            "WARNING",
+            {
+                "from_path": "tool_calling",
+                "to_path": "answer_without_tools",
+                "cause": "tool_round_limit",
+            },
+        )
+    ]
+    assert _answer(events)["tool_rounds"] == 3
+
+
+def test_router_reply_is_the_router_path(sample_docs, events: Events) -> None:  # type: ignore[no-untyped-def]
+    service = _routed_service(
+        sample_docs, ScriptedToolGenerator([]), Route(reply="No.")
+    )
+    service.chat("Who is the top scorer?")
+    attributes = _answer(events)
+    assert (attributes["path"], attributes["model"]) == ("router", "router")
+    assert (attributes["retrieved_count"], attributes["top_score"]) == (0, None)
+
+
+def test_routed_tools_are_the_tools_path(sample_docs, events: Events) -> None:  # type: ignore[no-untyped-def]
+    generator = ScriptedToolGenerator([ChatTurn("Arsenal at 47.1%.")])
+    route = Route(calls=[ToolCall("predict_match", {"home_team": "Arsenal"})])
+    _routed_service(sample_docs, generator, route).chat("Arsenal next?")
+    attributes = _answer(events)
+    assert (attributes["path"], attributes["tool_rounds"]) == ("model_with_tools", 1)
+
+
+def test_a_refusal_is_an_abstention(sample_docs, events: Events) -> None:  # type: ignore[no-untyped-def]
+    answer = "I don't have enough information to answer that."
+    _make_service(sample_docs, answer=answer).chat("Who won in 1888?")
+    assert events("assistant.abstain") == [("INFO", {"reason": "model_declined"})]
+
+
+def test_a_refusal_without_documents_is_no_retrieval(
+    sample_docs: list[Document], events: Events, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("assistant.services.assistant_service.retrieve", lambda *_: [])
+    answer = "I don't have enough information to answer that."
+    _make_service(sample_docs, answer=answer).chat("Who won in 1888?")
+    assert events("assistant.abstain") == [("INFO", {"reason": "no_retrieval"})]
+    assert _answer(events)["retrieved_count"] == 0

@@ -17,7 +17,8 @@ def _get_chat_service(request: Request) -> ChatService:
     if service is None:
         raise AssistantNotAvailableError(
             "Assistant service is not available. "
-            "Ensure Ollama is running and the index has been built."
+            "Ensure Ollama is running and the index has been built.",
+            component="assistant",
         )
     return service
 

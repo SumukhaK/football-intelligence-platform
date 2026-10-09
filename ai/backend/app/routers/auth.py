@@ -15,10 +15,7 @@ from backend.app.schemas.auth import (
     RedeemInviteRequest,
     SessionResponse,
 )
-from backend.app.services.account_service import (
-    ConsentRequiredError,
-    NewSession,
-)
+from backend.app.services.account_service import NewSession
 from backend.app.services.account_store import User
 
 router = APIRouter(tags=["Accounts"])
@@ -70,9 +67,7 @@ def logout(
     authorization: Annotated[str | None, Header()] = None,
 ) -> None:
     """Revoke the current session."""
-    token = bearer_token(authorization)
-    if token:
-        accounts.logout(token)
+    accounts.logout(bearer_token(authorization))
 
 
 @router.get(
@@ -101,10 +96,6 @@ def consent(
     body: ConsentRequest, user: SignedInUserDep, accounts: AccountServiceDep
 ) -> MeResponse:
     """Record consent to the current notice."""
-    if body.version != CONSENT_VERSION:
-        raise ConsentRequiredError(
-            f"The current notice is version {CONSENT_VERSION}; show it again."
-        )
     return _me(accounts.record_consent(user, body.version, body.store_questions))
 
 

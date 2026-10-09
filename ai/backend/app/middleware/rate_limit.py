@@ -8,6 +8,7 @@ the single-process local server this project runs.
 
 from __future__ import annotations
 
+import logging
 import time
 from collections import deque
 from collections.abc import Awaitable, Callable
@@ -16,6 +17,13 @@ from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
+
+from backend.app.middleware.request_context import UNMATCHED_ROUTE, record_error_code
+from shared.telemetry.events import EventName, emit
+from shared.telemetry.privacy import hash_ref
+
+logger = logging.getLogger(__name__)
+TOO_MANY_REQUESTS = "Too many requests"
 
 WINDOW_SECONDS = 60.0
 EXEMPT_PATHS = frozenset(
@@ -49,10 +57,11 @@ class SlidingWindowLimiter:
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """Applies a :class:`SlidingWindowLimiter` to every non-exempt request."""
 
-    def __init__(self, app: ASGIApp, limiter: SlidingWindowLimiter) -> None:
-        """Wrap ``app`` with ``limiter``."""
+    def __init__(self, app: ASGIApp, limiter: SlidingWindowLimiter, salt: str) -> None:
+        """Wrap ``app`` with ``limiter``; ``salt`` keys the logged client hash."""
         super().__init__(app)
         self._limiter = limiter
+        self._salt = salt
 
     async def dispatch(
         self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
@@ -65,10 +74,20 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if wait is None:
             return await call_next(request)
         seconds = max(1, int(wait + 0.999))
+        # The limiter runs before routing, so there is no route template yet.
+        emit(
+            logger,
+            EventName.RATELIMIT_REJECTED,
+            "Client is over the rate limit",
+            route=UNMATCHED_ROUTE,
+            client_ref=hash_ref(client, self._salt),
+            retry_after_s=seconds,
+        )
+        record_error_code(request, TOO_MANY_REQUESTS)
         return JSONResponse(
             status_code=429,
             content={
-                "error": "Too many requests",
+                "error": TOO_MANY_REQUESTS,
                 "detail": f"Rate limit reached. Try again in {seconds} seconds.",
             },
             headers={"Retry-After": str(seconds)},

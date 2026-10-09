@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from backend.app.middleware.rate_limit import RateLimitMiddleware, SlidingWindowLimiter
+from shared.telemetry.privacy import hash_ref
 
 
 class FakeClock:
@@ -42,7 +46,9 @@ def test_clients_are_counted_separately() -> None:
 
 def _app(limit: int) -> TestClient:
     app = FastAPI()
-    app.add_middleware(RateLimitMiddleware, limiter=SlidingWindowLimiter(limit))
+    app.add_middleware(
+        RateLimitMiddleware, limiter=SlidingWindowLimiter(limit), salt="test-salt"
+    )
 
     @app.get("/v2/teams")
     def teams() -> dict[str, str]:
@@ -68,3 +74,16 @@ def test_over_the_limit_is_a_structured_429() -> None:
 def test_health_is_never_limited() -> None:
     client = _app(limit=1)
     assert all(client.get("/health").status_code == 200 for _ in range(5))
+
+
+def test_a_rejection_logs_the_hashed_client(
+    events: Callable[[str], list[tuple[str, dict[str, Any]]]],
+) -> None:
+    client = _app(limit=1)
+    client.get("/v2/teams")
+    client.get("/v2/teams")
+    ((severity, attributes),) = events("ratelimit.rejected")
+    assert severity == "WARNING"
+    assert attributes["client_ref"] == hash_ref("testclient", "test-salt")
+    assert attributes["route"] == "<unmatched>"
+    assert 1 <= attributes["retry_after_s"] <= 60
