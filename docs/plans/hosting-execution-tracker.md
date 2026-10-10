@@ -45,7 +45,7 @@ Evidence: tests.
 
 - [ ] Next free ADR (check develop and open PRs): cloud serving, provider adapters, immutable snapshots, refresh scheduling.
 - [ ] Local baseline: lint, types, tests; startup time and peak RAM with `LIVE_REFRESH_HOUR=off`.
-- [ ] Snapshot manifest: model, registry, datasets, fixtures, index; hashes and sizes.
+- [x] Snapshot manifest: model, registry, datasets, fixtures, index; hashes and sizes.
 - [ ] GCP project with billing; budget $10 with alerts at $2, $5, $8.
 - [ ] Cloudflare account; Workers AI free plan; scoped API token kept out of Git.
 
