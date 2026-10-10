@@ -39,7 +39,7 @@ jobs:
 
       - name: Assemble debug
         working-directory: frontend
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        run: ./gradlew assembleDebug -PstagingBaseUrl=https://staging.invalid --no-daemon --stacktrace
 
       - name: Upload build artefacts
         if: success()

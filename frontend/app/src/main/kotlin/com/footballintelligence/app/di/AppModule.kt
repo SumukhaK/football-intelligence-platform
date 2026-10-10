@@ -1,5 +1,6 @@
 package com.footballintelligence.app.di
 
+import com.footballintelligence.app.BuildConfig
 import com.footballintelligence.core.network.AuthApiService
 import com.footballintelligence.core.network.AuthSession
 import com.footballintelligence.core.network.CachingFootballApiService
@@ -22,7 +23,7 @@ import java.time.Instant
  * server can't be reached, so screens show the last data with an offline banner.
  */
 val networkModule = module {
-    single { NetworkConfig() }
+    single { NetworkConfig(baseUrl = BuildConfig.BASE_URL) }
     single { AuthSession(store = get()) }
     single { HttpClientFactory.create(config = get(), session = get()) }
     single { AuthApiService(client = get(), config = get()) }

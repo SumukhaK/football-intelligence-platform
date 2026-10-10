@@ -161,7 +161,7 @@ Evidence: that report.
 
 ## 6a. Closed beta on staging
 
-- [ ] Staging build variant: its own application ID, build number and a "-stg" app name, pointing at the staging URL.
+- [x] Staging build variant: its own application ID, build number and a "-stg" app name, pointing at the staging URL (`staging` flavor; the URL comes from `frontend/local.properties`).
 - [ ] APK shared directly with invited friends.
 - [ ] Usage recorded per consented user: questions per day, tokens, latency, refusals, router and cache hits, tool use. Question text only with opt-in.
 - [ ] Weekly summary to set production budgets and limits.
