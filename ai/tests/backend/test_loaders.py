@@ -12,18 +12,22 @@ from fastapi.testclient import TestClient
 from pydantic import SecretStr
 
 from assistant.ingestion.document import Document
-from assistant.retrieval.vector_store import VectorStore
+from assistant.retrieval.vector_store import IndexInfo, VectorStore
 from backend.app.config import Settings
 from backend.app.loaders import load_assistant
 
 
-def _index(tmp_path: Path) -> Path:
+def _index(tmp_path: Path, info: IndexInfo | None = None) -> Path:
     import numpy as np
 
     store = VectorStore()
     store.add([Document(id="d1", text="t", source="s.md")], np.ones((1, 2), np.float32))
+    store.info = info
     store.save(tmp_path / "index")
     return tmp_path / "index"
+
+
+HOSTED = IndexInfo("@cf/qwen/qwen3-embedding-0.6b", 0.6)
 
 
 def _generator_of(chat_service: object) -> object:
@@ -42,7 +46,7 @@ def test_workers_ai_provider_uses_the_hosted_model(tmp_path: Path) -> None:
     from assistant.workers_ai import WorkersAIEmbedder, WorkersAIGenerator
 
     settings = Settings(
-        assistant_vector_store_path=_index(tmp_path),
+        assistant_vector_store_path=_index(tmp_path, HOSTED),
         assistant_provider="workers_ai",
         workers_ai_account_id="acc",
         workers_ai_api_token=SecretStr("token"),
@@ -87,7 +91,7 @@ def test_provider_off_loads_no_assistant(tmp_path: Path) -> None:
 
 def test_a_trailing_newline_on_the_token_is_dropped(tmp_path: Path) -> None:
     settings = Settings(
-        assistant_vector_store_path=_index(tmp_path),
+        assistant_vector_store_path=_index(tmp_path, HOSTED),
         assistant_provider="workers_ai",
         workers_ai_account_id="acc",
         workers_ai_api_token=SecretStr("token\n"),
@@ -95,3 +99,31 @@ def test_a_trailing_newline_on_the_token_is_dropped(tmp_path: Path) -> None:
     service = load_assistant(settings, SimpleNamespace())
     client = service._service._generator._client  # type: ignore[attr-defined]
     assert client._headers == {"Authorization": "Bearer token"}
+
+
+def test_the_index_cut_off_reaches_the_assistant(tmp_path: Path) -> None:
+    settings = Settings(
+        assistant_vector_store_path=_index(tmp_path, HOSTED),
+        assistant_provider="workers_ai",
+        workers_ai_account_id="acc",
+        workers_ai_api_token=SecretStr("token"),
+    )
+    service: Any = load_assistant(settings, SimpleNamespace())
+    assert service._service._min_relevance == 0.6
+
+
+def test_a_local_index_is_refused_for_hosted_queries(tmp_path: Path) -> None:
+    settings = Settings(
+        assistant_vector_store_path=_index(tmp_path),
+        assistant_provider="workers_ai",
+        workers_ai_account_id="acc",
+        workers_ai_api_token=SecretStr("token"),
+    )
+    with pytest.raises(ValueError, match="built with nomic-embed-text"):
+        load_assistant(settings, SimpleNamespace())
+
+
+def test_a_hosted_index_is_refused_for_local_queries(tmp_path: Path) -> None:
+    settings = Settings(assistant_vector_store_path=_index(tmp_path, HOSTED))
+    with pytest.raises(ValueError, match="queries would use nomic-embed-text"):
+        load_assistant(settings, SimpleNamespace())

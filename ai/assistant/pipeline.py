@@ -6,11 +6,13 @@ import logging
 
 from assistant.chunking.chunker import TextChunker
 from assistant.configuration import AssistantSettings
-from assistant.embeddings.embedder import Embedder, OllamaEmbedder
-from assistant.generation.generator import Generator, OllamaGenerator
+from assistant.embeddings.embedder import Embedder
+from assistant.generation.generator import Generator
 from assistant.ingestion.document import Document
 from assistant.ingestion.loader import DocumentLoader
-from assistant.retrieval.vector_store import VectorStore
+from assistant.prompting.templates import DEFAULT_MIN_RELEVANCE
+from assistant.providers import make_provider
+from assistant.retrieval.vector_store import IndexInfo, VectorStore
 from assistant.services.assistant_service import AssistantResponse, AssistantService
 
 logger = logging.getLogger(__name__)
@@ -29,19 +31,20 @@ class AssistantPipeline:
         settings: AssistantSettings,
         embedder: Embedder | None = None,
         generator: Generator | None = None,
+        min_relevance: float = DEFAULT_MIN_RELEVANCE,
     ) -> None:
-        """Initialise the pipeline with configuration and optional overrides."""
+        """Initialise with configuration and optional overrides.
+
+        Without overrides the provider in ``settings`` embeds and answers.
+        ``min_relevance`` is recorded in a newly built index with its
+        embedding model; measure it for any model but nomic-embed-text.
+        """
         self._settings = settings
-        self._embedder: Embedder = embedder or OllamaEmbedder(
-            model=settings.ollama_embed_model,
-            base_url=settings.ollama_base_url,
-        )
-        self._generator: Generator = generator or OllamaGenerator(
-            model=settings.ollama_chat_model,
-            base_url=settings.ollama_base_url,
-            temperature=settings.temperature,
-            max_tokens=settings.max_tokens,
-        )
+        provider = make_provider(settings)
+        self._embedder: Embedder = embedder or provider.embedder
+        self._generator: Generator = generator or provider.generator
+        self._chat_model = provider.chat_model
+        self._info = IndexInfo(provider.embed_model, min_relevance)
         self._store: VectorStore | None = None
 
     # ------------------------------------------------------------------
@@ -83,6 +86,7 @@ class AssistantPipeline:
 
         store = VectorStore()
         store = _embed_and_add(chunks, self._embedder, store)
+        store.info = self._info
         store.save(store_path)
         self._store = store
         logger.info("Index built: %d chunks → %s", store.size(), store_path)
@@ -110,8 +114,13 @@ class AssistantPipeline:
             embedder=self._embedder,
             generator=self._generator,
             store=self._store,
-            model_name=self._settings.ollama_chat_model,
+            model_name=self._chat_model,
             top_k=self._settings.top_k,
+            min_relevance=(
+                self._store.info.min_relevance
+                if self._store.info
+                else DEFAULT_MIN_RELEVANCE
+            ),
         )
 
     def query(self, question: str) -> AssistantResponse:
@@ -139,13 +148,31 @@ def _embed_and_add(
     return store
 
 
-if __name__ == "__main__":
-    import sys
+def main(argv: list[str] | None = None) -> int:
+    """Build the index with the configured provider.
 
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+    Usage, from ``ai/``::
+
+        uv run python -m assistant.pipeline --rebuild [--min-relevance 0.6]
+
+    Set ``ASSISTANT_PROVIDER`` and ``ASSISTANT_VECTOR_STORE_PATH`` to build a
+    Workers AI index next to the local one.
+    """
+    import argparse
+
     from assistant.configuration import get_assistant_settings
 
-    _settings = get_assistant_settings()
-    _pipeline = AssistantPipeline(_settings)
-    n = _pipeline.build_index(force_rebuild="--rebuild" in sys.argv)
-    print(f"Index built: {n} chunks in {_settings.vector_store_path}")
+    parser = argparse.ArgumentParser(prog="assistant.pipeline")
+    parser.add_argument("--rebuild", action="store_true")
+    parser.add_argument("--min-relevance", type=float, default=DEFAULT_MIN_RELEVANCE)
+    args = parser.parse_args(argv)
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+    settings = get_assistant_settings()
+    pipeline = AssistantPipeline(settings, min_relevance=args.min_relevance)
+    n = pipeline.build_index(force_rebuild=args.rebuild)
+    print(f"Index built: {n} chunks in {settings.vector_store_path}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

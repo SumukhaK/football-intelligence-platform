@@ -107,12 +107,18 @@ class WorkersAIGenerator:
         model: str,
         temperature: float = 0.1,
         max_tokens: int = 1024,
+        thinking: bool = True,
     ) -> None:
-        """Use ``model`` through ``client`` with these generation options."""
+        """Use ``model`` through ``client`` with these generation options.
+
+        ``thinking=False`` asks a reasoning model to answer directly; its
+        hidden reasoning otherwise costs tokens and seconds on every call.
+        """
         self._client = client
         self._model = model
         self._temperature = temperature
         self._max_tokens = max_tokens
+        self._thinking = thinking
 
     def generate(self, messages: list[dict[str, str]]) -> str:
         """Return the model's answer to ``messages``, offering no tools."""
@@ -130,6 +136,8 @@ class WorkersAIGenerator:
         }
         if tools:
             body["tools"] = tools
+        if not self._thinking:
+            body["chat_template_kwargs"] = {"enable_thinking": False}
         reply = self._client.post("chat/completions", body)
         return parse_turn(reply)
 

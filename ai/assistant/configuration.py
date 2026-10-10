@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,9 +18,20 @@ class AssistantSettings(BaseSettings):
         case_sensitive=False,
     )
 
+    # Who embeds and answers (ADR 025); the backend handles "off" itself.
+    assistant_provider: Literal["ollama", "workers_ai"] = "ollama"
     ollama_base_url: str = "http://localhost:11434"
     ollama_chat_model: str = "qwen2.5:7b-instruct"
     ollama_embed_model: str = "nomic-embed-text"
+
+    workers_ai_account_id: str | None = None
+    workers_ai_api_token: SecretStr | None = None
+    workers_ai_chat_model: str = "@cf/google/gemma-4-26b-a4b-it"
+    workers_ai_embed_model: str = "@cf/qwen/qwen3-embedding-0.6b"
+    workers_ai_timeout_s: float = Field(default=20.0, gt=0)
+    # Reasoning models think before answering unless told not to; off keeps
+    # answers inside the app's 30-second request budget.
+    workers_ai_thinking: bool = False
 
     vector_store_path: Path = Path("assistant/vector_store")
     knowledge_base_root: Path = Path(".")

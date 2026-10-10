@@ -192,3 +192,17 @@ def test_a_timeout_never_leaks_the_token() -> None:
         WorkersAIEmbedder(_client(post), "@cf/emb").embed(["a"])
     assert "secret-token" not in str(caught.value)
     assert "ReadTimeout" in str(caught.value)
+
+
+def test_thinking_off_asks_the_model_to_answer_directly() -> None:
+    post = FakePost(_completion({"content": "ok"}))
+    WorkersAIGenerator(_client(post), "@cf/chat", thinking=False).generate([])
+    assert post.requests[0]["json"]["chat_template_kwargs"] == {
+        "enable_thinking": False
+    }
+
+
+def test_thinking_on_sends_no_template_switch() -> None:
+    post = FakePost(_completion({"content": "ok"}))
+    WorkersAIGenerator(_client(post), "@cf/chat").generate([])
+    assert "chat_template_kwargs" not in post.requests[0]["json"]
