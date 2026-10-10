@@ -87,7 +87,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if settings.model_path.exists():
         app.state.registry = registry
     _load_models(app, settings, registry)
-    if settings.assistant_provider == "off":
+    if settings.assistant_provider is None:
         logger.info("Assistant is off (ASSISTANT_PROVIDER=off).")
     else:
         app.state.chat_service = load_component(

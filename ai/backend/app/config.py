@@ -75,7 +75,8 @@ class Settings(BaseSettings):
     trace_sample_ratio: float = Field(default=1.0, ge=0.0, le=1.0)
 
     # Who answers chat (ADR 025): local Ollama, Cloudflare Workers AI, or nobody.
-    assistant_provider: Literal["ollama", "workers_ai", "off"] = "ollama"
+    # `off` reads as None (env_parse_none_str above) and loads no assistant.
+    assistant_provider: Literal["ollama", "workers_ai"] | None = "ollama"
     ollama_base_url: str = "http://localhost:11434"
     ollama_chat_model: str = "qwen2.5:7b-instruct"
     ollama_embed_model: str = "nomic-embed-text"
