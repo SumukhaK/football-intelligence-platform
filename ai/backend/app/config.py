@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Tuned on 2022/23 in docs/reports/draw-handling.md (ADR 011).
@@ -68,9 +68,17 @@ class Settings(BaseSettings):
     otlp_endpoint: str = "http://localhost:4318/v1/traces"
     trace_sample_ratio: float = Field(default=1.0, ge=0.0, le=1.0)
 
+    # Who answers chat (ADR 025): local Ollama, Cloudflare Workers AI, or nobody.
+    assistant_provider: Literal["ollama", "workers_ai", "off"] = "ollama"
     ollama_base_url: str = "http://localhost:11434"
     ollama_chat_model: str = "qwen2.5:7b-instruct"
     ollama_embed_model: str = "nomic-embed-text"
+    workers_ai_account_id: str | None = None
+    workers_ai_api_token: SecretStr | None = None
+    workers_ai_chat_model: str = "@cf/qwen/qwen3-30b-a3b-fp8"
+    workers_ai_embed_model: str = "@cf/qwen/qwen3-embedding-0.6b"
+    # Deadline for each Workers AI attempt; one retry at most.
+    workers_ai_timeout_s: float = Field(default=20.0, gt=0)
     assistant_vector_store_path: Path = Path("assistant/vector_store")
     assistant_knowledge_root: Path = Path(".")
     assistant_top_k: int = 5

@@ -89,11 +89,11 @@ Evidence: integration tests and a staging walkthrough.
 
 ## 3. Connect the hosted LLM
 
-- [ ] Workers AI `Generator` and `Embedder` adapters behind the existing protocols, with deadlines and error mapping.
+- [x] Workers AI `Generator` and `Embedder` adapters behind the existing protocols, with deadlines and error mapping.
 - [ ] A function-calling model chosen; the adapter implements tool calls (ADR 018).
 - [ ] Index rebuilt with the hosted embedding model; 0.81 cut-off re-measured with the abstention questions.
-- [ ] Provider selection in settings; local Ollama stays the default.
-- [ ] Quota, timeout and 5xx return a structured 503; predictions keep working.
+- [x] Provider selection in settings; local Ollama stays the default.
+- [x] Quota, timeout and 5xx return a structured 503; predictions keep working.
 - [ ] Grounding and abstention evals pass against staging.
 
 Done when: staging chat answers with citations and quotes the API's numbers, and both evals pass.

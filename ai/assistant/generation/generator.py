@@ -29,6 +29,10 @@ class ChatTurn:
 
     content: str
     tool_calls: list[ToolCall] = field(default_factory=list)
+    # What the provider reported for this call; None when it reports nothing.
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
+    cost_usd: float | None = None
 
 
 @runtime_checkable
@@ -92,7 +96,12 @@ class OllamaGenerator:
             ToolCall(call.function.name, dict(call.function.arguments))
             for call in message.tool_calls or []
         ]
-        return ChatTurn(content=str(message.content or ""), tool_calls=calls)
+        return ChatTurn(
+            content=str(message.content or ""),
+            tool_calls=calls,
+            prompt_tokens=response.prompt_eval_count,
+            completion_tokens=response.eval_count,
+        )
 
 
 class OllamaGenerationError(RuntimeError):
