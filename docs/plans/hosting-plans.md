@@ -19,7 +19,7 @@ Inspected implementation:
 - Android NetworkConfig has 5-second connection and 30-second request timeouts.
 - Chat calls synchronous code from an async route; rate limiting is process-local. Review both before concurrent cloud usage.
 
-Before implementation, write the next unused ADR (currently 023) covering cloud serving, provider adapters, immutable snapshots and refresh scheduling. Explain the cloud extension to ADR 013 and invited-demo authentication. Local defaults remain unchanged. Follow the repository workflow with one task/PR into develop per phase. Fine-tuning remains outside project scope.
+Before implementation, write the next unused ADR (currently 025) covering cloud serving, provider adapters, immutable snapshots and refresh scheduling. Explain the cloud extension to ADR 013 and invited-demo authentication. Local defaults remain unchanged. Follow the repository workflow with one task/PR into develop per phase. Fine-tuning remains outside project scope.
 
 Architecture:
 Android HTTPS -> Cloud Run FastAPI -> prediction/SHAP/goals models + NumPy retrieval -> hosted query embedding and generation.
