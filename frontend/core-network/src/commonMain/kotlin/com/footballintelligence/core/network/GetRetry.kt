@@ -1,0 +1,54 @@
+package com.footballintelligence.core.network
+
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
+import kotlin.math.min
+import kotlin.random.Random
+
+/** Rate limited, or the server or its proxy briefly unavailable. */
+private val RETRYABLE_STATUSES = setOf(429, 502, 503, 504)
+private const val MAX_RETRIES = 2
+private const val BASE_WAIT_MS = 500L
+
+/** The longest the app waits before a retry, however long the server asks for. */
+internal const val MAX_WAIT_MS = 8_000L
+
+/**
+ * Whether a response may be retried. Only GETs, which change nothing on the
+ * server; a retried POST could send a chat message or a sign-in twice. A
+ * Retry-After longer than [MAX_WAIT_MS] is answered at once instead.
+ */
+internal fun isRetryable(method: HttpMethod, status: Int, retryAfterSeconds: Long?): Boolean =
+    method == HttpMethod.Get &&
+        status in RETRYABLE_STATUSES &&
+        (retryAfterSeconds == null || retryAfterSeconds * 1_000 <= MAX_WAIT_MS)
+
+/** Wait before retry number [retry]: Retry-After, else capped exponential backoff with full jitter. */
+internal fun retryDelayMs(retry: Int, retryAfterSeconds: Long?, random: Random): Long {
+    if (retryAfterSeconds != null) return retryAfterSeconds * 1_000
+    val ceiling = min(MAX_WAIT_MS, BASE_WAIT_MS shl min(retry, 4))
+    return random.nextLong(0, ceiling + 1)
+}
+
+/**
+ * Retries idempotent GETs that hit a 429, 502, 503 or 504, up to twice.
+ * Connection failures are not retried, so an unreachable server still falls
+ * back to saved data within the connect timeout.
+ */
+fun HttpClientConfig<*>.installGetRetry(random: Random = Random.Default) {
+    install(HttpRequestRetry) {
+        maxRetries = MAX_RETRIES
+        retryIf { request, response ->
+            isRetryable(request.method, response.status.value, response.retryAfterSeconds())
+        }
+        retryOnExceptionIf { _, _ -> false }
+        delayMillis(respectRetryAfterHeader = false) { retry ->
+            retryDelayMs(retry, response?.retryAfterSeconds(), random)
+        }
+    }
+}
+
+private fun HttpResponse.retryAfterSeconds(): Long? = headers[HttpHeaders.RetryAfter]?.trim()?.toLongOrNull()

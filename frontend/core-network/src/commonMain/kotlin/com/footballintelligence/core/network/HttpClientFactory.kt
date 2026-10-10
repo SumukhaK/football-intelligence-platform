@@ -18,6 +18,7 @@ object HttpClientFactory {
     fun create(config: NetworkConfig, session: AuthSession): HttpClient =
         HttpClient {
             install(bearerAuth(session))
+            installGetRetry()
             install(ContentNegotiation) {
                 json(
                     Json {
