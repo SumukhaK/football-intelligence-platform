@@ -1,0 +1,64 @@
+name: Container — Build and Smoke Test
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "Dockerfile"
+      - ".dockerignore"
+      - "ai/**"
+      - ".github/workflows/container.yml"
+  push:
+    branches: [develop]
+    paths:
+      - "Dockerfile"
+      - ".dockerignore"
+      - "ai/**"
+      - ".github/workflows/container.yml"
+
+jobs:
+  image:
+    name: Build image and probe it
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # CI has no artifacts, so it builds with an empty snapshot: the image
+      # must start, stay live, and report itself not ready.
+      - name: Create an empty snapshot
+        run: |
+          mkdir snapshot
+          # An empty file list hashes to the ID of the empty string.
+          sid=$(printf '' | sha256sum | cut -c1-16)
+          echo "{\"manifest_version\": 1, \"snapshot_id\": \"$sid\", \"files\": []}" > snapshot/manifest.json
+          cat snapshot/manifest.json
+
+      - name: Build
+        run: docker build --platform linux/amd64 -t football-api:ci .
+
+      - name: Run
+        run: |
+          docker run -d --name api -p 8080:8080 -e TELEMETRY_SALT=ci-salt football-api:ci
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:8080/v2/live && break
+            sleep 2
+          done
+
+      - name: Live answers 200
+        run: test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/v2/live)" = 200
+
+      - name: Ready answers 503 without artifacts
+        run: |
+          code=$(curl -s -o body.json -w '%{http_code}' http://localhost:8080/v2/ready)
+          cat body.json
+          test "$code" = 503
+          grep -q prediction_model body.json
+
+      - name: Runs as a non-root user that cannot change the code
+        run: |
+          test "$(docker exec api id -u)" = 10001
+          ! docker exec api touch /app/ai/backend/app/main.py
+
+      - name: Logs
+        if: always()
+        run: docker logs api 2>&1 | tail -50

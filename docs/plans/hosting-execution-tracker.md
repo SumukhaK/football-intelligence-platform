@@ -54,7 +54,7 @@ Evidence: baseline table in `docs/reports/hosting-baseline.md`.
 
 ## 1. Host the API: container and private staging
 
-- [ ] Dockerfile and `.dockerignore`: Python 3.12, non-root, artifacts copied read-only, no Ollama.
+- [x] Dockerfile and `.dockerignore`: Python 3.12, non-root, artifacts copied read-only, no Ollama.
 - [x] `/v2/live` and `/v2/ready`; `docs/api.md` updated.
 - [ ] Image pushed to Artifact Registry by digest.
 - [ ] Cloud Run staging: private, min 0, max 1, one worker, `LIVE_REFRESH_HOUR=off`, assistant off.
