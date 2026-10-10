@@ -332,6 +332,18 @@ ollama pull qwen2.5:7b-instruct
 uv run python -m assistant.pipeline --rebuild
 ```
 
+### Running the Backend in a Container
+
+The cloud image (ADR 025) serves from a snapshot of your local artifacts:
+
+```sh
+cd ai && uv run python -m scripts.build_snapshot --out ../snapshot && cd ..
+docker build --platform linux/amd64 -t football-api .
+docker run --rm -p 8080:8080 -e TELEMETRY_SALT=any-local-value football-api
+```
+
+`GET /v2/ready` answers 200 once every artifact loaded. The image runs as a non-root user with read-only files, the daily refresh off and the assistant off.
+
 ### Running Android
 
 ```sh

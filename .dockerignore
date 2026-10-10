@@ -1,0 +1,23 @@
+# Everything is excluded except what the API image copies (see Dockerfile).
+*
+!ai/
+!datasets/schemas/
+!snapshot/
+
+# Never in the image: secrets, local state, caches and anything not served.
+**/.env
+**/.env.*
+!ai/.env.example
+ai/.venv/
+ai/**/__pycache__/
+ai/.mypy_cache/
+ai/.pytest_cache/
+ai/.ruff_cache/
+ai/.coverage
+ai/accounts/
+ai/tests/
+ai/models/
+ai/datasets/
+ai/explanations/
+ai/assistant/vector_store/
+ai/docs/
