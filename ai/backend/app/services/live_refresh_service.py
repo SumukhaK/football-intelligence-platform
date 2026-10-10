@@ -17,6 +17,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from shared.telemetry.events import EventName, emit
+from shared.telemetry.tracing import tracer
 
 logger = logging.getLogger(__name__)
 
@@ -68,8 +69,7 @@ class LiveRefreshService:
         """Refresh the data and reload the services; never raises."""
         attempted = self._clock()
         try:
-            dataset = self._refresh()
-            self._reload()
+            dataset = self._traced_refresh()
         except Exception as exc:  # noqa: BLE001 — keep serving the old data
             outcome = RefreshOutcome(attempted, None, str(exc))
         else:
@@ -77,6 +77,15 @@ class LiveRefreshService:
         self._log(outcome)
         self.last_outcome = outcome
         return outcome
+
+    def _traced_refresh(self) -> Path:
+        """Run both steps under one ``refresh.run`` trace, each in its own span."""
+        with tracer().start_as_current_span("refresh.run"):
+            with tracer().start_as_current_span("refresh.download"):
+                dataset = self._refresh()
+            with tracer().start_as_current_span("refresh.reload"):
+                self._reload()
+        return dataset
 
     def _log(self, outcome: RefreshOutcome) -> None:
         """Log ``refresh.run``, and the fallback to old data when it failed."""

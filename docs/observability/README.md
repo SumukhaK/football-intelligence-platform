@@ -14,6 +14,21 @@ The backend implements it in `ai/shared/telemetry/` and
 `ai/backend/app/middleware/request_context.py`. Set `LOG_FORMAT=json` to get
 the contract's log lines; plain text stays the local default.
 
+Traces are off unless `TRACE_EXPORTER` is `otlp` (a local collector at
+`OTLP_ENDPOINT`) or `gcp` (Cloud Trace). `ai/shared/telemetry/tracing.py` sets
+up the provider; `main.py` adds one server span per request (not `/health` or
+the docs pages). Child spans:
+
+| Span | Where |
+|---|---|
+| `assistant.route`, `assistant.retrieve`, `assistant.embed`, `assistant.generate`, `assistant.tool.<name>` | `assistant/services/assistant_service.py` |
+| `refresh.run` (the refresh's root), `refresh.download`, `refresh.reload` | `backend/app/services/live_refresh_service.py` |
+
+Inside a sampled span, JSON log lines carry `trace_id`,
+`logging.googleapis.com/spanId` and, with `GCP_PROJECT_ID` set,
+`logging.googleapis.com/trace`. The request span's query string is dropped and
+its client address replaced by the `client_ref` hash.
+
 Where each event is emitted:
 
 | Event | Where |
@@ -26,7 +41,7 @@ Where each event is emitted:
 | `refresh.run`, `fallback` (refresh) | `backend/app/services/live_refresh_service.py` |
 | `assistant.answer`, `assistant.tool`, `assistant.abstain`, `fallback` (tools) | `assistant/services/assistant_service.py` |
 
-`dependency.call` and `retry` come with tracing (M5); `guardrail.event` with
+`dependency.call`, `retry` and the `dependency.<name>` spans come in M5; `guardrail.event` with
 hosting step 3b. `ai/tests/shared/telemetry/test_contract_conformance.py`
 checks every event the tests emit against `telemetry-events.json`, and
 `ai/tests/backend/test_log_privacy.py` checks that no question or email is

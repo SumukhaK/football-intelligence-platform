@@ -11,6 +11,7 @@ from functools import partial
 from pathlib import Path
 
 from fastapi import FastAPI
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 from backend.app.config import Settings, get_settings
 from backend.app.exceptions import (
@@ -55,10 +56,17 @@ from backend.app.startup_telemetry import load_component, log_fallback, log_fres
 from model_registry.registry import ModelRegistry
 from shared.telemetry.privacy import hash_ref
 from shared.telemetry.setup import configure_logging
+from shared.telemetry.tracing import (
+    configure_tracing,
+    scrub_server_span,
+    shutdown_tracing,
+)
 
 logger = logging.getLogger(__name__)
 # The `service` field on every JSON log line (telemetry contract section 1).
 TELEMETRY_SERVICE = "football-api"
+# Probes and docs pages would only add noise to the traces.
+_UNTRACED_URLS = "health,docs,redoc,openapi.json"
 
 
 @asynccontextmanager
@@ -87,6 +95,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if refresh_task is not None:
         refresh_task.cancel()
     logger.info("Shutting down Football Intelligence backend.")
+    shutdown_tracing(app.state.tracer_provider)
 
 
 def _load_models(app: FastAPI, settings: Settings, registry: ModelRegistry) -> None:
@@ -267,7 +276,24 @@ def create_app() -> FastAPI:
         )
     # Added last so it is the outermost layer and 429s get an ID too.
     app.add_middleware(RequestContextMiddleware)
+    _instrument(app, settings)
     return app
+
+
+def _instrument(app: FastAPI, settings: Settings) -> None:
+    """Trace every request when an exporter is set; before start, so it wraps all."""
+    provider = configure_tracing(settings)
+    app.state.tracer_provider = provider
+    if provider is None:
+        return
+    FastAPIInstrumentor.instrument_app(
+        app,
+        tracer_provider=provider,
+        excluded_urls=_UNTRACED_URLS,
+        server_request_hook=scrub_server_span(settings.telemetry_salt),
+        # Per-message ASGI spans would double the span count and explain nothing.
+        exclude_spans=["receive", "send"],
+    )
 
 
 app = create_app()

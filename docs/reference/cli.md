@@ -515,7 +515,10 @@ Set them in `ai/.env` (copy `ai/.env.example`). Every value below is the default
 | `API_VERSION` | `2.0.0` | API version string returned in `/health` |
 | `LOG_LEVEL` | `INFO` | Logging level |
 | `LOG_FORMAT` | `text` | `json` writes one JSON object per log line in the telemetry contract's format (ADR 024) |
-| `GCP_PROJECT_ID` | unset | Google Cloud project, used for the trace field on JSON log lines |
+| `GCP_PROJECT_ID` | unset | Google Cloud project, used for the trace field on JSON log lines and by `TRACE_EXPORTER=gcp` |
+| `TRACE_EXPORTER` | `none` | Where request traces go: `none`, `otlp` (a local collector) or `gcp` (Cloud Trace, needs `GCP_PROJECT_ID`) (ADR 024) |
+| `OTLP_ENDPOINT` | `http://localhost:4318/v1/traces` | OTLP/HTTP traces endpoint used when `TRACE_EXPORTER=otlp` |
+| `TRACE_SAMPLE_RATIO` | `1.0` | Share of requests traced, 0 to 1; logs and errors stay complete when lowered |
 | `K_REVISION` | unset | Set by Cloud Run; logged as `revision` on JSON log lines |
 | `TELEMETRY_SALT` | `local-dev-salt` | Key for the `user_ref` and `client_ref` hashes in logs; a secret in the cloud |
 | `RATE_LIMIT_PER_MINUTE` | `120` | Requests per minute per client before a 429; `off` turns it off (ADR 014) |
