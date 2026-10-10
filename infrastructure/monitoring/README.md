@@ -22,6 +22,8 @@ infrastructure/monitoring/apply.sh
 
 Running it again updates the metrics in place and recreates each policy, so there is always exactly one of each. Metrics only count log lines written after they exist.
 
+After the first apply, send a few requests and check in Metrics Explorer that `api_requests` has a `status_class` label (it is extracted from the numeric `status` field) and that the PromQL alerts show data, since those two parts cannot be checked without a project.
+
 ## Remove
 
 ```sh
