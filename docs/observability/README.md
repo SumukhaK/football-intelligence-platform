@@ -9,6 +9,10 @@ writes to its logs and traces, and what the ops console may read from them.
 - [`telemetry-events.json`](telemetry-events.json): the machine-readable copy
   of the event catalogue. `ai/tests/docs/test_telemetry_contract.py` checks
   that it lists the same events as the markdown catalogue.
+- [`local-stack.md`](local-stack.md): run Grafana and a trace store locally
+  and follow one request from its log line to its trace.
+- [`../../infrastructure/monitoring/`](../../infrastructure/monitoring/README.md):
+  the cloud log-based metrics and alert policies, with scripts to apply them.
 
 The backend implements it in `ai/shared/telemetry/` and
 `ai/backend/app/middleware/request_context.py`. Set `LOG_FORMAT=json` to get

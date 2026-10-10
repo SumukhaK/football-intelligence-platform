@@ -344,6 +344,10 @@ docker run --rm -p 8080:8080 -e TELEMETRY_SALT=any-local-value football-api
 
 `GET /v2/ready` answers 200 once every artifact loaded. The image runs as a non-root user with read-only files, the daily refresh off and the assistant off.
 
+### Local Traces and Dashboards
+
+`docker compose -f docker-compose.observability.yml up -d` starts Grafana with a trace store on your machine. Set `TRACE_EXPORTER=otlp` and `LOG_FORMAT=json` in `ai/.env` to send the API's traces there; [docs/observability/local-stack.md](docs/observability/local-stack.md) shows how to follow one request from its log line to its trace. The cloud metrics and alerts are defined in [`infrastructure/monitoring/`](infrastructure/monitoring/README.md).
+
 ### Running Android
 
 ```sh

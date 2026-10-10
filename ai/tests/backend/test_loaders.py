@@ -71,7 +71,7 @@ def test_provider_off_loads_no_assistant(tmp_path: Path) -> None:
     from backend.app.main import create_app
 
     settings = Settings(
-        assistant_provider="off",
+        assistant_provider=None,
         model_path=tmp_path / "none.joblib",
         registry_path=tmp_path / "none.json",
         live_refresh_hour=None,
@@ -95,3 +95,10 @@ def test_a_trailing_newline_on_the_token_is_dropped(tmp_path: Path) -> None:
     service = load_assistant(settings, SimpleNamespace())
     client = service._service._generator._client  # type: ignore[attr-defined]
     assert client._headers == {"Authorization": "Bearer token"}
+
+
+def test_off_in_the_environment_turns_the_assistant_off(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("ASSISTANT_PROVIDER", "off")
+    assert Settings().assistant_provider is None

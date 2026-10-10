@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+# A football question fits easily; longer input only costs model tokens.
+MAX_MESSAGE_CHARS = 1000
+
 
 class ChatRequest(BaseModel):
     """Input for POST /assistant/chat."""
@@ -11,6 +14,7 @@ class ChatRequest(BaseModel):
     message: str = Field(
         ...,
         min_length=1,
+        max_length=MAX_MESSAGE_CHARS,
         description="The user's question or message to the assistant.",
         examples=["What was the model's test accuracy?"],
     )

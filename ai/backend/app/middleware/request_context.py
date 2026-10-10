@@ -71,7 +71,10 @@ class RequestContextMiddleware:
             nonlocal status
             if message["type"] == "http.response.start":
                 status = message["status"]
-                MutableHeaders(scope=message).append(REQUEST_ID_HEADER, request_id)
+                headers = MutableHeaders(scope=message)
+                headers.append(REQUEST_ID_HEADER, request_id)
+                # Every body is JSON; stop browsers guessing another type.
+                headers.append("X-Content-Type-Options", "nosniff")
             await send(message)
 
         try:

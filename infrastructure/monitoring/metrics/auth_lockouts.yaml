@@ -1,0 +1,9 @@
+name: auth_lockouts
+description: Sign-ins refused because the email is locked out (auth.event).
+filter: >-
+  resource.type="cloud_run_revision" AND resource.labels.service_name=("football-api" OR "football-api-staging")
+  AND jsonPayload.event="auth.event"
+  AND jsonPayload.attributes.outcome="locked_out"
+metricDescriptor:
+  metricKind: DELTA
+  valueType: INT64

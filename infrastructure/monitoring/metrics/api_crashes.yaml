@@ -1,0 +1,8 @@
+name: api_crashes
+description: Unhandled exceptions answered with a 500 (app.crash).
+filter: >-
+  resource.type="cloud_run_revision" AND resource.labels.service_name=("football-api" OR "football-api-staging")
+  AND jsonPayload.event="app.crash"
+metricDescriptor:
+  metricKind: DELTA
+  valueType: INT64

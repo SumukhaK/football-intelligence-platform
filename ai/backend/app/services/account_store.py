@@ -1,8 +1,8 @@
 """Storage for accounts, invites and sessions (ADR 022).
 
-``AccountStore`` is the interface; ``JsonAccountStore`` keeps everything in one
-JSON file, enough for local use, tests and a single-instance staging service.
-A Firestore store follows with the hosting tracker's cloud storage step.
+``AccountStore`` is the interface. ``JsonAccountStore`` keeps everything in one
+JSON file, enough for local use and tests. ``FirestoreAccountStore`` keeps it in
+Firestore, which survives Cloud Run restarts and scale to zero (ADR 026).
 """
 
 from __future__ import annotations
@@ -12,7 +12,10 @@ import os
 import threading
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
+
+if TYPE_CHECKING:
+    from backend.app.config import Settings
 
 
 @dataclass
@@ -140,3 +143,82 @@ class JsonAccountStore:
             temporary = self._path.with_suffix(".tmp")
             temporary.write_text(json.dumps(data, indent=2), encoding="utf-8")
             os.replace(temporary, self._path)
+
+
+class FirestoreAccountStore:
+    """Users, invites and sessions as Firestore documents (ADR 026).
+
+    Each kind is a collection keyed like the JSON store: users and invites by
+    email, sessions by token hash. ``client`` is a ``firestore.Client``.
+    """
+
+    def __init__(self, client: Any, prefix: str = "") -> None:
+        """Use ``client``; ``prefix`` keeps staging and prod collections apart."""
+        self._client = client
+        self._prefix = prefix
+
+    def get_user(self, email: str) -> User | None:
+        """The user with ``email``, or None."""
+        row = self._get("users", email)
+        return User(**row) if row else None
+
+    def save_user(self, user: User) -> None:
+        """Create or replace a user."""
+        self._set("users", user.email, asdict(user))
+
+    def get_invite(self, email: str) -> Invite | None:
+        """The latest invite for ``email``, or None."""
+        row = self._get("invites", email)
+        return Invite(**row) if row else None
+
+    def save_invite(self, invite: Invite) -> None:
+        """Create or replace the invite for its email."""
+        self._set("invites", invite.email, asdict(invite))
+
+    def get_session(self, token_hash: str) -> Session | None:
+        """The session with ``token_hash``, or None."""
+        row = self._get("sessions", token_hash)
+        return Session(**row) if row else None
+
+    def save_session(self, session: Session) -> None:
+        """Create or replace a session."""
+        self._set("sessions", session.token_hash, asdict(session))
+
+    def sessions_for(self, email: str) -> list[Session]:
+        """Every session of ``email``."""
+        from google.cloud.firestore_v1.base_query import FieldFilter
+
+        query = self._collection("sessions").where(
+            filter=FieldFilter("email", "==", email)
+        )
+        return [Session(**doc.to_dict()) for doc in query.stream()]
+
+    def _collection(self, name: str) -> Any:
+        return self._client.collection(self._prefix + name)
+
+    def _get(self, collection: str, key: str) -> dict[str, Any] | None:
+        snapshot = self._collection(collection).document(_document_id(key)).get()
+        row: dict[str, Any] | None = snapshot.to_dict() if snapshot.exists else None
+        return row
+
+    def _set(self, collection: str, key: str, row: dict[str, Any]) -> None:
+        self._collection(collection).document(_document_id(key)).set(row)
+
+
+def _document_id(key: str) -> str:
+    """``key`` as a Firestore document ID, which may not contain a slash."""
+    if "/" in key or key in {"", ".", ".."}:
+        raise ValueError("Account keys cannot be used as Firestore document IDs")
+    return key
+
+
+def make_account_store(settings: Settings) -> AccountStore:
+    """The store ``ACCOUNT_STORE`` names: the JSON file or Firestore."""
+    if settings.account_store == "json":
+        return JsonAccountStore(settings.accounts_path)
+    from google.cloud import firestore
+
+    client = firestore.Client(
+        project=settings.gcp_project_id, database=settings.firestore_database
+    )
+    return FirestoreAccountStore(client, settings.firestore_collection_prefix)
