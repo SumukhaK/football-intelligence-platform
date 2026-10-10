@@ -21,6 +21,9 @@ class Settings(BaseSettings):
         case_sensitive=False,
         # Lets LIVE_REFRESH_HOUR=off and RATE_LIMIT_PER_MINUTE=off turn those off.
         env_parse_none_str="off",
+        # ai/.env is shared by all three settings classes, so each ignores the
+        # keys that belong to the others.
+        extra="ignore",
     )
 
     model_path: Path = Path("../ai/models/latest/model.joblib")
