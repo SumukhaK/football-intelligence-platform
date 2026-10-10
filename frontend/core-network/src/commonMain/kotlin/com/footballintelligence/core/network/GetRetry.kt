@@ -12,6 +12,10 @@ import kotlin.random.Random
 private val RETRYABLE_STATUSES = setOf(429, 502, 503, 504)
 private const val MAX_RETRIES = 2
 private const val BASE_WAIT_MS = 500L
+private const val MS_PER_SECOND = 1_000L
+
+// 500 ms doubled four times already passes the cap.
+private const val MAX_DOUBLINGS = 4
 
 /** The longest the app waits before a retry, however long the server asks for. */
 internal const val MAX_WAIT_MS = 8_000L
@@ -24,12 +28,12 @@ internal const val MAX_WAIT_MS = 8_000L
 internal fun isRetryable(method: HttpMethod, status: Int, retryAfterSeconds: Long?): Boolean =
     method == HttpMethod.Get &&
         status in RETRYABLE_STATUSES &&
-        (retryAfterSeconds == null || retryAfterSeconds * 1_000 <= MAX_WAIT_MS)
+        (retryAfterSeconds == null || retryAfterSeconds * MS_PER_SECOND <= MAX_WAIT_MS)
 
 /** Wait before retry number [retry]: Retry-After, else capped exponential backoff with full jitter. */
 internal fun retryDelayMs(retry: Int, retryAfterSeconds: Long?, random: Random): Long {
-    if (retryAfterSeconds != null) return retryAfterSeconds * 1_000
-    val ceiling = min(MAX_WAIT_MS, BASE_WAIT_MS shl min(retry, 4))
+    if (retryAfterSeconds != null) return retryAfterSeconds * MS_PER_SECOND
+    val ceiling = min(MAX_WAIT_MS, BASE_WAIT_MS shl min(retry, MAX_DOUBLINGS))
     return random.nextLong(0, ceiling + 1)
 }
 
