@@ -1,0 +1,33 @@
+{
+  "displayName": "football-api: component failed to load",
+  "documentation": {
+    "content": "A component failed or degraded while loading (`component.load`), so its endpoints answer 503 and `/v2/ready` may fail.\n\nFirst check: the `reason` on the `component.load` line, then whether the snapshot verified at build time and the revision's artifact paths.",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "Any component failure",
+      "conditionThreshold": {
+        "filter": "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/component_failures\"",
+        "aggregations": [
+          {
+            "alignmentPeriod": "300s",
+            "perSeriesAligner": "ALIGN_DELTA",
+            "crossSeriesReducer": "REDUCE_SUM"
+          }
+        ],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 0,
+        "duration": "0s",
+        "trigger": {
+          "count": 1
+        }
+      }
+    }
+  ],
+  "alertStrategy": {
+    "autoClose": "86400s"
+  },
+  "severity": "ERROR"
+}

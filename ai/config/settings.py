@@ -27,6 +27,9 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        # ai/.env is shared by all three settings classes, so each ignores the
+        # keys that belong to the others.
+        extra="ignore",
     )
 
     datasets_base_dir: Path = Field(

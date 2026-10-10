@@ -40,7 +40,9 @@ class ChatResponse(BaseModel):
     confidence: float = Field(
         ..., ge=0.0, le=1.0, description="Proxy confidence based on retrieval score."
     )
-    model: str = Field(..., description="Ollama model used for generation.")
+    model: str = Field(
+        ..., description="Chat model that wrote the answer, or 'router'."
+    )
     retrieved_count: int = Field(
         ..., ge=0, description="Number of document chunks retrieved."
     )

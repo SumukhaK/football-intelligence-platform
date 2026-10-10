@@ -64,3 +64,24 @@ class TestSettings:
         monkeypatch.setenv("FOOTBALL_AI_LOG_LEVEL", "DEBUG")
         settings = Settings()
         assert settings.log_level == "DEBUG"
+
+
+def test_every_settings_class_reads_a_shared_env_file(tmp_path: Path) -> None:
+    """Keys meant for one settings class do not stop the others from loading."""
+    from assistant.configuration import AssistantSettings
+    from backend.app.config import Settings as BackendSettings
+
+    env = tmp_path / ".env"
+    env.write_text(
+        "MODEL_PATH=m.joblib\n"
+        "OLLAMA_CHAT_MODEL=qwen2.5:7b-instruct\n"
+        "FOOTBALL_AI_LOG_LEVEL=DEBUG\n"
+        "SOME_OTHER_TOOL_KEY=value\n",
+        encoding="utf-8",
+    )
+    assert Settings(_env_file=env).log_level == "DEBUG"  # type: ignore[call-arg]
+    assert BackendSettings(_env_file=env).model_path == Path("m.joblib")  # type: ignore[call-arg]
+    assert (
+        AssistantSettings(_env_file=env).ollama_chat_model  # type: ignore[call-arg]
+        == "qwen2.5:7b-instruct"
+    )

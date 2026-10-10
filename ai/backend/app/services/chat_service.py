@@ -18,7 +18,7 @@ class ChatService:
 
         Raises:
             :class:`AssistantNotAvailableError`: When the underlying service
-                raises a runtime error (Ollama down, empty index, etc.).
+                raises a runtime error (provider down, empty index, etc.).
         """
         try:
             result = self._service.chat(request.message)  # type: ignore[attr-defined]

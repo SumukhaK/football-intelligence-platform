@@ -49,7 +49,7 @@ football-intelligence-platform/
 - `PULL_REQUEST_TEMPLATE.md` — standard PR description template.
 - `CODEOWNERS` — code ownership assignments.
 
-**Does not own:** deployment scripts (those belong in `scripts/`) or infrastructure config (that belongs in `infrastructure/`, which is an empty placeholder today).
+**Does not own:** deployment scripts (those belong in `scripts/`) or infrastructure config (that belongs in `infrastructure/`).
 
 ---
 
@@ -188,7 +188,7 @@ Today it holds only a `README.md` and empty `stage-*/` and `templates/` folders 
 
 ## `infrastructure/`
 
-**Purpose:** Empty placeholder (`.gitkeep` only) for future deployment configuration.
+**Purpose:** Cloud configuration as code. `monitoring/` holds the Cloud Logging log-based metrics and Cloud Monitoring alert policies, with scripts to apply and remove them (ADR 024).
 
 ---
 
@@ -222,7 +222,7 @@ Today it holds only a `README.md` and empty `stage-*/` and `templates/` folders 
 | `docs/` | Markdown | Manual | All project documentation |
 | `frontend/` | Kotlin | Gradle | Compose Multiplatform Android app |
 | `ai/models/` | JSON, joblib | Training pipeline | Trained model artifacts and registry (gitignored) |
-| `infrastructure/` | — | — | Empty placeholder |
+| `infrastructure/` | YAML, JSON, Shell | Manual | Cloud metrics and alerts as code |
 | `playbook/` | Markdown | Manual | Placeholder for prompt templates |
 | `scripts/` | Shell, Python | Manual | Repository automation |
 | `tools/` | Any | Manual | Shared CLI utilities |

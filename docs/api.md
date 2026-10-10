@@ -110,6 +110,25 @@ refresh (ADR 013); both are null until one has run.
 requests may omit `features` (ADR 008). `insights_available` is true when the
 goals model was fitted at startup, so `POST /insights` works.
 
+## GET /v2/live and GET /v2/ready
+
+Probes for the hosting platform (ADR 025). Both exist only under `/v2`, stay
+open when `AUTH_REQUIRED` is on, and are never rate limited.
+
+`/v2/live` answers `{"status": "alive"}` whenever the process serves requests.
+
+`/v2/ready` answers `{"status": "ready"}` when every component predictions
+need loaded at startup: the prediction model, the explainer, the match
+history, the goals models, the fixtures and the season outlook. Otherwise it
+answers 503:
+
+```json
+{"error": "Not ready", "detail": "Components not loaded: prediction_model"}
+```
+
+Neither probe calls the assistant's model provider, so a provider outage
+never marks the API unready. `/health` stays the place for diagnostics.
+
 ## GET /model
 
 Registry entry of the served model: `model_version`, `dataset_version`,
@@ -400,12 +419,18 @@ Errors:
 ## POST /assistant/chat
 
 Retrieval-augmented answers about the project's data and models. Returns 503
-when the assistant's vector store or Ollama is unavailable.
+when the assistant is turned off, its vector store is missing, or its model
+provider is unreachable, out of quota or too slow. Predictions keep working.
+
+`ASSISTANT_PROVIDER` chooses who answers (ADR 025): `ollama` (the default),
+`workers_ai` (Cloudflare Workers AI, using `WORKERS_AI_ACCOUNT_ID`,
+`WORKERS_AI_API_TOKEN`, `WORKERS_AI_CHAT_MODEL` and `WORKERS_AI_EMBED_MODEL`)
+or `off`. `model` in the response names the chat model that wrote the answer.
 
 For a match prediction, its SHAP explanation or a league's upcoming fixtures,
 the assistant calls tools that run the same services as `/v2/predict`,
 `/v2/explain` and `/v2/fixtures`, so it quotes the latest model's numbers
-(ADR 018). `OLLAMA_CHAT_MODEL` must name a model that supports tool calling.
+(ADR 018). The chat model must support tool calling.
 The request and response bodies are unchanged.
 
 It can also answer season questions through internal tools: a team's results

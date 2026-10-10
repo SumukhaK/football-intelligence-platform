@@ -1,0 +1,15 @@
+# Local logs, traces and dashboards with no cloud account (ADR 024, M6).
+# Start: docker compose -f docker-compose.observability.yml up -d
+# Guide: docs/observability/local-stack.md
+services:
+  lgtm:
+    image: grafana/otel-lgtm:0.34.0
+    ports:
+      - "3000:3000" # Grafana
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP, where the API sends traces
+    volumes:
+      - lgtm-data:/data
+
+volumes:
+  lgtm-data:
