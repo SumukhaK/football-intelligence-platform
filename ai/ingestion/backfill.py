@@ -88,7 +88,7 @@ class HistoryBackfill:
     ) -> None:
         self._provider = provider
         self._storage = storage
-        self._transport: HttpTransport = transport or HttpxTransport()
+        self._transport: HttpTransport = transport or HttpxTransport("football_data")
         self._normalizer = normalizer or MatchNormalizer()
         self._max_failed_ratio = max_failed_ratio
 

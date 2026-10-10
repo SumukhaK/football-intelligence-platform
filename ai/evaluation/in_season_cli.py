@@ -78,7 +78,7 @@ def _build_matrix(args: argparse.Namespace, out: Path) -> pd.DataFrame:
     current = fetch_in_progress(
         FootballDataProvider(),
         DatasetStorage(DataPaths(base_dir=base_dir)),
-        HttpxTransport(),
+        HttpxTransport("football_data"),
         args.divisions,
         args.season,
         date.today(),

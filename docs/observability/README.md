@@ -23,6 +23,7 @@ the docs pages). Child spans:
 |---|---|
 | `assistant.route`, `assistant.retrieve`, `assistant.embed`, `assistant.generate`, `assistant.tool.<name>` | `assistant/services/assistant_service.py` |
 | `refresh.run` (the refresh's root), `refresh.download`, `refresh.reload` | `backend/app/services/live_refresh_service.py` |
+| `dependency.<name>` (one per attempt, with a `retry` span event before each retry) | `shared/telemetry/retry.py` |
 
 Inside a sampled span, JSON log lines carry `trace_id`,
 `logging.googleapis.com/spanId` and, with `GCP_PROJECT_ID` set,
@@ -40,8 +41,13 @@ Where each event is emitted:
 | `auth.event` | `backend/app/services/account_service.py` |
 | `refresh.run`, `fallback` (refresh) | `backend/app/services/live_refresh_service.py` |
 | `assistant.answer`, `assistant.tool`, `assistant.abstain`, `fallback` (tools) | `assistant/services/assistant_service.py` |
+| `dependency.call`, `retry` | `shared/telemetry/retry.py`, used by `ingestion/downloader.py` (`HttpxTransport`) |
 
-`dependency.call`, `retry` and the `dependency.<name>` spans come in M5; `guardrail.event` with
+Downloads from football-data.co.uk (`football_data`) and openfootball
+(`openfootball`) retry timeouts, connection errors, 429 (honouring a numeric
+`Retry-After`) and 500/502/503/504 with full-jitter backoff, up to
+`FOOTBALL_AI_HTTP_MAX_RETRIES` retries. Ollama calls are not retried yet; the
+hosted provider adapter will use the same helper. `guardrail.event` comes with
 hosting step 3b. `ai/tests/shared/telemetry/test_contract_conformance.py`
 checks every event the tests emit against `telemetry-events.json`, and
 `ai/tests/backend/test_log_privacy.py` checks that no question or email is
