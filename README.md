@@ -1,6 +1,6 @@
 # Football Intelligence Platform
 
-**[Explore the project website](https://sumukhak.github.io/football-intelligence-platform/)** · [Website source and publishing guide](docs/site/README.md)
+**[Explore the project website](https://fip-ai.dev/)** · [Website source and publishing guide](docs/site/README.md)
 
 **An AI-first football analytics platform — from raw match data to an explainable, grounded, mobile-native prediction experience.**
 

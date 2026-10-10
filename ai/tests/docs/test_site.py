@@ -39,3 +39,11 @@ def test_checker_rejects_root_relative_urls(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     assert CHECK(tmp_path) == ["Root-relative URL breaks project Pages: /styles.css"]
+
+
+def test_custom_domain_matches_canonical_url() -> None:
+    """Publishing replaces gh-pages, so CNAME must match the page's canonical URL."""
+    site = ROOT / "docs" / "site"
+    domain = (site / "CNAME").read_text(encoding="utf-8").strip()
+    page = (site / "index.html").read_text(encoding="utf-8")
+    assert f'rel="canonical" href="https://{domain}/"' in page

@@ -1,7 +1,7 @@
 # Project website
 
 A compact, static introduction to Football Intelligence Platform, published at
-https://sumukhak.github.io/football-intelligence-platform/.
+https://fip-ai.dev/.
 
 ## Pitch and design
 
@@ -36,14 +36,22 @@ documents and application data are not exposed as website files.
 Commit site changes first, then run from the repository root:
 
     python scripts/check_site.py
+    git fetch origin gh-pages
     git subtree split --prefix=docs/site --branch=site-publish
-    git push origin site-publish:gh-pages
-    git branch -d site-publish
+    git push --force-with-lease=gh-pages:origin/gh-pages origin site-publish:gh-pages
+    git branch -D site-publish
+
+gh-pages holds generated output only, so each publish replaces it. Make every
+change in docs/site, never on gh-pages: a commit made there, including the one
+GitHub's Pages settings make when the domain changes, is lost on the next publish.
 
 GitHub Pages serves the root of gh-pages with HTTPS.
 The .nojekyll file disables Jekyll processing. Publish after site changes;
 merging a source PR alone does not republish it. No deployment token is stored.
 
-For a custom domain, configure it in GitHub Pages settings, add the DNS records,
-and update canonical and social URLs in index.html. A domain and matching email
-are separate from this website; neither is purchased or configured here.
+## Custom domain
+
+The site is served at fip-ai.dev. The CNAME file in docs/site carries the
+domain, so every publish keeps it. To change the domain, edit CNAME and the
+canonical and social URLs in index.html, update the DNS records, then publish.
+A test checks that CNAME and the canonical URL agree.
