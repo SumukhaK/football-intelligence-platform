@@ -31,13 +31,9 @@ jobs:
           uv export --frozen --extra dev --no-emit-project --format requirements-txt > requirements.txt
           uvx pip-audit@2.7.3 --disable-pip --require-hashes -r requirements.txt
 
-  gradle-graph:
-    name: Gradle (submit dependency graph)
-    # The graph feeds GitHub's advisories and the review below.
-    if: github.event_name == 'push'
+  gradle:
+    name: Gradle (OSV-Scanner)
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -46,21 +42,21 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Submit the Gradle dependency graph
-        uses: gradle/actions/dependency-submission@v4
-        with:
-          build-root-directory: frontend
-        env:
-          ORG_GRADLE_PROJECT_stagingBaseUrl: https://staging.invalid
+      # Records the shipped app's release runtime dependencies, all modules'
+      # included, in app/gradle.lockfile; the build itself is not locked.
+      - name: Resolve release dependencies
+        working-directory: frontend
+        run: >
+          ./gradlew --no-daemon --no-configuration-cache
+          --init-script ../.github/scripts/lock-all.gradle.kts
+          :app:resolveReleaseDependencies --write-locks
+          -PstagingBaseUrl=https://staging.invalid
 
-  review:
-    name: Dependency review (all ecosystems)
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+      - name: Install OSV-Scanner
+        run: |
+          curl -sSfL -o osv-scanner https://github.com/google/osv-scanner/releases/download/v2.5.1/osv-scanner_linux_amd64
+          echo "f9f25499a2c8cc367b3af45df2ea7eeca7fbccceab9c35079968f4b3652194be  osv-scanner" | sha256sum -c -
+          chmod +x osv-scanner
 
-      # Fails a pull request that adds a dependency with a known advisory.
-      - uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: moderate
+      - name: Scan
+        run: ./osv-scanner scan source --lockfile frontend/app/gradle.lockfile
