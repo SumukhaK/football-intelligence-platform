@@ -1,0 +1,22 @@
+{
+  "displayName": "football-api: data refresh failing",
+  "documentation": {
+    "content": "The data refresh failed twice within 26 hours, so match data is going stale.\n\nFirst check: the `error` on the `refresh.run` lines and `dependency.call` failures for `football_data` and `openfootball`.",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "2+ refresh failures in 26 hours",
+      "conditionPrometheusQueryLanguage": {
+        "query": "sum(increase(logging_googleapis_com:user_refresh_failures{monitored_resource=\"cloud_run_revision\"}[26h])) >= 2",
+        "duration": "0s",
+        "evaluationInterval": "60s"
+      }
+    }
+  ],
+  "alertStrategy": {
+    "autoClose": "86400s"
+  },
+  "severity": "ERROR"
+}
