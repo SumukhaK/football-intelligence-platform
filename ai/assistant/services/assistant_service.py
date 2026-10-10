@@ -18,7 +18,7 @@ from assistant.generation.generator import (
     ToolCall,
     ToolCallingGenerator,
 )
-from assistant.prompting.templates import build_messages
+from assistant.prompting.templates import DEFAULT_MIN_RELEVANCE, build_messages
 from assistant.retrieval.retriever import RetrievedDoc, retrieve
 from assistant.retrieval.vector_store import VectorStore
 from assistant.tools.routing import Route, Router
@@ -101,8 +101,12 @@ class AssistantService:
         today: Callable[[], date] = date.today,
         router: Router | None = None,
         clock: Callable[[], float] = time.monotonic,
+        min_relevance: float = DEFAULT_MIN_RELEVANCE,
     ) -> None:
-        """Initialise with injected components, optional tools and a router."""
+        """Initialise with injected components, optional tools and a router.
+
+        ``min_relevance`` is the index's retrieval cut-off (ADR 025).
+        """
         self._embedder = embedder
         self._generator = generator
         self._store = store
@@ -112,6 +116,7 @@ class AssistantService:
         self._today = today
         self._router = router
         self._clock = clock
+        self._min_relevance = min_relevance
 
     def chat(self, question: str) -> AssistantResponse:
         """Answer *question* using RAG over the local knowledge base.
@@ -142,7 +147,9 @@ class AssistantService:
         # on other questions it made the 7B model refuse documented answers.
         today = self._today() if route is not None else None
         messages: list[dict[str, Any]] = list(
-            build_messages(question, retrieved, today=today)
+            build_messages(
+                question, retrieved, min_relevance=self._min_relevance, today=today
+            )
         )
         if route is not None:
             self._run_calls(messages, route.calls, turn)

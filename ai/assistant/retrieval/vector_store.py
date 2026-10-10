@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import numpy as np
@@ -14,6 +15,19 @@ logger = logging.getLogger(__name__)
 
 _EMBEDDINGS_FILE = "embeddings.npy"
 _DOCUMENTS_FILE = "documents.json"
+_INFO_FILE = "index.json"
+
+
+@dataclass(frozen=True)
+class IndexInfo:
+    """How an index was built: its embedding model and relevance cut-off.
+
+    Query vectors must come from ``embed_model``, and ``min_relevance`` was
+    measured for that model, so both travel with the index (ADR 025).
+    """
+
+    embed_model: str
+    min_relevance: float
 
 
 class VectorStore:
@@ -27,6 +41,8 @@ class VectorStore:
         """Initialise an empty store."""
         self._documents: list[Document] = []
         self._embeddings: np.ndarray = np.empty((0, 0), dtype=np.float32)
+        # None for an index built before it recorded its embedding model.
+        self.info: IndexInfo | None = None
 
     # ------------------------------------------------------------------
     # Mutation
@@ -91,6 +107,10 @@ class VectorStore:
         (path / _DOCUMENTS_FILE).write_text(
             json.dumps(doc_list, indent=2), encoding="utf-8"
         )
+        if self.info is not None:
+            (path / _INFO_FILE).write_text(
+                json.dumps(asdict(self.info), indent=2), encoding="utf-8"
+            )
         logger.info("Saved vector store: %d documents → %s", len(self._documents), path)
 
     @classmethod
@@ -107,5 +127,8 @@ class VectorStore:
         store._embeddings = np.load(emb_path).astype(np.float32)
         raw = json.loads(doc_path.read_text(encoding="utf-8"))
         store._documents = [Document.from_dict(d) for d in raw]
+        info_path = path / _INFO_FILE
+        if info_path.exists():
+            store.info = IndexInfo(**json.loads(info_path.read_text("utf-8")))
         logger.info("Loaded vector store: %d documents from %s", store.size(), path)
         return store

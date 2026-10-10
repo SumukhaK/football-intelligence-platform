@@ -97,3 +97,30 @@ def test_store_load_missing_path_raises(tmp_path: Path) -> None:
     """Loading from a missing path raises FileNotFoundError."""
     with pytest.raises(FileNotFoundError, match="not found"):
         VectorStore.load(tmp_path / "nonexistent")
+
+
+def test_index_info_round_trips(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """The embedding model and cut-off are saved with the index (ADR 025)."""
+    import numpy as np
+
+    from assistant.ingestion.document import Document
+    from assistant.retrieval.vector_store import IndexInfo, VectorStore
+
+    store = VectorStore()
+    store.add([Document(id="d", text="t", source="s")], np.ones((1, 2), np.float32))
+    store.info = IndexInfo("@cf/emb", 0.62)
+    store.save(tmp_path)
+    assert VectorStore.load(tmp_path).info == IndexInfo("@cf/emb", 0.62)
+
+
+def test_an_old_index_has_no_info(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    import numpy as np
+
+    from assistant.ingestion.document import Document
+    from assistant.retrieval.vector_store import VectorStore
+
+    store = VectorStore()
+    store.add([Document(id="d", text="t", source="s")], np.ones((1, 2), np.float32))
+    store.save(tmp_path)
+    assert not (tmp_path / "index.json").exists()
+    assert VectorStore.load(tmp_path).info is None

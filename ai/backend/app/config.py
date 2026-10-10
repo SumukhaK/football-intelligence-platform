@@ -82,10 +82,13 @@ class Settings(BaseSettings):
     ollama_embed_model: str = "nomic-embed-text"
     workers_ai_account_id: str | None = None
     workers_ai_api_token: SecretStr | None = None
-    workers_ai_chat_model: str = "@cf/qwen/qwen3-30b-a3b-fp8"
+    workers_ai_chat_model: str = "@cf/google/gemma-4-26b-a4b-it"
     workers_ai_embed_model: str = "@cf/qwen/qwen3-embedding-0.6b"
     # Deadline for each Workers AI attempt; one retry at most.
     workers_ai_timeout_s: float = Field(default=20.0, gt=0)
+    # Reasoning models think before answering unless told not to; off keeps
+    # answers inside the app's 30-second request budget.
+    workers_ai_thinking: bool = False
     assistant_vector_store_path: Path = Path("assistant/vector_store")
     assistant_knowledge_root: Path = Path(".")
     assistant_top_k: int = 5

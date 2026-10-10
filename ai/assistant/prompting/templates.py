@@ -44,14 +44,15 @@ _CONTEXT_FOOTER = "--- END OF CONTEXT ---"
 # index at 0.73 or above, so 0.50 let everything through. Measured on the
 # questions in evaluation/assistant_abstention.py: in-scope questions top out
 # at 0.80-0.88, out-of-scope ones at 0.74-0.81. Re-measure if the embedding
-# model or the knowledge base changes.
-_MIN_RELEVANCE = 0.81
+# model or the knowledge base changes. An index built with another model
+# records its own cut-off in index.json (ADR 025).
+DEFAULT_MIN_RELEVANCE = 0.81
 
 
 def build_user_prompt(
     question: str,
     retrieved: list[RetrievedDoc],
-    min_relevance: float = _MIN_RELEVANCE,
+    min_relevance: float = DEFAULT_MIN_RELEVANCE,
 ) -> str:
     """Assemble the user-turn prompt from the question and retrieved chunks.
 
@@ -83,7 +84,7 @@ def build_user_prompt(
 def build_messages(
     question: str,
     retrieved: list[RetrievedDoc],
-    min_relevance: float = _MIN_RELEVANCE,
+    min_relevance: float = DEFAULT_MIN_RELEVANCE,
     today: date | None = None,
 ) -> list[dict[str, str]]:
     """Return an Ollama-compatible messages list for the chat call.

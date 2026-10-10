@@ -15,8 +15,7 @@ from typing import TYPE_CHECKING, Any
 from model_registry.registry import ModelRegistry
 
 if TYPE_CHECKING:
-    from assistant.embeddings.embedder import Embedder
-    from assistant.generation.generator import Generator
+    from assistant.retrieval.vector_store import IndexInfo
     from backend.app.config import Settings
     from backend.app.services.chat_service import ChatService
     from backend.app.services.explanation_service import ExplanationService
@@ -132,6 +131,8 @@ def load_insights(directory: Path, competitions: list[str]) -> InsightsService:
 
 def load_assistant(settings: Settings, state: Any) -> ChatService:
     """The assistant, with its tools and season router over ``state``."""
+    from assistant.prompting.templates import DEFAULT_MIN_RELEVANCE
+    from assistant.providers import make_provider
     from assistant.retrieval.vector_store import VectorStore
     from assistant.services.assistant_service import AssistantService
     from backend.app.dependencies import get_served_competitions
@@ -139,77 +140,62 @@ def load_assistant(settings: Settings, state: Any) -> ChatService:
     from backend.app.services.chat_service import ChatService
     from backend.app.services.season_router import SeasonRouter
 
+    a_cfg = _assistant_settings(settings)
     store = VectorStore.load(settings.assistant_vector_store_path)
-    embedder, generator, model_name = _provider(settings)
+    provider = make_provider(a_cfg)
+    require_matching_index(store.info, provider.embed_model, a_cfg.ollama_embed_model)
     served = get_served_competitions()
     ai_service = AssistantService(
-        embedder=embedder,
-        generator=generator,
+        embedder=provider.embedder,
+        generator=provider.generator,
         store=store,
-        model_name=model_name,
+        model_name=provider.chat_model,
         top_k=settings.assistant_top_k,
         tools=AssistantTools(state, served).tools(),
         router=SeasonRouter(state, served),
+        min_relevance=store.info.min_relevance if store.info else DEFAULT_MIN_RELEVANCE,
     )
     logger.info(
         "Assistant uses %s (%s); index has %d chunks.",
         settings.assistant_provider,
-        model_name,
+        provider.chat_model,
         store.size(),
     )
     return ChatService(ai_service)
 
 
-def _provider(settings: Settings) -> tuple[Embedder, Generator, str]:
-    """The embedder, generator and chat model name for the configured provider."""
-    a_cfg = _assistant_settings(settings)
-    if settings.assistant_provider == "workers_ai":
-        return _workers_ai(settings, a_cfg)
-    from assistant.embeddings.embedder import OllamaEmbedder
-    from assistant.generation.generator import OllamaGenerator
+def require_matching_index(
+    info: IndexInfo | None, embed_model: str, legacy_model: str
+) -> None:
+    """Refuse an index whose vectors came from a different embedding model.
 
-    embedder = OllamaEmbedder(
-        model=a_cfg.ollama_embed_model, base_url=a_cfg.ollama_base_url
-    )
-    generator = OllamaGenerator(
-        model=a_cfg.ollama_chat_model,
-        base_url=a_cfg.ollama_base_url,
-        temperature=a_cfg.temperature,
-        max_tokens=a_cfg.max_tokens,
-    )
-    return embedder, generator, a_cfg.ollama_chat_model
-
-
-def _workers_ai(settings: Settings, a_cfg: Any) -> tuple[Embedder, Generator, str]:
-    from assistant.workers_ai import (
-        WorkersAIClient,
-        WorkersAIEmbedder,
-        WorkersAIGenerator,
-    )
-
-    token = settings.workers_ai_api_token
-    if not settings.workers_ai_account_id or token is None:
+    An index without ``index.json`` predates it and was built with the local
+    default, ``legacy_model``. Mixing embedding spaces makes every retrieval
+    score meaningless, so this is an error, not a warning (ADR 025).
+    """
+    built_with = info.embed_model if info else legacy_model
+    if built_with != embed_model:
         raise ValueError(
-            "ASSISTANT_PROVIDER=workers_ai needs WORKERS_AI_ACCOUNT_ID and "
-            "WORKERS_AI_API_TOKEN."
+            f"The index was built with {built_with}, but queries would use "
+            f"{embed_model}. Rebuild it, or point ASSISTANT_VECTOR_STORE_PATH "
+            "at an index built with that model."
         )
-    client = WorkersAIClient(
-        settings.workers_ai_account_id,
-        # A secret mounted from a file can end in a newline.
-        token.get_secret_value().strip(),
-        settings.workers_ai_timeout_s,
-    )
-    model = settings.workers_ai_chat_model
-    generator = WorkersAIGenerator(
-        client, model, temperature=a_cfg.temperature, max_tokens=a_cfg.max_tokens
-    )
-    return WorkersAIEmbedder(client, settings.workers_ai_embed_model), generator, model
 
 
 def _assistant_settings(settings: Settings) -> Any:
     from assistant.configuration import AssistantSettings
 
+    # "off" never reaches here: main.py skips loading the assistant.
     return AssistantSettings(
+        assistant_provider=(
+            "workers_ai" if settings.assistant_provider == "workers_ai" else "ollama"
+        ),
+        workers_ai_account_id=settings.workers_ai_account_id,
+        workers_ai_api_token=settings.workers_ai_api_token,
+        workers_ai_chat_model=settings.workers_ai_chat_model,
+        workers_ai_embed_model=settings.workers_ai_embed_model,
+        workers_ai_timeout_s=settings.workers_ai_timeout_s,
+        workers_ai_thinking=settings.workers_ai_thinking,
         ollama_base_url=settings.ollama_base_url,
         ollama_chat_model=settings.ollama_chat_model,
         ollama_embed_model=settings.ollama_embed_model,

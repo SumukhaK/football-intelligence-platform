@@ -90,8 +90,8 @@ Evidence: integration tests and a staging walkthrough.
 ## 3. Connect the hosted LLM
 
 - [x] Workers AI `Generator` and `Embedder` adapters behind the existing protocols, with deadlines and error mapping.
-- [ ] A function-calling model chosen; the adapter implements tool calls (ADR 018).
-- [ ] Index rebuilt with the hosted embedding model; 0.81 cut-off re-measured with the abstention questions.
+- [x] A function-calling model chosen (`@cf/google/gemma-4-26b-a4b-it`, thinking off); the adapter implements tool calls (ADR 018). See [hosted-assistant-evals.md](../reports/hosted-assistant-evals.md).
+- [x] Index rebuilt with the hosted embedding model; cut-off re-measured with the abstention questions (0.77, recorded in the index).
 - [x] Provider selection in settings; local Ollama stays the default.
 - [x] Quota, timeout and 5xx return a structured 503; predictions keep working.
 - [ ] Grounding and abstention evals pass against staging.
