@@ -59,6 +59,11 @@ class Settings(BaseSettings):
     telemetry_salt: str = "local-dev-salt"
     # Cloud Run sets K_REVISION; it is null locally.
     revision: str | None = Field(default=None, validation_alias="K_REVISION")
+    # Where request traces go (ADR 024): nowhere, a local OTLP collector, or
+    # Cloud Trace (needs gcp_project_id).
+    trace_exporter: Literal["none", "otlp", "gcp"] = "none"
+    otlp_endpoint: str = "http://localhost:4318/v1/traces"
+    trace_sample_ratio: float = Field(default=1.0, ge=0.0, le=1.0)
 
     ollama_base_url: str = "http://localhost:11434"
     ollama_chat_model: str = "qwen2.5:7b-instruct"

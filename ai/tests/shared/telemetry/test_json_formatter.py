@@ -5,6 +5,12 @@ import logging
 import sys
 from typing import Any
 
+from opentelemetry import trace
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+    InMemorySpanExporter,
+)
+from opentelemetry.trace import SpanContext
+
 from shared.telemetry.context import reset_request_id, set_request_id
 from shared.telemetry.json_formatter import COMMON_FIELDS, JsonFormatter
 
@@ -98,3 +104,33 @@ def test_lines_without_exceptions_have_no_exception_fields() -> None:
 def test_unserialisable_attribute_values_become_strings() -> None:
     data = _format(_record(attributes={"value": object}))
     assert data["attributes"]["value"] == str(object)
+
+
+def _in_span(formatter: JsonFormatter) -> tuple[dict[str, Any], SpanContext]:
+    with trace.get_tracer("test").start_as_current_span("work") as span:
+        line: dict[str, Any] = json.loads(formatter.format(_record()))
+        return line, span.get_span_context()
+
+
+def test_trace_fields_come_from_the_active_span(
+    spans: InMemorySpanExporter,
+) -> None:
+    formatter = JsonFormatter(
+        service="football-api",
+        api_version="2.0.0",
+        revision=None,
+        gcp_project_id="fip-prod",
+    )
+    data, context = _in_span(formatter)
+    trace_id = format(context.trace_id, "032x")
+    assert data["trace_id"] == trace_id
+    assert data["logging.googleapis.com/spanId"] == format(context.span_id, "016x")
+    resource = data["logging.googleapis.com/trace"]
+    assert resource == f"projects/fip-prod/traces/{trace_id}"
+
+
+def test_the_trace_resource_needs_a_project_id(spans: InMemorySpanExporter) -> None:
+    data, _ = _in_span(FORMATTER)
+    assert len(data["trace_id"]) == 32
+    assert len(data["logging.googleapis.com/spanId"]) == 16
+    assert data["logging.googleapis.com/trace"] is None

@@ -21,6 +21,11 @@ dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.30.0",
     "ollama>=0.2.0",
+    "opentelemetry-api>=1.45.1",
+    "opentelemetry-sdk>=1.45.1",
+    "opentelemetry-instrumentation-fastapi>=0.66b1",
+    "opentelemetry-exporter-otlp-proto-http>=1.45.1",
+    "opentelemetry-exporter-gcp-trace>=1.15.0",
 ]
 
 [project.optional-dependencies]
@@ -107,6 +112,11 @@ strict = true
 warn_return_any = true
 warn_unused_configs = true
 disable_error_code = ["type-arg"]
+# These OpenTelemetry functions have no annotations; the rest of the package is typed.
+untyped_calls_exclude = [
+    "opentelemetry.exporter.cloud_trace",
+    "opentelemetry.sdk.trace.sampling",
+]
 ignore_missing_imports = false
 packages = [
     "config",

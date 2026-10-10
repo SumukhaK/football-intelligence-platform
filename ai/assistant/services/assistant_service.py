@@ -7,18 +7,22 @@ import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Any
+from typing import Any, TypeVar
+
+from opentelemetry.trace import StatusCode
 
 from assistant.embeddings.embedder import Embedder
 from assistant.generation.generator import Generator, ToolCall, ToolCallingGenerator
 from assistant.prompting.templates import build_messages
 from assistant.retrieval.retriever import RetrievedDoc, retrieve
 from assistant.retrieval.vector_store import VectorStore
-from assistant.tools.routing import Router
-from assistant.tools.tool import Tool, run_tool_checked
+from assistant.tools.routing import Route, Router
+from assistant.tools.tool import Tool, ToolResult, run_tool_checked
 from shared.telemetry.events import EventName, emit
+from shared.telemetry.tracing import tracer
 
 logger = logging.getLogger(__name__)
+_T = TypeVar("_T")
 
 
 @dataclass(frozen=True)
@@ -106,7 +110,7 @@ class AssistantService:
             )
 
         turn = _Turn(self._clock())
-        route = self._router.route(question) if self._router else None
+        route = self._route(question)
         if route is not None and route.reply is not None:
             response = _routed_reply(route.reply)
             self._log_answer(question, response, [], turn, routed=True)
@@ -174,9 +178,22 @@ class AssistantService:
             retrieved_count=len(retrieved),
         )
 
+    def _route(self, question: str) -> Route | None:
+        """Ask the season router whether it answers ``question``, in a span."""
+        if self._router is None:
+            return None
+        with tracer().start_as_current_span("assistant.route") as span:
+            route = self._router.route(question)
+            span.set_attribute("routed", route is not None)
+            return route
+
     def _retrieve(self, question: str) -> list[RetrievedDoc]:
-        query_emb = self._embedder.embed([question])[0]
-        return retrieve(query_emb, self._store, self._top_k)
+        with tracer().start_as_current_span("assistant.retrieve") as span:
+            with tracer().start_as_current_span("assistant.embed"):
+                query_emb = self._embedder.embed([question])[0]
+            retrieved = retrieve(query_emb, self._store, self._top_k)
+            span.set_attribute("retrieved_count", len(retrieved))
+            return retrieved
 
     def _run_calls(
         self,
@@ -190,7 +207,7 @@ class AssistantService:
         turn.rounds += 1
         for call in calls:
             started = self._clock()
-            result = run_tool_checked(self._tools, call.name, call.arguments)
+            result = self._run_tool(call)
             turn.tools_run.append(call.name)
             status = "error" if result.error else "ok"
             emit(
@@ -206,14 +223,30 @@ class AssistantService:
                 {"role": "tool", "tool_name": call.name, "content": result.content}
             )
 
+    def _run_tool(self, call: ToolCall) -> ToolResult:
+        """Run one tool call in its own span; a tool error marks the span."""
+        with tracer().start_as_current_span(f"assistant.tool.{call.name}") as span:
+            result = run_tool_checked(self._tools, call.name, call.arguments)
+            span.set_attribute("tool", call.name)
+            if result.error:
+                span.set_status(StatusCode.ERROR)
+            return result
+
+    def _generate(self, round_: int, call: Callable[[], _T]) -> _T:
+        """Make model call number ``round_`` of this answer, in a span."""
+        with tracer().start_as_current_span("assistant.generate") as span:
+            span.set_attribute("round", round_)
+            span.set_attribute("model", self._model_name)
+            return call()
+
     def _answer(self, messages: list[dict[str, Any]], turn: _Turn) -> str:
         """Generate the answer, running any tool calls the model makes first."""
         generator = self._generator
         if not self._tools or not isinstance(generator, ToolCallingGenerator):
-            return generator.generate(messages)
+            return self._generate(1, lambda: generator.generate(messages))
         schemas = [tool.schema() for tool in self._tools]
-        for _ in range(_MAX_TOOL_ROUNDS):
-            step = generator.chat(messages, schemas)
+        for round_ in range(1, _MAX_TOOL_ROUNDS + 1):
+            step = self._generate(round_, lambda: generator.chat(messages, schemas))
             if not step.tool_calls:
                 return step.content
             self._run_calls(messages, step.tool_calls, turn, step.content)
@@ -225,7 +258,8 @@ class AssistantService:
             to_path="answer_without_tools",
             cause="tool_round_limit",
         )
-        return generator.chat(messages, []).content
+        final = _MAX_TOOL_ROUNDS + 1
+        return self._generate(final, lambda: generator.chat(messages, [])).content
 
 
 class VectorStoreEmptyError(RuntimeError):
