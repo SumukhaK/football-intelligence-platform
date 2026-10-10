@@ -142,7 +142,7 @@ Lands before friends use the beta (step 6a).
 - [x] Size limit on chat messages in the request schema; request body size limit.
 - [x] CORS and security headers reviewed for the hosted API. Decision: no CORS middleware, because the only client is the Android app and CORS only matters to browsers; every response sends `X-Content-Type-Options: nosniff`. HSTS is left to Cloud Run, which serves HTTPS only.
 - [x] The server refuses to start on Cloud Run (`K_REVISION` set) with `AUTH_REQUIRED` off or the development `TELEMETRY_SALT`.
-- [ ] Dependency vulnerability scans in CI for Python and Gradle.
+- [x] Dependency vulnerability scans in CI for Python and Gradle (`dependency-scan.yml`: pip-audit on every PR, push and weekly; the Gradle graph submitted on pushes; dependency review fails a PR that adds a vulnerable dependency).
 - [ ] App: retry with exponential backoff and jitter for idempotent GET requests only, honouring `Retry-After` on 429 and 503; no retry on POST.
 - [ ] App: R8 resource shrinking on for release builds; release build checked for working Ktor and serialization keep rules.
 - [ ] Decision recorded: no SSL pinning (Cloud Run certificates rotate without notice; HTTPS plus no secrets in the APK covers the risk) and no Play Integrity for an invite-only app; revisit if the app goes public.
