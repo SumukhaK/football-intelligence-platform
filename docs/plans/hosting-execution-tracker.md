@@ -18,7 +18,7 @@ Status values: `Not started`, `In progress`, `Blocked (reason)`, `Done (date)`.
 | 3a | Invite-only accounts and consent | [plan](accounts-and-consent-plan.md) | In progress (backend and Android screens done; Firestore store to go) |
 | 3 | Connect the hosted LLM | 1 | Not started |
 | 3b | Guardrails gateway: safety, scope router, cache, limits | [analysis](assistant-guardrails-analysis.md) | Not started |
-| 4 | Observability: logs, traces, metrics, alerts | 6 | Not started |
+| 4 | Observability: logs, traces, metrics, alerts | 6 | In progress (request IDs and traces done; metrics and alerts to go) |
 | 5 | CI/CD with the eval gate | 6 | Not started |
 | 5a | Security hardening | this tracker | Not started |
 | 6 | Cold-start and idle-wake measurement | 4 | Not started |
@@ -43,7 +43,7 @@ Evidence: tests.
 
 ## 0. Baseline, accounts and budget guardrails
 
-- [ ] Next free ADR (check develop and open PRs): cloud serving, provider adapters, immutable snapshots, refresh scheduling.
+- [ ] Next free ADR (currently 025; check develop and open PRs): cloud serving, provider adapters, immutable snapshots, refresh scheduling.
 - [ ] Local baseline: lint, types, tests; startup time and peak RAM with `LIVE_REFRESH_HOUR=off`.
 - [ ] Snapshot manifest: model, registry, datasets, fixtures, index; hashes and sizes.
 - [ ] GCP project with billing; budget $10 with alerts at $2, $5, $8.
@@ -117,7 +117,7 @@ Evidence: tests and staging logs.
 Contract: [telemetry contract](../observability/telemetry-contract.md) and [ADR 024](../adr/024-structured-telemetry-and-opentelemetry.md).
 
 - [x] Request ID on every request and log line.
-- [ ] OpenTelemetry traces: retrieval, each tool call, generation, to Cloud Trace.
+- [x] OpenTelemetry traces: retrieval, each tool call, generation, to Cloud Trace (#91).
 - [ ] Metrics: p50/p95 latency, tokens, cost per answer, tool-call rate, refusal rate, provider errors and 429s.
 - [ ] One dashboard; alerts on error rate, p95 latency and provider failures.
 
