@@ -91,7 +91,13 @@ class Settings(BaseSettings):
 
     # Invite-only sign-in for every /v2 data route (ADR 022); on in the cloud.
     auth_required: bool = False
+    # Where accounts live (ADR 026): a local JSON file, or Firestore in the
+    # cloud, where the disk is wiped on every restart.
+    account_store: Literal["json", "firestore"] = "json"
     accounts_path: Path = Path("accounts/accounts.json")
+    firestore_database: str = "(default)"
+    # Prefixed to each collection name, so staging and prod can share a database.
+    firestore_collection_prefix: str = ""
 
     @model_validator(mode="after")
     def _refuse_unsafe_cloud_defaults(self) -> Settings:

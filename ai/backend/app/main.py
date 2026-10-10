@@ -52,7 +52,7 @@ from backend.app.middleware.rate_limit import RateLimitMiddleware, SlidingWindow
 from backend.app.middleware.request_context import RequestContextMiddleware
 from backend.app.routing import include_routers
 from backend.app.services.account_service import AccountService, AuthError
-from backend.app.services.account_store import JsonAccountStore
+from backend.app.services.account_store import make_account_store
 from backend.app.startup_telemetry import load_component, log_fallback, log_freshness
 from model_registry.registry import ModelRegistry
 from shared.telemetry.privacy import hash_ref
@@ -268,7 +268,7 @@ def create_app() -> FastAPI:
     _add_exception_handlers(app)
 
     app.state.account_service = AccountService(
-        JsonAccountStore(settings.accounts_path),
+        make_account_store(settings),
         user_ref=partial(hash_ref, salt=settings.telemetry_salt),
     )
     include_routers(app, settings.auth_required)

@@ -15,7 +15,7 @@ Status values: `Not started`, `In progress`, `Blocked (reason)`, `Done (date)`.
 | 0 | Baseline, accounts and budget guardrails | 0, 3.1 | Not started |
 | 1 | Host the API: container and private staging | 2, 3 | Not started |
 | 2 | Connect storage and secrets | 3, 7 | Not started |
-| 3a | Invite-only accounts and consent | [plan](accounts-and-consent-plan.md) | In progress (backend and Android screens done; Firestore store to go) |
+| 3a | Invite-only accounts and consent | [plan](accounts-and-consent-plan.md) | In progress (code done, including the Firestore store; staging walkthrough to go) |
 | 3 | Connect the hosted LLM | 1 | Not started |
 | 3b | Guardrails gateway: safety, scope router, cache, limits | [analysis](assistant-guardrails-analysis.md) | Not started |
 | 4 | Observability: logs, traces, metrics, alerts | 6 | In progress (request IDs and traces done; metrics and alerts to go) |
@@ -78,7 +78,7 @@ Evidence: the manifest check failing on a deliberately wrong snapshot.
 Backend first, then the Android screens. Details in [accounts-and-consent-plan.md](accounts-and-consent-plan.md).
 
 - [x] ADR 022 for accounts, sessions and consent.
-- [x] Store interface and a JSON file store. Firestore store still to do.
+- [x] Store interface, a JSON file store, and a Firestore store chosen with `ACCOUNT_STORE=firestore` (ADR 026).
 - [x] Invites, scrypt passwords, login lockout, revocable sessions.
 - [x] `/v2/auth/*`, `/v2/me`, `/v2/me/consent`; every `/v2` data route needs a session and current consent when `AUTH_REQUIRED` is on.
 - [x] Owner script: invite (also resets a password), ban, unban.
