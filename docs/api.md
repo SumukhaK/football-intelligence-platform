@@ -31,6 +31,19 @@ one-minute window (default 120; `off` turns it off). Beyond that the server
 answers 429 `{ "error": "Too many requests", "detail": "..." }` with a
 `Retry-After` header in seconds. Health checks and the docs are never limited.
 
+Behind a proxy, set `TRUSTED_PROXY_HOPS` to the number of proxies that append
+to `X-Forwarded-For` (1 on Cloud Run). The limiter then counts the address the
+outermost trusted proxy saw, so a client cannot dodge it by sending its own
+`X-Forwarded-For`. With the default 0 the header is ignored.
+
+## Request size
+
+A request body may be at most `MAX_BODY_BYTES` (default 16384). A larger
+`Content-Length` gets 413 `Request too large`, and a chunked body with no
+`Content-Length` gets 411 `Length required`. A chat `message` may be at most
+1000 characters; a longer one gets 422. Every response carries
+`X-Content-Type-Options: nosniff`.
+
 ## Request IDs
 
 Every response, including 429 and 500 responses, carries an `X-Request-ID`

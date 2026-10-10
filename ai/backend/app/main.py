@@ -47,11 +47,12 @@ from backend.app.loaders import (
     load_season,
     model_versions,
 )
+from backend.app.middleware.body_limit import BodyLimitMiddleware
 from backend.app.middleware.rate_limit import RateLimitMiddleware, SlidingWindowLimiter
 from backend.app.middleware.request_context import RequestContextMiddleware
 from backend.app.routing import include_routers
 from backend.app.services.account_service import AccountService, AuthError
-from backend.app.services.account_store import JsonAccountStore
+from backend.app.services.account_store import make_account_store
 from backend.app.startup_telemetry import load_component, log_fallback, log_freshness
 from model_registry.registry import ModelRegistry
 from shared.telemetry.privacy import hash_ref
@@ -86,7 +87,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if settings.model_path.exists():
         app.state.registry = registry
     _load_models(app, settings, registry)
-    if settings.assistant_provider == "off":
+    if settings.assistant_provider is None:
         logger.info("Assistant is off (ASSISTANT_PROVIDER=off).")
     else:
         app.state.chat_service = load_component(
@@ -267,7 +268,7 @@ def create_app() -> FastAPI:
     _add_exception_handlers(app)
 
     app.state.account_service = AccountService(
-        JsonAccountStore(settings.accounts_path),
+        make_account_store(settings),
         user_ref=partial(hash_ref, salt=settings.telemetry_salt),
     )
     include_routers(app, settings.auth_required)
@@ -276,7 +277,9 @@ def create_app() -> FastAPI:
             RateLimitMiddleware,
             limiter=SlidingWindowLimiter(settings.rate_limit_per_minute),
             salt=settings.telemetry_salt,
+            trusted_proxy_hops=settings.trusted_proxy_hops,
         )
+    app.add_middleware(BodyLimitMiddleware, max_bytes=settings.max_body_bytes)
     # Added last so it is the outermost layer and 429s get an ID too.
     app.add_middleware(RequestContextMiddleware)
     _instrument(app, settings)

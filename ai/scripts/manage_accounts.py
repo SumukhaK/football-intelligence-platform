@@ -7,8 +7,10 @@ Usage:
 
 ``invite`` prints a one-time code valid for 7 days; send it to the person
 privately. They redeem it in the app with a password of their choosing.
-Inviting an existing account again lets them reset their password. The
-accounts file is ``ACCOUNTS_PATH`` (default ``accounts/accounts.json``).
+Inviting an existing account again lets them reset their password. Accounts
+are in ``ACCOUNTS_PATH`` (default ``accounts/accounts.json``), or in Firestore
+with ``ACCOUNT_STORE=firestore`` and ``GCP_PROJECT_ID`` set (ADR 026); sign in
+first with ``gcloud auth application-default login``.
 """
 
 from __future__ import annotations
@@ -18,7 +20,7 @@ import sys
 
 from backend.app.config import get_settings
 from backend.app.services.account_service import AccountService
-from backend.app.services.account_store import JsonAccountStore
+from backend.app.services.account_store import make_account_store
 
 
 def _build_arg_parser() -> argparse.ArgumentParser:
@@ -31,7 +33,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     """Run one account action; 1 if the account does not exist."""
     args = _build_arg_parser().parse_args(argv)
-    accounts = AccountService(JsonAccountStore(get_settings().accounts_path))
+    accounts = AccountService(make_account_store(get_settings()))
     if args.action == "invite":
         code = accounts.create_invite(args.email)
         print(f"Invite code for {args.email} (valid 7 days): {code}")

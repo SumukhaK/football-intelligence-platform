@@ -5,11 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Tuned on 2022/23 in docs/reports/draw-handling.md (ADR 011).
 DEFAULT_DRAW_POSSIBLE_THRESHOLD = 0.28
+DEV_TELEMETRY_SALT = "local-dev-salt"
 
 
 class Settings(BaseSettings):
@@ -33,6 +34,11 @@ class Settings(BaseSettings):
     v1_model_version: str = "20260630_132617"
     # Requests per client per minute; `off` turns rate limiting off (ADR 014).
     rate_limit_per_minute: int | None = Field(default=120, ge=1)
+    # Proxies in front of the server that append to X-Forwarded-For: 0 locally,
+    # 1 on Cloud Run, whose front end appends the address it saw.
+    trusted_proxy_hops: int = Field(default=0, ge=0)
+    # Largest request body accepted; every body is a small JSON object.
+    max_body_bytes: int = Field(default=16_384, ge=1)
     matches_dir: Path = Path("../datasets/processed/football_data")
     datasets_dir: Path = Path("../datasets")
     # Upcoming fixtures, rebuilt by the daily refresh (ADR 015).
@@ -59,7 +65,7 @@ class Settings(BaseSettings):
     log_format: Literal["text", "json"] = "text"
     gcp_project_id: str | None = None
     # Key for the user_ref and client_ref hashes in logs; a secret in the cloud.
-    telemetry_salt: str = "local-dev-salt"
+    telemetry_salt: str = DEV_TELEMETRY_SALT
     # Cloud Run sets K_REVISION; it is null locally.
     revision: str | None = Field(default=None, validation_alias="K_REVISION")
     # Where request traces go (ADR 024): nowhere, a local OTLP collector, or
@@ -69,7 +75,8 @@ class Settings(BaseSettings):
     trace_sample_ratio: float = Field(default=1.0, ge=0.0, le=1.0)
 
     # Who answers chat (ADR 025): local Ollama, Cloudflare Workers AI, or nobody.
-    assistant_provider: Literal["ollama", "workers_ai", "off"] = "ollama"
+    # `off` reads as None (env_parse_none_str above) and loads no assistant.
+    assistant_provider: Literal["ollama", "workers_ai"] | None = "ollama"
     ollama_base_url: str = "http://localhost:11434"
     ollama_chat_model: str = "qwen2.5:7b-instruct"
     ollama_embed_model: str = "nomic-embed-text"
@@ -88,7 +95,24 @@ class Settings(BaseSettings):
 
     # Invite-only sign-in for every /v2 data route (ADR 022); on in the cloud.
     auth_required: bool = False
+    # Where accounts live (ADR 026): a local JSON file, or Firestore in the
+    # cloud, where the disk is wiped on every restart.
+    account_store: Literal["json", "firestore"] = "json"
     accounts_path: Path = Path("accounts/accounts.json")
+    firestore_database: str = "(default)"
+    # Prefixed to each collection name, so staging and prod can share a database.
+    firestore_collection_prefix: str = ""
+
+    @model_validator(mode="after")
+    def _refuse_unsafe_cloud_defaults(self) -> Settings:
+        """On Cloud Run, refuse to start open to everyone or with the dev salt."""
+        if self.revision is None:
+            return self
+        if not self.auth_required:
+            raise ValueError("AUTH_REQUIRED must be true on Cloud Run (ADR 025).")
+        if self.telemetry_salt == DEV_TELEMETRY_SALT:
+            raise ValueError("TELEMETRY_SALT must be a secret on Cloud Run (ADR 025).")
+        return self
 
 
 _settings: Settings | None = None

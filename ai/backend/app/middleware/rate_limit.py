@@ -66,11 +66,22 @@ class SlidingWindowLimiter:
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """Applies a :class:`SlidingWindowLimiter` to every non-exempt request."""
 
-    def __init__(self, app: ASGIApp, limiter: SlidingWindowLimiter, salt: str) -> None:
-        """Wrap ``app`` with ``limiter``; ``salt`` keys the logged client hash."""
+    def __init__(
+        self,
+        app: ASGIApp,
+        limiter: SlidingWindowLimiter,
+        salt: str,
+        trusted_proxy_hops: int = 0,
+    ) -> None:
+        """Wrap ``app`` with ``limiter``; ``salt`` keys the logged client hash.
+
+        ``trusted_proxy_hops`` is how many proxies in front of the server add
+        to ``X-Forwarded-For`` (see :func:`client_address`).
+        """
         super().__init__(app)
         self._limiter = limiter
         self._salt = salt
+        self._hops = trusted_proxy_hops
 
     async def dispatch(
         self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
@@ -78,7 +89,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         """Reject the request with 429 when its client is over the limit."""
         if request.url.path in EXEMPT_PATHS:
             return await call_next(request)
-        client = request.client.host if request.client else "unknown"
+        client = client_address(request, self._hops)
         wait = self._limiter.check(client)
         if wait is None:
             return await call_next(request)
@@ -101,3 +112,21 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             },
             headers={"Retry-After": str(seconds)},
         )
+
+
+def client_address(request: Request, trusted_proxy_hops: int) -> str:
+    """The caller's address, read past ``trusted_proxy_hops`` trusted proxies.
+
+    Each proxy appends the address it saw to ``X-Forwarded-For``, so the entry
+    that many places from the end was written by the outermost trusted proxy.
+    Entries further left came from the client and could be forged. With no
+    trusted proxies, the socket's peer address is used.
+    """
+    peer = request.client.host if request.client else "unknown"
+    if trusted_proxy_hops == 0:
+        return peer
+    header = request.headers.get("x-forwarded-for", "")
+    forwarded = [part.strip() for part in header.split(",") if part.strip()]
+    if len(forwarded) < trusted_proxy_hops:
+        return peer
+    return forwarded[-trusted_proxy_hops]

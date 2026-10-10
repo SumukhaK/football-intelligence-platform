@@ -75,7 +75,7 @@ def test_provider_off_loads_no_assistant(tmp_path: Path) -> None:
     from backend.app.main import create_app
 
     settings = Settings(
-        assistant_provider="off",
+        assistant_provider=None,
         model_path=tmp_path / "none.joblib",
         registry_path=tmp_path / "none.json",
         live_refresh_hour=None,
@@ -127,3 +127,10 @@ def test_a_hosted_index_is_refused_for_local_queries(tmp_path: Path) -> None:
     settings = Settings(assistant_vector_store_path=_index(tmp_path, HOSTED))
     with pytest.raises(ValueError, match="queries would use nomic-embed-text"):
         load_assistant(settings, SimpleNamespace())
+
+
+def test_off_in_the_environment_turns_the_assistant_off(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("ASSISTANT_PROVIDER", "off")
+    assert Settings().assistant_provider is None
