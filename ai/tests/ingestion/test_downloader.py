@@ -9,9 +9,9 @@ import httpx
 import pytest
 
 from config.settings import Settings
-from ingestion.downloader import HttpxTransport, classify_httpx_error
+from ingestion.downloader import HttpxTransport
 from shared.exceptions import IngestionError
-from shared.telemetry.retry import AttemptOutcome, RetryPolicy
+from shared.telemetry.retry import AttemptOutcome, RetryPolicy, classify_httpx_error
 
 _URL = "https://www.football-data.co.uk/mmz4281/2526/E0.csv"
 _REQUEST = httpx.Request("GET", _URL)

@@ -66,7 +66,7 @@ logger = logging.getLogger(__name__)
 # The `service` field on every JSON log line (telemetry contract section 1).
 TELEMETRY_SERVICE = "football-api"
 # Probes and docs pages would only add noise to the traces.
-_UNTRACED_URLS = "health,docs,redoc,openapi.json"
+_UNTRACED_URLS = "health,v2/live,v2/ready,docs,redoc,openapi.json"
 
 
 @asynccontextmanager
@@ -86,9 +86,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if settings.model_path.exists():
         app.state.registry = registry
     _load_models(app, settings, registry)
-    app.state.chat_service = load_component(
-        "assistant", lambda: load_assistant(settings, app.state)
-    )
+    if settings.assistant_provider == "off":
+        logger.info("Assistant is off (ASSISTANT_PROVIDER=off).")
+    else:
+        app.state.chat_service = load_component(
+            "assistant", lambda: load_assistant(settings, app.state)
+        )
 
     yield
 

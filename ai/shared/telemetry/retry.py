@@ -7,8 +7,9 @@ import random
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Literal
+from typing import Final, Literal
 
+import httpx
 from opentelemetry import trace
 from opentelemetry.trace import StatusCode
 
@@ -17,6 +18,7 @@ from shared.telemetry.tracing import tracer
 
 AttemptStatus = Literal["timeout", "http_error", "connection_error", "error"]
 logger = logging.getLogger(__name__)
+_RETRYABLE_STATUSES: Final = frozenset({500, 502, 503, 504})
 
 
 @dataclass(frozen=True)
@@ -66,6 +68,26 @@ def classify_retryable(exc: Exception) -> AttemptOutcome:
     if isinstance(exc, RetryableError):
         return AttemptOutcome("error", None, True, exc.retry_after_s, exc.cause)
     return AttemptOutcome("error")
+
+
+def classify_httpx_error(exc: Exception) -> AttemptOutcome:
+    """Say how a failed httpx request is reported and whether to retry it."""
+    if isinstance(exc, httpx.TimeoutException):
+        return AttemptOutcome("timeout", retryable=True)
+    if isinstance(exc, httpx.TransportError):
+        return AttemptOutcome("connection_error", retryable=True)
+    if isinstance(exc, httpx.HTTPStatusError):
+        code = exc.response.status_code
+        if code == 429:
+            return AttemptOutcome("http_error", code, True, _retry_after(exc.response))
+        return AttemptOutcome("http_error", code, code in _RETRYABLE_STATUSES)
+    return AttemptOutcome("error")
+
+
+def _retry_after(response: httpx.Response) -> float | None:
+    """Retry-After in seconds when it is a plain number; HTTP dates are ignored."""
+    value = response.headers.get("Retry-After", "").strip()
+    return float(value) if value.isdigit() else None
 
 
 def backoff_wait(

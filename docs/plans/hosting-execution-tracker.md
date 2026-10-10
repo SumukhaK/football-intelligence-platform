@@ -18,7 +18,7 @@ Status values: `Not started`, `In progress`, `Blocked (reason)`, `Done (date)`.
 | 3a | Invite-only accounts and consent | [plan](accounts-and-consent-plan.md) | In progress (code done, including the Firestore store; staging walkthrough to go) |
 | 3 | Connect the hosted LLM | 1 | Not started |
 | 3b | Guardrails gateway: safety, scope router, cache, limits | [analysis](assistant-guardrails-analysis.md) | Not started |
-| 4 | Observability: logs, traces, metrics, alerts | 6 | Not started |
+| 4 | Observability: logs, traces, metrics, alerts | 6 | In progress (request IDs and traces done; metrics and alerts to go) |
 | 5 | CI/CD with the eval gate | 6 | Not started |
 | 5a | Security hardening | this tracker | Not started |
 | 6 | Cold-start and idle-wake measurement | 4 | Not started |
@@ -43,9 +43,9 @@ Evidence: tests.
 
 ## 0. Baseline, accounts and budget guardrails
 
-- [ ] Next free ADR (check develop and open PRs): cloud serving, provider adapters, immutable snapshots, refresh scheduling.
+- [ ] Next free ADR (currently 025; check develop and open PRs): cloud serving, provider adapters, immutable snapshots, refresh scheduling.
 - [ ] Local baseline: lint, types, tests; startup time and peak RAM with `LIVE_REFRESH_HOUR=off`.
-- [ ] Snapshot manifest: model, registry, datasets, fixtures, index; hashes and sizes.
+- [x] Snapshot manifest: model, registry, datasets, fixtures, index; hashes and sizes.
 - [ ] GCP project with billing; budget $10 with alerts at $2, $5, $8.
 - [ ] Cloudflare account; Workers AI free plan; scoped API token kept out of Git.
 
@@ -55,7 +55,7 @@ Evidence: baseline table in `docs/reports/hosting-baseline.md`.
 ## 1. Host the API: container and private staging
 
 - [ ] Dockerfile and `.dockerignore`: Python 3.12, non-root, artifacts copied read-only, no Ollama.
-- [ ] `/v2/live` and `/v2/ready`; `docs/api.md` updated.
+- [x] `/v2/live` and `/v2/ready`; `docs/api.md` updated.
 - [ ] Image pushed to Artifact Registry by digest.
 - [ ] Cloud Run staging: private, min 0, max 1, one worker, `LIVE_REFRESH_HOUR=off`, assistant off.
 - [ ] Fixtures, predict, explain and insights work through `gcloud run services proxy`.
@@ -89,11 +89,11 @@ Evidence: integration tests and a staging walkthrough.
 
 ## 3. Connect the hosted LLM
 
-- [ ] Workers AI `Generator` and `Embedder` adapters behind the existing protocols, with deadlines and error mapping.
+- [x] Workers AI `Generator` and `Embedder` adapters behind the existing protocols, with deadlines and error mapping.
 - [ ] A function-calling model chosen; the adapter implements tool calls (ADR 018).
 - [ ] Index rebuilt with the hosted embedding model; 0.81 cut-off re-measured with the abstention questions.
-- [ ] Provider selection in settings; local Ollama stays the default.
-- [ ] Quota, timeout and 5xx return a structured 503; predictions keep working.
+- [x] Provider selection in settings; local Ollama stays the default.
+- [x] Quota, timeout and 5xx return a structured 503; predictions keep working.
 - [ ] Grounding and abstention evals pass against staging.
 
 Done when: staging chat answers with citations and quotes the API's numbers, and both evals pass.
@@ -117,7 +117,7 @@ Evidence: tests and staging logs.
 Contract: [telemetry contract](../observability/telemetry-contract.md) and [ADR 024](../adr/024-structured-telemetry-and-opentelemetry.md).
 
 - [x] Request ID on every request and log line.
-- [ ] OpenTelemetry traces: retrieval, each tool call, generation, to Cloud Trace.
+- [x] OpenTelemetry traces: retrieval, each tool call, generation, to Cloud Trace (#91).
 - [ ] Metrics: p50/p95 latency, tokens, cost per answer, tool-call rate, refusal rate, provider errors and 429s.
 - [ ] One dashboard; alerts on error rate, p95 latency and provider failures.
 

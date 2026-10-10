@@ -21,6 +21,7 @@ One-shot scripts that are run from the command line rather than imported as libr
 - `refresh_fixtures.py` — download upcoming fixtures by hand (ADR 015).
 - `build_team_crests.py` — rebuild `datasets/schemas/team_crests.csv` and `league_emblems.csv`, the crest URL per team and league (ADR 020).
 - `manage_accounts.py` — invite people, ban or unban accounts (ADR 022).
+- `build_snapshot.py` — build or verify an immutable serving snapshot with its manifest (ADR 025).
 
 - `draw_feature_experiment.py` — retrains with six candidate draw features and reports the log-loss change; the features were not adopted (`docs/reports/draw-handling.md`).
 

@@ -12,7 +12,12 @@ from typing import Any, TypeVar
 from opentelemetry.trace import StatusCode
 
 from assistant.embeddings.embedder import Embedder
-from assistant.generation.generator import Generator, ToolCall, ToolCallingGenerator
+from assistant.generation.generator import (
+    ChatTurn,
+    Generator,
+    ToolCall,
+    ToolCallingGenerator,
+)
 from assistant.prompting.templates import build_messages
 from assistant.retrieval.retriever import RetrievedDoc, retrieve
 from assistant.retrieval.vector_store import VectorStore
@@ -59,6 +64,22 @@ class _Turn:
     started: float
     rounds: int = 0
     tools_run: list[str] = field(default_factory=list)
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
+    cost_usd: float | None = None
+
+    def add_usage(self, step: ChatTurn) -> None:
+        """Add one model call's reported usage; unreported stays None."""
+        self.prompt_tokens = _plus(self.prompt_tokens, step.prompt_tokens)
+        self.completion_tokens = _plus(self.completion_tokens, step.completion_tokens)
+        self.cost_usd = _plus(self.cost_usd, step.cost_usd)
+
+
+def _plus[N: (int, float)](total: N | None, part: N | None) -> N | None:
+    """Sum two counts where None means not reported."""
+    if part is None:
+        return total
+    return part if total is None else total + part
 
 
 class AssistantService:
@@ -152,9 +173,9 @@ class AssistantService:
             confidence=response.confidence,
             tool_rounds=turn.rounds,
             model=response.model,
-            prompt_tokens=None,
-            completion_tokens=None,
-            cost_usd=None,
+            prompt_tokens=turn.prompt_tokens,
+            completion_tokens=turn.completion_tokens,
+            cost_usd=None if turn.cost_usd is None else round(turn.cost_usd, 6),
             duration_ms=round((self._clock() - turn.started) * 1000),
         )
         if _NO_INFO_MARKER in response.answer:
@@ -247,6 +268,7 @@ class AssistantService:
         schemas = [tool.schema() for tool in self._tools]
         for round_ in range(1, _MAX_TOOL_ROUNDS + 1):
             step = self._generate(round_, lambda: generator.chat(messages, schemas))
+            turn.add_usage(step)
             if not step.tool_calls:
                 return step.content
             self._run_calls(messages, step.tool_calls, turn, step.content)
@@ -259,7 +281,9 @@ class AssistantService:
             cause="tool_round_limit",
         )
         final = _MAX_TOOL_ROUNDS + 1
-        return self._generate(final, lambda: generator.chat(messages, [])).content
+        step = self._generate(final, lambda: generator.chat(messages, []))
+        turn.add_usage(step)
+        return step.content
 
 
 class VectorStoreEmptyError(RuntimeError):
