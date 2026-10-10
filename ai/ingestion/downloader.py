@@ -67,9 +67,7 @@ class HttpxTransport:
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         self._dependency = dependency
-        self._policy = policy or RetryPolicy(
-            max_attempts=get_settings().http_max_retries + 1
-        )
+        self._policy = policy if policy is not None else retry_policy(get_settings())
         self._send = send
         self._sleep = sleep
 
@@ -96,6 +94,11 @@ class HttpxTransport:
             ) from exc
         except httpx.RequestError as exc:
             raise IngestionError(url, f"Request failed: {exc}") from exc
+
+
+def retry_policy(settings: Settings) -> RetryPolicy:
+    """The download retry policy: the first attempt plus ``http_max_retries``."""
+    return RetryPolicy(max_attempts=settings.http_max_retries + 1)
 
 
 def classify_httpx_error(exc: Exception) -> AttemptOutcome:
@@ -147,10 +150,12 @@ class DatasetDownloader:
     ) -> None:
         self._provider = provider
         self._storage = storage
-        self._transport = (
-            transport if transport is not None else HttpxTransport("football_data")
-        )
         self._settings = settings if settings is not None else get_settings()
+        self._transport = (
+            transport
+            if transport is not None
+            else HttpxTransport("football_data", retry_policy(self._settings))
+        )
 
     def fetch(
         self,
