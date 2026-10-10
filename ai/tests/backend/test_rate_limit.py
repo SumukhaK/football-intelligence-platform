@@ -87,3 +87,43 @@ def test_a_rejection_logs_the_hashed_client(
     assert attributes["client_ref"] == hash_ref("testclient", "test-salt")
     assert attributes["route"] == "<unmatched>"
     assert 1 <= attributes["retry_after_s"] <= 60
+
+
+def _proxied_app(limit: int, hops: int) -> TestClient:
+    app = FastAPI()
+    app.add_middleware(
+        RateLimitMiddleware,
+        limiter=SlidingWindowLimiter(limit),
+        salt="test-salt",
+        trusted_proxy_hops=hops,
+    )
+
+    @app.get("/v2/teams")
+    def teams() -> dict[str, str]:
+        return {"ok": "yes"}
+
+    return TestClient(app)
+
+
+def _as(client: TestClient, forwarded: str) -> int:
+    response = client.get("/v2/teams", headers={"X-Forwarded-For": forwarded})
+    return int(response.status_code)
+
+
+def test_behind_a_proxy_each_real_client_has_its_own_limit() -> None:
+    client = _proxied_app(limit=1, hops=1)
+    assert _as(client, "203.0.113.1") == 200
+    assert _as(client, "203.0.113.2") == 200
+    assert _as(client, "203.0.113.1") == 429
+
+
+def test_a_forged_forwarded_entry_does_not_dodge_the_limit() -> None:
+    client = _proxied_app(limit=1, hops=1)
+    assert _as(client, "1.1.1.1, 203.0.113.1") == 200
+    assert _as(client, "2.2.2.2, 203.0.113.1") == 429
+
+
+def test_without_trusted_proxies_the_header_is_ignored() -> None:
+    client = _proxied_app(limit=1, hops=0)
+    assert _as(client, "203.0.113.1") == 200
+    assert _as(client, "203.0.113.2") == 429

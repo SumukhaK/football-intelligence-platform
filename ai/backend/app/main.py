@@ -47,6 +47,7 @@ from backend.app.loaders import (
     load_season,
     model_versions,
 )
+from backend.app.middleware.body_limit import BodyLimitMiddleware
 from backend.app.middleware.rate_limit import RateLimitMiddleware, SlidingWindowLimiter
 from backend.app.middleware.request_context import RequestContextMiddleware
 from backend.app.routing import include_routers
@@ -276,7 +277,9 @@ def create_app() -> FastAPI:
             RateLimitMiddleware,
             limiter=SlidingWindowLimiter(settings.rate_limit_per_minute),
             salt=settings.telemetry_salt,
+            trusted_proxy_hops=settings.trusted_proxy_hops,
         )
+    app.add_middleware(BodyLimitMiddleware, max_bytes=settings.max_body_bytes)
     # Added last so it is the outermost layer and 429s get an ID too.
     app.add_middleware(RequestContextMiddleware)
     _instrument(app, settings)
