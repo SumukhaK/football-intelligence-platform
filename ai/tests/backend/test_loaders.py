@@ -83,3 +83,15 @@ def test_provider_off_loads_no_assistant(tmp_path: Path) -> None:
                 with TestClient(application):
                     assert application.state.chat_service is None
             loader.assert_not_called()
+
+
+def test_a_trailing_newline_on_the_token_is_dropped(tmp_path: Path) -> None:
+    settings = Settings(
+        assistant_vector_store_path=_index(tmp_path),
+        assistant_provider="workers_ai",
+        workers_ai_account_id="acc",
+        workers_ai_api_token=SecretStr("token\n"),
+    )
+    service = load_assistant(settings, SimpleNamespace())
+    client = service._service._generator._client  # type: ignore[attr-defined]
+    assert client._headers == {"Authorization": "Bearer token"}

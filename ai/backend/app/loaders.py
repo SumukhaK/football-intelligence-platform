@@ -195,7 +195,8 @@ def _workers_ai(settings: Settings, a_cfg: Any) -> tuple[Embedder, Generator, st
         )
     client = WorkersAIClient(
         settings.workers_ai_account_id,
-        token.get_secret_value(),
+        # A secret mounted from a file can end in a newline.
+        token.get_secret_value().strip(),
         settings.workers_ai_timeout_s,
     )
     model = settings.workers_ai_chat_model
