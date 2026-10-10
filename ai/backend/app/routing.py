@@ -17,6 +17,7 @@ from backend.app.routers import (
     model,
     outlook,
     prediction,
+    probes,
     teams,
     v1,
 )
@@ -40,11 +41,12 @@ def include_routers(app: FastAPI, auth_required: bool) -> None:
     Unversioned paths stay on v1 so clients built for release v1.0.0 keep
     working; they are hidden from the docs. With ``auth_required``, every v2
     data route needs a signed-in, consenting user, and v1 is not mounted at
-    all, since it would bypass sign-in. Health, sign-in and crest images stay
-    open.
+    all, since it would bypass sign-in. Health, the probes, sign-in and crest
+    images stay open.
     """
     guard = [Depends(require_consented_user)] if auth_required else []
     app.include_router(health.router, prefix="/v2")
+    app.include_router(probes.router, prefix="/v2")
     app.include_router(auth.router, prefix="/v2")
     app.include_router(crests.router, prefix="/v2")
     for router in _V2_DATA:
