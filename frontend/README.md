@@ -84,8 +84,8 @@ on a screen fetches fresh data.
 3. Build and install:
    ```bash
    cd frontend
-   ./gradlew assembleDebug
-   adb install app/build/outputs/apk/debug/app-debug.apk
+   ./gradlew assembleLocalDebug
+   adb install app/build/outputs/apk/local/debug/app-local-debug.apk
    ```
 
 ## Running Tests
@@ -117,7 +117,29 @@ module's `androidMain` source set, wrapped in `PreviewSurface` (ADR 010).
 
 ## Backend Base URL
 
-The base URL is configured in `core-network/src/commonMain/.../NetworkConfig.kt`:
+The app has two flavors, each with its own base URL:
+
+| Flavor | App | Base URL |
+|---|---|---|
+| `local` | Football Intelligence (`com.footballintelligence.app`) | `http://10.0.2.2:8000`, the API on your PC as seen from the emulator |
+| `staging` | Football Intelligence -stg (`com.footballintelligence.app.stg`, version `-stg`) | The hosted staging API (ADR 025) |
+
+They install side by side. The staging address is not in Git: put it in
+`frontend/local.properties`, then build:
+
+```properties
+staging.baseUrl=https://<staging service URL>
+```
+
+```bash
+./gradlew assembleStagingDebug
+```
+
+A staging build without an `https://` address fails straight away instead
+of producing an app that can't reach anything. `-PstagingBaseUrl=...` works
+too; CI passes a placeholder so `assembleDebug` builds both flavors.
+
+The rest of the network settings are in `core-network/src/commonMain/.../NetworkConfig.kt`:
 
 ```kotlin
 data class NetworkConfig(
@@ -133,4 +155,4 @@ quickly; `timeoutMs` bounds a request once connected. `crestUrl(team)` and
 `emblemUrl(competition)` build the crest and emblem image URLs from the same
 base URL (ADR 020).
 
-Change this for physical device testing (use your machine's LAN IP).
+For a physical device on your network, change the `local` flavor's `BASE_URL` in `app/build.gradle.kts` to your machine's LAN IP.
