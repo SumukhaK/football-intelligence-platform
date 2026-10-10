@@ -1,0 +1,33 @@
+{
+  "displayName": "football-api: unhandled exception",
+  "documentation": {
+    "content": "At least one request ended in an unhandled exception (`app.crash`) in 5 minutes.\n\nFirst check: the grouped stack trace in Error Reporting, and the request's trace via its `trace_id`.",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "Any app.crash in 5 minutes",
+      "conditionThreshold": {
+        "filter": "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/api_crashes\"",
+        "aggregations": [
+          {
+            "alignmentPeriod": "300s",
+            "perSeriesAligner": "ALIGN_DELTA",
+            "crossSeriesReducer": "REDUCE_SUM"
+          }
+        ],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 0,
+        "duration": "0s",
+        "trigger": {
+          "count": 1
+        }
+      }
+    }
+  ],
+  "alertStrategy": {
+    "autoClose": "86400s"
+  },
+  "severity": "ERROR"
+}

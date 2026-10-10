@@ -1,0 +1,15 @@
+name: component_failures
+description: Startup or reload component loads that failed or degraded (component.load).
+filter: >-
+  resource.type="cloud_run_revision" AND resource.labels.service_name=("football-api" OR "football-api-staging")
+  AND jsonPayload.event="component.load"
+  AND jsonPayload.attributes.status=("failed" OR "degraded")
+metricDescriptor:
+  metricKind: DELTA
+  valueType: INT64
+  labels:
+    - key: component
+      valueType: STRING
+      description: Contract component name, for example prediction_model.
+labelExtractors:
+  component: EXTRACT(jsonPayload.attributes.component)
