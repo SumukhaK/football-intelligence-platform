@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -20,7 +21,12 @@ from backend.app.services.account_service import (
     TooManyAttemptsError,
     WeakPasswordError,
 )
-from backend.app.services.account_store import JsonAccountStore
+from backend.app.services.account_store import (
+    AccountStore,
+    FirestoreAccountStore,
+    JsonAccountStore,
+)
+from tests.backend.fake_firestore import FakeFirestore
 
 EMAIL = "Sam@Example.com"
 PASSWORD = "correct horse battery"
@@ -41,9 +47,17 @@ def clock() -> Clock:
     return Clock()
 
 
-@pytest.fixture()
-def accounts(tmp_path: Path, clock: Clock) -> AccountService:
-    return AccountService(JsonAccountStore(tmp_path / "accounts.json"), clock)
+@pytest.fixture(params=["json", "firestore"])
+def accounts(
+    request: pytest.FixtureRequest, tmp_path: Path, clock: Clock
+) -> AccountService:
+    """Every behaviour holds for both stores (ADR 026)."""
+    store: AccountStore = (
+        JsonAccountStore(tmp_path / "accounts.json")
+        if request.param == "json"
+        else FirestoreAccountStore(FakeFirestore())
+    )
+    return AccountService(store, clock)
 
 
 def _signed_up(accounts: AccountService) -> str:
@@ -169,10 +183,15 @@ def test_consent_is_recorded(accounts: AccountService, clock: Clock) -> None:
 def test_secrets_are_never_stored_in_plain_text(
     accounts: AccountService, tmp_path: Path
 ) -> None:
-    """The file holds hashes only: no password, invite code or token."""
+    """The store holds hashes only: no password, invite code or token."""
     code = accounts.create_invite(EMAIL)
     token = accounts.redeem_invite(EMAIL, code, PASSWORD).token
-    stored = (tmp_path / "accounts.json").read_text(encoding="utf-8")
+    store = accounts._store
+    stored = (
+        json.dumps(store._client.collections)
+        if isinstance(store, FirestoreAccountStore)
+        else (tmp_path / "accounts.json").read_text(encoding="utf-8")
+    )
     for secret in (PASSWORD, code, token):
         assert secret not in stored
 
