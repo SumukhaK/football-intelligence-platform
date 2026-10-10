@@ -1,0 +1,33 @@
+{
+  "displayName": "football-api: LLM provider failing",
+  "documentation": {
+    "content": "More than 5 calls to the assistant's model provider failed in 10 minutes. Chat answers 503; predictions are unaffected.\n\nFirst check: `dependency.call` lines for the `http_status` (429 means the Workers AI daily quota or rate limit), then the provider's status page.",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "More than 5 failed LLM calls in 10 minutes",
+      "conditionThreshold": {
+        "filter": "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/dependency_failures\" AND metric.label.dependency=one_of(\"workers_ai\", \"ollama_chat\", \"ollama_embed\")",
+        "aggregations": [
+          {
+            "alignmentPeriod": "600s",
+            "perSeriesAligner": "ALIGN_DELTA",
+            "crossSeriesReducer": "REDUCE_SUM"
+          }
+        ],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 5,
+        "duration": "0s",
+        "trigger": {
+          "count": 1
+        }
+      }
+    }
+  ],
+  "alertStrategy": {
+    "autoClose": "86400s"
+  },
+  "severity": "ERROR"
+}

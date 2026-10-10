@@ -116,3 +116,6 @@ ai/assistant/vector_store*/
 
 # Local account store (ADR 022)
 ai/accounts/
+
+# Serving snapshots (ADR 025): built by `python -m scripts.build_snapshot`
+/snapshot/

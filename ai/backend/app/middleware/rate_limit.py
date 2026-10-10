@@ -1,7 +1,7 @@
 """Per-client rate limiting: a safety net against runaway clients (ADR 014).
 
 A sliding one-minute window per client address. Requests over the limit get a
-structured 429 with ``Retry-After``. ``/health`` and the docs are never
+structured 429 with ``Retry-After``. Health, the probes and the docs are never
 limited, so monitoring keeps working. State is in memory, which is enough for
 the single-process local server this project runs.
 """
@@ -27,7 +27,16 @@ TOO_MANY_REQUESTS = "Too many requests"
 
 WINDOW_SECONDS = 60.0
 EXEMPT_PATHS = frozenset(
-    {"/health", "/v1/health", "/v2/health", "/docs", "/redoc", "/openapi.json"}
+    {
+        "/health",
+        "/v1/health",
+        "/v2/health",
+        "/v2/live",
+        "/v2/ready",
+        "/docs",
+        "/redoc",
+        "/openapi.json",
+    }
 )
 
 

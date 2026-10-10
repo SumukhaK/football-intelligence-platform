@@ -332,6 +332,10 @@ ollama pull qwen2.5:7b-instruct
 uv run python -m assistant.pipeline --rebuild
 ```
 
+### Local Traces and Dashboards
+
+`docker compose -f docker-compose.observability.yml up -d` starts Grafana with a trace store on your machine. Set `TRACE_EXPORTER=otlp` and `LOG_FORMAT=json` in `ai/.env` to send the API's traces there; [docs/observability/local-stack.md](docs/observability/local-stack.md) shows how to follow one request from its log line to its trace. The cloud metrics and alerts are defined in [`infrastructure/monitoring/`](infrastructure/monitoring/README.md).
+
 ### Running Android
 
 ```sh

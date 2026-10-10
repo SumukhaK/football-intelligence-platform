@@ -16,6 +16,9 @@ class AssistantSettings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        # ai/.env is shared by all three settings classes, so each ignores the
+        # keys that belong to the others.
+        extra="ignore",
     )
 
     # Who embeds and answers (ADR 025); the backend handles "off" itself.

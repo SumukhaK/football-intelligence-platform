@@ -1,0 +1,22 @@
+{
+  "displayName": "football-api: p95 latency over 3 s",
+  "documentation": {
+    "content": "p95 latency of non-chat routes stayed above 3 seconds for 15 minutes. Chat is excluded because a model call is expected to be slow.\n\nFirst check: whether a cold start or a refresh coincides (startup `component.load` durations), then the slowest traces for the route in Cloud Trace.",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "p95 over 3000 ms, chat excluded",
+      "conditionPrometheusQueryLanguage": {
+        "query": "histogram_quantile(0.95, sum by (le) (rate(logging_googleapis_com:user_api_latency_ms_bucket{monitored_resource=\"cloud_run_revision\",route!~\".*/assistant/chat\"}[5m]))) > 3000",
+        "duration": "900s",
+        "evaluationInterval": "60s"
+      }
+    }
+  ],
+  "alertStrategy": {
+    "autoClose": "86400s"
+  },
+  "severity": "ERROR"
+}
