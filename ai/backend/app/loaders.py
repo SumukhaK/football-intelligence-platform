@@ -15,6 +15,8 @@ from typing import TYPE_CHECKING, Any
 from model_registry.registry import ModelRegistry
 
 if TYPE_CHECKING:
+    from assistant.embeddings.embedder import Embedder
+    from assistant.generation.generator import Generator
     from backend.app.config import Settings
     from backend.app.services.chat_service import ChatService
     from backend.app.services.explanation_service import ExplanationService
@@ -130,8 +132,6 @@ def load_insights(directory: Path, competitions: list[str]) -> InsightsService:
 
 def load_assistant(settings: Settings, state: Any) -> ChatService:
     """The assistant, with its tools and season router over ``state``."""
-    from assistant.embeddings.embedder import OllamaEmbedder
-    from assistant.generation.generator import OllamaGenerator
     from assistant.retrieval.vector_store import VectorStore
     from assistant.services.assistant_service import AssistantService
     from backend.app.dependencies import get_served_competitions
@@ -139,27 +139,70 @@ def load_assistant(settings: Settings, state: Any) -> ChatService:
     from backend.app.services.chat_service import ChatService
     from backend.app.services.season_router import SeasonRouter
 
-    a_cfg = _assistant_settings(settings)
-    store = VectorStore.load(a_cfg.vector_store_path)
+    store = VectorStore.load(settings.assistant_vector_store_path)
+    embedder, generator, model_name = _provider(settings)
     served = get_served_competitions()
     ai_service = AssistantService(
-        embedder=OllamaEmbedder(
-            model=a_cfg.ollama_embed_model, base_url=a_cfg.ollama_base_url
-        ),
-        generator=OllamaGenerator(
-            model=a_cfg.ollama_chat_model,
-            base_url=a_cfg.ollama_base_url,
-            temperature=a_cfg.temperature,
-            max_tokens=a_cfg.max_tokens,
-        ),
+        embedder=embedder,
+        generator=generator,
         store=store,
-        model_name=a_cfg.ollama_chat_model,
-        top_k=a_cfg.top_k,
+        model_name=model_name,
+        top_k=settings.assistant_top_k,
         tools=AssistantTools(state, served).tools(),
         router=SeasonRouter(state, served),
     )
-    logger.info("Assistant index has %d chunks.", store.size())
+    logger.info(
+        "Assistant uses %s (%s); index has %d chunks.",
+        settings.assistant_provider,
+        model_name,
+        store.size(),
+    )
     return ChatService(ai_service)
+
+
+def _provider(settings: Settings) -> tuple[Embedder, Generator, str]:
+    """The embedder, generator and chat model name for the configured provider."""
+    a_cfg = _assistant_settings(settings)
+    if settings.assistant_provider == "workers_ai":
+        return _workers_ai(settings, a_cfg)
+    from assistant.embeddings.embedder import OllamaEmbedder
+    from assistant.generation.generator import OllamaGenerator
+
+    embedder = OllamaEmbedder(
+        model=a_cfg.ollama_embed_model, base_url=a_cfg.ollama_base_url
+    )
+    generator = OllamaGenerator(
+        model=a_cfg.ollama_chat_model,
+        base_url=a_cfg.ollama_base_url,
+        temperature=a_cfg.temperature,
+        max_tokens=a_cfg.max_tokens,
+    )
+    return embedder, generator, a_cfg.ollama_chat_model
+
+
+def _workers_ai(settings: Settings, a_cfg: Any) -> tuple[Embedder, Generator, str]:
+    from assistant.workers_ai import (
+        WorkersAIClient,
+        WorkersAIEmbedder,
+        WorkersAIGenerator,
+    )
+
+    token = settings.workers_ai_api_token
+    if not settings.workers_ai_account_id or token is None:
+        raise ValueError(
+            "ASSISTANT_PROVIDER=workers_ai needs WORKERS_AI_ACCOUNT_ID and "
+            "WORKERS_AI_API_TOKEN."
+        )
+    client = WorkersAIClient(
+        settings.workers_ai_account_id,
+        token.get_secret_value(),
+        settings.workers_ai_timeout_s,
+    )
+    model = settings.workers_ai_chat_model
+    generator = WorkersAIGenerator(
+        client, model, temperature=a_cfg.temperature, max_tokens=a_cfg.max_tokens
+    )
+    return WorkersAIEmbedder(client, settings.workers_ai_embed_model), generator, model
 
 
 def _assistant_settings(settings: Settings) -> Any:
