@@ -63,7 +63,7 @@ def refresh_live_dataset(
     current = fetch_in_progress(
         provider,
         storage,
-        transport or HttpxTransport(),
+        transport or HttpxTransport("football_data"),
         divisions or list(TOP_FIVE_DIVISIONS),
         season_code or season_code_for(as_of),
         as_of,

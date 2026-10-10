@@ -62,7 +62,9 @@ def refresh_fixtures(
     storage = DatasetStorage(DataPaths(base_dir=base_dir))
     frames = [
         upcoming_fixtures(
-            _load_or_download(storage, transport or HttpxTransport(), code, as_of),
+            _load_or_download(
+                storage, transport or HttpxTransport("openfootball"), code, as_of
+            ),
             competition,
             as_of,
         )
