@@ -38,6 +38,7 @@ ENV PATH=/app/.venv/bin:$PATH \
     PORT=8080 \
     LIVE_REFRESH_HOUR=off \
     LOG_FORMAT=json \
+    TRUSTED_PROXY_HOPS=1 \
     ASSISTANT_PROVIDER=off
 WORKDIR /app/ai
 USER app
