@@ -107,3 +107,4 @@ ADRs are never deleted.
 | [022](022-invite-only-accounts-and-consent.md) | Invite-only accounts, sessions and consent | Accepted |
 | [023](023-team-season-outlook-endpoint.md) | Team season outlook endpoint | Accepted |
 | [024](024-structured-telemetry-and-opentelemetry.md) | Structured telemetry and OpenTelemetry | Accepted |
+| [025](025-cloud-serving-on-cloud-run.md) | Cloud serving on Cloud Run | Accepted |

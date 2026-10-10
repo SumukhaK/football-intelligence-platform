@@ -367,3 +367,19 @@ def test_a_refusal_without_documents_is_no_retrieval(
     _make_service(sample_docs, answer=answer).chat("Who won in 1888?")
     assert events("assistant.abstain") == [("INFO", {"reason": "no_retrieval"})]
     assert _answer(events)["retrieved_count"] == 0
+
+
+def test_token_usage_is_summed_over_rounds(sample_docs, events: Events) -> None:  # type: ignore[no-untyped-def]
+    call = ToolCall("predict_match", {"home_team": "Arsenal"})
+    generator = ScriptedToolGenerator(
+        [
+            ChatTurn(
+                "", [call], prompt_tokens=100, completion_tokens=10, cost_usd=0.001
+            ),
+            ChatTurn("Done.", prompt_tokens=150, completion_tokens=20, cost_usd=0.002),
+        ]
+    )
+    _clocked(_tool_service(sample_docs, generator)).chat("Arsenal?")
+    attributes = _answer(events)
+    assert (attributes["prompt_tokens"], attributes["completion_tokens"]) == (250, 30)
+    assert attributes["cost_usd"] == pytest.approx(0.003)
