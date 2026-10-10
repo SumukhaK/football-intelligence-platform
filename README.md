@@ -1,5 +1,7 @@
 # Football Intelligence Platform
 
+**[Explore the project website](https://fip-ai.dev/)** · [Website source and publishing guide](docs/site/README.md)
+
 **An AI-first football analytics platform — from raw match data to an explainable, grounded, mobile-native prediction experience.**
 
 [![CI](https://img.shields.io/badge/CI-passing-brightgreen)](.github/workflows) [![Tests](https://img.shields.io/badge/tests-1050-brightgreen)](docs/reports/) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Python](https://img.shields.io/badge/python-3.12-blue)](ai/pyproject.toml) [![Kotlin](https://img.shields.io/badge/kotlin-Compose%20Multiplatform-purple)](frontend/)

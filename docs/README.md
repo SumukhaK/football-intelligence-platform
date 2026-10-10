@@ -12,6 +12,8 @@ Maintained by the project architect. The implementation engineer updates documen
 
 ## Index
 
+[Project website](site/README.md): pitch, preview, validation and publishing.
+
 ### Setup
 
 | Document | Description |

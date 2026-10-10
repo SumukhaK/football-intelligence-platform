@@ -28,5 +28,9 @@ Scripts are one-off or operational tools that do not belong in the application c
 
 ## Status
 
-Empty. Operational scripts live in `ai/scripts/`: backfill, live refresh,
+The website check lives in `check_site.py`. Run it from the repository root
+with `python scripts/check_site.py` before publishing. It validates local
+links, assets and document structure.
+
+Application operational scripts live in `ai/scripts/`: backfill, live refresh,
 fixtures refresh, crest tables and account management.
