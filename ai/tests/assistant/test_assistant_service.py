@@ -383,3 +383,12 @@ def test_token_usage_is_summed_over_rounds(sample_docs, events: Events) -> None:
     attributes = _answer(events)
     assert (attributes["prompt_tokens"], attributes["completion_tokens"]) == (250, 30)
     assert attributes["cost_usd"] == pytest.approx(0.003)
+
+
+def test_sources_and_citations_are_logged(sample_docs, events: Events) -> None:  # type: ignore[no-untyped-def]
+    """What the answer drew on is recorded in the log, not shown (ADR 029)."""
+    answer = "Accuracy is 56% [source: model_card.md] [source: tool predict_match]."
+    _make_service(sample_docs, answer=answer).chat("What is the model accuracy?")
+    attributes = _answer(events)
+    assert attributes["cited"] == ["model_card.md", "tool predict_match"]
+    assert len(attributes["sources"]) == 3

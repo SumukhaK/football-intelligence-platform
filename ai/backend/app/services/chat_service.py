@@ -5,8 +5,9 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from assistant.prompting.templates import strip_citations
 from backend.app.exceptions import AssistantNotAvailableError
-from backend.app.schemas.assistant import ChatRequest, ChatResponse, SourceCitation
+from backend.app.schemas.assistant import ChatRequest, ChatResponse
 from backend.app.services.account_service import MAX_STRIKES, AccountService
 from backend.app.services.account_store import User
 from shared.telemetry.events import EventName, emit
@@ -54,17 +55,11 @@ class ChatService:
         except Exception as exc:
             raise AssistantNotAvailableError(str(exc)) from exc
 
-        sources = [
-            SourceCitation(
-                source=s.source,
-                excerpt=s.excerpt,
-                relevance_score=s.relevance_score,
-            )
-            for s in result.sources
-        ]
+        # Sources and citations go to the logs (assistant.answer), not to
+        # users (ADR 029).
         return ChatResponse(
-            answer=result.answer,
-            sources=sources,
+            answer=strip_citations(result.answer),
+            sources=[],
             confidence=result.confidence,
             model=result.model,
             retrieved_count=result.retrieved_count,

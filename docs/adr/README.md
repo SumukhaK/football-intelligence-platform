@@ -111,3 +111,4 @@ ADRs are never deleted.
 | [026](026-firestore-account-store.md) | Firestore for the account store | Accepted |
 | [027](027-assistant-safety-check-and-strikes.md) | Assistant safety check and strikes | Accepted |
 | [028](028-crash-reports-in-the-staging-app.md) | Crash reports in the staging app | Accepted |
+| [029](029-assistant-sources-logged-not-shown.md) | Assistant sources are logged, not shown | Accepted |

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from assistant.ingestion.document import Document
@@ -114,3 +115,17 @@ def build_messages(
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": user},
     ]
+
+
+# Matches one citation in the format rule 3 asks for, with the space before it.
+_CITATION = re.compile(r"\s*\[source:\s*([^\]]*)\]")
+
+
+def cited_sources(answer: str) -> list[str]:
+    """The sources an answer cites, in order, each once."""
+    return list(dict.fromkeys(m.strip() for m in _CITATION.findall(answer)))
+
+
+def strip_citations(answer: str) -> str:
+    """The answer as users read it: citations are logged, not shown."""
+    return _CITATION.sub("", answer).strip()
