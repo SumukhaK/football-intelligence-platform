@@ -12,10 +12,10 @@ The page uses the Android app's green palette, system fonts and a responsive
 editorial layout. Navigation works with a keyboard. There is no JavaScript,
 analytics, external font or build dependency.
 
-The page describes the working local product. It does not claim a hosted beta,
+The page describes the working local product and that it is ready to host. It does not claim a hosted beta,
 a Claude integration, customers or guaranteed hallucination prevention.
 The serving dataset figures come from the refit report in docs/reports.
-The demo and poster are the existing v2.0.0 recording, clearly dated.
+The demo video (`demo.mp4`, recorded October 2026) and its poster are served from this folder, clearly dated; the subtitles are burned in, and the transcript is `docs/showcase/demo-video/demo.srt`.
 
 ## Preview and verify
 
