@@ -11,6 +11,15 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.5.1] — 2026-10-15
+
+A patch release that records the staging deploy; the code is v2.5.0's.
+
+### Changed
+- Staging runs v2.5.0 with chat memory on Google Cloud Run; the image is now built with Cloud Build. The README and the project website say the service is live.
+
+---
+
 ## [2.5.0] — 2026-10-15
 
 ### Added
@@ -105,6 +114,7 @@ The API is unchanged and still reports version 2.0.0.
 - Every markdown file checked against the code and updated for v2; "Lessons Learned" removed from the README (#57, #58).
 - Branch flow: work merges into `develop`; `main` only takes release pull requests and hotfixes, each tagged. CI runs on pull requests into both, and both branches are protected (#59).
 
+[2.5.1]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.5.1
 [2.5.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.5.0
 [2.4.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.4.0
 [2.3.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.3.0
