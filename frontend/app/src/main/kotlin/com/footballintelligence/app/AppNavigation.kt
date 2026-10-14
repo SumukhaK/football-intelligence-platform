@@ -11,6 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -113,12 +114,18 @@ private fun AppNavHost(
     val settingsAction: @Composable RowScope.() -> Unit = {
         SettingsButton(onClick = { navController.navigate(Screen.Settings.route) })
     }
+    val appContext = LocalContext.current.applicationContext
     NavHost(
         navController = navController,
         startDestination = startDestination,
         modifier = modifier,
     ) {
-        authRoutes(onReady = { navController.restartAt(firstRoute) })
+        authRoutes(
+            onReady = {
+                enableCrashReports(appContext)
+                navController.restartAt(firstRoute)
+            },
+        )
 
         composable(Screen.Onboarding.route) {
             TeamPickerRoute(

@@ -284,10 +284,18 @@ Those are the counts at v1.0.0.
 
 ---
 
-## Next
+## Release v2.3.0 (2026-10-15)
 
-The private staging deployment on Cloud Run, then the closed beta with invited friends.
+**Deliverables (PRs #116–#119, ADR 028):** the staging backend live on Cloud Run (deployed 14 October 2026, 19 s from a cold start to ready), crash reports from the staging app after consent, consent notice version 2, and the alert policies applied with two fixes to the monitoring scripts.
+
+**Git Tag:** v2.3.0
 
 ---
 
-**Today: 7 releases, 27 ADRs, 1,496 tests (1,322 Python, 174 Android). One engineer.**
+## Next
+
+The closed beta with invited friends on the staging app.
+
+---
+
+**Today: 8 releases, 28 ADRs, 1,496 tests (1,322 Python, 174 Android). One engineer.**

@@ -8,6 +8,8 @@ plugins {
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.spotless) apply false
+    alias(libs.plugins.google.services) apply false
+    alias(libs.plugins.firebase.crashlytics) apply false
 }
 
 // Static analysis for every module, as run by the Frontend Static Analysis
