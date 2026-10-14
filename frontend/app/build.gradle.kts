@@ -3,6 +3,16 @@ import java.util.Properties
 plugins {
     id("football.android.application")
     id("football.android.compose")
+    alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
+}
+
+// Only the staging build reports crashes, with the Firebase config the owner
+// keeps at src/staging/google-services.json, out of Git (ADR 028). The local
+// build, and CI, which has no config, build without one.
+googleServices {
+    missingGoogleServicesStrategy =
+        com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy.IGNORE
 }
 
 // The staging API's HTTPS address, kept out of Git: `staging.baseUrl` in
@@ -36,6 +46,10 @@ android {
         create("local") {
             dimension = "environment"
             buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8000\"")
+            // No Firebase config, so there is no app to upload R8 mappings to.
+            configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
+                mappingFileUploadEnabled = false
+            }
         }
         create("staging") {
             dimension = "environment"
@@ -86,6 +100,9 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.kotlinx.coroutines.android)
+
+    "stagingImplementation"(platform(libs.firebase.bom))
+    "stagingImplementation"(libs.firebase.crashlytics)
 
     testImplementation(libs.junit5.api)
     testRuntimeOnly(libs.junit5.engine)

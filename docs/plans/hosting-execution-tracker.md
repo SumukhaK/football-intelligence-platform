@@ -162,6 +162,7 @@ Evidence: that report.
 ## 6a. Closed beta on staging
 
 - [x] Staging build variant: its own application ID, build number and a "-stg" app name, pointing at the staging URL (`staging` flavor; the URL comes from `frontend/local.properties`).
+- [x] Crash reports from the staging app with Firebase Crashlytics, sent only after consent; the notice (version 2) says so (ADR 028).
 - [ ] APK shared directly with invited friends.
 - [ ] Usage recorded per consented user: questions per day, tokens, latency, refusals, router and cache hits, tool use. Question text only with opt-in.
 - [ ] Weekly summary to set production budgets and limits.
