@@ -9,6 +9,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- Chat memory design: ADR 030 and the chat memory plan (signed history kept on the phone, 4 exchanges, nothing stored on the server), with tracker step 3c.
+
+### Fixed
+- Every screen shares one green top bar, and New prediction no longer flashes an error while leaving the result (#126).
+
 ---
 
 ## [2.4.0] — 2026-10-15

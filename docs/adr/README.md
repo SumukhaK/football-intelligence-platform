@@ -112,3 +112,4 @@ ADRs are never deleted.
 | [027](027-assistant-safety-check-and-strikes.md) | Assistant safety check and strikes | Accepted |
 | [028](028-crash-reports-in-the-staging-app.md) | Crash reports in the staging app | Accepted |
 | [029](029-assistant-sources-logged-not-shown.md) | Assistant sources are logged, not shown | Accepted |
+| [030](030-short-term-chat-memory.md) | Short-term chat memory with signed history | Accepted |
