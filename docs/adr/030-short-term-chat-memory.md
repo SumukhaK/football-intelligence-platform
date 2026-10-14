@@ -29,8 +29,8 @@ Constraints:
    shows. With each question it sends the last **4 exchanges** as `history`,
    plus a `conversation_id` it generates.
 2. **The server signs its answers.** Each response carries a `signature`: an
-   HMAC-SHA256 over the user, the conversation ID, the turn number and the
-   answer text, keyed by `HISTORY_KEY` (Secret Manager in the cloud). If an
+   HMAC-SHA256 over the user, the conversation ID and the answer
+   text, keyed by `HISTORY_KEY` (Secret Manager in the cloud). If an
    assistant turn in the history doesn't verify, the server drops the whole
    history and answers the question on its own. User turns need no signature,
    because they are checked again.

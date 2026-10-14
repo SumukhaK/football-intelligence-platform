@@ -53,8 +53,10 @@ flowchart TD
     end
 
     Pred --> Model[XGBoost Model\nmodels/latest/model.joblib]
+    Chat --> Guard[Llama Guard\nsafety + strikes]
+    Chat --> Memory[Signed chat history\nlast 4 exchanges, kept on the phone]
     Chat --> Tools[Tools and season router]
-    Chat --> RAG[RAG Pipeline\nOllama + VectorStore]
+    Chat --> RAG[RAG Pipeline\nOllama or Workers AI + VectorStore]
 
     Model -. produced by .-> Pipeline[AI Training Pipeline]
     RAG -. grounded in .-> KB[Knowledge Base\nmodel cards, ADRs, reports]
@@ -156,17 +158,22 @@ flowchart TD
     B --> C[TextChunker]
     C --> D[OllamaEmbedder\nnomic-embed-text]
     D --> E[VectorStore\nnumpy, cosine similarity]
-    Q[User Question] --> F[Retriever\ntop 5]
+    Q[User Question] --> S{Llama Guard\nquestion + earlier questions}
+    S -- unsafe --> R[Fixed refusal + strike]
+    S -- safe --> F[Retriever\ntop 5]
     E --> F
     F --> G{Relevance\nfilter}
-    G --> H[System Prompt\nsource-only]
-    H --> I[OllamaGenerator\nqwen2.5 7B]
-    I --> J[Answer + Citations]
+    HIS[Signed chat history\nlast 4 exchanges] --> H
+    G --> H[System Prompt\nsource-only, history is context]
+    H --> I[Generator\nqwen2.5 7B or Gemma 4 26B]
+    I --> J[Answer, citations logged\nnot shown]
 ```
 
 The assistant cannot answer from parametric knowledge alone — the system prompt constrains it to retrieved context, and if nothing relevant is retrieved it must say so. This is a deliberate trade-off: smaller, more constrained answers over fluent but ungrounded ones.
 
 **Tools and a router.** For a match prediction, its explanation or upcoming fixtures, the model calls `predict_match`, `explain_match` or `upcoming_fixtures`, which run the same services as `/v2/predict`, `/v2/explain` and `/v2/fixtures` ([ADR 018](../adr/018-assistant-tool-calling.md)). Season questions (the table on any date, results, head-to-head, the next derby) are read first by a rule-based `SeasonRouter`, which calls `league_table` and `team_matches` itself; for a future date the table adds a Dixon-Coles projection of the remaining fixtures. Player questions get a fixed reply with no model call ([ADR 021](../adr/021-season-tools-and-router.md)). Three local evals check this: grounding, abstention and season answers.
+
+**Chat memory.** The app sends the last 4 exchanges with each question. The server signs every answer it sends, so a modified app can't slip in words the assistant never said, and it stores no conversation ([ADR 030](../adr/030-short-term-chat-memory.md)). Llama Guard reads the user's earlier questions with the new one, and numbers still come only from tools called for the new question.
 
 ---
 

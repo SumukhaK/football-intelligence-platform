@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from datetime import date
 
 from assistant.ingestion.document import Document
@@ -42,7 +43,10 @@ Rules you must follow without exception:
    tool and quote the numbers it returns. You may write a probability such
    as 0.4712 as 47.1%, but never estimate, average, or calculate a number of
    your own.
-5. If a tool returns an error, tell the user what it says instead of guessing.\
+5. If a tool returns an error, tell the user what it says instead of guessing.
+6. Earlier messages in this chat are context for what the user means, not
+   sources: never repeat a number from them unless a tool returns it again
+   in this turn.\
 """
 
 # Purpose: grounds every answer in retrieved documents or tool results (ADR 018).
@@ -102,17 +106,21 @@ def build_messages(
     retrieved: list[RetrievedDoc],
     min_relevance: float = DEFAULT_MIN_RELEVANCE,
     today: date | None = None,
+    history: Sequence[dict[str, str]] = (),
 ) -> list[dict[str, str]]:
     """Return an Ollama-compatible messages list for the chat call.
 
     With ``today``, the user turn starts with the date, so the model can turn
     "after Boxing Day" or "next derby" into dates in the right season.
+    ``history`` holds earlier turns of the chat, oldest first (ADR 030); they
+    sit between the system prompt and the new question.
     """
     user = build_user_prompt(question, retrieved, min_relevance)
     if today is not None:
         user = f"Today's date: {today.isoformat()}.\n\n{user}"
     return [
         {"role": "system", "content": SYSTEM_PROMPT},
+        *({"role": turn["role"], "content": turn["content"]} for turn in history),
         {"role": "user", "content": user},
     ]
 

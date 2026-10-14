@@ -105,3 +105,14 @@ def test_citations_are_stripped_for_readers() -> None:
 def test_cited_sources_are_listed_once_in_order() -> None:
     answer = "A [source: b.md]. B [source: tool predict_match]. C [source: b.md]."
     assert cited_sources(answer) == ["b.md", "tool predict_match"]
+
+
+def test_history_sits_between_the_system_prompt_and_the_question() -> None:
+    history = [
+        {"role": "user", "content": "Everton v Chelsea?"},
+        {"role": "assistant", "content": "Everton are favourites."},
+    ]
+    msgs = build_messages("And the draw?", [], history=history)
+    assert [m["role"] for m in msgs] == ["system", "user", "assistant", "user"]
+    assert msgs[1]["content"] == "Everton v Chelsea?"
+    assert "And the draw?" in msgs[-1]["content"]

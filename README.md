@@ -82,7 +82,7 @@ flowchart TD
     J --> K["FastAPI Backend\n/v2: predict · explain · insights · fixtures · teams\n/v1: original Premier League model\nrate limited"]
     NG --> K
     FS --> K
-    K --> L["AI Assistant\nRAG · numpy vector store\nOllama locally · Workers AI hosted\ntools: predict · explain · fixtures"]
+    K --> L["AI Assistant\nRAG · numpy vector store\nOllama locally · Workers AI hosted\ntools: predict · explain · fixtures\nsigned short-term chat memory"]
     K --> M["Android App\nCompose Multiplatform · MVVM · Ktor · Koin\noffline cache · pull to refresh"]
 
     classDef source fill:#E3F2FD,stroke:#1E88E5,color:#0D2A4A

@@ -31,7 +31,7 @@ flowchart LR
 |---|---|---|---|
 | `conversation_id` | request | string, 8–64 chars | Made by the app; new on New chat, sign-out or 30 min idle |
 | `history` | request | list of `{role, content, signature?}`, at most 8 items | Oldest first; `role` is `user` or `assistant`; an assistant item needs its `signature` |
-| `signature` | response | string, 64 hex chars | HMAC-SHA256 over user, conversation ID, turn number and answer, keyed by `HISTORY_KEY` |
+| `signature` | response | string, 64 hex chars | HMAC-SHA256 over user, conversation ID and answer, keyed by `HISTORY_KEY` |
 
 ## Limits
 

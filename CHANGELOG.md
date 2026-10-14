@@ -11,6 +11,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Chat memory design: ADR 030 and the chat memory plan (signed history kept on the phone, 4 exchanges, nothing stored on the server), with tracker step 3c.
+- Chat memory on the server: `POST /v2/assistant/chat` takes an optional `conversation_id` and `history` and signs every answer; forged history is ignored, long history trimmed, and Llama Guard reads the user's earlier questions with the new one. Request bodies may now be 24 KB (ADR 030).
 
 ### Fixed
 - Every screen shares one green top bar, and New prediction no longer flashes an error while leaving the result (#126).

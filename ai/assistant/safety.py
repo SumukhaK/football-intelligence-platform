@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from assistant.generation.generator import Generator
 
 
@@ -16,13 +18,19 @@ class SafetyCheck:
         """Use ``guard``, a generator bound to a Llama Guard 3 model."""
         self._guard = guard
 
-    def harmful_categories(self, question: str) -> list[str]:
+    def harmful_categories(
+        self, question: str, earlier: Sequence[str] = ()
+    ) -> list[str]:
         """The hazard codes (S1 to S14) the question falls under; empty if safe.
+
+        ``earlier`` holds the user's previous questions in this chat (ADR 030),
+        read together with this one so a request split across turns is caught.
 
         Raises:
             SafetyCheckError: The guard answered in an unexpected form.
         """
-        reply = self._guard.generate([{"role": "user", "content": question}])
+        text = "\n\n".join([*earlier, question])
+        reply = self._guard.generate([{"role": "user", "content": text}])
         lines = [line.strip() for line in reply.strip().splitlines() if line.strip()]
         verdict = lines[0].lower() if lines else ""
         if verdict == "safe":

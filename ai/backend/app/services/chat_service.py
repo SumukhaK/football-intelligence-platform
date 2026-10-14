@@ -10,6 +10,7 @@ from backend.app.exceptions import AssistantNotAvailableError
 from backend.app.schemas.assistant import ChatRequest, ChatResponse
 from backend.app.services.account_service import MAX_STRIKES, AccountService
 from backend.app.services.account_store import User
+from backend.app.services.chat_history import ChatHistory, CheckedHistory
 from shared.telemetry.events import EventName, emit
 
 if TYPE_CHECKING:
@@ -26,15 +27,19 @@ class ChatService:
         assistant_service: object,
         safety: SafetyCheck | None = None,
         accounts: AccountService | None = None,
+        history: ChatHistory | None = None,
     ) -> None:
-        """Initialise with the AI service, and the safety check and accounts.
+        """Initialise with the AI service, the safety check, accounts and history.
 
         With ``safety``, each question is checked first, and a harmful one
         adds a strike to the signed-in user through ``accounts`` (ADR 027).
+        With ``history``, answers are signed and the app's signed history is
+        passed to the model (ADR 030).
         """
         self._service = assistant_service
         self._safety = safety
         self._accounts = accounts
+        self._history = history
 
     def chat(self, request: ChatRequest, user: User | None = None) -> ChatResponse:
         """Answer the user's question and return a structured response.
@@ -43,13 +48,19 @@ class ChatService:
             :class:`AssistantNotAvailableError`: When the underlying service
                 raises a runtime error (provider down, empty index, etc.).
         """
+        who = user.email if user is not None else "anonymous"
+        earlier = self._checked_history(who, request)
         try:
             harmful = (
-                self._safety.harmful_categories(request.message) if self._safety else []
+                self._safety.harmful_categories(request.message, earlier.user_questions)
+                if self._safety
+                else []
             )
             if harmful:
-                return self._refuse(harmful, user)
-            result = self._service.chat(request.message)  # type: ignore[attr-defined]
+                return self._signed(self._refuse(harmful, user), who, request)
+            result = self._service.chat(  # type: ignore[attr-defined]
+                request.message, earlier.messages
+            )
         except ValueError as exc:
             raise ValueError(str(exc)) from exc
         except Exception as exc:
@@ -57,13 +68,38 @@ class ChatService:
 
         # Sources and citations go to the logs (assistant.answer), not to
         # users (ADR 029).
-        return ChatResponse(
+        response = ChatResponse(
             answer=strip_citations(result.answer),
             sources=[],
             confidence=result.confidence,
             model=result.model,
             retrieved_count=result.retrieved_count,
         )
+        return self._signed(response, who, request)
+
+    def _checked_history(self, who: str, request: ChatRequest) -> CheckedHistory:
+        """The history the model may see; drops and trims are logged."""
+        if self._history is None:
+            return CheckedHistory([])
+        checked = self._history.check(who, request.conversation_id, request.history)
+        if checked.dropped or checked.trimmed:
+            emit(
+                logger,
+                EventName.GUARDRAIL_EVENT,
+                "Chat history was dropped or trimmed",
+                kind="history",
+                outcome="dropped" if checked.dropped else "trimmed",
+            )
+        return checked
+
+    def _signed(
+        self, response: ChatResponse, who: str, request: ChatRequest
+    ) -> ChatResponse:
+        """``response`` with the signature the app sends back next turn."""
+        if self._history is None or request.conversation_id is None:
+            return response
+        signature = self._history.sign(who, request.conversation_id, response.answer)
+        return response.model_copy(update={"signature": signature})
 
     def _refuse(self, categories: list[str], user: User | None) -> ChatResponse:
         """A fixed refusal; the user's strike count goes up when signed in."""

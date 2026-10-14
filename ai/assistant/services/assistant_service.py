@@ -71,6 +71,8 @@ class _Turn:
     prompt_tokens: int | None = None
     completion_tokens: int | None = None
     cost_usd: float | None = None
+    history_turns: int = 0
+    history_chars: int = 0
 
     def add_usage(self, step: ChatTurn) -> None:
         """Add one model call's reported usage; unreported stays None."""
@@ -122,8 +124,13 @@ class AssistantService:
         self._clock = clock
         self._min_relevance = min_relevance
 
-    def chat(self, question: str) -> AssistantResponse:
+    def chat(
+        self, question: str, history: Sequence[dict[str, str]] = ()
+    ) -> AssistantResponse:
         """Answer *question* using RAG over the local knowledge base.
+
+        ``history`` is the chat so far, checked and trimmed by the caller
+        (ADR 030); it helps the model read follow-ups but is never a source.
 
         Raises:
             ValueError: When *question* is empty.
@@ -139,7 +146,8 @@ class AssistantService:
                 "Run the assistant pipeline to build the index first."
             )
 
-        turn = _Turn(self._clock())
+        turn = _Turn(self._clock(), history_turns=len(history))
+        turn.history_chars = sum(len(message["content"]) for message in history)
         route = self._route(question)
         if route is not None and route.reply is not None:
             response = _routed_reply(route.reply)
@@ -152,7 +160,11 @@ class AssistantService:
         today = self._today() if route is not None else None
         messages: list[dict[str, Any]] = list(
             build_messages(
-                question, retrieved, min_relevance=self._min_relevance, today=today
+                question,
+                retrieved,
+                min_relevance=self._min_relevance,
+                today=today,
+                history=history,
             )
         )
         if route is not None:
@@ -190,6 +202,8 @@ class AssistantService:
             duration_ms=round((self._clock() - turn.started) * 1000),
             sources=[source.source for source in response.sources],
             cited=cited_sources(response.answer),
+            history_turns=turn.history_turns,
+            history_tokens=turn.history_chars // 4,
         )
         if _NO_INFO_MARKER in response.answer:
             reason = "model_declined" if retrieved or turn.rounds else "no_retrieval"
