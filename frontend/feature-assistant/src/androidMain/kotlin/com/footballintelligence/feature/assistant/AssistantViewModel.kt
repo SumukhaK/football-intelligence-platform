@@ -47,7 +47,7 @@ class AssistantViewModel(
                                 relevanceScore = src.relevanceScore,
                             )
                         },
-                        confidence = response.confidence,
+                        confidence = retrievalConfidence(response.confidence, response.sources.size),
                     )
                     conversationHistory.add(assistantMessage)
                     _state.value = AssistantUiState.Chatting(conversationHistory.toList())

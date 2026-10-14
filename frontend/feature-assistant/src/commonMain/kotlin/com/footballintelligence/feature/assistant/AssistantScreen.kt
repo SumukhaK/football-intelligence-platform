@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -40,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.footballintelligence.core.model.ChatMessage
 import com.footballintelligence.core.model.MessageRole
@@ -117,7 +119,9 @@ private fun ChatContent(
         }
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
+    // The outer scaffolds already pad for the bars, so only the keyboard's
+    // extra height is added and the message box stays above it.
+    Column(modifier = modifier.fillMaxSize().imePadding()) {
         LazyColumn(
             modifier = Modifier.weight(1f),
             state = listState,
@@ -206,7 +210,7 @@ private fun MessageBubble(message: ChatMessage) {
                     .padding(12.dp),
             ) {
                 Text(
-                    text = message.text,
+                    text = if (isUser) AnnotatedString(message.text) else formatAnswer(message.text),
                     color = if (isUser) {
                         MaterialTheme.colorScheme.onPrimary
                     } else {
