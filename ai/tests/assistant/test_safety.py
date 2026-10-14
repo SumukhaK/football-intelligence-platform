@@ -40,3 +40,11 @@ def test_unsafe_without_codes_still_counts() -> None:
 def test_an_unexpected_reply_fails_closed(reply: str) -> None:
     with pytest.raises(SafetyCheckError):
         SafetyCheck(Guard(reply)).harmful_categories("...")
+
+
+def test_earlier_questions_are_read_with_the_new_one() -> None:
+    guard = Guard("safe")
+    SafetyCheck(guard).harmful_categories("now where does he live?", ["the referee"])
+    assert guard.messages == [
+        {"role": "user", "content": "the referee\n\nnow where does he live?"}
+    ]

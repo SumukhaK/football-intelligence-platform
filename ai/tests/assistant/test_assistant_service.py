@@ -392,3 +392,15 @@ def test_sources_and_citations_are_logged(sample_docs, events: Events) -> None: 
     attributes = _answer(events)
     assert attributes["cited"] == ["model_card.md", "tool predict_match"]
     assert len(attributes["sources"]) == 3
+
+
+def test_history_size_is_logged(sample_docs, events: Events) -> None:  # type: ignore[no-untyped-def]
+    """Only counts of the chat history reach the log (ADR 030)."""
+    history = [
+        {"role": "user", "content": "Everton v Chelsea?"},
+        {"role": "assistant", "content": "Everton are favourites."},
+    ]
+    _make_service(sample_docs, answer="Draw 25%.").chat("And the draw?", history)
+    attributes = _answer(events)
+    assert attributes["history_turns"] == 2
+    assert attributes["history_tokens"] == (18 + 23) // 4

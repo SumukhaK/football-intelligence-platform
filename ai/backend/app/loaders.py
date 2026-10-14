@@ -138,6 +138,7 @@ def load_assistant(settings: Settings, state: Any) -> ChatService:
     from assistant.services.assistant_service import AssistantService
     from backend.app.dependencies import get_served_competitions
     from backend.app.services.assistant_tools import AssistantTools
+    from backend.app.services.chat_history import ChatHistory
     from backend.app.services.chat_service import ChatService
     from backend.app.services.season_router import SeasonRouter
 
@@ -163,7 +164,12 @@ def load_assistant(settings: Settings, state: Any) -> ChatService:
         store.size(),
     )
     safety = SafetyCheck(make_guard(a_cfg)) if settings.assistant_safety else None
-    return ChatService(ai_service, safety, getattr(state, "account_service", None))
+    return ChatService(
+        ai_service,
+        safety,
+        getattr(state, "account_service", None),
+        ChatHistory(settings.history_key.get_secret_value()),
+    )
 
 
 def require_matching_index(

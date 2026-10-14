@@ -38,7 +38,7 @@ outermost trusted proxy saw, so a client cannot dodge it by sending its own
 
 ## Request size
 
-A request body may be at most `MAX_BODY_BYTES` (default 16384). A larger
+A request body may be at most `MAX_BODY_BYTES` (default 24576, enough for a question with its chat history, ADR 030). A larger
 `Content-Length` gets 413 `Request too large`, and a chunked body with no
 `Content-Length` gets 411 `Length required`. A chat `message` may be at most
 1000 characters; a longer one gets 422. Every response carries
@@ -430,11 +430,39 @@ or `off`. `model` in the response names the chat model that wrote the answer.
 the model still cites, but the server logs its sources and citations in
 `assistant.answer` instead of sending them (ADR 029).
 
+**Chat memory (ADR 030).** To ask a follow-up, send the chat so far:
+
+```json
+{
+  "message": "And the draw?",
+  "conversation_id": "a1b2c3d4e5f6",
+  "history": [
+    {"role": "user", "content": "Who wins Everton v Chelsea?"},
+    {"role": "assistant", "content": "Everton are slight favourites at 41%.",
+     "signature": "<the signature that answer came with>"}
+  ]
+}
+```
+
+- `conversation_id` (8–64 letters, digits, `_` or `-`) is made by the app and
+  is needed whenever `history` is sent. Every answer to a request with one
+  carries a `signature`.
+- `history` holds at most 8 messages, oldest first, each at most 1,500
+  characters. Every `assistant` item must carry the `signature` its answer
+  came with, signed for this user and conversation.
+- If any signature is missing or wrong, the whole history is ignored, and the
+  question is answered on its own; this is logged as a `guardrail.event` with
+  kind `history`. History over 1,200 tokens (about 4,800 characters) is trimmed,
+  oldest first, never rejected.
+- The safety check reads the user's earlier questions with the new one; only the
+  new one can add a strike. Numbers in the answer always come from tools called
+  for this question, never from the history.
+- Without `conversation_id` and `history`, the endpoint behaves as before.
+
 For a match prediction, its SHAP explanation or a league's upcoming fixtures,
 the assistant calls tools that run the same services as `/v2/predict`,
 `/v2/explain` and `/v2/fixtures`, so it quotes the latest model's numbers
 (ADR 018). The chat model must support tool calling.
-The request and response bodies are unchanged.
 
 It can also answer season questions through internal tools: a team's results
 and next meetings, and the league table on any date of a season in the data,

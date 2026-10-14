@@ -118,7 +118,7 @@ Evidence: tests and staging logs.
 Plan: [chat-memory-plan.md](chat-memory-plan.md). Decision: [ADR 030](../adr/030-short-term-chat-memory.md). Ships in v2.5.0.
 
 - [x] Design approved: signed history on the phone, 4 exchanges, 30-minute reset, consent unchanged (15 October 2026).
-- [ ] Backend: optional `history`, `conversation_id` and `signature`; HMAC with `HISTORY_KEY`; trimming; Llama Guard over the user's turns; the history prompt rule; log counts.
+- [x] Backend: optional `history`, `conversation_id` and `signature`; HMAC with `HISTORY_KEY`; trimming; Llama Guard over the user's turns; the history prompt rule; log counts.
 - [ ] `evaluation/assistant_conversation.py` passes on Workers AI, and abstention, grounding and season still pass.
 - [ ] App: keeps the signed window, New chat, 30-minute idle reset (ViewModel tests first).
 - [ ] Staging: `history-key` secret mounted; history tokens and neurons per answer checked in the logs.

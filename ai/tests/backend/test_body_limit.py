@@ -54,5 +54,5 @@ def test_a_request_without_a_body_is_passed_on() -> None:
 
 
 def test_the_api_limits_bodies(client: TestClient) -> None:
-    response = client.post("/v2/predict", content=b"x" * 20_000)
+    response = client.post("/v2/predict", content=b"x" * 30_000)
     assert response.status_code == 413
