@@ -35,8 +35,25 @@ def test_cloud_starts_with_sign_in_and_a_secret_salt(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("K_REVISION", "football-api-00001-abc")
-    settings = Settings(auth_required=True, telemetry_salt="a-real-secret")
+    settings = Settings(
+        auth_required=True, telemetry_salt="a-real-secret", assistant_safety=True
+    )
     assert settings.revision == "football-api-00001-abc"
+
+
+def test_cloud_refuses_to_start_with_unguarded_chat(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("K_REVISION", "football-api-00001-abc")
+    with pytest.raises(ValidationError, match="ASSISTANT_SAFETY"):
+        Settings(auth_required=True, telemetry_salt="a-real-secret")
+
+
+def test_cloud_starts_with_the_assistant_off(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("K_REVISION", "football-api-00001-abc")
+    monkeypatch.setenv("ASSISTANT_PROVIDER", "off")
+    settings = Settings(auth_required=True, telemetry_salt="a-real-secret")
+    assert settings.assistant_provider is None
 
 
 def test_chat_messages_have_a_length_limit(client: TestClient) -> None:

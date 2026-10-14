@@ -26,7 +26,7 @@
     "dependency.call": {"required": ["dependency", "operation", "status", "http_status", "attempt", "duration_ms"], "optional": []},
     "retry": {"required": ["dependency", "operation", "attempt", "max_attempts", "wait_ms", "cause"], "optional": []},
     "fallback": {"required": ["from_path", "to_path", "cause"], "optional": []},
-    "guardrail.event": {"required": ["kind", "outcome"], "optional": []}
+    "guardrail.event": {"required": ["kind", "outcome"], "optional": ["categories"]}
   },
   "forbidden_attribute_names": [
     "question", "message_text", "answer", "email", "password", "token",

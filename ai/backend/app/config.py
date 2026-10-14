@@ -89,6 +89,11 @@ class Settings(BaseSettings):
     # Reasoning models think before answering unless told not to; off keeps
     # answers inside the app's 30-second request budget.
     workers_ai_thinking: bool = False
+    # Llama Guard checks each question before anything else, and three
+    # harmful questions ban the user (ADR 027); required on Cloud Run.
+    assistant_safety: bool = False
+    ollama_guard_model: str = "llama-guard3:1b"
+    workers_ai_guard_model: str = "@cf/meta/llama-guard-3-8b"
     assistant_vector_store_path: Path = Path("assistant/vector_store")
     assistant_knowledge_root: Path = Path(".")
     assistant_top_k: int = 5
@@ -105,13 +110,18 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _refuse_unsafe_cloud_defaults(self) -> Settings:
-        """On Cloud Run, refuse to start open to everyone or with the dev salt."""
+        """On Cloud Run, refuse to start open, with the dev salt or unguarded chat."""
         if self.revision is None:
             return self
         if not self.auth_required:
             raise ValueError("AUTH_REQUIRED must be true on Cloud Run (ADR 025).")
         if self.telemetry_salt == DEV_TELEMETRY_SALT:
             raise ValueError("TELEMETRY_SALT must be a secret on Cloud Run (ADR 025).")
+        if self.assistant_provider is not None and not self.assistant_safety:
+            raise ValueError(
+                "ASSISTANT_SAFETY must be true on Cloud Run when the assistant "
+                "is on (ADR 027)."
+            )
         return self
 
 

@@ -17,7 +17,7 @@ Status values: `Not started`, `In progress`, `Blocked (reason)`, `Done (date)`.
 | 2 | Connect storage and secrets | 3, 7 | Not started |
 | 3a | Invite-only accounts and consent | [plan](accounts-and-consent-plan.md) | In progress (code done, including the Firestore store; staging walkthrough to go) |
 | 3 | Connect the hosted LLM | 1 | In progress (adapter, index and model chosen; evals against staging to go) |
-| 3b | Guardrails gateway: safety, scope router, cache, limits | [analysis](assistant-guardrails-analysis.md) | Not started |
+| 3b | Guardrails gateway: safety, scope router, cache, limits | [analysis](assistant-guardrails-analysis.md) | In progress (safety check and strikes done, ADR 027; cache, budgets and the rules sheet to go) |
 | 4 | Observability: logs, traces, metrics, alerts | 6 | In progress (request IDs, traces, local stack, and metrics and alerts as code done; apply and dashboard to go) |
 | 5 | CI/CD with the eval gate | 6 | Not started |
 | 5a | Security hardening | this tracker | Done (11 October 2026) |
@@ -103,7 +103,7 @@ Evidence: eval output saved under `docs/reports/`.
 
 The season router (ADR 021) is the first piece.
 
-- [ ] Safety check before the model; three strikes means a permanent ban that revokes sessions.
+- [x] Safety check before the model; three strikes means a permanent ban that revokes sessions. Llama Guard 3 on Workers AI, `ASSISTANT_SAFETY=true` (ADR 027); needed before friends use the beta.
 - [ ] Scope router extended beyond season questions.
 - [ ] Answer cache keyed on the normalised question, data snapshot, model and prompt version.
 - [ ] Daily token budget per user and a global daily budget; **off in staging**, on in prod from beta numbers.

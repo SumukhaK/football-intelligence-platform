@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+from typing import Annotated
 
+from fastapi import APIRouter, Header, Request
+
+from backend.app.dependencies import AccountServiceDep, bearer_token
 from backend.app.exceptions import AssistantNotAvailableError
 from backend.app.schemas.assistant import ChatRequest, ChatResponse
 from backend.app.services.chat_service import ChatService
@@ -31,12 +34,17 @@ def _get_chat_service(request: Request) -> ChatService:
         "Send a question to the RAG-powered Football Intelligence Assistant. "
         "Answers are grounded in local knowledge sources (model cards, "
         "evaluation reports, SHAP summaries, ADRs). "
-        "The assistant never invents facts beyond the retrieved context."
+        "The assistant never invents facts beyond the retrieved context. "
+        "With the safety check on, a harmful question gets a fixed refusal "
+        "(model 'safety') and adds a strike to the signed-in user; the third "
+        "strike blocks the account (ADR 027)."
     ),
 )
 def chat(
     request_body: ChatRequest,
     request: Request,
+    accounts: AccountServiceDep,
+    authorization: Annotated[str | None, Header()] = None,
 ) -> ChatResponse:
     """Answer a football intelligence question using RAG.
 
@@ -44,4 +52,6 @@ def chat(
     and the question is never logged (users opt in to storing it, ADR 022).
     """
     service = _get_chat_service(request)
-    return service.chat(request_body)
+    token = bearer_token(authorization)
+    user = accounts.authenticate(token) if token else None
+    return service.chat(request_body, user)

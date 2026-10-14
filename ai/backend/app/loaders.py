@@ -132,8 +132,9 @@ def load_insights(directory: Path, competitions: list[str]) -> InsightsService:
 def load_assistant(settings: Settings, state: Any) -> ChatService:
     """The assistant, with its tools and season router over ``state``."""
     from assistant.prompting.templates import DEFAULT_MIN_RELEVANCE
-    from assistant.providers import make_provider
+    from assistant.providers import make_guard, make_provider
     from assistant.retrieval.vector_store import VectorStore
+    from assistant.safety import SafetyCheck
     from assistant.services.assistant_service import AssistantService
     from backend.app.dependencies import get_served_competitions
     from backend.app.services.assistant_tools import AssistantTools
@@ -161,7 +162,8 @@ def load_assistant(settings: Settings, state: Any) -> ChatService:
         provider.chat_model,
         store.size(),
     )
-    return ChatService(ai_service)
+    safety = SafetyCheck(make_guard(a_cfg)) if settings.assistant_safety else None
+    return ChatService(ai_service, safety, getattr(state, "account_service", None))
 
 
 def require_matching_index(
@@ -196,6 +198,8 @@ def _assistant_settings(settings: Settings) -> Any:
         workers_ai_embed_model=settings.workers_ai_embed_model,
         workers_ai_timeout_s=settings.workers_ai_timeout_s,
         workers_ai_thinking=settings.workers_ai_thinking,
+        workers_ai_guard_model=settings.workers_ai_guard_model,
+        ollama_guard_model=settings.ollama_guard_model,
         ollama_base_url=settings.ollama_base_url,
         ollama_chat_model=settings.ollama_chat_model,
         ollama_embed_model=settings.ollama_embed_model,
