@@ -9,8 +9,21 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+---
+
+## [2.3.0] — 2026-10-15
+
+The staging backend went live on Cloud Run on 14 October 2026.
+
 ### Added
-- Crash reports from the staging app through Firebase Crashlytics, sent only after the user accepts the notice. The notice is now version 2: it names crash reports and the hosted model, so everyone is asked again. The local build has no Firebase code (ADR 028).
+- Crash reports from the staging app through Firebase Crashlytics, sent only after the user accepts the notice. The notice is now version 2: it names crash reports and the hosted model, so everyone is asked again. The local build has no Firebase code (ADR 028, #116).
+
+### Fixed
+- The data-refresh alert looks back 25 hours, the most Cloud Monitoring allows for a PromQL alert on a log-based metric; 26 hours was rejected (#118).
+- `apply.sh` and `remove.sh` strip the carriage return gcloud adds on Windows, so re-running them replaces each alert policy (#119).
+
+### Changed
+- The hosting tracker records the staging deploy (#117).
 
 ---
 
@@ -69,6 +82,7 @@ The API is unchanged and still reports version 2.0.0.
 - Every markdown file checked against the code and updated for v2; "Lessons Learned" removed from the README (#57, #58).
 - Branch flow: work merges into `develop`; `main` only takes release pull requests and hotfixes, each tagged. CI runs on pull requests into both, and both branches are protected (#59).
 
+[2.3.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.3.0
 [2.2.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.2.0
 [2.1.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.1.0
 
