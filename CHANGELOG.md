@@ -9,6 +9,10 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+---
+
+## [2.4.0] — 2026-10-15
+
 ### Changed
 - The assistant talks like a football-savvy friend: the answer first, one line of context, natural replies to small talk; the grounding rules are unchanged (#122).
 - Chat answers reach users without sources or `[source: ...]` markers; the server logs both in `assistant.answer` (ADR 029).
@@ -86,6 +90,7 @@ The API is unchanged and still reports version 2.0.0.
 - Every markdown file checked against the code and updated for v2; "Lessons Learned" removed from the README (#57, #58).
 - Branch flow: work merges into `develop`; `main` only takes release pull requests and hotfixes, each tagged. CI runs on pull requests into both, and both branches are protected (#59).
 
+[2.4.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.4.0
 [2.3.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.3.0
 [2.2.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.2.0
 [2.1.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.1.0
