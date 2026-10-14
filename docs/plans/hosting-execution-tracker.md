@@ -120,7 +120,7 @@ Plan: [chat-memory-plan.md](chat-memory-plan.md). Decision: [ADR 030](../adr/030
 - [x] Design approved: signed history on the phone, 4 exchanges, 30-minute reset, consent unchanged (15 October 2026).
 - [x] Backend: optional `history`, `conversation_id` and `signature`; HMAC with `HISTORY_KEY`; trimming; Llama Guard over the user's turns; the history prompt rule; log counts.
 - [x] `evaluation/assistant_conversation.py` passes on Workers AI (8/8), and abstention (20/20), grounding (11/11) and season (7/7) still pass (15 October 2026).
-- [ ] App: keeps the signed window, New chat, 30-minute idle reset (ViewModel tests first).
+- [x] App: keeps the signed window, New chat, 30-minute idle reset (ViewModel tests first; checked on the emulator 15 October 2026).
 - [ ] Staging: `history-key` secret mounted; history tokens and neurons per answer checked in the logs.
 
 Done when: a follow-up such as "and the draw?" is answered from the conversation on staging, a forged turn is ignored, and all four evals pass.

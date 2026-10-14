@@ -12,6 +12,16 @@ data class ChatMessage(
     val text: String,
     val sources: List<SourceCitation> = emptyList(),
     val confidence: Double? = null,
+    /** The server's signature on an answer, sent back as chat history (ADR 030). */
+    val signature: String? = null,
+)
+
+/** One earlier message sent with a question so the assistant can follow up (ADR 030). */
+@Serializable
+data class HistoryTurn(
+    val role: String,
+    val content: String,
+    val signature: String? = null,
 )
 
 /** A retrieved source document citation. */
@@ -22,9 +32,13 @@ data class SourceCitation(
     @SerialName("relevance_score") val relevanceScore: Double,
 )
 
-/** Request body for POST /assistant/chat. */
+/** Request body for POST /assistant/chat; history needs a conversation ID. */
 @Serializable
-data class ChatRequest(val message: String)
+data class ChatRequest(
+    val message: String,
+    @SerialName("conversation_id") val conversationId: String? = null,
+    val history: List<HistoryTurn> = emptyList(),
+)
 
 /** Response from POST /assistant/chat. */
 @Serializable
@@ -34,4 +48,6 @@ data class ChatResponse(
     val confidence: Double,
     val model: String,
     @SerialName("retrieved_count") val retrievedCount: Int,
+    /** Null from servers older than v2.5.0 or when no conversation ID was sent. */
+    val signature: String? = null,
 )

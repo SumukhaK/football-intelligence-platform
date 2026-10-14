@@ -12,6 +12,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 - Chat memory design: ADR 030 and the chat memory plan (signed history kept on the phone, 4 exchanges, nothing stored on the server), with tracker step 3c.
 - Chat memory on the server: `POST /v2/assistant/chat` takes an optional `conversation_id` and `history` and signs every answer; forged history is ignored, long history trimmed, and Llama Guard reads the user's earlier questions with the new one. Request bodies may now be 24 KB (ADR 030).
+- The Assistant screen remembers the chat: it sends the last 4 signed exchanges with each question, has a New chat button, and starts afresh after 30 minutes idle (ADR 030).
 - A conversation eval (`evaluation.assistant_conversation`): follow-ups, a topic switch, a forged earlier answer, injection in the history and a split harmful request. 8/8 on Workers AI.
 
 ### Fixed
