@@ -30,6 +30,7 @@ import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
 import com.footballintelligence.core.ui.OfflineBanner
+import com.footballintelligence.core.ui.appBarColors
 import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.prediction.resources.Res
 import com.footballintelligence.feature.prediction.resources.against_subtitle
@@ -61,6 +62,7 @@ fun ExplainPredictionScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                colors = appBarColors(),
                 title = { Text(stringResource(Res.string.explanation_title)) },
                 navigationIcon = { BackButton(onClick = onBack) },
             )

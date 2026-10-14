@@ -23,6 +23,7 @@ import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
 import com.footballintelligence.core.ui.OfflineBanner
 import com.footballintelligence.core.ui.RefreshableContent
+import com.footballintelligence.core.ui.appBarColors
 import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.settings.resources.Res
 import com.footballintelligence.feature.settings.resources.dataset_version
@@ -48,6 +49,7 @@ fun ModelInfoScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                colors = appBarColors(),
                 title = { Text(stringResource(Res.string.model_info_title)) },
                 navigationIcon = { BackButton(onClick = onBack) },
             )

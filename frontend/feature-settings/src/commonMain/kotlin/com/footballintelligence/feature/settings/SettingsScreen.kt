@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.footballintelligence.core.ui.BackButton
+import com.footballintelligence.core.ui.appBarColors
 import com.footballintelligence.feature.settings.resources.Res
 import com.footballintelligence.feature.settings.resources.about_summary
 import com.footballintelligence.feature.settings.resources.about_title
@@ -61,6 +62,7 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                colors = appBarColors(),
                 title = { Text(stringResource(Res.string.settings_title)) },
                 navigationIcon = { BackButton(onClick = onBack) },
             )
