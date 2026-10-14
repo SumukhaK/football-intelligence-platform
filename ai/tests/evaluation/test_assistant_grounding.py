@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import pytest
 
+from assistant.grounding import matches, ungrounded_numbers
 from evaluation.assistant_grounding import (
-    matches,
     quotes_prediction,
     score_prediction_answer,
     score_unknown_team_answer,
-    ungrounded_numbers,
 )
 
 PREDICTION = {

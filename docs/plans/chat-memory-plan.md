@@ -61,7 +61,7 @@ Measured prices on Workers AI (15 October 2026): Gemma 4 26B about 0.009 neurons
 | Fake assistant turns from a modified app | HMAC signature per answer; any bad signature drops the whole history |
 | A harmful request split across turns | Llama Guard reads the user's recent turns together; only the newest question can strike |
 | Prompt injection inside the history | History goes in as earlier turns below the system prompt, never as instructions |
-| Old numbers repeated after a data refresh | Prompt rule: numbers only from tools called this turn; stored answers carry no citations |
+| Old or worked-out numbers in a follow-up | Prompt rule plus a check in code: a follow-up answer with a number no tool returned this turn is asked again once |
 | Oversized history | Trimmed, never rejected; 24 KB body limit |
 | Privacy | Nothing stored; logs keep counts only; consent notice unchanged |
 

@@ -124,7 +124,10 @@ class AssistantTools:
     def _resolve(
         self, args: Mapping[str, Any]
     ) -> tuple[PredictionRequest, str, dict[str, float]]:
-        competition = self._competitions.resolve(args.get("competition") or None)
+        competition = self._competitions.resolve(
+            args.get("competition")
+            or self._league_of(args.get("home_team", ""), args.get("away_team", ""))
+        )
         request = PredictionRequest(
             home_team=self._team_name(args.get("home_team", ""), competition),
             away_team=self._team_name(args.get("away_team", ""), competition),
@@ -132,6 +135,24 @@ class AssistantTools:
         )
         fixtures = getattr(self._state, "fixture_feature_service", None)
         return request, competition, resolve_features(request, fixtures, competition)
+
+    def _league_of(self, home: str, away: str) -> str | None:
+        """The served league both teams play in, when the model named none.
+
+        A follow-up such as "why?" often reaches the tool without a league,
+        and the default league would not know a La Liga side.
+        """
+        season = getattr(self._state, "season_service", None)
+        if season is None:
+            return None
+        for league in self._competitions.names:
+            try:
+                resolve_team(home, season.teams(league))
+                resolve_team(away, season.teams(league))
+            except (TeamNotFoundError, ValueError):
+                continue
+            return league
+        return None
 
     def _team_name(self, name: str, competition: str) -> str:
         """The data's spelling of ``name``, or ``name`` unchanged if unknown."""

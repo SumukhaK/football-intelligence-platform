@@ -404,3 +404,39 @@ def test_history_size_is_logged(sample_docs, events: Events) -> None:  # type: i
     attributes = _answer(events)
     assert attributes["history_turns"] == 2
     assert attributes["history_tokens"] == (18 + 23) // 4
+
+
+class _SequenceGenerator:
+    """Gives each answer in turn and keeps what it was sent."""
+
+    def __init__(self, *answers: str) -> None:
+        self.answers = list(answers)
+        self.sent: list[list[dict[str, str]]] = []
+
+    def generate(self, messages: list[dict[str, str]]) -> str:
+        self.sent.append(list(messages))
+        return self.answers.pop(0)
+
+
+HISTORY = [
+    {"role": "user", "content": "Everton v Chelsea?"},
+    {"role": "assistant", "content": "Everton 40.6%, Chelsea 34.7%."},
+]
+
+
+def test_invented_follow_up_numbers_retry(sample_docs, events: Events) -> None:  # type: ignore[no-untyped-def]
+    """A number worked out from history, not a tool, triggers one retry (ADR 030)."""
+    service = _make_service(sample_docs)
+    generator = _SequenceGenerator("The draw is 24.7%.", "Let me check that again.")
+    service._generator = generator
+    response = service.chat("And the draw?", HISTORY)
+    assert response.answer == "Let me check that again."
+    assert "24.7" in generator.sent[1][-1]["content"]
+    ((_, attributes),) = events("guardrail.event")
+    assert attributes == {"kind": "grounding", "outcome": "retried"}
+
+
+def test_a_follow_up_without_numbers_is_not_asked_again(sample_docs) -> None:  # type: ignore[no-untyped-def]
+    service = _make_service(sample_docs)
+    service._generator = _SequenceGenerator("It looks close.")
+    assert service.chat("And the draw?", HISTORY).answer == "It looks close."
