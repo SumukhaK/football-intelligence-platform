@@ -308,10 +308,18 @@ Those are the counts at v1.0.0.
 
 ---
 
+## Release v2.5.1 (2026-10-15)
+
+**Deliverables:** v2.5.x deployed to the invite-only staging service on Cloud Run, built with Cloud Build. Chat memory, sign-in, predictions and a forged-history check were verified through the public URL. The README and website now say staging is live.
+
+**Git Tag:** v2.5.1
+
+---
+
 ## Next
 
 The closed beta with invited friends on the staging app.
 
 ---
 
-**Today: 10 releases, 30 ADRs, 1,531 tests (1,345 Python, 186 Android). One engineer.**
+**Today: 11 releases, 30 ADRs, 1,531 tests (1,345 Python, 186 Android). One engineer.**
