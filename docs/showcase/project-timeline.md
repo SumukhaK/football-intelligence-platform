@@ -292,10 +292,18 @@ Those are the counts at v1.0.0.
 
 ---
 
+## Release v2.4.0 (2026-10-15)
+
+**Deliverables (PRs #122–#123, ADR 029):** the assistant answers like a football-savvy friend, with the grounding rules unchanged and all three evals passing on Workers AI; its sources and citations go to the logs instead of the app.
+
+**Git Tag:** v2.4.0
+
+---
+
 ## Next
 
 The closed beta with invited friends on the staging app.
 
 ---
 
-**Today: 8 releases, 28 ADRs, 1,496 tests (1,322 Python, 174 Android). One engineer.**
+**Today: 9 releases, 29 ADRs, 1,502 tests (1,327 Python, 175 Android). One engineer.**
