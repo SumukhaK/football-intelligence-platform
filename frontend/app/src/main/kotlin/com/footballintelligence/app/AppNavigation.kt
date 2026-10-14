@@ -268,6 +268,7 @@ private fun AppNavHost(
                 onSend = vm::send,
                 onBack = { navController.popBackStack() },
                 actions = settingsAction,
+                onNewChat = vm::newChat,
             )
         }
 

@@ -11,10 +11,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
-/** ViewModel managing the assistant chat conversation. */
+/**
+ * ViewModel managing the assistant chat. The conversation it shows is also
+ * the memory it sends back with each question (ADR 030): the last 4 signed
+ * exchanges, reset by [newChat] or after 30 minutes idle.
+ */
 class AssistantViewModel(
     private val repository: AssistantRepository,
+    private val now: () -> Long = System::currentTimeMillis,
+    private val newConversationId: () -> String = ::randomConversationId,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<AssistantUiState>(AssistantUiState.Idle)
@@ -24,17 +31,29 @@ class AssistantViewModel(
     val isSending: StateFlow<Boolean> = _isSending.asStateFlow()
 
     private val conversationHistory = mutableListOf<ChatMessage>()
+    private var conversationId = newConversationId()
+    private var lastActivity = now()
+
+    /** Starts a new conversation: the screen clears and the assistant forgets. */
+    fun newChat() {
+        conversationHistory.clear()
+        conversationId = newConversationId()
+        _state.value = AssistantUiState.Idle
+    }
 
     fun send(text: String) {
         if (text.isBlank() || _isSending.value) return
+        if (now() - lastActivity > IDLE_RESET_MILLIS) newChat()
+        lastActivity = now()
 
+        val history = historyWindow(conversationHistory)
         val userMessage = ChatMessage(role = MessageRole.USER, text = text)
         conversationHistory.add(userMessage)
         _state.value = AssistantUiState.Chatting(conversationHistory.toList())
         _isSending.value = true
 
         viewModelScope.launch {
-            when (val result = repository.chat(text)) {
+            when (val result = repository.chat(text, conversationId, history)) {
                 is NetworkResult.Success -> {
                     val response = result.data
                     val assistantMessage = ChatMessage(
@@ -48,6 +67,7 @@ class AssistantViewModel(
                             )
                         },
                         confidence = retrievalConfidence(response.confidence, response.sources.size),
+                        signature = response.signature,
                     )
                     conversationHistory.add(assistantMessage)
                     _state.value = AssistantUiState.Chatting(conversationHistory.toList())
@@ -74,3 +94,12 @@ class AssistantViewModel(
 
 /** The backend returns 503 when the assistant (Ollama or its index) is down. */
 private const val HTTP_SERVICE_UNAVAILABLE = 503
+
+/** After this long without a question the next one starts a new conversation. */
+private const val IDLE_RESET_MILLIS = 30 * 60 * 1000L
+
+private const val ID_LENGTH = 16
+private const val ID_RADIX = 36
+
+private fun randomConversationId(): String =
+    (1..ID_LENGTH).joinToString("") { Random.nextInt(ID_RADIX).toString(ID_RADIX) }

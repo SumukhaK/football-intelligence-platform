@@ -54,6 +54,9 @@ transition) and back. The choice is saved in SharedPreferences and the picker
 is not shown again. Fixtures opens on the favourite league's tab, listed first. A bottom bar
 switches between Fixtures, Predict,
 My Team and Assistant; a settings icon at the top right of each opens Settings.
+The Assistant remembers the chat (ADR 030): with each question it sends its
+last 4 signed exchanges, so "and the draw?" follows on. New chat in its top bar,
+or 30 minutes without a question, starts a fresh conversation.
 My Team shows the favourite team's next match: kick-off, the win/draw/loss pick
 with its top three reasons, the three likeliest scores and the clean-sheet
 chance. A match leaves the card two hours after kick-off. Below it, Season outlook shows the projected
