@@ -59,8 +59,12 @@ def test_workers_ai_provider_uses_the_hosted_model(tmp_path: Path) -> None:
 
 
 def test_workers_ai_without_credentials_fails_to_load(tmp_path: Path) -> None:
+    # Explicit, so credentials in a developer's ai/.env don't count.
     settings = Settings(
-        assistant_vector_store_path=_index(tmp_path), assistant_provider="workers_ai"
+        assistant_vector_store_path=_index(tmp_path),
+        assistant_provider="workers_ai",
+        workers_ai_account_id=None,
+        workers_ai_api_token=None,
     )
     with pytest.raises(ValueError, match="WORKERS_AI_API_TOKEN"):
         load_assistant(settings, SimpleNamespace())

@@ -20,7 +20,7 @@ The Football Intelligence Platform ingests 26 seasons of match data from Europe'
 
 It is a complete, working system — not a notebook or a prototype. Twelve build stages take it from an empty repository to a tested, documented, end-to-end product: ingestion → validation → feature engineering → model training → explainability → a FastAPI backend → a locally-grounded RAG assistant → a Compose Multiplatform Android app → full integration testing.
 
-**1,473 tests: 1,304 Python and 169 Android. Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes results and fixtures daily without a restart, and the app keeps working offline with the last data it saw.** It is also ready to host: a container image, health probes, structured logs and traces, alerts as code, and a hosted model for the assistant, all off by default so the local setup is unchanged.
+**1,496 tests: 1,322 Python and 174 Android. Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes results and fixtures daily without a restart, and the app keeps working offline with the last data it saw.** It is also ready to host: a container image, health probes, structured logs and traces, alerts as code, and a hosted model for the assistant, all off by default so the local setup is unchanged.
 
 ---
 
@@ -53,7 +53,7 @@ This project demonstrates AI engineering as a discipline: not just "can I train 
 | **Full reproducibility** | Entire pipeline (ingest → features → train → explain) runs in under 15 seconds from one CLI command |
 | **Observability** | JSON logs to one versioned telemetry contract, a request ID on every request and log line, OpenTelemetry traces across retrieval, tool calls and generation, retries with backoff on every outbound download, a local Grafana stack, and Cloud Monitoring metrics and alerts kept as code (ADR 024) |
 | **Hosting-ready** | A non-root container image built from a verified artifact snapshot, `/v2/live` and `/v2/ready` probes, a Firestore account store, and a server that refuses unsafe cloud defaults (ADR 025, ADR 026). CI builds and probes the image and scans Python and Gradle dependencies |
-| **End-to-end test coverage** | 1,304 Python tests (including 36 integration tests against the real model, most of which skip on a machine without one) and 169 Android tests (ViewModels written test-first, repositories, network, cache, retries, loader) |
+| **End-to-end test coverage** | 1,322 Python tests (including 37 integration tests against the real model, most of which skip on a machine without one) and 174 Android tests (ViewModels written test-first, repositories, network, cache, retries, loader) |
 | **No cloud needed locally** | Runs entirely on a laptop: no managed database, no cloud LLM, no hosted vector store. The cloud pieces are opt-in settings |
 
 ---
@@ -111,7 +111,7 @@ flowchart TD
 | **Hosting** | Docker, Google Cloud Run, Firestore, Secret Manager, Cloud Logging, Trace and Monitoring (staging not yet deployed) |
 | **Mobile** | Kotlin, Compose Multiplatform, Ktor client, Koin DI, AndroidX Navigation Compose, Material 3 |
 | **Tooling** | uv (Python dependency management), Gradle 8.8, Ruff, Black, MyPy, Detekt, Spotless, ShellCheck |
-| **Testing** | pytest (1,304 tests), JUnit 5, MockK, Ktor MockEngine (169 tests) |
+| **Testing** | pytest (1,322 tests), JUnit 5, MockK, Ktor MockEngine (174 tests) |
 | **CI/CD** | GitHub Actions: lint, types, tests, container build and probe, pip-audit and OSV-Scanner |
 
 ---
@@ -383,10 +383,10 @@ uv run python -m scripts.manage_accounts invite --email you@example.com
 ### Running Tests
 
 ```sh
-# Python: 1,304 tests (the 36 integration tests need a trained model)
+# Python: 1,322 tests (the 36 integration tests need a trained model)
 cd ai && uv run pytest
 
-# Android: unit tests, lint and formatting (169 tests)
+# Android: unit tests, lint and formatting (174 tests)
 cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
 ```
 
