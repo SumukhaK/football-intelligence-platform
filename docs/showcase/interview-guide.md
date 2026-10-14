@@ -278,6 +278,8 @@
 
 **Trade-off:** A local 7B model is less capable at open-ended reasoning than a frontier hosted model — acceptable because the task (source-constrained QA) doesn't require frontier-level reasoning.
 
+**Since then:** a hosted API can't reach a laptop's Ollama, so for hosting the assistant can switch to Cloudflare Workers AI with one setting (`ASSISTANT_PROVIDER`, ADR 025). Both providers sit behind the same `Embedder` and `Generator` interfaces, and the hosted model (Gemma 4 26B) was chosen by the same two evals. Local development still runs offline on Ollama.
+
 ---
 
 ### 31. Why a numpy-based vector store instead of a managed vector database?
@@ -298,9 +300,9 @@
 
 ---
 
-### 33. What happens if Ollama isn't running?
+### 33. What happens if the model provider isn't available?
 
-**Answer:** The backend's lifespan startup attempts to load the assistant service; if it fails (Ollama unreachable), `app.state.chat_service` stays `None` and `POST /assistant/chat` returns a structured `503` with a clear error message — the backend doesn't crash, and every other endpoint (predictions, explanations, insights, fixtures, teams, health) continues working normally.
+**Answer:** The backend's lifespan startup attempts to load the assistant service; if it fails (Ollama unreachable), `app.state.chat_service` stays `None` and `POST /assistant/chat` returns a structured `503` with a clear error message — the backend doesn't crash, and every other endpoint (predictions, explanations, insights, fixtures, teams, health) continues working normally. The same holds for the hosted provider: a timeout, quota error or 5xx from Workers AI is retried once within a deadline, then becomes the same `503`, and `/v2/ready` never calls the provider, so an outage can't make the platform restart the service.
 
 **Reasoning:** Graceful degradation — an optional dependency failing shouldn't take down the whole service. Verified by integration tests.
 
@@ -308,7 +310,7 @@
 
 ### 34. How would you evaluate whether the assistant's answers are actually faithful to the retrieved context?
 
-**Answer:** Partly done. Three local evals run against Ollama: grounding (answers quote `/v2/predict` and invent no numbers, 11/11), abstention (answers what the documents cover, refuses the rest, 20/20) and season answers (7/7). Faithfulness to retrieved document chunks is not scored yet; that would need a ground-truth Q&A set and an LLM-as-judge or entailment check, and is listed as future scope.
+**Answer:** Partly done. Three evals run against the live model provider (Ollama locally; the first two also against Workers AI before choosing the hosted model): grounding (answers quote `/v2/predict` and invent no numbers, 11/11), abstention (answers what the documents cover, refuses the rest, 20/20) and season answers (7/7). Faithfulness to retrieved document chunks is not scored yet; that would need a ground-truth Q&A set and an LLM-as-judge or entailment check, and is listed as future scope.
 
 **Reasoning:** Honest acknowledgment of what's structurally enforced versus what's empirically measured — these are different guarantees and shouldn't be conflated.
 
@@ -326,7 +328,7 @@
 
 **Answer:** `nomic-embed-text`, run locally via Ollama — chosen for being a capable, open, locally-runnable embedding model that doesn't require a separate hosted embedding API, consistent with the local-first constraint.
 
-**Reasoning:** Same reasoning as the generation model choice — keep the entire pipeline self-hosted.
+**Reasoning:** Same reasoning as the generation model choice — keep the entire pipeline self-hosted. The hosted index uses `qwen3-embedding-0.6b` on Workers AI instead; query and document vectors must come from the same model, so each index records its model and the server refuses a mismatch. On the abstention questions the hosted embeddings separated in-scope from out-of-scope questions cleanly (cut-off 0.77).
 
 ---
 
@@ -334,7 +336,7 @@
 
 ### 37. Why FastAPI over Flask or Django?
 
-**Answer:** Native async support, automatic OpenAPI schema generation from Pydantic models (so `/docs` is always accurate, never hand-written and stale), and first-class Pydantic v2 integration for request/response validation — all of which map directly onto this project's "documentation must be accurate" and "structured validation" requirements.
+**Answer:** Native async support, automatic OpenAPI schema generation from Pydantic models (so `/docs` is always accurate, never hand-written and stale), and first-class Pydantic v2 integration for request/response validation — all of which map directly onto this project's "documentation must be accurate" and "structured validation" requirements. One catch: the model call is blocking, so the chat route is a plain `def`, which FastAPI runs in its thread pool; an `async def` would have stalled every other request while a model answered.
 
 **Reasoning:** Direct fit between framework strengths and project requirements, not just popularity.
 

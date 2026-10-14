@@ -192,7 +192,7 @@ The same applies to `explainability.pipeline`: pass `--feature-matrix ../dataset
 
 ## Pytest Issues
 
-### Fewer than 970 tests pass
+### Fewer than 1,304 tests pass
 
 **Cause:** `uv sync --extra dev` was not run, or a test file has a syntax error.
 
@@ -275,6 +275,38 @@ Then restart the backend.
 
 **Fix:** Call `/v2/predict` for the current five-league model. Send only the team names and, optionally, `competition`. Do not send `"features": {}`: an empty object counts as supplied features and fails with 422. See [`docs/api.md`](api.md).
 
+
+---
+
+### `503 Assistant not available`
+
+**Cause:** The assistant didn't load at startup, or its model provider failed. The startup log's `component.load` line for `assistant` says which. Common reasons: no index at `ASSISTANT_VECTOR_STORE_PATH`; Ollama not running (`ASSISTANT_PROVIDER=ollama`, the default); `ASSISTANT_PROVIDER=workers_ai` without `WORKERS_AI_ACCOUNT_ID` and `WORKERS_AI_API_TOKEN`; or `ASSISTANT_PROVIDER=off`. A message such as `The index was built with nomic-embed-text, but queries would use @cf/qwen/qwen3-embedding-0.6b` means the index and the provider don't match (ADR 025).
+
+**Fix:** Build an index with the provider you run (`uv run python -m assistant.pipeline --rebuild`, with `ASSISTANT_PROVIDER` and `VECTOR_STORE_PATH` set the same way) and point `ASSISTANT_VECTOR_STORE_PATH` at it, then restart. Predictions keep working either way.
+
+---
+
+### The server won't start: `AUTH_REQUIRED must be true on Cloud Run` or `TELEMETRY_SALT must be a secret on Cloud Run`
+
+**Cause:** `K_REVISION` is set, which Cloud Run does, so the settings refuse to start a server that is open to everyone or uses the development salt (ADR 025).
+
+**Fix:** In the Cloud Run service set `AUTH_REQUIRED=true` and mount `TELEMETRY_SALT` from Secret Manager. Locally, don't set `K_REVISION`.
+
+---
+
+### `/v2/ready` answers 503 `Not ready`
+
+**Cause:** A component predictions need didn't load; the `detail` names it (for example `prediction_model`). In the container this usually means the snapshot is missing a file.
+
+**Fix:** Check the startup `component.load` lines for the reason. For the image, rebuild the snapshot with `uv run python -m scripts.build_snapshot --out ../snapshot` and verify it with `--verify ../snapshot` before `docker build`.
+
+---
+
+### `docker build` fails downloading a package
+
+**Cause:** Large wheels such as pyarrow can time out on a slow connection, or Docker Desktop's build frontend drops the connection (`frontend grpc server closed unexpectedly`).
+
+**Fix:** Run the build again; the Dockerfile already allows 300 seconds per download (`UV_HTTP_TIMEOUT`), and finished layers are cached.
 ---
 
 ## Android / Gradle Issues

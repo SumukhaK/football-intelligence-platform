@@ -19,8 +19,6 @@ jobs:
           required_files=(
             "README.md"
             "CHANGELOG.md"
-            "CONTRIBUTING.md"
-            "CODE_OF_CONDUCT.md"
             "LICENSE"
             ".editorconfig"
             ".gitattributes"

@@ -8,7 +8,7 @@
 
 The Football Intelligence Platform is a complete, working AI system for Europe's top five football leagues. It predicts match outcomes, explains every prediction in plain football language, estimates likely scores, lists upcoming fixtures, answers natural-language questions grounded in its own documents and data (including league tables, results and season projections), and serves all of this through a native Android app. One engineer built it end to end: 12 stages up to v1.0.0, then the v2 releases.
 
-It is not a notebook or a prototype. It is a tested (1,135 tests), documented, reproducible system that runs entirely on a laptop with zero cloud dependency: a Python ML pipeline, a versioned FastAPI backend, a local RAG assistant powered by Ollama, and a Compose Multiplatform Android client. A [3-minute demo video](demo-video/README.md) shows it end to end.
+It is not a notebook or a prototype. It is a tested (1,473 tests), documented, reproducible system that runs entirely on a laptop with no cloud dependency, and is ready to host: a Python ML pipeline, a versioned FastAPI backend with structured logs and traces, a RAG assistant on Ollama locally or Cloudflare Workers AI when hosted, a container image for Cloud Run, and a Compose Multiplatform Android client. A [3-minute demo video](demo-video/README.md) shows it end to end.
 
 **The goal was never "build a model." It was "ship a model as a trustworthy, explainable, usable product."**
 
@@ -50,23 +50,25 @@ Beyond the ADRs: Clean Architecture with one-directional dependencies in both th
 - **SHAP explainability** — per-prediction attribution through `POST /v2/explain`, with fan-friendly labels for every feature.
 - **Dixon-Coles goals model** — likely scores, expected goals and goal markets through `POST /v2/insights`, refitted daily.
 - **Retrieval-Augmented Generation** — Ollama embeddings (`nomic-embed-text`) into a numpy vector store, cosine retrieval, and a source-constrained system prompt feeding `qwen2.5:7b-instruct`, which can also call the prediction, SHAP and fixtures services as tools. A rule-based router sends season questions (tables on any date, results, the next derby) to season tools, with a goals-model projection for future dates.
-- **Local-first AI** — no hosted LLM API, no managed vector database. Everything runs on the developer's machine.
+- **Local-first, hosting-ready AI** — everything runs on the developer's machine, with no managed vector database. For hosting, one setting swaps Ollama for Cloudflare Workers AI; the hosted model was chosen by the same two evals (ADR 025).
+- **Observability and operations** — a versioned telemetry contract, request IDs, JSON logs, OpenTelemetry traces across retrieval, tool calls and generation, retries with backoff, and metrics and alerts kept as code (ADR 024).
 
 ---
 
 ## Technologies
 
 **ML / Data:** Python 3.12, XGBoost, scikit-learn, SciPy, SHAP, pandas, NumPy, PyArrow
-**Backend:** FastAPI, Pydantic v2, pydantic-settings, uvicorn
-**AI Assistant:** Ollama, custom RAG pipeline
+**Backend:** FastAPI, Pydantic v2, pydantic-settings, uvicorn, OpenTelemetry
+**Hosting:** Docker, Google Cloud Run, Firestore, Secret Manager, Cloud Logging, Trace and Monitoring
+**AI Assistant:** Ollama locally, Cloudflare Workers AI hosted, custom RAG pipeline
 **Mobile:** Kotlin, Compose Multiplatform, Ktor, Koin, Material 3
-**Tooling:** uv, Gradle, Ruff, Black, MyPy, Detekt, Spotless, GitHub Actions
+**Tooling:** uv, Gradle, Ruff, Black, MyPy, Detekt, Spotless, ShellCheck, pip-audit, OSV-Scanner, GitHub Actions
 
 ---
 
 ## Engineering Practices
 
-- **1,135 tests** — 970 Python (including 37 against the real trained model) and 165 Android (ViewModels written test-first).
+- **1,473 tests** — 1,304 Python (including 36 against the real trained model) and 169 Android (ViewModels written test-first).
 - **Strict typing** — MyPy on the Python codebase; Kotlin with `val`-by-default and exhaustive `when`.
 - **Conventional commits, ADRs and reports** — every structural decision is recorded; every experiment has a report with the command to reproduce it.
 - **One concern per pull request**, self-reviewed against a written checklist.

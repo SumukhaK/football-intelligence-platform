@@ -19,9 +19,10 @@ football-intelligence-platform/
 ├── playbook/
 ├── scripts/
 ├── tools/
+├── .dockerignore
 ├── CHANGELOG.md
-├── CONTRIBUTING.md
-├── CODE_OF_CONDUCT.md
+├── Dockerfile                        # The API image for Cloud Run (ADR 025)
+├── docker-compose.observability.yml  # Local Grafana and trace store (ADR 024)
 ├── LICENSE
 └── README.md
 ```
