@@ -119,7 +119,7 @@ h1 span { color: var(--green); }
   top: 3.5rem;
   right: 1.5rem;
   object-fit: cover;
-  object-position: 8.5% 50%;
+  object-position: 50% 50%;
   border-radius: 16px;
 }
 .signal-tags { position: absolute; top: 7.5rem; left: 1.5rem; display: grid; gap: 2.25rem; }

@@ -8,9 +8,9 @@
 
 Licensed under the [MIT License](LICENSE). Match data, fixtures and crests come from third parties under their own terms; see [Data sources and licences](#data-sources-and-licences).
 
-[![Watch the 3-minute demo](docs/showcase/demo-video/thumbnail.png)](https://github.com/SumukhaK/football-intelligence-platform/releases/download/v2.0.0/football-intelligence-demo.mp4)
+[![Watch the demo](docs/showcase/demo-video/thumbnail.png)](https://fip-ai.dev/demo.mp4)
 
-**▶ [Watch the 3-minute end-to-end demo](https://github.com/SumukhaK/football-intelligence-platform/releases/download/v2.0.0/football-intelligence-demo.mp4)**: narrated, with English subtitles. Scenes and the subtitle file are in [docs/showcase/demo-video](docs/showcase/demo-video/README.md).
+**▶ [Watch the 2-minute end-to-end demo](https://fip-ai.dev/demo.mp4)** (recorded October 2026): narrated, with English subtitles. Scenes and the subtitle file are in [docs/showcase/demo-video](docs/showcase/demo-video/README.md).
 
 ---
 
