@@ -48,6 +48,7 @@ import com.footballintelligence.core.model.MessageRole
 import com.footballintelligence.core.model.SourceCitation
 import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.KickoffLoader
+import com.footballintelligence.core.ui.appBarColors
 import com.footballintelligence.feature.assistant.resources.Res
 import com.footballintelligence.feature.assistant.resources.assistant_title
 import com.footballintelligence.feature.assistant.resources.cd_message_input
@@ -76,6 +77,7 @@ fun AssistantScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                colors = appBarColors(),
                 title = { Text(stringResource(Res.string.assistant_title)) },
                 navigationIcon = { BackButton(onClick = onBack) },
                 actions = actions,

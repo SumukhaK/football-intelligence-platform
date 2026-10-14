@@ -40,6 +40,7 @@ import com.footballintelligence.core.ui.LoadingView
 import com.footballintelligence.core.ui.OfflineBanner
 import com.footballintelligence.core.ui.RefreshableContent
 import com.footballintelligence.core.ui.TeamCrest
+import com.footballintelligence.core.ui.appBarColors
 import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.prediction.resources.Res
 import com.footballintelligence.feature.prediction.resources.action_explain
@@ -57,6 +58,17 @@ import com.footballintelligence.feature.prediction.resources.result_title
 import org.jetbrains.compose.resources.stringResource
 
 /** Displays the prediction result and offers navigation to the explanation. */
+/**
+ * What the result screen draws: [current], except that going back to Idle
+ * keeps the [previous] state. Leaving the screen resets the prediction while
+ * the screen is still animating out, which would otherwise flash an error.
+ */
+fun resultToShow(
+    previous: PredictionInputUiState?,
+    current: PredictionInputUiState,
+): PredictionInputUiState =
+    if (current is PredictionInputUiState.Idle && previous != null) previous else current
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PredictionResultScreen(
@@ -69,24 +81,28 @@ fun PredictionResultScreen(
     isRefreshing: Boolean = false,
     onRefresh: () -> Unit = {},
 ) {
+    // A plain holder, not state: remembering what was drawn must not redraw.
+    val shown = remember { arrayOfNulls<PredictionInputUiState>(1) }
+    val state = resultToShow(shown[0], uiState).also { shown[0] = it }
     Scaffold(
         topBar = {
             TopAppBar(
+                colors = appBarColors(),
                 title = { Text(stringResource(Res.string.result_title)) },
                 navigationIcon = { BackButton(onClick = onBack) },
             )
         },
         bottomBar = {
-            if (uiState is PredictionInputUiState.Success) {
+            if (state is PredictionInputUiState.Success) {
                 ResultActions(onExplain = onExplain, onNewPrediction = onNewPrediction)
             }
         },
         modifier = modifier,
     ) { padding ->
-        when (uiState) {
+        when (state) {
             is PredictionInputUiState.Loading -> LoadingView(Modifier.padding(padding))
             is PredictionInputUiState.Error -> ErrorView(
-                message = errorMessage(uiState.kind, uiState.message),
+                message = errorMessage(state.kind, state.message),
                 onRetry = onNewPrediction,
                 modifier = Modifier.padding(padding),
             )
@@ -96,8 +112,8 @@ fun PredictionResultScreen(
                 modifier = Modifier.padding(padding),
             ) {
                 Column {
-                    OfflineBanner(uiState.savedAt)
-                    ResultContent(result = uiState.result, insightsState = insightsState)
+                    OfflineBanner(state.savedAt)
+                    ResultContent(result = state.result, insightsState = insightsState)
                 }
             }
             is PredictionInputUiState.Idle -> ErrorView(
