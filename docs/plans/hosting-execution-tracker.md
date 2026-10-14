@@ -1,6 +1,6 @@
 # Hosting Execution Tracker
 
-Status: In progress (step 3a). Created 8 October 2026; reordered and step 5a added 8 October 2026.
+Status: In progress (steps 0 to 3: staging deploy next). Created 8 October 2026; reordered and step 5a added 8 October 2026; statuses updated 14 October 2026.
 Design and detail: [hosting-plans.md](hosting-plans.md). This file is the order of work and its status.
 
 Work one step at a time, one PR into `develop` per step (or per sub-step when it grows). A step is done only when its "Done when" checks pass and its evidence is saved. Update the Status column and the date in the same PR.
@@ -12,17 +12,17 @@ Status values: `Not started`, `In progress`, `Blocked (reason)`, `Done (date)`.
 | # | Step | Plan phase | Status |
 |---|---|---|---|
 | 0a | Chat route fix | this tracker | Done (8 October 2026) |
-| 0 | Baseline, accounts and budget guardrails | 0, 3.1 | Not started |
-| 1 | Host the API: container and private staging | 2, 3 | Not started |
+| 0 | Baseline, accounts and budget guardrails | 0, 3.1 | In progress (budget alert test to go) |
+| 1 | Host the API: container and private staging | 2, 3 | In progress (image and probes done; push and deploy to go) |
 | 2 | Connect storage and secrets | 3, 7 | Not started |
 | 3a | Invite-only accounts and consent | [plan](accounts-and-consent-plan.md) | In progress (code done, including the Firestore store; staging walkthrough to go) |
-| 3 | Connect the hosted LLM | 1 | Not started |
+| 3 | Connect the hosted LLM | 1 | In progress (adapter, index and model chosen; evals against staging to go) |
 | 3b | Guardrails gateway: safety, scope router, cache, limits | [analysis](assistant-guardrails-analysis.md) | Not started |
-| 4 | Observability: logs, traces, metrics, alerts | 6 | In progress (request IDs and traces done; metrics and alerts to go) |
+| 4 | Observability: logs, traces, metrics, alerts | 6 | In progress (request IDs, traces, local stack, and metrics and alerts as code done; apply and dashboard to go) |
 | 5 | CI/CD with the eval gate | 6 | Not started |
-| 5a | Security hardening | this tracker | Not started |
+| 5a | Security hardening | this tracker | Done (11 October 2026) |
 | 6 | Cold-start and idle-wake measurement | 4 | Not started |
-| 6a | Closed beta on staging | 5 | Not started |
+| 6a | Closed beta on staging | 5 | In progress (staging build variant done) |
 | 7 | Production service and the Android app | 5 | Not started |
 | 8 | Online quality monitoring | 6 | Not started |
 | 9 | Self-hosted model window | 7b | Not started |
@@ -43,11 +43,11 @@ Evidence: tests.
 
 ## 0. Baseline, accounts and budget guardrails
 
-- [ ] Next free ADR (currently 025; check develop and open PRs): cloud serving, provider adapters, immutable snapshots, refresh scheduling.
-- [ ] Local baseline: lint, types, tests; startup time and peak RAM with `LIVE_REFRESH_HOUR=off`.
+- [x] Next free ADR (currently 025; check develop and open PRs): cloud serving, provider adapters, immutable snapshots, refresh scheduling. ADR 025; ADR 026 covers the Firestore account store.
+- [x] Local baseline: lint, types, tests; startup time and peak RAM with `LIVE_REFRESH_HOUR=off`. See [hosting-baseline.md](../reports/hosting-baseline.md).
 - [x] Snapshot manifest: model, registry, datasets, fixtures, index; hashes and sizes.
-- [ ] GCP project with billing; budget $10 with alerts at $2, $5, $8.
-- [ ] Cloudflare account; Workers AI free plan; scoped API token kept out of Git.
+- [x] GCP project with billing; budget $10 with alerts at $2, $5, $8. Set up 10 October 2026 as a ₹500 monthly budget on the whole billing account, alerting at 50%, 90%, 100% and 150%.
+- [x] Cloudflare account; Workers AI free plan; scoped API token kept out of Git (local `ai/.env` and Secret Manager).
 
 Done when: baseline numbers are recorded and budget alerts fire on a test threshold.
 Evidence: baseline table in `docs/reports/hosting-baseline.md`.

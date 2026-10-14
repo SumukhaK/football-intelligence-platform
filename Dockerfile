@@ -6,10 +6,12 @@
 
 FROM python:3.12.11-slim-bookworm AS build
 COPY --from=ghcr.io/astral-sh/uv:0.11.1 /uv /usr/local/bin/uv
+# A long download timeout: large wheels such as pyarrow time out on slow links.
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
     UV_PROJECT_ENVIRONMENT=/app/.venv \
-    UV_PYTHON_DOWNLOADS=never
+    UV_PYTHON_DOWNLOADS=never \
+    UV_HTTP_TIMEOUT=300
 WORKDIR /app/ai
 COPY ai/pyproject.toml ai/uv.lock ./
 # The server runs from ai/, so the project's own packages import from there
