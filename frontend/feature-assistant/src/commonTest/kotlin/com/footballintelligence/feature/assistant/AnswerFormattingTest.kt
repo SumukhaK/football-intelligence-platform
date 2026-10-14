@@ -29,6 +29,13 @@ class AnswerFormattingTest {
     }
 
     @Test
+    fun `citation markers are hidden from the reader`() {
+        val answer = "Everton are favourites [source: tool predict_match]. " +
+            "Form is mixed [source: team_matches]."
+        assertEquals("Everton are favourites. Form is mixed.", formatAnswer(answer).text)
+    }
+
+    @Test
     fun `plain text is unchanged`() {
         val text = "I don't have enough information in my knowledge base to answer that."
         assertEquals(text, formatAnswer(text).text)

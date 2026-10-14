@@ -22,6 +22,8 @@ from dataclasses import dataclass
 from typing import Any
 
 _NUMBER = re.compile(r"\d+(?:\.\d+)?")
+# League names with a digit in them are names, not statistics.
+_NAMES_WITH_DIGITS = re.compile(r"\bLigue 1\b")
 _UNKNOWN_TEAM = "Atlantis FC"
 _ENDPOINTS = ("/v2/predict", "/v2/explain")
 
@@ -63,7 +65,8 @@ def matches(token: str, value: float) -> bool:
 def ungrounded_numbers(answer: str, sources: Iterable[str]) -> list[str]:
     """Numbers in ``answer`` that no number in ``sources`` accounts for."""
     values = [float(t) for source in sources for t in numbers_in(source)]
-    return [t for t in numbers_in(answer) if not any(matches(t, v) for v in values)]
+    claimed = numbers_in(_NAMES_WITH_DIGITS.sub("", answer))
+    return [t for t in claimed if not any(matches(t, v) for v in values)]
 
 
 def quotes_prediction(answer: str, prediction: Mapping[str, Any]) -> bool:

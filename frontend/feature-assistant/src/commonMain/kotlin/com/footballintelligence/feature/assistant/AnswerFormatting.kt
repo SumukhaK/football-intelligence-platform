@@ -7,16 +7,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 
 private val LIST_MARKER = Regex("""^\s*[*-]\s+""")
+
+// The server keeps its citations for traceability; the sources card below
+// the answer already shows readers where it came from.
+private val CITATION = Regex("""\s*\[source:[^\]]*]""")
 private const val BOLD = "**"
 private const val BULLET = "•  "
 
 /**
  * The assistant's answer with the little markdown models use made readable:
- * `**bold**` becomes bold text and `*` or `-` list markers become bullets.
- * Anything else, including an unmatched `**`, is shown as written.
+ * `**bold**` becomes bold text, `*` or `-` list markers become bullets and
+ * `[source: ...]` citations are hidden. Anything else, including an unmatched
+ * `**`, is shown as written.
  */
 fun formatAnswer(text: String): AnnotatedString = buildAnnotatedString {
-    text.lines().forEachIndexed { index, line ->
+    text.replace(CITATION, "").lines().forEachIndexed { index, line ->
         if (index > 0) append('\n')
         val bulleted = LIST_MARKER.find(line)?.let { BULLET + line.substring(it.range.last + 1) } ?: line
         appendWithBold(bulleted)
