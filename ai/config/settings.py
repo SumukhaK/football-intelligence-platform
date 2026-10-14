@@ -27,6 +27,9 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        # ai/.env is shared by all three settings classes, so each ignores the
+        # keys that belong to the others.
+        extra="ignore",
     )
 
     datasets_base_dir: Path = Field(
@@ -44,7 +47,10 @@ class Settings(BaseSettings):
     )
     http_max_retries: int = Field(
         default=DEFAULT_HTTP_MAX_RETRIES,
-        description="Maximum number of retry attempts for failed HTTP requests.",
+        description=(
+            "Retries after the first attempt for a failed download (timeouts, "
+            "connection errors, 429 and 5xx); 0 disables retries."
+        ),
         ge=0,
     )
 

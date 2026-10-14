@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -119,3 +121,53 @@ def test_refresh_can_be_turned_off(monkeypatch: pytest.MonkeyPatch) -> None:
     assert Settings().live_refresh_hour is None
     monkeypatch.setenv("LIVE_REFRESH_HOUR", "18")
     assert Settings().live_refresh_hour == 18
+
+
+class StepClock:
+    """Each call moves time on by two seconds."""
+
+    def __init__(self) -> None:
+        self.now = NOW
+
+    def __call__(self) -> datetime:
+        self.now += timedelta(seconds=2)
+        return self.now
+
+
+def test_a_refresh_logs_refresh_run(
+    events: Callable[[str], list[tuple[str, dict[str, Any]]]],
+) -> None:
+    service = LiveRefreshService(
+        refresh=lambda: Path("match_results_live_v20260929_060000.csv"),
+        reload=lambda: None,
+        clock=StepClock(),
+    )
+    service.run_once()
+    assert events("refresh.run") == [
+        (
+            "INFO",
+            {
+                "status": "ok",
+                "duration_ms": 2000,
+                "dataset": "match_results_live_v20260929_060000.csv",
+                "error": None,
+            },
+        )
+    ]
+    assert events("fallback") == []
+
+
+def test_a_failed_refresh_falls_back_to_the_old_data(
+    events: Callable[[str], list[tuple[str, dict[str, Any]]]],
+) -> None:
+    def fail() -> Path:
+        raise ConnectionError("football-data.co.uk unreachable")
+
+    LiveRefreshService(fail, lambda: None, StepClock()).run_once()
+    ((severity, run),) = events("refresh.run")
+    assert (severity, run["status"], run["error"]) == (
+        "WARNING",
+        "failed",
+        "football-data.co.uk unreachable",
+    )
+    assert [a["to_path"] for _, a in events("fallback")] == ["previous_match_data"]

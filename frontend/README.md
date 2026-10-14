@@ -14,26 +14,57 @@ Android client for the Football Intelligence Platform. Built with Compose Multip
 | AndroidX ViewModel | 2.8.3 | Lifecycle-scoped state holders |
 | Kotlinx Serialization | 1.7.1 | JSON serialisation for API DTOs |
 | Napier | 2.7.1 | KMP-compatible logging |
+| Coil | 2.7.0 | Team crest and league emblem images |
 | JUnit 5 + MockK + Turbine | — | Unit testing |
 
 ## Module Structure
 
 ```
 app/                   — Application entry point, NavHost, bottom bar, Koin assembly
-feature-home/          — Fixtures by league (the first screen) and the backend status card
+feature-home/          — Fixtures by league (the first screen; tap one to predict it) and the backend status card
 feature-prediction/    — Prediction, Result, and Explain screens
 feature-assistant/     — AI Assistant chat screen
 feature-settings/      — Settings, Model Information, and About screens
-core-network/          — Ktor API service, offline response cache, HTTP client factory
+feature-team/          — Favourite team picker (first launch and Settings) and the My Team tab
+feature-auth/          — Sign in, invite code and consent screens, and the saved session token (ADR 022)
+core-network/          — Ktor API service, auth API and session, offline response cache, HTTP client factory
 core-model/            — Domain models and network result types
 core-design-system/    — Material 3 theme and colour palette
 core-navigation/       — Screen routes sealed class
-core-ui/               — Shared UI components (loading, errors, offline banner, pull to refresh)
+core-ui/               — Shared UI components (loading, errors, offline banner, pull to refresh, team crests)
 core-common/           — Dispatchers and date/time formatting
-core-testing/, feature-match/, feature-team/ — empty, nothing depends on them
+core-testing/, feature-match/ — empty, nothing depends on them
 ```
 
-A bottom bar switches between Fixtures, Predict, Assistant and Settings. Every
+The app opens on sign-in (ADR 022): a green header over a sheet with two
+tabs, Sign in and Invite code, which can be tapped or swiped. Invite code sets
+a password with the one-time code from the owner. The session token is kept in
+private SharedPreferences (app backup is off, so it never leaves the device)
+and sent as `Authorization: Bearer <token>` on every request. After sign-in the
+app calls `GET /v2/me`; if the current notice still needs accepting it shows
+the notice from the server with a "Store my question text" switch (off by
+default). Any request answered 401 forgets the token and returns to sign-in,
+and Settings has a Sign out entry. Without a connection the app skips the
+notice check and shows saved data.
+
+On first launch the app asks for a favourite league, then a team from it, on
+one screen with two steps: a grid of league emblems, then the league's crests.
+The chosen emblem morphs into the team step's header (a shared element
+transition) and back. The choice is saved in SharedPreferences and the picker
+is not shown again. Fixtures opens on the favourite league's tab, listed first. A bottom bar
+switches between Fixtures, Predict,
+My Team and Assistant; a settings icon at the top right of each opens Settings.
+My Team shows the favourite team's next match: kick-off, the win/draw/loss pick
+with its top three reasons, the three likeliest scores and the clean-sheet
+chance. A match leaves the card two hours after kick-off. Below it, Season outlook shows the projected
+finish from `GET /v2/teams/{team}/outlook` (ADR 023): position and points,
+the title, top-four and relegation chances, a chart of those chances
+through the season (each point used only results known then) and attack and
+defence strengths. Tapping it opens the projected table with the team
+highlighted. Settings shows the
+saved team in one My team row; it reopens the picker with the saved league and
+team checked and, once a team is saved, restarts the app so every screen loads
+the new team. Every
 API response is saved in the app's cache directory; when the server can't be
 reached, screens show the saved data under an offline banner, and pulling down
 on a screen fetches fresh data.
@@ -41,14 +72,20 @@ on a screen fetches fresh data.
 ## Running Locally
 
 1. Start the FastAPI backend (see [`backend/README.md`](../backend/README.md)). It must be reachable on `localhost:8000`.
+   Sign-in works the same whether `AUTH_REQUIRED` is on or off. Create an invite to sign in with, then use the
+   printed code on the Invite code tab:
+   ```bash
+   cd ai
+   uv run python -m scripts.manage_accounts invite --email you@example.com
+   ```
 
 2. Launch an Android emulator (API 26+). The app calls API v2 at `http://10.0.2.2:8000/v2` (emulator localhost alias).
 
 3. Build and install:
    ```bash
    cd frontend
-   ./gradlew assembleDebug
-   adb install app/build/outputs/apk/debug/app-debug.apk
+   ./gradlew assembleLocalDebug
+   adb install app/build/outputs/apk/local/debug/app-local-debug.apk
    ```
 
 ## Running Tests
@@ -74,19 +111,48 @@ The app follows MVVM with strict layer separation:
 UI state is a sealed class per screen with `Loading`, `Success`, and `Error` variants.
 
 Screen text lives in each module's `src/commonMain/composeResources/values/strings.xml`
-and is read with `stringResource(Res.string.key)`. Every screen has previews in its
+and is read with `stringResource(Res.string.key)`. The app name and bottom bar
+labels are the exception: they live in `app/src/main/res/values/strings.xml`. Every screen has previews in its
 module's `androidMain` source set, wrapped in `PreviewSurface` (ADR 010).
 
 ## Backend Base URL
 
-The base URL is configured in `core-network/src/commonMain/.../NetworkConfig.kt`:
+The app has two flavors, each with its own base URL:
+
+| Flavor | App | Base URL |
+|---|---|---|
+| `local` | Football Intelligence (`com.footballintelligence.app`) | `http://10.0.2.2:8000`, the API on your PC as seen from the emulator |
+| `staging` | Football Intelligence -stg (`com.footballintelligence.app.stg`, version `-stg`) | The hosted staging API (ADR 025) |
+
+They install side by side. The staging address is not in Git: put it in
+`frontend/local.properties`, then build:
+
+```properties
+staging.baseUrl=https://<staging service URL>
+```
+
+```bash
+./gradlew assembleStagingDebug
+```
+
+A staging build without an `https://` address fails straight away instead
+of producing an app that can't reach anything. `-PstagingBaseUrl=...` works
+too; CI passes a placeholder so `assembleDebug` builds both flavors.
+
+The rest of the network settings are in `core-network/src/commonMain/.../NetworkConfig.kt`:
 
 ```kotlin
 data class NetworkConfig(
     val baseUrl: String = "http://10.0.2.2:8000",
     val apiVersion: String = "v2",
     val timeoutMs: Long = 30_000L,
+    val connectTimeoutMs: Long = 5_000L,
 )
 ```
 
-Change this for physical device testing (use your machine's LAN IP).
+The short connect timeout makes an unreachable server fall back to saved data
+quickly; `timeoutMs` bounds a request once connected. `crestUrl(team)` and
+`emblemUrl(competition)` build the crest and emblem image URLs from the same
+base URL (ADR 020).
+
+For a physical device on your network, change the `local` flavor's `BASE_URL` in `app/build.gradle.kts` to your machine's LAN IP.

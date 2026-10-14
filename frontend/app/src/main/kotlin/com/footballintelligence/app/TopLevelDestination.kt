@@ -3,8 +3,8 @@ package com.footballintelligence.app
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -23,8 +23,8 @@ enum class TopLevelDestination(
 ) {
     FIXTURES(Screen.Home, Icons.Default.CalendarMonth, R.string.nav_fixtures),
     PREDICT(Screen.Prediction, Icons.Default.SportsSoccer, R.string.nav_predict),
+    MY_TEAM(Screen.MyTeam, Icons.Default.Favorite, R.string.nav_my_team),
     ASSISTANT(Screen.Assistant, Icons.Default.Psychology, R.string.nav_assistant),
-    SETTINGS(Screen.Settings, Icons.Default.Settings, R.string.nav_settings),
     ;
 
     companion object {

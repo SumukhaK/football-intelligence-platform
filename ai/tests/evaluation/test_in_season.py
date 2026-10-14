@@ -9,7 +9,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from evaluation.in_season import build_season_features, match_predictions
+from evaluation.in_season import (
+    build_season_features,
+    elo_baseline,
+    evaluate_season,
+    match_predictions,
+    split_season,
+)
 from ingestion.in_progress import (
     IN_PROGRESS_DATASET,
     combine_with_history,
@@ -104,7 +110,8 @@ def test_build_season_features_uses_history_for_current_rows(tmp_path: Path) -> 
             _canonical("2026-08-22", "2026/27", "B", "A", "H"),
         ]
     )
-    rows = build_season_features(history, current, tmp_path)
+    matrix = build_season_features(history, current, tmp_path)
+    _, rows = split_season(matrix, "2026/27")
     assert len(rows) == 2
     assert rows["h2h_meetings"].tolist() == [2, 3]
     assert rows["home_league_points"].tolist() == [0, 1]
@@ -145,3 +152,63 @@ def test_division_with_no_played_matches_is_empty(tmp_storage: DatasetStorage) -
     df = _fetch(tmp_storage, FakeTransport(unplayed))
     assert df.empty
     assert "home_team" in df.columns
+
+
+def _scored(season: str, day: str, gap: float, result: str) -> dict:
+    return {
+        "season": season,
+        "match_date": day,
+        "competition": "Serie A",
+        "home_team": "Inter",
+        "home_elo_before": 1500.0 + gap,
+        "away_elo_before": 1500.0,
+        "home_odds": 2.0,
+        "draw_odds": 3.4,
+        "away_odds": 3.8,
+        "result": result,
+    }
+
+
+# Stronger home sides win, weaker ones lose, level ones split: Elo carries signal.
+_HISTORY = pd.DataFrame(
+    [_scored("2025/26", "2026-01-01", g, r) for g, r in [(200, "H"), (-200, "A")] * 20]
+    + [_scored("2025/26", "2026-01-01", 0, r) for r in "HDAD" * 5]
+)
+
+
+def test_split_season_keeps_earlier_seasons_and_matches_up_to_the_date() -> None:
+    current = pd.DataFrame(
+        [
+            _scored("2026/27", "2026-09-27", 0, "H"),
+            _scored("2026/27", "2026-08-20", 0, "D"),
+        ]
+    )
+    history, rows = split_season(
+        pd.concat([_HISTORY, current]), "2026/27", "2026-09-20"
+    )
+    assert len(history) == len(_HISTORY)
+    assert rows["match_date"].tolist() == ["2026-08-20"]
+
+
+def test_elo_baseline_favours_the_higher_rated_side() -> None:
+    rows = pd.DataFrame([_scored("2026/27", "2026-08-20", g, "H") for g in (300, -300)])
+    probs = elo_baseline(_HISTORY, rows, ["A", "D", "H"])
+    assert probs.sum(axis=1) == pytest.approx([1.0, 1.0])
+    assert probs[0, 2] > probs[0, 0]
+    assert probs[1, 0] > probs[1, 2]
+
+
+def test_evaluate_season_reports_elo_and_bootstrap_ranges() -> None:
+    rows = _HISTORY.assign(season="2026/27")
+    probs = np.full((len(rows), 3), 1 / 3)
+    report = evaluate_season(rows, probs, _HISTORY, ["A", "D", "H"])
+    assert set(report["scores"]["overall"]) == {
+        "candidate",
+        "elo",
+        "priors",
+        "bookmaker",
+    }
+    assert set(report["intervals"]) == {"candidate", "elo", "bookmaker"}
+    assert set(report["deltas"]) == {"candidate_minus_bookmaker", "candidate_minus_elo"}
+    elo_gap = report["deltas"]["candidate_minus_elo"]["log_loss"]
+    assert elo_gap["lower"] > 0  # uniform guesses lose to the Elo baseline

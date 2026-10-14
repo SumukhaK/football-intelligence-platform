@@ -53,3 +53,11 @@ private fun BackButtonPreview() {
         BackButton(onClick = {})
     }
 }
+
+@Preview
+@Composable
+private fun TeamCrestPreview() {
+    PreviewSurface {
+        TeamCrest(team = "Arsenal")
+    }
+}

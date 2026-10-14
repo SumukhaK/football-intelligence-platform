@@ -45,6 +45,7 @@ def _multi_season(rows_per_season: int = 20) -> pd.DataFrame:
 @pytest.fixture()
 def season_config() -> TrainingConfig:
     return TrainingConfig(
+        feature_columns=["home_elo_before"],
         split_strategy="season",
         val_seasons=["2022/23"],
         test_seasons=["2023/24"],

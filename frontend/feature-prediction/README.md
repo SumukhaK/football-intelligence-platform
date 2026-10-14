@@ -8,9 +8,10 @@ Presentation layer. The most AI-forward feature module.
 
 ## Contents
 
-- `PredictionViewModel` — league, teams, prediction, explanation and insights state.
-- `PredictionScreen` — league picker and team selection.
-- `PredictionResultScreen` — probabilities, draw tag and the goals model's insights (`InsightsSection`).
+- `PredictionViewModel` — league, teams, prediction, explanation and insights state. `predictFixture` predicts a fixture tapped on home.
+- `PredictionScreen` — league picker with league emblems and team selection with crests.
+- `PredictionResultScreen` — the winner's crest (both crests for a draw), probabilities, draw tag and the goals model's insights (`InsightsSection`). A predicted win plays a burst of confetti (`Confetti`).
+- `InsightsSection` — likely scores, with a note on why a draw can top that list, and goal markets.
 - `ExplainPredictionScreen` — SHAP contributions in plain football language.
 - `PredictionRepository` — predict, explain, insights, teams and competitions calls.
 

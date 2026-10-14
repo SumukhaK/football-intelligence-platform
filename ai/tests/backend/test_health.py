@@ -47,6 +47,8 @@ def test_health_no_model_loaded(tmp_path: Path) -> None:
     missing_settings = Settings(
         model_path=tmp_path / "no_model.joblib",
         registry_path=tmp_path / "no_registry.json",
+        # Explicit, so a real index and Ollama on the machine don't load it.
+        assistant_provider=None,
     )
     with patch("backend.app.config._settings", missing_settings):
         with patch("backend.app.main.get_settings", return_value=missing_settings):

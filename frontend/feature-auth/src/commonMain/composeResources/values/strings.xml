@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sign in and invite code -->
+    <string name="auth_app_name">Football Intelligence</string>
+    <string name="auth_invite_only">Invite only</string>
+    <string name="tab_sign_in">Sign in</string>
+    <string name="tab_invite_code">Invite code</string>
+    <string name="field_email">Email</string>
+    <string name="field_password">Password</string>
+    <string name="field_invite_code">Invite code</string>
+    <string name="field_new_password">Choose a password</string>
+    <string name="new_password_hint">At least 10 characters</string>
+    <string name="forgot_password">Forgot your password? Ask for a new invite code.</string>
+    <string name="action_sign_in">Sign in</string>
+    <string name="action_create_account">Create account</string>
+    <string name="cd_show_password">Show password</string>
+    <string name="cd_hide_password">Hide password</string>
+    <string name="error_wrong_credentials">That email and password don't match.</string>
+    <string name="error_too_many_tries">Too many tries. Wait 15 minutes and try again.</string>
+    <string name="error_invalid_invite">That code is wrong, used or expired. Ask for a new one.</string>
+    <string name="error_password_too_short">Use at least 10 characters.</string>
+    <string name="error_blocked">This account is blocked.</string>
+
+    <!-- Consent -->
+    <string name="consent_title">Before you start</string>
+    <string name="consent_store_questions">Store my question text</string>
+    <string name="consent_store_questions_hint">Off unless you turn it on</string>
+    <string name="action_accept">Accept and continue</string>
+    <string name="action_sign_out">Sign out</string>
+</resources>

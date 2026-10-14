@@ -16,6 +16,13 @@ internal fun outcomeLabel(code: String, homeTeam: String, awayTeam: String): Str
     else -> code
 }
 
+/** The team a predicted outcome code says wins; null for a draw, which has no winner. */
+internal fun winningTeam(code: String, homeTeam: String, awayTeam: String): String? = when (code) {
+    "H" -> homeTeam
+    "A" -> awayTeam
+    else -> null
+}
+
 /** A number with one decimal place, such as expected goals. */
 internal fun oneDecimal(value: Double): String {
     val tenths = (value * TENTHS).roundToInt()

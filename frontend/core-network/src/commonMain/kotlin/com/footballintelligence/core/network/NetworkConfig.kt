@@ -1,5 +1,7 @@
 package com.footballintelligence.core.network
 
+import io.ktor.http.encodeURLPathPart
+
 /**
  * Network configuration. Base URL is overridable for testing.
  *
@@ -15,4 +17,12 @@ data class NetworkConfig(
     val apiVersion: String = "v2",
     val timeoutMs: Long = 30_000L,
     val connectTimeoutMs: Long = 5_000L,
-)
+) {
+    /** URL of [team]'s crest; the server redirects it to the image (ADR 020). */
+    fun crestUrl(team: String): String =
+        "$baseUrl/$apiVersion/teams/${team.encodeURLPathPart()}/crest"
+
+    /** URL of [competition]'s emblem; the server redirects it to the image (ADR 020). */
+    fun emblemUrl(competition: String): String =
+        "$baseUrl/$apiVersion/competitions/${competition.encodeURLPathPart()}/emblem"
+}

@@ -148,6 +148,11 @@ private fun ResultWithInsightsPreview() = Result(PredictionInputUiState.Success(
 
 @Preview
 @Composable
+private fun DrawResultPreview() =
+    Result(PredictionInputUiState.Success(samplePrediction.copy(predictedResult = "D")))
+
+@Preview
+@Composable
 private fun InsightsLoadingPreview() = PreviewSurface { InsightsSection(InsightsUiState.Loading) }
 
 @Preview

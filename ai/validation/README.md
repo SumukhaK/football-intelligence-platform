@@ -5,10 +5,14 @@ Schema and data quality validation for the football AI pipeline.
 ## Responsibility
 
 All data entering the pipeline must pass validation before moving to the next
-stage. This package provides two complementary validators:
+stage. This package provides:
 
-- `DatasetValidator` — rule-based quality checks (nulls, duplicates, row counts).
-- `SchemaValidator` — Pydantic-schema-based column compatibility checks.
+- `DatasetValidator` (`dataset_validator.py`) — rule-based quality checks (nulls, duplicates, row counts).
+- `SchemaValidator` (`schema_validator.py`) — Pydantic-schema-based column compatibility checks.
+- `season_integrity.py` — per league season checks (ADR 006): every team hosts every
+  other team once, no duplicated fixtures, season labels and results agree with the score.
+  `check_partial_season` runs the same checks on a season in progress, without the
+  match and schedule counts.
 
 Validation failures are explicit errors, not silent skips.
 

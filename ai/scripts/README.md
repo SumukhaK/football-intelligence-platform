@@ -9,7 +9,7 @@ One-shot scripts that are run from the command line rather than imported as libr
 ## Contracts
 
 - Scripts are run with `uv run python -m scripts.<name>`; nothing imports them.
-- Each script has a `--help` flag and a usage example at the top.
+- Each script has a usage example at the top, and all but `build_team_crests` (which takes no options) have a `--help` flag.
 - Scripts must be idempotent where possible.
 - No script downloads data or modifies `datasets/raw/` without user confirmation.
 
@@ -19,6 +19,9 @@ One-shot scripts that are run from the command line rather than imported as libr
 - `ingest_football_data.py` — ingest a single football-data.co.uk file.
 - `refresh_live_dataset.py` — add the season so far to the served dataset by hand (the backend also does this daily).
 - `refresh_fixtures.py` — download upcoming fixtures by hand (ADR 015).
+- `build_team_crests.py` — rebuild `datasets/schemas/team_crests.csv` and `league_emblems.csv`, the crest URL per team and league (ADR 020).
+- `manage_accounts.py` — invite people, ban or unban accounts (ADR 022).
+- `build_snapshot.py` — build or verify an immutable serving snapshot with its manifest (ADR 025).
 
 - `draw_feature_experiment.py` — retrains with six candidate draw features and reports the log-loss change; the features were not adopted (`docs/reports/draw-handling.md`).
 

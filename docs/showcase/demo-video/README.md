@@ -1,12 +1,15 @@
 # Demo Video
 
-A 3-minute, narrated walk-through of the whole system, recorded on
-29 September 2026 against release v2.0.0.
+A 2-minute, narrated walk-through of the whole system, recorded on
+14 October 2026 from `develop` (after the hosting groundwork, PRs #93 to #110).
 
-**▶ [Watch the video](https://github.com/SumukhaK/football-intelligence-platform/releases/download/v2.0.0/football-intelligence-demo.mp4)**
-(MP4, 1080p, 6 MB, attached to the [v2.0.0 release](https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.0.0)).
-English subtitles are burned into the video and also provided as
-[`demo.srt`](demo.srt).
+**▶ [Watch the video](https://fip-ai.dev/demo.mp4)** (MP4, 1080p, about
+4 MB, served with the [project website](../../site/README.md) from
+`docs/site/demo.mp4`). English subtitles are burned into the video and also
+provided as [`demo.srt`](demo.srt).
+
+The earlier 3-minute recording of release v2.0.0 is still attached to the
+[v2.0.0 release](https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.0.0).
 
 ---
 
@@ -15,35 +18,34 @@ English subtitles are burned into the video and also provided as
 | Time | Scene | What you see |
 |---|---|---|
 | 0:00 | Title | What the project is |
-| 0:12 | Architecture | The architecture diagram from the root README |
-| 0:41 | Backend | The FastAPI `/docs` page listing `/v1` and `/v2` |
-| 0:57 | Predict | `POST /v2/predict` for Arsenal against Chelsea |
-| 1:13 | Explain | `POST /v2/explain`: the factors behind the pick, in plain language |
-| 1:26 | API v1 | The same request to `/v1`, answered by the original June model |
-| 1:35 | Fixtures API | `GET /v2/fixtures` for the Bundesliga |
-| 1:43 | Assistant | `POST /v2/assistant/chat`, answered by local Ollama with sources |
-| 1:52 | App: Fixtures | League tabs over upcoming fixtures |
-| 2:08 | App: Predict | League and teams, result, likely scores, explanation |
-| 2:27 | App: Offline | Server stopped, pull to refresh, saved data under the offline banner |
-| 2:43 | App: Settings | Backend status card |
-| 2:49 | Close | Runs on a laptop, no cloud |
+| 0:13 | Architecture | Data, pipeline, models, FastAPI and the two clients |
+| 0:29 | App: Sign-in | Redeeming a one-time invite code, then the consent notice |
+| 0:41 | App: My Team | The favourite team's next match, the pick and why, the season outlook |
+| 0:56 | App: Fixtures | League tabs over upcoming fixtures with crests |
+| 1:05 | App: Prediction | Probabilities and the most likely scores |
+| 1:13 | App: Explanation | SHAP factors in plain football language |
+| 1:22 | App: Assistant | A match question answered with the prediction tool, on Workers AI |
+| 1:34 | App: Offline | Server stopped, pull to refresh, saved data under the offline banner |
+| 1:42 | Backend | The FastAPI `/docs` page with `/v2/live` and `/v2/ready` |
+| 1:52 | Telemetry | One chat request's JSON log events: tool calls, the model call, tokens and cost |
+| 2:06 | Close | Runs on a laptop, ready for Cloud Run |
 
 ---
 
 ## How It Was Made
 
-- **Everything on screen is real.** The terminal scenes show real responses
-  from the running backend. Long outputs are trimmed, and the video marks
-  each cut with "…". The app scenes are screen recordings from an Android
-  emulator. Browser views were captured with headless Microsoft Edge, so no
-  browser toolbar or bookmarks appear.
-- **Edits.** App recordings are sped up by at most 2.5 times to match the
-  narration. In the offline scene, the app waits about 50 seconds for the
-  request to time out; the video cuts from the pull to the result.
+- **Everything on screen is real.** The app scenes are screen recordings from
+  an Android emulator against the local backend, with the assistant on
+  Cloudflare Workers AI (`gemma-4-26b-a4b-it`, thinking off). The `/docs`
+  page was captured with headless Microsoft Edge. The telemetry scene lists
+  the real JSON log events the backend wrote for one chat request, with its
+  `X-Request-ID`, trimmed to their key fields.
+- **Edits.** App recordings are sped up where the narration is shorter than
+  the action, and the keyboard typing in the assistant scene is cut. The
+  Explanation scene is a still screenshot. The invite code shown belongs to a
+  local demo account.
 - **Narration.** An AI voice (`en-GB-RyanNeural` via `edge-tts`) reads the
   script. Each subtitle is one narrated sentence, timed to its audio.
-- **Assistant.** In the video, the assistant runs `qwen2.5:7b-instruct` in
-  Ollama, not the default `llama3.2`, because that is the model installed on
-  the recording machine. It takes about 45 seconds per answer on that
-  laptop's GPU, which is longer than the app's 30-second timeout. That is why
-  the assistant is shown answering in the terminal.
+- **Assembly.** ffmpeg (from the `imageio-ffmpeg` package) cut and joined the
+  scenes and burned in the subtitles; title and diagram cards were drawn with
+  Pillow.

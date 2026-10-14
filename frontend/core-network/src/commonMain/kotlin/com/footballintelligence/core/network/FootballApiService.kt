@@ -12,6 +12,7 @@ import com.footballintelligence.core.model.ModelInfo
 import com.footballintelligence.core.model.NetworkResult
 import com.footballintelligence.core.model.PredictionRequest
 import com.footballintelligence.core.model.PredictionResult
+import com.footballintelligence.core.model.TeamOutlook
 import com.footballintelligence.core.model.TeamsResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -22,6 +23,7 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.http.encodeURLPathPart
 import io.ktor.http.isSuccess
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -37,6 +39,9 @@ interface FootballApiService {
     suspend fun explain(request: PredictionRequest): NetworkResult<ExplanationResult>
     suspend fun getInsights(request: PredictionRequest): NetworkResult<Insights>
     suspend fun chat(request: ChatRequest): NetworkResult<ChatResponse>
+
+    /** [team]'s projected season finish in [competition] (ADR 023). */
+    suspend fun getTeamOutlook(team: String, competition: String): NetworkResult<TeamOutlook>
 }
 
 /** Ktor-backed implementation of [FootballApiService]. */
@@ -96,6 +101,13 @@ class KtorFootballApiService(
             }.decode()
         }
 
+    override suspend fun getTeamOutlook(team: String, competition: String): NetworkResult<TeamOutlook> =
+        guarded {
+            client.get("$base/teams/${team.encodeURLPathPart()}/outlook") {
+                parameter("competition", competition)
+            }.decode()
+        }
+
     override suspend fun chat(request: ChatRequest): NetworkResult<ChatResponse> =
         guarded {
             client.post("$base/assistant/chat") {
@@ -114,7 +126,7 @@ class KtorFootballApiService(
  * separately as an unexpected error.
  */
 @Suppress("TooGenericExceptionCaught")
-private suspend inline fun <T> guarded(call: () -> NetworkResult<T>): NetworkResult<T> =
+internal suspend inline fun <T> guarded(call: () -> NetworkResult<T>): NetworkResult<T> =
     try {
         call()
     } catch (e: SerializationException) {
@@ -123,16 +135,16 @@ private suspend inline fun <T> guarded(call: () -> NetworkResult<T>): NetworkRes
         NetworkResult.Error(message = e.message ?: "Unknown network error", kind = ErrorKind.OFFLINE)
     }
 
-private suspend inline fun <reified T> HttpResponse.decode(): NetworkResult<T> =
-    if (status.isSuccess()) {
-        NetworkResult.Success(body())
-    } else {
-        NetworkResult.Error(
-            message = serverDetail() ?: "HTTP ${status.value}: ${status.description}",
-            code = status.value,
-            kind = errorKindFor(status.value),
-        )
-    }
+internal suspend inline fun <reified T> HttpResponse.decode(): NetworkResult<T> =
+    if (status.isSuccess()) NetworkResult.Success(body()) else toError()
+
+/** This failed response as an error, keeping the server's explanation. */
+internal suspend fun HttpResponse.toError(): NetworkResult.Error =
+    NetworkResult.Error(
+        message = serverDetail() ?: "HTTP ${status.value}: ${status.description}",
+        code = status.value,
+        kind = errorKindFor(status.value),
+    )
 
 /** The `detail` of the backend's structured error body, if it has one. */
 private suspend fun HttpResponse.serverDetail(): String? =

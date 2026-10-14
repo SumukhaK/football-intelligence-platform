@@ -1,6 +1,6 @@
 # Interview Guide — Football Intelligence Platform
 
-50 questions an interviewer might ask about this project (as of release v2.0.1), organised by topic, each with a suggested answer, the reasoning behind it, and the trade-offs worth raising proactively.
+50 questions an interviewer might ask about this project (as of release v2.2.0), organised by topic, each with a suggested answer, the reasoning behind it, and the trade-offs worth raising proactively.
 
 ---
 
@@ -272,11 +272,13 @@
 
 ### 30. Why Ollama instead of OpenAI/Anthropic API?
 
-**Answer:** Keeps the entire system runnable offline with zero per-request cost and zero data leaving the developer's machine — directly supporting the project's "no cloud dependency" goal. `llama3.2` is small enough to run on a laptop while still being capable enough for grounded, source-constrained QA.
+**Answer:** Keeps the entire system runnable offline with zero per-request cost and zero data leaving the developer's machine — directly supporting the project's "no cloud dependency" goal. `qwen2.5:7b-instruct` is the smallest local model that passed both assistant evals (ADR 019); the 3B `llama3.2` it replaced misquoted tool numbers.
 
 **Reasoning:** A deliberate architectural constraint, not a budget workaround — local-first is a stated project value.
 
-**Trade-off:** A local 3B-ish parameter model is less capable at open-ended reasoning than a frontier hosted model — acceptable because the task (source-constrained QA) doesn't require frontier-level reasoning.
+**Trade-off:** A local 7B model is less capable at open-ended reasoning than a frontier hosted model — acceptable because the task (source-constrained QA) doesn't require frontier-level reasoning.
+
+**Since then:** a hosted API can't reach a laptop's Ollama, so for hosting the assistant can switch to Cloudflare Workers AI with one setting (`ASSISTANT_PROVIDER`, ADR 025). Both providers sit behind the same `Embedder` and `Generator` interfaces, and the hosted model (Gemma 4 26B) was chosen by the same two evals. Local development still runs offline on Ollama.
 
 ---
 
@@ -292,15 +294,15 @@
 
 ### 32. How do you prevent the assistant from hallucinating?
 
-**Answer:** Three layers: (1) retrieval — only relevant chunks are fetched via cosine similarity, (2) relevance filtering — low-similarity chunks are dropped before they reach the prompt, (3) a system prompt that explicitly instructs source-only answering and to say "I don't know" rather than guess. The combination means the model is structurally constrained, not just politely asked, to stay grounded.
+**Answer:** Three layers: (1) retrieval — only relevant chunks are fetched via cosine similarity, (2) relevance filtering — low-similarity chunks are dropped before they reach the prompt, (3) a system prompt that explicitly instructs source-only answering and to say "I don't know" rather than guess, and (4) tools: match and season numbers come from the API's own services, never the model ([ADR 018](../adr/018-assistant-tool-calling.md), [ADR 021](../adr/021-season-tools-and-router.md)). The combination means the model is structurally constrained, not just politely asked, to stay grounded.
 
 **Reasoning:** No single layer is sufficient alone — retrieval can return weak matches, and prompting alone doesn't guarantee compliance, so the layers are defence-in-depth.
 
 ---
 
-### 33. What happens if Ollama isn't running?
+### 33. What happens if the model provider isn't available?
 
-**Answer:** The backend's lifespan startup attempts to load the assistant service; if it fails (Ollama unreachable), `app.state.chat_service` stays `None` and `POST /assistant/chat` returns a structured `503` with a clear error message — the backend doesn't crash, and every other endpoint (predictions, explanations, insights, fixtures, teams, health) continues working normally.
+**Answer:** The backend's lifespan startup attempts to load the assistant service; if it fails (Ollama unreachable), `app.state.chat_service` stays `None` and `POST /assistant/chat` returns a structured `503` with a clear error message — the backend doesn't crash, and every other endpoint (predictions, explanations, insights, fixtures, teams, health) continues working normally. The same holds for the hosted provider: a timeout, quota error or 5xx from Workers AI is retried once within a deadline, then becomes the same `503`, and `/v2/ready` never calls the provider, so an outage can't make the platform restart the service.
 
 **Reasoning:** Graceful degradation — an optional dependency failing shouldn't take down the whole service. Verified by integration tests.
 
@@ -308,7 +310,7 @@
 
 ### 34. How would you evaluate whether the assistant's answers are actually faithful to the retrieved context?
 
-**Answer:** Not yet implemented as an automated metric — currently relies on manual spot-checking and the structural guarantees (retrieval + filtering + prompt). A proper evaluation would build a ground-truth Q&A set and score faithfulness (e.g., via an LLM-as-judge comparing the answer against only the retrieved chunks, or simpler n-gram/entailment overlap checks). This is explicitly listed as future scope.
+**Answer:** Partly done. Three evals run against the live model provider (Ollama locally; the first two also against Workers AI before choosing the hosted model): grounding (answers quote `/v2/predict` and invent no numbers, 11/11), abstention (answers what the documents cover, refuses the rest, 20/20) and season answers (7/7). Faithfulness to retrieved document chunks is not scored yet; that would need a ground-truth Q&A set and an LLM-as-judge or entailment check, and is listed as future scope.
 
 **Reasoning:** Honest acknowledgment of what's structurally enforced versus what's empirically measured — these are different guarantees and shouldn't be conflated.
 
@@ -326,7 +328,7 @@
 
 **Answer:** `nomic-embed-text`, run locally via Ollama — chosen for being a capable, open, locally-runnable embedding model that doesn't require a separate hosted embedding API, consistent with the local-first constraint.
 
-**Reasoning:** Same reasoning as the generation model choice — keep the entire pipeline self-hosted.
+**Reasoning:** Same reasoning as the generation model choice — keep the entire pipeline self-hosted. The hosted index uses `qwen3-embedding-0.6b` on Workers AI instead; query and document vectors must come from the same model, so each index records its model and the server refuses a mismatch. On the abstention questions the hosted embeddings separated in-scope from out-of-scope questions cleanly (cut-off 0.77).
 
 ---
 
@@ -334,7 +336,7 @@
 
 ### 37. Why FastAPI over Flask or Django?
 
-**Answer:** Native async support, automatic OpenAPI schema generation from Pydantic models (so `/docs` is always accurate, never hand-written and stale), and first-class Pydantic v2 integration for request/response validation — all of which map directly onto this project's "documentation must be accurate" and "structured validation" requirements.
+**Answer:** Native async support, automatic OpenAPI schema generation from Pydantic models (so `/docs` is always accurate, never hand-written and stale), and first-class Pydantic v2 integration for request/response validation — all of which map directly onto this project's "documentation must be accurate" and "structured validation" requirements. One catch: the model call is blocking, so the chat route is a plain `def`, which FastAPI runs in its thread pool; an `async def` would have stalled every other request while a model answered.
 
 **Reasoning:** Direct fit between framework strengths and project requirements, not just popularity.
 
@@ -382,7 +384,7 @@
 
 ### 43. How would you add authentication to this backend?
 
-**Answer:** FastAPI's `Depends` system makes this straightforward to add without restructuring — an `api_key` or JWT-validation dependency could be added to each router and injected the same way the AI services already are. Not implemented here because the project's explicit scope excludes authentication for early stages (per `.claude/CLAUDE.md` non-goals) and the system is designed for local development, not public deployment.
+**Answer:** It now has it, for hosted deployments ([ADR 022](../adr/022-invite-only-accounts-and-consent.md)): invite-only accounts, scrypt password hashes from the standard library, opaque 30-day session tokens stored as hashes, a login lockout and a consent notice. With `AUTH_REQUIRED=true` every `/v2` data route needs a token and current consent, and `/v1` is not mounted. It is off by default on the server. The Android app always opens on sign-in, with a Sign in tab and an Invite code tab, then shows the notice if it still needs accepting; it sends the token on every request and returns to sign-in on any 401.
 
 **Reasoning:** Distinguishes "didn't think about it" from "deliberately scoped out, with a clear extension path."
 
@@ -390,7 +392,7 @@
 
 ### 44. What would break first if this backend had to handle real production traffic?
 
-**Answer:** Authentication is missing entirely, so anyone who can reach the server can use it. There is a rate limiter (120 requests per minute per client, 429 with `Retry-After`, [ADR 014](../adr/014-api-versioning-and-rate-limiting.md)), but it lives in memory per process, so behind a load balancer each instance would count separately. The assistant is the heaviest path, since a local LLM answer can take many seconds. First steps: API keys, a shared rate-limit store such as Redis, HTTPS, and a queue or separate limit for the assistant.
+**Answer:** Sign-in exists but is off by default, and the account store is a single JSON file, which suits one process only. There is a rate limiter (120 requests per minute per client, 429 with `Retry-After`, [ADR 014](../adr/014-api-versioning-and-rate-limiting.md)), but it lives in memory per process, so behind a load balancer each instance would count separately. The assistant is the heaviest path, since a local LLM answer can take many seconds. First steps: a shared account store, a shared rate-limit store such as Redis, HTTPS, and a queue or separate limit for the assistant.
 
 ---
 
@@ -440,6 +442,6 @@
 
 ### 50. If you had another two weeks on this project, what would you build next?
 
-**Answer:** (1) An evaluation set for the assistant — questions with expected sources — to measure retrieval hit rate, faithfulness and refusals on every change. (2) A weekly monitoring job that scores the live season's matches and alerts when log loss or calibration drifts outside the cross-validation range. (3) Retries with backoff for the daily downloads and a timeout plus one retry for LLM calls.
+**Answer:** (1) Retrieval hit rate and faithfulness metrics for the assistant, on top of the grounding, abstention and season evals, run on every change. (2) A weekly monitoring job that scores the live season's matches and alerts when log loss or calibration drifts outside the cross-validation range. (3) Retries with backoff for the daily downloads and a timeout plus one retry for LLM calls.
 
 **Reasoning:** The prediction path is measured and honest already; the assistant and live monitoring are the least measured parts, so they come first.

@@ -42,6 +42,7 @@ def _write_matrix(cwd: Path) -> str:
 @pytest.fixture()
 def config(tmp_path: Path) -> TrainingConfig:
     return TrainingConfig(
+        feature_columns=["home_elo_before", "away_elo_before"],
         n_estimators=10,
         early_stopping_rounds=3,
         cv_folds=2,

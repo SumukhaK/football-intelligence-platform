@@ -58,6 +58,15 @@ class FixturesService:
         frame = pd.read_csv(path, dtype=str, keep_default_na=False)
         return cls(frame, today, dataset_built_at(path))
 
+    def schedule(self, competition: str) -> pd.DataFrame:
+        """Every scheduled match of the league in the dataset, earliest first.
+
+        Unlike :meth:`upcoming` this keeps matches dated before today, which
+        may be played but not yet in the results data.
+        """
+        rows = self._frame[self._frame["competition"] == competition]
+        return rows[["match_date", "kickoff", "home_team", "away_team", "round"]]
+
     def upcoming(self, competition: str, limit: int) -> FixturesResponse:
         """The league's next ``limit`` fixtures from today on, earliest first."""
         today = self._today().isoformat()

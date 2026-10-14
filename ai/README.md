@@ -18,11 +18,15 @@ This directory owns:
 - Feature engineering for model training.
 - XGBoost model training and serialisation.
 - SHAP explainability — every prediction includes a SHAP explanation.
-- Retrieval-augmented generation pipeline using Ollama.
-- The Dixon-Coles goals model behind scoreline insights.
+- Retrieval-augmented generation pipeline: Ollama locally, Cloudflare Workers AI when hosted (ADR 025).
+- The Dixon-Coles goals model behind scoreline insights and league table projections.
 - The FastAPI backend (`backend/`), which serves all of the above.
 - Prompt templates and retrieval configuration.
-- Evaluation scripts: prediction accuracy, assistant faithfulness, hallucination rate.
+- Evaluation scripts for the match and goals models: season-split comparisons,
+  bookmaker benchmarks and in-season backtests. For the assistant: a grounding
+  check that it quotes the API's predictions without inventing numbers, a season
+  check for table, projection, result and derby answers, and an abstention check
+  that it says "I don't know" when it should.
 
 ---
 
@@ -32,6 +36,8 @@ This directory owns:
 ai/
   config/               # Settings (pydantic-settings) and path layout
   shared/               # Common types, exceptions, and constants
+    telemetry/          # Request IDs, JSON log lines, the event catalogue, traces and retries (ADR 024)
+    snapshot.py         # Serving snapshots: copy, manifest and verify (ADR 025)
   providers/            # Data provider adapters (football-data.co.uk used; FBref, Understat adapters)
   ingestion/            # Downloader, storage, season backfill, daily live refresh, fixtures (openfootball)
   validation/           # DataFrame-level rules and schema compatibility checks
@@ -40,17 +46,16 @@ ai/
   schemas/              # Pydantic schema definitions for all datasets
   metadata/             # DatasetMetadata model and MetadataBuilder
   scripts/              # Operational CLI scripts (setup, pipeline triggers)
-  tests/                # Unit tests mirroring source structure
+  tests/                # Unit and integration tests mirroring source structure
   training/             # XGBoost training, season split, tuning
   evaluation/           # Model evaluation, backtests and in-season accuracy
   inference/            # Predictor and server-side match features used by the backend
   explainability/       # SHAP explainability pipeline and fan-friendly feature labels
-  goals/                # Dixon-Coles goals model: likely scores and goal markets
+  goals/                # Dixon-Coles goals model: likely scores, goal markets, league table projections
   model_registry/       # JSON model registry with git commit traceability
   assistant/            # RAG assistant: ingestion, chunking, embeddings, retrieval, generation
   backend/              # FastAPI application (see backend/README.md at the repo root)
-  docs/                 # Stage 8 and 10 demo guides and reports
-  rag/, prompts/, datasets/  # Empty; the RAG code lives in assistant/, prompts in playbook/
+  rag/, prompts/, datasets/  # Empty; the RAG code lives in assistant/, prompts in assistant/prompting/templates.py
   models/               # Serialised model artefacts (gitignored)
 ```
 
@@ -161,7 +166,7 @@ uv run pytest --cov --cov-report=term-missing
 - The assistant never invents facts. Every response is grounded in retrieved data or model output.
 - SHAP values accompany every prediction.
 - Prompt templates are version-controlled and tested.
-- Model selection favours the smallest Ollama model that meets quality thresholds.
+- Model selection favours the smallest model that meets quality thresholds: `qwen2.5:7b-instruct` locally (ADR 019), Gemma 4 26B on Workers AI ([evals](../docs/reports/hosted-assistant-evals.md)).
 - Fine-tuning and LoRA are out of scope. Improve quality through better retrieval and better prompts.
 - No model is merged without a passing evaluation run.
 
@@ -208,7 +213,13 @@ All rolling features use `.shift(1)` before `.rolling()` to prevent data leakage
 ## Assistant Package
 
 The `assistant/` package implements the RAG pipeline for the Football Intelligence
-Assistant. It is structured as a series of composable stages:
+Assistant. Besides retrieved documents, the chat model can call tools that run the
+backend's prediction, SHAP and fixtures services, so it quotes the served model's
+numbers (ADR 018; the tools are built in `backend/app/services/assistant_tools.py`).
+Season questions (tables, projections, results, derbies) use two more tools,
+`team_matches` and `league_table`, and a rule-based router picks the tool calls
+before the model answers (ADR 021; `backend/app/services/season_tools.py` and
+`season_router.py`). It is structured as a series of composable stages:
 
 ```
 assistant/
@@ -217,8 +228,11 @@ assistant/
   embeddings/     # Embedder protocol + OllamaEmbedder
   retrieval/      # VectorStore (numpy, file-persisted) + cosine retrieve()
   prompting/      # System prompt + build_messages()
-  generation/     # Generator protocol + OllamaGenerator
-  services/       # AssistantService — orchestrates the full pipeline
+  generation/     # Generator protocols + OllamaGenerator (plain and tool-calling chat)
+  workers_ai.py   # Workers AI embedder and generator (OpenAI-compatible REST, ADR 025)
+  providers.py    # Builds the configured provider's embedder and generator
+  tools/          # Tool definition, run_tool() and the Router protocol (routing.py)
+  services/       # AssistantService — retrieve, prompt, run tool calls, answer
   pipeline.py     # AssistantPipeline facade: build_index / load_index / query
   configuration.py  # AssistantSettings (pydantic-settings)
 ```
@@ -227,15 +241,25 @@ assistant/
 
 ```sh
 ollama pull nomic-embed-text
+ollama pull qwen2.5:7b-instruct
 uv run python -m assistant.pipeline --rebuild
 ```
+
+The default chat model is `qwen2.5:7b-instruct` (ADR 019); set
+`OLLAMA_CHAT_MODEL` to use another.
+
+With `ASSISTANT_PROVIDER=workers_ai` the same command embeds with Workers AI.
+Give the hosted index its own folder with `VECTOR_STORE_PATH`, and record its
+measured cut-off with `--min-relevance` (`python -m evaluation.relevance_cutoff`
+suggests one). The index saves its embedding model and cut-off in `index.json`,
+and the server refuses an index whose model doesn't match its embedder.
 
 ### Knowledge sources loaded
 
 - `ai/models/**/*.md` — model cards
 - `docs/adr/*.md` — architecture decision records
-- `docs/reports/*.md` — stage summaries
+- `docs/reports/*.md` — stage summaries and evaluation reports
 - `docs/*.md` — project documentation
-- `ai/models/latest/evaluation_report.json` — model evaluation
+- `ai/models/latest/evaluation_report.json`, `metrics.json`, `config.json` — served model evaluation and settings
 - `ai/explanations/global_summary.json` — SHAP global explanations
-- `datasets/features/feature_metadata.json` — feature descriptions
+- `datasets/features/feature_metadata.json`, `feature_generation_report.json` — feature descriptions

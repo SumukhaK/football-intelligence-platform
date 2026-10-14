@@ -1,0 +1,33 @@
+{
+  "displayName": "football-api: sign-in lockout burst",
+  "documentation": {
+    "content": "Three or more accounts were locked out after failed sign-ins within an hour, which may be password guessing.\n\nFirst check: `auth.event` lines with outcome `locked_out` and the `client_ref` values on the matching `ratelimit.rejected` lines.",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "3+ lockouts in an hour",
+      "conditionThreshold": {
+        "filter": "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/auth_lockouts\"",
+        "aggregations": [
+          {
+            "alignmentPeriod": "3600s",
+            "perSeriesAligner": "ALIGN_DELTA",
+            "crossSeriesReducer": "REDUCE_SUM"
+          }
+        ],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 2,
+        "duration": "0s",
+        "trigger": {
+          "count": 1
+        }
+      }
+    }
+  ],
+  "alertStrategy": {
+    "autoClose": "86400s"
+  },
+  "severity": "ERROR"
+}

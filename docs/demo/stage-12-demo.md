@@ -234,4 +234,4 @@ Full test suite (unit + integration):
 uv run pytest
 ```
 
-Expected output: **798 passed** (unit and integration).
+Expected output: **872 passed** (unit and integration).

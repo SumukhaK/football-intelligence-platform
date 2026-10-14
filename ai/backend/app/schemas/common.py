@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -53,7 +55,19 @@ class HealthResponse(BaseModel):
         default=None,
         description="Why the last refresh failed; null when it succeeded.",
     )
-    version: str = Field(..., description="API version string.", examples=["2.0.0"])
+    version: str = Field(..., description="API version string.", examples=["2.2.0"])
+
+
+class LiveResponse(BaseModel):
+    """Response body for GET /v2/live."""
+
+    status: Literal["alive"] = Field(..., description="Always 'alive'.")
+
+
+class ReadyResponse(BaseModel):
+    """Response body for GET /v2/ready when the service can serve predictions."""
+
+    status: Literal["ready"] = Field(..., description="Always 'ready'.")
 
 
 class ModelInfoResponse(BaseModel):

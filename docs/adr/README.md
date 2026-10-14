@@ -89,7 +89,7 @@ ADRs are never deleted.
 | [004](004-shap-for-explainability.md) | Use SHAP TreeExplainer for model explainability | Accepted |
 | [005](005-top-five-leagues-multi-source-data.md) | Expand training data to the top five leagues from multiple sources | Accepted (item 6 superseded by 012) |
 | [006](006-team-canonicalisation-and-match-dedup.md) | Canonical team names and match deduplication | Accepted |
-| [007](007-season-based-split-and-evaluation.md) | Season-based split and evaluation protocol | Accepted |
+| [007](007-season-based-split-and-evaluation.md) | Season-based split and evaluation protocol | Accepted (item 6 amended by 017) |
 | [008](008-server-side-match-features.md) | Compute match features on the server | Accepted (item 6 superseded by 012) |
 | [009](009-dixon-coles-goals-model.md) | Add a Dixon-Coles goals model for scoreline predictions | Accepted |
 | [010](010-compose-resources-for-ui-text.md) | Keep UI text in Compose Multiplatform resources | Accepted |
@@ -99,3 +99,14 @@ ADRs are never deleted.
 | [014](014-api-versioning-and-rate-limiting.md) | Version the API and add a rate limiter | Accepted |
 | [015](015-upcoming-fixtures-from-openfootball.md) | Upcoming fixtures from openfootball | Accepted |
 | [016](016-app-icon-and-kickoff-launch-screen.md) | App icon and the Kick-off launch screen | Accepted |
+| [017](017-refit-on-all-seasons-for-serving.md) | Refit on all seasons for serving | Accepted |
+| [018](018-assistant-tool-calling.md) | Assistant tool calling over the API's own services | Accepted |
+| [019](019-default-chat-model-qwen2-5-7b.md) | qwen2.5 7B as the default chat model | Accepted |
+| [020](020-team-crests-from-football-data-org.md) | Team crests and league emblems from football-data.org | Accepted |
+| [021](021-season-tools-and-router.md) | Season tools and a rule-based router for the assistant | Accepted |
+| [022](022-invite-only-accounts-and-consent.md) | Invite-only accounts, sessions and consent | Accepted |
+| [023](023-team-season-outlook-endpoint.md) | Team season outlook endpoint | Accepted |
+| [024](024-structured-telemetry-and-opentelemetry.md) | Structured telemetry and OpenTelemetry | Accepted |
+| [025](025-cloud-serving-on-cloud-run.md) | Cloud serving on Cloud Run | Accepted |
+| [026](026-firestore-account-store.md) | Firestore for the account store | Accepted |
+| [027](027-assistant-safety-check-and-strikes.md) | Assistant safety check and strikes | Accepted |

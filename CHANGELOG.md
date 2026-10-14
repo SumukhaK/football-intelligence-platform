@@ -9,7 +9,47 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-Nothing yet.
+---
+
+## [2.2.0] — 2026-10-14
+
+The API reports version 2.2.0 (it had stayed at 2.0.0 since v2.0.0).
+
+### Added
+- The assistant can call tools that run the prediction, SHAP explanation and fixtures services, so it quotes the served model's numbers instead of refusing match questions (#65, ADR 018).
+- Season questions in the assistant: results, head-to-head and the next meeting (for example the next Manchester derby), and the league table on any date, with a goals-model projection of points, goals and clean sheets for dates still ahead. A rule-based router picks the tools and answers player and next-season questions without the model (#76, ADR 021).
+- Tap a fixture on the home screen to open its prediction (#73).
+- Team crests and league emblems next to names, via `/v2/teams/{team}/crest` and `/v2/competitions/{competition}/emblem` redirects, and a crest celebration for a predicted win (#74, ADR 020).
+- Assistant evals: a grounding check that answers quote `/v2/predict` without invented numbers, and an abstention check for "I don't know" (#65, #66).
+- Invite-only sign-in and consent for hosted deployments: invites, sessions, a consent notice, bans and `scripts.manage_accounts`. Off locally (`AUTH_REQUIRED`); on, it guards every `/v2` data route and drops `/v1` (#79, ADR 022).
+- Android sign-in: a Sign in / Invite code screen under a green header, a consent notice after the first sign-in with an opt-in for storing question text, and Sign out in Settings. The app sends the session token on every request and returns to sign-in on a 401 (#84, ADR 022).
+- Favourite team onboarding and a My Team tab with the team's next match, and a season outlook for that team: projected finish and points and the chance of the title, top four and relegation, from `GET /v2/teams/{team}/outlook` (#80, #83, ADR 023).
+- Structured telemetry (ADR 024), in six steps: a versioned telemetry contract and event catalogue (#87); an `X-Request-ID` on every response and JSON log lines with `LOG_FORMAT=json` (#88); contract events for component loads, errors, sign-in, the daily refresh and the assistant (#89); OpenTelemetry traces of each request, retrieval, tool call and model call, to a local collector or Cloud Trace (#91); retries with backoff on outbound downloads, each attempt recorded (#92); and a local Grafana stack plus Cloud Monitoring metrics and alert policies as code in `infrastructure/monitoring/` (#100).
+- Hosting groundwork (ADR 025): `/v2/live` and `/v2/ready` probes (#95), immutable serving snapshots with a verified manifest (`scripts.build_snapshot`, #98), a non-root container image built and probed in CI (#99), and a baseline of boot time and memory (#108).
+- A Cloudflare Workers AI provider for the assistant, chosen with `ASSISTANT_PROVIDER` (Ollama stays the default), with deadlines, one retry, token counts and cost in the logs (#97). Its own index records the embedding model and cut-off, and the server refuses a mismatched index; Gemma 4 26B passes both assistant evals and is the hosted default (#103).
+- A Firestore account store for the cloud, chosen with `ACCOUNT_STORE` (#102, ADR 026).
+- A `staging` Android build, Football Intelligence -stg, that installs beside the local one and calls the hosted staging API (#105).
+- The app retries GET requests on 429, 502, 503 and 504 with backoff, honouring a short `Retry-After`; release builds shrink resources (#106).
+- Dependency vulnerability scans in CI: pip-audit over `uv.lock` and OSV-Scanner over the app's release dependencies (#107).
+- A Llama Guard 3 safety check before every chat question, with `ASSISTANT_SAFETY` (off locally, required on Cloud Run with the assistant on). A harmful question gets a fixed refusal with `"model": "safety"` and a strike; the third strike bans the account and ends its sessions. Football swearing passes (#113, ADR 027).
+
+### Changed
+- The default chat model is `qwen2.5:7b-instruct` instead of `llama3.2`, which misquoted tool numbers and failed both assistant evals (ADR 019).
+- The chat route runs the model call in FastAPI's thread pool, so a slow answer no longer blocks other requests, and question text is no longer logged (#86).
+- Hardening for hosting: the rate limiter reads the client address behind a trusted proxy, bodies over 16 KB get 413, chat messages are capped at 1000 characters, responses send `nosniff`, and the server refuses to start on Cloud Run with sign-in off or the development telemetry salt (#101).
+- `anyio`, `pillow`, `virtualenv` and Ktor moved to versions without known advisories (#107).
+- A new 2-minute demo video recorded in October 2026, showing sign-in, My Team, fixtures, predictions, explanations, the assistant on Workers AI, offline mode, the API docs and one chat request's JSON log events. It is served from the project website, which now describes the hosting work.
+- Removed `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`, which don't apply to a single-maintainer portfolio project, and the duplicate stage 8 and 10 docs under `ai/docs/`; the README now states the licence and the data sources' terms up front.
+
+### Fixed
+- Every settings class reads the shared `ai/.env` again; keys meant for one no longer stop the others from loading (#96).
+- `ASSISTANT_PROVIDER=off` turns the assistant off instead of stopping the server from starting (#104).
+- Release builds failed in R8 on a missing SLF4J class; they build again (#106).
+- The assistant's relevance cut-off let every retrieved chunk through; it now drops chunks that don't match the question (#66).
+- The likeliest-scores card explains why a draw can top it even when one side is the favourite (#75).
+- The grounding eval no longer flags numbers the assistant repeats from the API's own error message.
+- The Assistant screen keeps the message box above the keyboard, shows **bold** and lists in answers, and leaves out the confidence bar when an answer has no sources (#112).
+- Two tests no longer fail on a machine that has an assistant index or Workers AI credentials in `ai/.env`.
 
 ---
 
@@ -26,6 +66,7 @@ The API is unchanged and still reports version 2.0.0.
 - Every markdown file checked against the code and updated for v2; "Lessons Learned" removed from the README (#57, #58).
 - Branch flow: work merges into `develop`; `main` only takes release pull requests and hotfixes, each tagged. CI runs on pull requests into both, and both branches are protected (#59).
 
+[2.2.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.2.0
 [2.1.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.1.0
 
 ---

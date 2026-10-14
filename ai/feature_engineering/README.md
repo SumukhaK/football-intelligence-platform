@@ -20,7 +20,8 @@ python -m feature_engineering.pipeline \
 
 ## Output
 
-All outputs are written to `datasets/features/`:
+All outputs are written to `--output-dir` (default `datasets/features/`). The
+five-league matrix the model is trained on lives in `../datasets/features/top5/`.
 
 | File | Description |
 |---|---|
@@ -120,3 +121,7 @@ Expands the match DataFrame to one row per `(match, team)` — doubling the row 
 4. Register it in `build_default_registry()` in `pipeline.py`.
 5. Write tests in `tests/feature_engineering/test_my_feature.py`.
 6. Write an ADR in `docs/adr/` if the feature introduces new data assumptions.
+7. Decide whether the model uses it. Training uses only the pinned
+   `MODEL_FEATURES` list in `training/configuration.py` and stops on any
+   numeric column that is neither listed nor in `exclude_columns`, so add the
+   new columns to one of the two on purpose.

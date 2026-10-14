@@ -285,8 +285,12 @@ def compare(
     blocks: dict[str, pd.Series],
 ) -> None:
     """Print the log-loss change (new − current) on each block of rows."""
+    extras = [c for c in extended.columns if c not in base.columns]
+    candidate_config = config.model_copy(
+        update={"feature_columns": [*config.feature_columns, *extras]}
+    )
     current, cur_cols = fit(base, config)
-    candidate, cand_cols = fit(extended, config)
+    candidate, cand_cols = fit(extended, candidate_config)
     for name, mask in blocks.items():
         rows = extended[mask]
         if rows.empty:

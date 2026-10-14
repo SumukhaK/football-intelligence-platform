@@ -1,11 +1,20 @@
 """Shared pytest fixtures for the football AI workspace test suite."""
 
 import json
+import logging
+from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import pytest
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+    InMemorySpanExporter,
+)
 
 from config.paths import DataPaths
 from ingestion.storage import DatasetStorage
@@ -26,6 +35,74 @@ def no_live_refresh(monkeypatch: pytest.MonkeyPatch) -> None:
     import backend.app.main as main
 
     monkeypatch.setattr(main, "_start_live_refresh", lambda app: None)
+
+
+# ---------------------------------------------------------------------------
+# Telemetry events
+# ---------------------------------------------------------------------------
+
+EventRecords = list[logging.LogRecord]
+
+
+class _EventCollector(logging.Handler):
+    """Keeps every log record that carries a contract event."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.records: EventRecords = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        if getattr(record, "event", None):
+            self.records.append(record)
+
+
+@pytest.fixture(scope="session")
+def session_events() -> Iterator[EventRecords]:
+    """Every event emitted during the test session, for the conformance test."""
+    collector = _EventCollector()
+    root = logging.getLogger()
+    root.addHandler(collector)
+    yield collector.records
+    root.removeHandler(collector)
+
+
+@pytest.fixture(autouse=True)
+def _collect_session_events(session_events: EventRecords) -> None:
+    """Install the session collector before every test."""
+
+
+@pytest.fixture()
+def events(
+    caplog: pytest.LogCaptureFixture,
+) -> Callable[[str], list[tuple[str, dict[str, Any]]]]:
+    """Return a lookup of (severity, attributes) for each emitted ``event``."""
+    caplog.set_level(logging.DEBUG)
+
+    def by_name(name: str) -> list[tuple[str, dict[str, Any]]]:
+        return [
+            (record.levelname, record.__dict__["attributes"])
+            for record in caplog.records
+            if getattr(record, "event", None) == name
+        ]
+
+    return by_name
+
+
+@pytest.fixture(scope="session")
+def _span_exporter() -> InMemorySpanExporter:
+    """Install an in-memory tracer provider once; OpenTelemetry allows one."""
+    exporter = InMemorySpanExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    trace.set_tracer_provider(provider)
+    return exporter
+
+
+@pytest.fixture()
+def spans(_span_exporter: InMemorySpanExporter) -> InMemorySpanExporter:
+    """Return the in-memory span exporter, emptied for this test."""
+    _span_exporter.clear()
+    return _span_exporter
 
 
 # ---------------------------------------------------------------------------

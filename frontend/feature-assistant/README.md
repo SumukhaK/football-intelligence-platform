@@ -15,6 +15,6 @@ Presentation layer. The AI-facing feature module.
 ## Constraints
 
 - The ViewModel must not fabricate responses. All answers come from the backend.
-- Streaming responses must be handled gracefully — partial messages are valid state.
+- Answers arrive whole (the backend does not stream); the screen stays in its `Chatting` state until the answer comes.
 - TDD: ViewModel tests written before implementation.
 - No hardcoded strings.

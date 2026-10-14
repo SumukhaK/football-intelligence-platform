@@ -1,0 +1,67 @@
+"""Tool definitions the assistant offers the chat model (ADR 018)."""
+
+from __future__ import annotations
+
+import json
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
+from typing import Any
+
+ToolHandler = Callable[[Mapping[str, Any]], Any]
+
+
+class ToolError(Exception):
+    """An expected tool failure, such as an unknown team, shown to the model."""
+
+
+@dataclass(frozen=True)
+class Tool:
+    """A function the chat model may call, described by a JSON schema."""
+
+    name: str
+    description: str
+    parameters: dict[str, Any]
+    handler: ToolHandler
+
+    def schema(self) -> dict[str, Any]:
+        """Return the tool in the Ollama / OpenAI function-calling format."""
+        return {
+            "type": "function",
+            "function": {
+                "name": self.name,
+                "description": self.description,
+                "parameters": self.parameters,
+            },
+        }
+
+
+@dataclass(frozen=True)
+class ToolResult:
+    """What a tool call returns to the model, and the error message if it failed."""
+
+    content: str
+    error: str | None
+
+
+def run_tool_checked(
+    tools: Sequence[Tool], name: str, arguments: Mapping[str, Any]
+) -> ToolResult:
+    """Run the named tool; the content is what the model sees.
+
+    Expected failures (:class:`ToolError`, an unknown tool name) come back as
+    ``{"error": ...}`` so the model can tell the user. Anything else propagates.
+    """
+    tool = next((t for t in tools if t.name == name), None)
+    if tool is None:
+        error = f"Unknown tool '{name}'."
+        return ToolResult(json.dumps({"error": error}), error)
+    try:
+        result = tool.handler(arguments)
+    except ToolError as exc:
+        return ToolResult(json.dumps({"error": str(exc)}), str(exc))
+    return ToolResult(json.dumps(result, default=str), None)
+
+
+def run_tool(tools: Sequence[Tool], name: str, arguments: Mapping[str, Any]) -> str:
+    """Run the named tool and return its result as JSON for the model."""
+    return run_tool_checked(tools, name, arguments).content

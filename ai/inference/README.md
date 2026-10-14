@@ -7,6 +7,7 @@ Loads a trained model and returns structured match predictions.
 | Module | Responsibility |
 |---|---|
 | `predictor.py` | `MatchPredictor` — wraps `TrainedModel`; `MatchPrediction` dataclass |
+| `fixture_features.py` | Pre-match features for a fixture, computed with the training feature pipeline (ADR 008) |
 
 ## Usage
 
@@ -18,9 +19,9 @@ import pandas as pd
 predictor = MatchPredictor.from_path(Path("models/latest/model.joblib"))
 
 features = pd.DataFrame([{
-    "home_elo": 1550.0,
-    "away_elo": 1480.0,
-    # ... all 42 feature columns
+    "home_elo_before": 1550.0,
+    "away_elo_before": 1480.0,
+    # ... all 42 columns in training.configuration.MODEL_FEATURES
 }])
 
 result = predictor.predict(features, home_team="Arsenal", away_team="Chelsea")

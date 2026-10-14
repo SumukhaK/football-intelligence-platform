@@ -19,8 +19,6 @@ jobs:
           required_files=(
             "README.md"
             "CHANGELOG.md"
-            "CONTRIBUTING.md"
-            "CODE_OF_CONDUCT.md"
             "LICENSE"
             ".editorconfig"
             ".gitattributes"
@@ -83,3 +81,13 @@ jobs:
             fi
           done < <(find . -name "*.md" -not -path "./.git/*" -print0)
           exit $failed
+
+  shell:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check infrastructure scripts
+        run: find infrastructure -name "*.sh" -print0 | xargs -0 --no-run-if-empty shellcheck

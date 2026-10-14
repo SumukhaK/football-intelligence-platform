@@ -21,7 +21,7 @@ v1 keeps the release v1.0.0 contract so older clients keep working. It serves
 Its responses have no `competition` or `draw_possible` field, and its
 explanations have no `display_name` or `display_value`. Naming any league
 other than the Premier League returns 422 `Unknown competition`.
-`/competitions`, `/fixtures` and `/insights` exist only in v2. The unversioned paths
+`/competitions`, `/fixtures`, `/insights` and `/teams/{team}/outlook` exist only in v2. The unversioned paths
 behave exactly like `/v1` and are left out of the docs page.
 
 ## Rate limit
@@ -30,6 +30,56 @@ Each client address may make `RATE_LIMIT_PER_MINUTE` requests in any
 one-minute window (default 120; `off` turns it off). Beyond that the server
 answers 429 `{ "error": "Too many requests", "detail": "..." }` with a
 `Retry-After` header in seconds. Health checks and the docs are never limited.
+
+Behind a proxy, set `TRUSTED_PROXY_HOPS` to the number of proxies that append
+to `X-Forwarded-For` (1 on Cloud Run). The limiter then counts the address the
+outermost trusted proxy saw, so a client cannot dodge it by sending its own
+`X-Forwarded-For`. With the default 0 the header is ignored.
+
+## Request size
+
+A request body may be at most `MAX_BODY_BYTES` (default 16384). A larger
+`Content-Length` gets 413 `Request too large`, and a chunked body with no
+`Content-Length` gets 411 `Length required`. A chat `message` may be at most
+1000 characters; a longer one gets 422. Every response carries
+`X-Content-Type-Options: nosniff`.
+
+## Request IDs
+
+Every response, including 429 and 500 responses, carries an `X-Request-ID`
+header. If the request sent `X-Request-ID` and its value is 8 to 64 characters
+from `A-Z a-z 0-9 . _ -`, the same value is returned; otherwise the server
+creates one (32 lowercase hex characters). The server's log lines for that
+request carry the same ID, so quote it when reporting a problem
+([telemetry contract](observability/telemetry-contract.md), ADR 024).
+
+---
+
+## Sign-in and consent
+
+With `AUTH_REQUIRED=true` (staging and production), every `/v2` data route needs `Authorization: Bearer <token>` from a signed-in user who has accepted the current notice. `/v2/health`, `/docs`, `/redoc`, `/openapi.json`, the crest and emblem redirects (image loaders send no token) and the routes below stay open. `/v1` and unversioned paths are not mounted, because they would bypass sign-in. `AUTH_REQUIRED` is off by default, so local development needs no token (ADR 022).
+
+Accounts are invite-only. The owner creates an invite with `uv run python -m scripts.manage_accounts invite --email <email>`.
+
+| Method | Path | Body | Returns |
+|---|---|---|---|
+| POST | `/v2/auth/redeem-invite` | `email`, `code`, `password` (10+ characters) | `{ "token", "expires_at" }`. Creates the account, or resets its password with a new invite, and ends older sessions. |
+| POST | `/v2/auth/login` | `email`, `password` | `{ "token", "expires_at" }`. Sessions last 30 days. |
+| POST | `/v2/auth/logout` | none | 204; ends the session behind the token. |
+| GET | `/v2/me` | none | `email`, `consent_required`, `consent_version`, `consent_text`, `store_questions` |
+| POST | `/v2/me/consent` | `version`, `store_questions` (default false) | The updated `/v2/me` body |
+
+Errors:
+
+| Status | `error` | When |
+|---|---|---|
+| 400 | `Invalid invite` | The code is wrong, already used, or older than 7 days. |
+| 401 | `Not signed in` | No token, or an unknown, expired or revoked one. |
+| 401 | `Invalid credentials` | Wrong email or password; the message never says which. |
+| 403 | `Consent required` | The current notice has not been accepted, or `version` is not the current one. |
+| 403 | `Account blocked` | The account is banned. |
+| 422 | `Password too short` | Fewer than 10 characters. |
+| 429 | `Too many attempts` | 5 failed sign-ins for the email within 15 minutes; it is locked for 15 minutes. |
 
 ---
 
@@ -48,7 +98,7 @@ Service status.
   "matches_through": "2026-09-20",
   "last_refresh_at": "2026-09-29T07:01:31+05:30",
   "last_refresh_error": null,
-  "version": "2.0.0"
+  "version": "2.2.0"
 }
 ```
 
@@ -60,11 +110,33 @@ refresh (ADR 013); both are null until one has run.
 requests may omit `features` (ADR 008). `insights_available` is true when the
 goals model was fitted at startup, so `POST /insights` works.
 
+## GET /v2/live and GET /v2/ready
+
+Probes for the hosting platform (ADR 025). Both exist only under `/v2`, stay
+open when `AUTH_REQUIRED` is on, and are never rate limited.
+
+`/v2/live` answers `{"status": "alive"}` whenever the process serves requests.
+
+`/v2/ready` answers `{"status": "ready"}` when every component predictions
+need loaded at startup: the prediction model, the explainer, the match
+history, the goals models, the fixtures and the season outlook. Otherwise it
+answers 503:
+
+```json
+{"error": "Not ready", "detail": "Components not loaded: prediction_model"}
+```
+
+Neither probe calls the assistant's model provider, so a provider outage
+never marks the API unready. `/health` stays the place for diagnostics.
+
 ## GET /model
 
 Registry entry of the served model: `model_version`, `dataset_version`,
-`training_timestamp`, `git_commit` and test `metrics`. Returns 503 when no
-model is registered.
+`training_timestamp`, `git_commit` and `metrics`. Returns 503 when no
+model is registered. A model trained with a test season reports its test
+metrics (`accuracy`, `log_loss`, ...). The served refit (ADR 017) has no test
+season, so it reports its scores on the current season so far, named by season
+(`accuracy_2026_27`, `log_loss_2026_27`, `rps_2026_27`, `brier_2026_27`).
 
 ## GET /competitions
 
@@ -104,6 +176,88 @@ choose the league; the default is the Premier League. An unknown league returns
 ```
 
 Returns 503 when match history is not loaded.
+
+## GET /teams/{team}/crest
+
+Redirects (307) to the team's crest PNG on `crests.football-data.org`
+(ADR 020). `team` is a name as `/teams` or `/fixtures` returns it, URL-encoded
+(`/v2/teams/Nott'm%20Forest/crest`). A team without a known crest returns 404:
+
+```json
+{ "error": "No crest", "detail": "No crest is known for 'Atlantis'." }
+```
+
+## GET /teams/{team}/outlook
+
+A team's projected season finish and how its chances have moved (ADR 023).
+Pass `?competition=` for the league (default the Premier League). `team` is a
+name from `/teams`.
+
+The current projection plays every remaining fixture 10,000 times with the
+league's goals model, the one `/insights` uses, and adds the simulated points
+to today's table. `history` starts with one point before the first match,
+then adds one per week of the season with matches. Each point uses only the
+results before its date, and a goals model refitted on those results, so no
+later information leaks in. History points use 2,000 simulations. A league's
+history is computed on its first request and then cached.
+
+```json
+{
+  "competition": "Premier League",
+  "season": "2026/27",
+  "team": "Arsenal",
+  "as_of": "2026-10-08",
+  "model_version": "dc-2026-10-08",
+  "fitted_before": "2026-10-08",
+  "simulations": 10000,
+  "history_simulations": 2000,
+  "projection": {
+    "team": "Arsenal",
+    "current_points": 13,
+    "expected_points": 74.2,
+    "most_likely_position": 2,
+    "chance_first": 0.231,
+    "chance_top_four": 0.792,
+    "chance_bottom_three": 0.0
+  },
+  "strengths": { "attack": 1.23, "defence": 0.69 },
+  "table": [ { "team": "Man City", "...": "..." } ],
+  "history": [
+    {
+      "as_of": "2026-08-14",
+      "played": 0,
+      "most_likely_position": 3,
+      "chance_first": 0.18,
+      "chance_top_four": 0.71,
+      "chance_bottom_three": 0.0
+    }
+  ]
+}
+```
+
+- `table` holds every team's projection, highest expected points first.
+- `strengths` are multiples of a league-average side, as in `/insights`. An
+  attack above 1 scores more than average; a defence below 1 concedes fewer.
+- `played` is the team's matches up to that point's `as_of`.
+- `chance_bottom_three` is the relegation zone as three places. Some leagues
+  relegate fewer directly or add a play-off.
+
+Errors:
+
+| Status | `error` | When |
+|---|---|---|
+| 422 | `Unknown competition` | The league is not served. |
+| 422 | `Unknown team` | The team is not in the league this season. |
+| 503 | `Season outlook not available` | No match history is loaded. |
+| 503 | `Insights not available` | The league has no fitted goals model. |
+| 503 | `Fixtures not available` | No fixtures dataset is loaded yet. |
+
+## GET /competitions/{competition}/emblem
+
+Redirects (307) to the league's emblem PNG on `crests.football-data.org`
+(ADR 020). `competition` is a name as `/competitions` returns it, URL-encoded
+(`/v2/competitions/Serie%20A/emblem`). A league without a known emblem returns
+the same 404 `No crest` body as `/teams/{team}/crest`.
 
 ## GET /fixtures
 
@@ -160,12 +314,12 @@ Response:
   "home_team": "Arsenal",
   "away_team": "Man City",
   "predicted_result": "H",
-  "probability_home": 0.393,
-  "probability_draw": 0.277,
-  "probability_away": 0.330,
-  "confidence": 0.393,
+  "probability_home": 0.410,
+  "probability_draw": 0.251,
+  "probability_away": 0.340,
+  "confidence": 0.410,
   "draw_possible": false,
-  "model_version": "20260928_123224"
+  "model_version": "20261007_154105"
 }
 ```
 
@@ -265,7 +419,36 @@ Errors:
 ## POST /assistant/chat
 
 Retrieval-augmented answers about the project's data and models. Returns 503
-when the assistant's vector store or Ollama is unavailable.
+when the assistant is turned off, its vector store is missing, or its model
+provider is unreachable, out of quota or too slow. Predictions keep working.
+
+`ASSISTANT_PROVIDER` chooses who answers (ADR 025): `ollama` (the default),
+`workers_ai` (Cloudflare Workers AI, using `WORKERS_AI_ACCOUNT_ID`,
+`WORKERS_AI_API_TOKEN`, `WORKERS_AI_CHAT_MODEL` and `WORKERS_AI_EMBED_MODEL`)
+or `off`. `model` in the response names the chat model that wrote the answer.
+
+For a match prediction, its SHAP explanation or a league's upcoming fixtures,
+the assistant calls tools that run the same services as `/v2/predict`,
+`/v2/explain` and `/v2/fixtures`, so it quotes the latest model's numbers
+(ADR 018). The chat model must support tool calling.
+The request and response bodies are unchanged.
+
+It can also answer season questions through internal tools: a team's results
+and next meetings, and the league table on any date of a season in the data,
+projected with the goals model when the date is still ahead (ADR 021). A
+rule-based router reads each question first. Questions about individual
+players or seasons that have not started get a fixed reply without calling
+the model; those responses have `"model": "router"`, `"sources": []` and
+`"confidence": 0.0`.
+
+With `ASSISTANT_SAFETY=true` (required on Cloud Run when the assistant is on),
+Llama Guard 3 checks every question before anything else (ADR 027). A harmful
+question gets a fixed refusal with `"model": "safety"`, `"sources": []` and
+`"confidence": 0.0`, and adds a strike to the signed-in user; the answer says
+how many strikes they have. The third strike bans the account and ends its
+sessions, so the next request gets `403 Account blocked`. Swearing about
+football is not harmful. If the safety model can't be reached, chat returns
+`503` and no strike is added.
 
 ---
 

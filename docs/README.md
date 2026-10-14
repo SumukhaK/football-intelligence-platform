@@ -12,6 +12,8 @@ Maintained by the project architect. The implementation engineer updates documen
 
 ## Index
 
+[Project website](site/README.md): pitch, preview, validation and publishing.
+
 ### Setup
 
 | Document | Description |
@@ -24,6 +26,7 @@ Maintained by the project architect. The implementation engineer updates documen
 |---|---|
 | [API Reference](api.md) | Both API versions, every endpoint, request fields, responses, errors and the rate limit |
 | [CLI Reference](reference/cli.md) | Every supported CLI command with options, examples, and expected output |
+| [Observability](observability/README.md) | Telemetry contract (log lines, request IDs, events, traces), the [local Grafana stack](observability/local-stack.md) and the cloud metrics and alerts |
 | [Repository Structure](repository-structure.md) | Every top-level directory: purpose, what belongs, what does not |
 
 ### Architecture
@@ -51,14 +54,21 @@ Maintained by the project architect. The implementation engineer updates documen
 
 | Document | Description |
 |---|---|
+| [Hosting Plans](plans/hosting-plans.md) | Free-tier deployment, cold starts and step-by-step operations plan |
+| [Hosting Execution Tracker](plans/hosting-execution-tracker.md) | Ordered deployment steps with status, exit checks and the evidence each step produces |
+| [Accounts and Consent Plan](plans/accounts-and-consent-plan.md) | Invite-only accounts, sessions and consent for the assistant |
+| [Assistant Guardrails Analysis](plans/assistant-guardrails-analysis.md) | Safety, scope routing, caching and limits for the hosted assistant |
 | [Next Phase Plan](plans/next-phase-plan.md) | Testing gaps, draw handling, scoreline predictions: order, design, impact analysis |
 | [Five Leagues Plan](plans/five-leagues-plan.md) | Serving all five leagues in the API and app |
 | [Multi-League Retraining Plan](plans/multi-league-retraining-plan.md) | Goal, data profile and phased plan for retraining on top-5 league data |
 | [Multi-League Model Comparison](reports/multi-league-retraining-comparison.md) | Candidate vs current model, bookmaker and priors, with the promotion verdict |
 | [2026/27 Live Check](reports/in-season-2026-27.md) | Served model scored on 2026/27 matches played up to 20 September 2026 (checked 28 September) |
 | [Draw Handling](reports/draw-handling.md) | Why draws are a tag, not a pick |
+| [Refit on All Seasons](reports/refit-all-seasons.md) | Frozen-split model vs a refit on every season through 2025/26, on the same 250 matches of 2026/27 (ADR 017) |
 | [Goals Model](reports/goals-model.md) | Dixon-Coles scoreline model and its evaluation |
 | [Kaggle Extras](reports/kaggle-extras.md) | xG, FIFA ratings and Champions League rest days tested; none adopted |
+| [Hosted Assistant Evals](reports/hosted-assistant-evals.md) | Workers AI models and index cut-off measured with both assistant evals |
+| [Hosting Baseline](reports/hosting-baseline.md) | Checks, image size, boot time per component and memory of the API image |
 | [UI/UX Review](reports/ui-ux-review.md) | App review against mobile design guidelines |
 
 ### Demos
@@ -98,6 +108,7 @@ Maintained by the project architect. The implementation engineer updates documen
 | Document | Description |
 |---|---|
 | [v2.1.0 Release Notes](releases/v2.1.0.md) | App icon, Kick-off launch screen and loader, branch flow |
+| [v2.2.0 Release Notes](releases/v2.2.0.md) | Assistant tools, accounts, telemetry, hosting readiness, safety check |
 | [v2.0.1 Release Notes](releases/v2.0.1.md) | Faster offline fallback in the app, demo video |
 | [v2.0.0 Release Notes](releases/v2.0.0.md) | Five leagues, versioned API, fixtures, goals model, offline app |
 | [v1.0.0 Release Notes](releases/v1.0.0.md) | Full release notes for the complete platform (Stages 1–12) |
@@ -115,10 +126,12 @@ Maintained by the project architect. The implementation engineer updates documen
 docs/
   adr/            # Architectural Decision Records
   demo/           # Stage-by-stage demo scripts for technical interviews
-  plans/          # Plans for the follow-on phase after Stage 12
+  design/         # Design concepts (app icon and launch screen, ADR 016)
+  observability/  # Telemetry contract, event catalogue and local stack guide (ADR 024)
+  plans/          # Plans for the work after Stage 12 (leagues, hosting, accounts, guardrails)
   reference/      # CLI command reference
   releases/       # Release notes and readiness reports
-  reports/        # Stage summaries and model/data experiment reports
+  reports/        # Stage summaries, model/data experiment reports and hosting measurements
   setup/          # Installation and quick-start guides
   showcase/       # Recruiter-facing showcase: portfolio summary, timeline, interview guide, demo scripts, demo video
   README.md       # This index

@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from evaluation.comparison import (
+    bootstrap_interval,
     brier_score,
     class_prior_probabilities,
     implied_probabilities,
@@ -72,6 +73,15 @@ def test_class_prior_probabilities_repeat_training_frequencies() -> None:
     assert probs[0].tolist() == [0.25, 0.25, 0.5]
 
 
+def test_bootstrap_interval_brackets_the_point_estimate() -> None:
+    rng = np.random.default_rng(1)
+    y = rng.choice(["H", "D", "A"], 200)
+    probs = rng.dirichlet([2, 2, 2], 200)
+    lower, upper = bootstrap_interval(y, probs, _CLASSES, n_resamples=200)
+    point = score_probabilities(y, probs, _CLASSES)["log_loss"]
+    assert lower < point < upper
+
+
 def test_paired_bootstrap_delta_detects_a_clearly_better_forecast() -> None:
     rng = np.random.default_rng(0)
     y = rng.choice(["H", "D", "A"], 300)
@@ -96,3 +106,15 @@ def test_paired_bootstrap_delta_is_deterministic() -> None:
     first = paired_bootstrap_delta(y, a, b, _CLASSES, n_resamples=50, seed=7)
     second = paired_bootstrap_delta(y, a, b, _CLASSES, n_resamples=50, seed=7)
     assert first == second
+
+
+def test_bootstrap_accuracy_delta_is_higher_minus_lower() -> None:
+    y = ["H", "A", "H", "D"]
+    right = np.array(
+        [[0.1, 0.2, 0.7], [0.7, 0.2, 0.1], [0.1, 0.2, 0.7], [0.1, 0.2, 0.7]]
+    )
+    wrong = right[:, ::-1]
+    delta = paired_bootstrap_delta(y, right, wrong, _CLASSES, metric="accuracy")
+    # Right picks 3 of 4 and reversed picks none, so A - B is about +0.75.
+    assert delta.mean == pytest.approx(0.75, abs=0.2)
+    assert delta.lower > 0

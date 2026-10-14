@@ -4,6 +4,7 @@ import com.footballintelligence.core.model.ErrorKind
 import com.footballintelligence.core.model.Fixture
 import com.footballintelligence.core.model.FixturesResponse
 import com.footballintelligence.core.model.NetworkResult
+import com.footballintelligence.core.model.SERVED_LEAGUES
 import com.footballintelligence.feature.home.repository.FixturesRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -39,7 +40,8 @@ class HomeViewModelTest {
             NetworkResult.Success(FixturesResponse(competition, fixtures), cachedAt)
     }
 
-    private fun viewModel() = HomeViewModel(repository, zone, Locale.US)
+    private fun viewModel(favouriteLeague: String? = null) =
+        HomeViewModel(repository, favouriteLeague, zone, Locale.US)
 
     @BeforeEach
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
@@ -53,6 +55,29 @@ class HomeViewModelTest {
         val vm = viewModel()
         assertEquals("Premier League", vm.selectedLeague.value)
         coVerify { repository.getFixtures("Premier League") }
+    }
+
+    @Test
+    fun `the favourite league's tab comes first and is selected`() {
+        respond("Serie A")
+        val vm = viewModel(favouriteLeague = "Serie A")
+        assertEquals(listOf("Serie A", "Premier League", "Bundesliga", "La Liga", "Ligue 1"), vm.leagues)
+        assertEquals("Serie A", vm.selectedLeague.value)
+        coVerify { repository.getFixtures("Serie A") }
+    }
+
+    @Test
+    fun `without a favourite the tabs keep their usual order`() {
+        respond("Premier League")
+        assertEquals(SERVED_LEAGUES, viewModel(favouriteLeague = null).leagues)
+    }
+
+    @Test
+    fun `a favourite league the app does not serve changes nothing`() {
+        respond("Premier League")
+        val vm = viewModel(favouriteLeague = "Eredivisie")
+        assertEquals(SERVED_LEAGUES, vm.leagues)
+        assertEquals("Premier League", vm.selectedLeague.value)
     }
 
     @Test

@@ -90,6 +90,7 @@ def resolve_features(
     if service is None:
         raise FixtureFeaturesNotAvailableError(
             "Request has no features and no match history is loaded. "
-            "Send features, or check MATCHES_DIR in configuration."
+            "Send features, or check MATCHES_DIR in configuration.",
+            component="match_history",
         )
     return service.features_for(request, competition)

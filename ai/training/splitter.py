@@ -32,9 +32,27 @@ class DataSplit:
 
 
 def get_feature_columns(df: pd.DataFrame, config: TrainingConfig) -> list[str]:
-    """Return numeric columns that are safe to use as training features."""
-    excluded = set(config.exclude_columns) | {config.target_column}
-    return [c for c in df.columns if c not in excluded and df[c].dtype.kind in "fiu"]
+    """Return the pinned ``config.feature_columns``, checked against ``df``.
+
+    Raises:
+        ValueError: If a pinned feature is missing or not numeric, or if a
+            numeric column is neither a feature nor explicitly excluded.
+    """
+    features = list(config.feature_columns)
+    missing = [c for c in features if c not in df.columns]
+    if missing:
+        raise ValueError(f"Feature matrix is missing pinned features: {missing}")
+    not_numeric = [c for c in features if df[c].dtype.kind not in "fiub"]
+    if not_numeric:
+        raise ValueError(f"Pinned features are not numeric: {not_numeric}")
+    known = set(features) | set(config.exclude_columns) | {config.target_column}
+    unknown = [c for c in df.columns if c not in known and df[c].dtype.kind in "fiub"]
+    if unknown:
+        raise ValueError(
+            f"Unknown numeric columns {unknown}: add them to feature_columns "
+            "or exclude_columns before training."
+        )
+    return features
 
 
 class ChronologicalSplitter:

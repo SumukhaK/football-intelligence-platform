@@ -6,8 +6,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material3.Card
@@ -32,13 +35,17 @@ import com.footballintelligence.feature.settings.resources.cd_open_about
 import com.footballintelligence.feature.settings.resources.cd_open_model_info
 import com.footballintelligence.feature.settings.resources.model_info_summary
 import com.footballintelligence.feature.settings.resources.model_info_title
+import com.footballintelligence.feature.settings.resources.section_account
 import com.footballintelligence.feature.settings.resources.section_analytics
 import com.footballintelligence.feature.settings.resources.settings_title
+import com.footballintelligence.feature.settings.resources.sign_out
+import com.footballintelligence.feature.settings.resources.sign_out_summary
 import org.jetbrains.compose.resources.stringResource
 
 /**
  * Settings screen with links to Model Info and About. [status] is shown first;
- * the app passes the backend status card.
+ * the app passes the backend status card. [myTeam] follows the links; the app
+ * passes the favourite team section. Sign out ends the session (ADR 022).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,8 +53,10 @@ fun SettingsScreen(
     onModelInfoClick: () -> Unit,
     onAboutClick: () -> Unit,
     onBack: () -> Unit,
+    onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
     status: @Composable () -> Unit = {},
+    myTeam: @Composable () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -64,6 +73,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -105,6 +115,18 @@ fun SettingsScreen(
                             .semantics { contentDescription = aboutDescription },
                     )
                 }
+            }
+            myTeam()
+            Text(stringResource(Res.string.section_account), style = MaterialTheme.typography.labelMedium)
+            Card(modifier = Modifier.fillMaxWidth()) {
+                ListItem(
+                    headlineContent = { Text(stringResource(Res.string.sign_out)) },
+                    supportingContent = { Text(stringResource(Res.string.sign_out_summary)) },
+                    leadingContent = {
+                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null)
+                    },
+                    modifier = Modifier.clickable(onClick = onSignOut),
+                )
             }
         }
     }

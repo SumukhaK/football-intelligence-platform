@@ -19,9 +19,10 @@ football-intelligence-platform/
 ├── playbook/
 ├── scripts/
 ├── tools/
+├── .dockerignore
 ├── CHANGELOG.md
-├── CONTRIBUTING.md
-├── CODE_OF_CONDUCT.md
+├── Dockerfile                        # The API image for Cloud Run (ADR 025)
+├── docker-compose.observability.yml  # Local Grafana and trace store (ADR 024)
 ├── LICENSE
 └── README.md
 ```
@@ -45,11 +46,11 @@ football-intelligence-platform/
 
 **Owns:**
 - `workflows/` — GitHub Actions CI definitions.
-- `ISSUE_TEMPLATE/` — structured issue templates (bug report, task, ADR request).
+- `ISSUE_TEMPLATE/` — issue templates (today only an ADR request template).
 - `PULL_REQUEST_TEMPLATE.md` — standard PR description template.
 - `CODEOWNERS` — code ownership assignments.
 
-**Does not own:** deployment scripts (those belong in `scripts/`) or infrastructure config (that belongs in `infrastructure/`, which is an empty placeholder today).
+**Does not own:** deployment scripts (those belong in `scripts/`) or infrastructure config (that belongs in `infrastructure/`).
 
 ---
 
@@ -74,10 +75,11 @@ football-intelligence-platform/
 - `goals/` — Dixon-Coles goals model, score grid and goal-market insights (ADR 009).
 - `assistant/` — the retrieval-grounded assistant: chunking, embeddings, vector store, retrieval, prompt templates (`assistant/prompting/templates.py`) and generation.
 - `model_registry/` — JSON-backed local model registry with versioned `ModelEntry` records.
-- `backend/` — the FastAPI application in `backend/app/`: `routers/`, `services/`, `schemas/`, `middleware/` (rate limiter) and `exceptions/`.
-- `scripts/` — operational CLI scripts: `backfill_football_data`, `ingest_football_data`, `refresh_live_dataset`, `refresh_fixtures`, and two experiment scripts (`draw_feature_experiment`, `kaggle_extras_experiment`).
+- `backend/` — the FastAPI application in `backend/app/`: `routers/`, `services/`, `schemas/`, `middleware/` (rate limiter), `exceptions/`, `routing.py` (which routers are mounted where, ADR 014 and ADR 022), `dependencies.py` and `consent.py` (the consent notice, ADR 022).
+- `scripts/` — operational CLI scripts: `backfill_football_data`, `ingest_football_data`, `refresh_live_dataset`, `refresh_fixtures`, `build_team_crests` (ADR 020), `manage_accounts` (ADR 022), and two experiment scripts (`draw_feature_experiment`, `kaggle_extras_experiment`).
 - `models/` — trained model output (runs, `latest/`, `registry.json`). Gitignored: only `.gitkeep` is tracked. See `ai/models/` below.
 - `explanations/` — SHAP explanation output. Gitignored.
+- `accounts/` — the account store (`accounts/accounts.json`, ADR 022), created when accounts are used. Gitignored.
 - `datasets/` — where the pipelines read and write by default when run from `ai/` without explicit paths (the README Quick Start passes `../datasets` instead). Only `.gitkeep` is tracked; the shared data lives in the root `datasets/`.
 - `rag/`, `prompts/` — empty placeholders (`.gitkeep` only). The assistant code lives in `assistant/`.
 - `tests/` — unit, backend and integration tests mirroring the source package structure.
@@ -104,7 +106,7 @@ The FastAPI code lives in `ai/backend/app/` so it can import the model, feature 
 - `raw/` — immutable source data exactly as received from providers. Never overwrite; version by timestamp.
 - `processed/` — canonical `ProcessedMatch` CSVs produced by the ingestion pipeline.
 - `features/` — the feature matrix (`feature_matrix.parquet`) and feature metadata produced by the feature engineering pipeline. `features/top5/` holds the five-league features the current model uses; the files directly in `features/` are the original single-season Premier League features.
-- `schemas/` — reviewed reference tables such as `team_aliases.csv` (ADR 006).
+- `schemas/` — reviewed reference tables: `team_aliases.csv` (ADR 006), `team_crests.csv` and `league_emblems.csv` (ADR 020).
 
 Only metadata and reports are tracked. CSV and Parquet data files are gitignored and generated locally.
 
@@ -125,12 +127,13 @@ Only metadata and reports are tracked. CSV and Parquet data files are gitignored
 - `adr/` — Architectural Decision Records. One file per decision, numbered sequentially.
 - `reports/` — stage completion summaries with executive summary, design decisions, tests, and metrics.
 - `releases/` — release notes and readiness reports.
-- `plans/` — plans for the multi-league work and the next phase.
+- `plans/` — plans for the multi-league work, the next phase, hosting, accounts and consent, and assistant guardrails.
 - `setup/` — installation and quick-start guides.
 - `reference/` — CLI command reference.
 - `api.md` — the full API contract for both versions.
 - `showcase/` — project write-up, portfolio summary, interview guide, demo video notes and screenshots.
 - `demo/` — demo scripts for each completed stage, aimed at technical interviewers.
+- `design/` — design concepts (`icon-splash-concepts.html`, ADR 016).
 - `README.md` — documentation index.
 
 A few other folders (`ai/`, `architecture/`, `backend/` and similar) are empty placeholders.
@@ -150,9 +153,9 @@ A few other folders (`ai/`, `architecture/`, `backend/` and similar) are empty p
 - `build-logic/` — shared Gradle convention plugins.
 - `gradle/` — Gradle wrapper and version catalog.
 
-**Modules:** 14 Gradle modules: `app`, 7 core modules and 6 feature modules (see `settings.gradle.kts`).
+**Modules:** 15 Gradle modules: `app`, 7 core modules and 7 feature modules (see `settings.gradle.kts`).
 
-**Module graph:** Feature modules depend on core modules. Feature modules never depend on each other. `app` depends on the four features in use (home, prediction, assistant, settings); `feature-match` and `feature-team` are empty and not wired in.
+**Module graph:** Feature modules depend on core modules. Feature modules never depend on each other. `app` depends on the six features in use (home, prediction, assistant, settings, team, auth); `feature-match` is empty and not wired in.
 
 **Does not own:** business logic (that belongs in domain/service classes), network configuration beyond Ktor setup (that belongs in `core-network`), or ML inference (that belongs in `ai/` and is exposed through the API in `ai/backend/`).
 
@@ -186,7 +189,7 @@ Today it holds only a `README.md` and empty `stage-*/` and `templates/` folders 
 
 ## `infrastructure/`
 
-**Purpose:** Empty placeholder (`.gitkeep` only) for future deployment configuration.
+**Purpose:** Cloud configuration as code. `monitoring/` holds the Cloud Logging log-based metrics and Cloud Monitoring alert policies, with scripts to apply and remove them (ADR 024).
 
 ---
 
@@ -220,7 +223,7 @@ Today it holds only a `README.md` and empty `stage-*/` and `templates/` folders 
 | `docs/` | Markdown | Manual | All project documentation |
 | `frontend/` | Kotlin | Gradle | Compose Multiplatform Android app |
 | `ai/models/` | JSON, joblib | Training pipeline | Trained model artifacts and registry (gitignored) |
-| `infrastructure/` | — | — | Empty placeholder |
+| `infrastructure/` | YAML, JSON, Shell | Manual | Cloud metrics and alerts as code |
 | `playbook/` | Markdown | Manual | Placeholder for prompt templates |
 | `scripts/` | Shell, Python | Manual | Repository automation |
 | `tools/` | Any | Manual | Shared CLI utilities |

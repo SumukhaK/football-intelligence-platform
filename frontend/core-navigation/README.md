@@ -8,7 +8,7 @@ Presentation layer — infrastructure only. Does not own any screens.
 
 ## Contents
 
-- `Screen` — sealed class of every route in the app's single NavHost.
+- `Screen` — sealed class of every route in the app's single NavHost, from `Auth` and `Consent` (ADR 022) through onboarding to the tabs and Settings.
 
 ## Constraints
 

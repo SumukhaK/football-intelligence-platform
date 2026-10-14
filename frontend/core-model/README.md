@@ -15,6 +15,9 @@ Domain layer. These types flow from the network layer through to the UI. No modu
 - `ExplanationResult`, `FeatureContribution` — SHAP attribution with fan-friendly labels.
 - `Insights` — likely scores and goal markets from the goals model.
 - `ChatRequest`, `ChatResponse` — assistant conversation.
+- `LoginRequest`, `RedeemInviteRequest`, `SessionResponse`, `Me`, `ConsentRequest`, `TokenStore` — sign-in and consent (ADR 022).
+- `FavouriteTeam`, `FavouriteTeamStore` — the favourite team saved on the device.
+- `TeamOutlook` — a team's projected season finish (ADR 023).
 - `NetworkResult`, `ErrorKind` — typed result of every API call; `Success.cachedAt` marks saved data replayed offline.
 
 ## Constraints

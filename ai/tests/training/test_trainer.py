@@ -76,3 +76,17 @@ def test_predict_labels_are_valid_classes(
 def test_best_iteration_is_non_negative(_trained: TrainedModel) -> None:
     """best_iteration must be a non-negative integer (XGBoost is 0-indexed)."""
     assert _trained.best_iteration >= 0
+
+
+def test_refit_grows_exactly_n_estimators_trees(
+    feature_matrix: pd.DataFrame, training_config: TrainingConfig
+) -> None:
+    """Refit has no validation set, so no early stopping cuts the trees short."""
+    cols = get_feature_columns(feature_matrix, training_config)
+    config = training_config.model_copy(update={"n_estimators": 7})
+    model = ModelTrainer().refit(feature_matrix[cols], feature_matrix["result"], config)
+    assert model.booster.get_booster().num_boosted_rounds() == 7
+    assert model.best_iteration == 6
+    assert model.feature_names == cols
+    _, probs = ModelTrainer().predict(model, feature_matrix[cols])
+    np.testing.assert_allclose(probs.sum(axis=1), 1.0, atol=1e-5)

@@ -8,6 +8,8 @@ from evaluation.draw_analysis import (
     analyse_block,
     draw_calibration,
     draw_rule_tradeoff,
+    draw_tag,
+    lowest_tag_threshold,
     pick_with_draw_margin,
 )
 
@@ -61,3 +63,19 @@ def test_block_summary() -> None:
     assert block["matches"] == 4
     assert block["draw_rate"] == 0.5
     assert block["max_draw_probability"] == 0.33
+
+
+def test_draw_tag_reports_flagged_share_and_draw_rates() -> None:
+    tag = draw_tag(PROBS, ACTUAL, CLASSES, threshold=0.31)
+    # Rows 1 (0.31, drew) and 3 (0.33, drew) are flagged; rows 0 and 2 are not.
+    assert tag == {
+        "threshold": 0.31,
+        "flagged": 0.5,
+        "draw_rate_flagged": 1.0,
+        "draw_rate_others": 0.0,
+    }
+
+
+def test_lowest_tag_threshold_flags_under_a_third() -> None:
+    # Draw probabilities 0.30, 0.31, 0.25, 0.33: 0.32 flags one in four.
+    assert lowest_tag_threshold(PROBS, CLASSES) == 0.32

@@ -35,6 +35,7 @@ import com.footballintelligence.feature.prediction.resources.markets_title
 import com.footballintelligence.feature.prediction.resources.percent
 import com.footballintelligence.feature.prediction.resources.reason_bullet
 import com.footballintelligence.feature.prediction.resources.score_line
+import com.footballintelligence.feature.prediction.resources.top_scores_note
 import com.footballintelligence.feature.prediction.resources.top_scores_title
 import com.footballintelligence.feature.prediction.resources.why_title
 import org.jetbrains.compose.resources.stringResource
@@ -88,6 +89,7 @@ private fun TopScoresCard(insights: Insights) {
         insights.topScores.forEach { score ->
             ScoreRow(score = score, insights = insights, scale = top)
         }
+        MutedText(stringResource(Res.string.top_scores_note))
     }
 }
 

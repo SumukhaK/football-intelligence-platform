@@ -55,6 +55,18 @@ Prints the number of upcoming fixtures per league and the written path, or `FAIL
 
 ---
 
+### `python -m scripts.build_team_crests`
+
+Rebuilds `datasets/schemas/team_crests.csv` and `league_emblems.csv`, the crest URL per team and league that the crest redirects serve (ADR 020). Takes no options.
+
+```sh
+uv run python -m scripts.build_team_crests
+```
+
+Reads the newest `match_results_top5_v*.csv`, the newest fixtures file and the football-data.org snapshot at `../datasets/raw/kaggle/adrianjuliusaluoch_live_results/football_matches.parquet`. Teams are matched by the games they played, from 2022/23 on, not by spelling. Prints the number of crests and emblems written and the teams left without a crest; the app shows a placeholder for those.
+
+---
+
 ### `python -m scripts.backfill_football_data`
 
 Backfills many seasons for the top five leagues (ADR 005), checks every season's integrity (ADR 006), and writes one combined dataset. Runs as a dry run unless `--confirm` is given.
@@ -217,7 +229,11 @@ uv run python -m evaluation.in_season_cli --season 2627 --confirm
 | `--model PATH` | `models/latest/model.joblib` | Model to score. |
 | `--base-dir DIR` | `../datasets` | Datasets base directory. |
 | `--output-dir DIR` | `models/backtests/<season>_<date>` | Where outputs go. |
+| `--features PATH` | none | Rescore a saved run's `features/feature_matrix.parquet` instead of downloading. |
+| `--through DATE` | none | Score only matches up to this date (`YYYY-MM-DD`). |
 | `--confirm` | off | Download and score. |
+
+The report scores the model against an Elo-only baseline (logistic regression on the pre-match Elo gap, fitted on earlier seasons), outcome-frequency priors and Bet365 (pre-match odds with the margin removed; a benchmark only). It adds overall 95% bootstrap ranges for accuracy, log loss, RPS and Brier, and paired bootstraps of the model minus Bet365 and minus Elo only.
 
 Raw snapshots are stored once per division per day under `raw/football_data/match_results_in_progress/`. Outputs: `report.md`, `report.json` and `predictions.csv` (one line per match with probabilities, pick and result).
 
@@ -261,6 +277,19 @@ uv run python -m evaluation.goals_evaluation_cli
 | `--output-dir DIR` | `models/evaluation/goals` | Where outputs go. |
 
 **Outputs:** `goals_evaluation.json` and `goals_forecasts.csv`.
+
+---
+
+### `python -m evaluation.draw_analysis`
+
+Checks how well the model's draw probabilities are calibrated, and what a "pick a draw when it is close to the favourite" rule would cost in accuracy, per season block. Writes JSON and prints `Wrote <path>`.
+
+| Flag | Default | Description |
+|---|---|---|
+| `--model PATH` | `models/latest/model.joblib` | Model to analyse. |
+| `--feature-matrix PATH` | `../datasets/features/top5/feature_matrix.parquet` | That model's feature matrix. |
+| `--in-season CSV` | none | `predictions.csv` from `evaluation.in_season_cli`. |
+| `--output PATH` | `models/evaluation/draw_analysis.json` | Report path. |
 
 ---
 
@@ -353,7 +382,28 @@ Run dir:        <path>/models/runs/<timestamp>
 Promoted:       yes
 ```
 
-`Promoted:` reads `no` when `--no-promote` is given. For reference, the served model `20260928_123224` has test accuracy 0.5245, test log loss 0.9762 and best iteration 167 (`models/latest/model_card.md`).
+`Promoted:` reads `no` when `--no-promote` is given. For reference, the season-split run `20260928_123224` has test accuracy 0.5245, test log loss 0.9762 and best iteration 167 (`models/runs/20260928_123224/model_card.md`). The served model, `20261007_154105`, is a refit of that run (ADR 017; see below).
+
+---
+
+### Serving refit (ADR 017)
+
+Three steps retrain a season-split run on every completed season and serve it. Each prints `ERROR: <reason>` and exits with code 1 on failure.
+
+```sh
+# 1. Retrain on all seasons up to --last-season (default 2025/26) with the
+#    source run's settings and best tree count. Writes models/runs/<v>/ only.
+uv run python -m training.refit --source-run models/runs/20260928_123224
+
+# 2. Score the refit and the source run on the season so far, using the
+#    features saved by evaluation.in_season_cli
+uv run python -m evaluation.refit_backtest   --rows models/backtests/<in-season run>/features/feature_matrix.parquet   --frozen-run models/runs/20260928_123224 --refit-run models/runs/<v>
+
+# 3. Copy the refit to models/latest/ and register it with its backtest scores
+uv run python -m training.promote_refit --run models/runs/<v>   --backtest models/backtests/refit_<v>/report.json
+```
+
+`evaluation.refit_backtest` also takes `--season` (default `2026/27`), `--through` (default `2026-09-20`) and `--output-dir`. `training.promote_refit` takes `--models-dir` (default `models`). The refit has no test season, so the registry holds its current-season scores (`accuracy_2026_27`, ...), and test and holdout results stay quoted from the source run.
 
 ---
 
@@ -386,7 +436,7 @@ uv run pytest tests/training/test_trainer.py
 uv run pytest -m integration
 ```
 
-Expected: 798 tests pass with `uv run pytest`. 37 of them are integration tests, which need the trained model in `models/latest/`; `-m "not integration"` runs the other 761. Integration tests are not skipped by default.
+Expected: 1,322 tests pass with `uv run pytest`. 37 of them are integration tests, which need the trained model in `models/latest/`; `-m "not integration"` runs the other 1,285. Integration tests are not skipped by default.
 
 ---
 
@@ -464,13 +514,24 @@ Set them in `ai/.env` (copy `ai/.env.example`). Every value below is the default
 | `DRAW_POSSIBLE_THRESHOLD` | `0.28` | Draw probability at or above which `draw_possible` is true (ADR 011) |
 | `API_VERSION` | `2.0.0` | API version string returned in `/health` |
 | `LOG_LEVEL` | `INFO` | Logging level |
+| `LOG_FORMAT` | `text` | `json` writes one JSON object per log line in the telemetry contract's format (ADR 024) |
+| `GCP_PROJECT_ID` | unset | Google Cloud project, used for the trace field on JSON log lines and by `TRACE_EXPORTER=gcp` |
+| `TRACE_EXPORTER` | `none` | Where request traces go: `none`, `otlp` (a local collector) or `gcp` (Cloud Trace, needs `GCP_PROJECT_ID`) (ADR 024) |
+| `OTLP_ENDPOINT` | `http://localhost:4318/v1/traces` | OTLP/HTTP traces endpoint used when `TRACE_EXPORTER=otlp` |
+| `TRACE_SAMPLE_RATIO` | `1.0` | Share of requests traced, 0 to 1; logs and errors stay complete when lowered |
+| `K_REVISION` | unset | Set by Cloud Run; logged as `revision` on JSON log lines |
+| `TELEMETRY_SALT` | `local-dev-salt` | Key for the `user_ref` and `client_ref` hashes in logs; a secret in the cloud |
 | `RATE_LIMIT_PER_MINUTE` | `120` | Requests per minute per client before a 429; `off` turns it off (ADR 014) |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server URL |
-| `OLLAMA_CHAT_MODEL` | `llama3.2` | Chat generation model |
+| `OLLAMA_CHAT_MODEL` | `qwen2.5:7b-instruct` | Chat generation model |
 | `OLLAMA_EMBED_MODEL` | `nomic-embed-text` | Embedding model |
 | `ASSISTANT_VECTOR_STORE_PATH` | `assistant/vector_store` | Persisted index path |
 | `ASSISTANT_KNOWLEDGE_ROOT` | `.` | Root folder of the assistant's knowledge documents |
 | `ASSISTANT_TOP_K` | `5` | Top-K chunks to retrieve per query |
+| `AUTH_REQUIRED` | `false` | Require invite-only sign-in and consent on every `/v2` data route, and drop `/v1` (ADR 022) |
+| `ACCOUNTS_PATH` | `accounts/accounts.json` | Local accounts file (hashes only; gitignored) |
+| `TEAM_CRESTS_PATH` | `../datasets/schemas/team_crests.csv` | Team name → crest URL (ADR 020) |
+| `LEAGUE_EMBLEMS_PATH` | `../datasets/schemas/league_emblems.csv` | League name → emblem URL (ADR 020) |
 
 **Endpoints:**
 
@@ -486,9 +547,16 @@ Set them in `ai/.env` (copy `ai/.env.example`). Every value below is the default
 | `POST` | `/v2/predict` | Match outcome prediction (H/D/A) with probabilities |
 | `POST` | `/v2/explain` | Prediction + full SHAP feature contributions |
 | `POST` | `/v2/insights` | Likely scores, expected goals and goal markets from the goals model |
-| `POST` | `/v2/assistant/chat` | RAG assistant chat (requires Ollama + built index) |
+| `POST` | `/v2/assistant/chat` | RAG assistant chat (needs a built index and its provider: Ollama, or Workers AI with `ASSISTANT_PROVIDER=workers_ai`) |
+| `GET` | `/v2/teams/{team}/crest` | Redirect to the team's crest image (ADR 020) |
+| `GET` | `/v2/competitions/{competition}/emblem` | Redirect to the league's emblem image (ADR 020) |
+| `POST` | `/v2/auth/redeem-invite`, `/v2/auth/login`, `/v2/auth/logout` | Invite-only sign-in (ADR 022) |
+| `GET` / `POST` | `/v2/me`, `/v2/me/consent` | The signed-in user, and accepting the notice |
+| `GET` | `/v2/live`, `/v2/ready` | Liveness and readiness probes (ADR 025) |
 | `GET` | `/docs` | Swagger UI — interactive API documentation |
 | `GET` | `/redoc` | ReDoc — alternative API documentation |
+
+With `AUTH_REQUIRED=true`, every `/v2` data route needs `Authorization: Bearer <token>`, and `/v1` and the unversioned paths are not mounted. Health, sign-in and the crest redirects stay open.
 
 Each client may make 120 requests a minute (`RATE_LIMIT_PER_MINUTE`). Beyond that the server answers `429` with a `Retry-After` header. Health checks and the docs are never limited.
 
@@ -512,13 +580,42 @@ curl -s -X POST http://localhost:8000/v2/predict \
 
 `POST /v2/explain` takes the same body and adds SHAP feature contributions. Team names must match `/v2/teams?competition=<league>`.
 
+### `python -m scripts.manage_accounts`
+
+Invites people and bans or unbans accounts in `ACCOUNTS_PATH`, or in Firestore with `ACCOUNT_STORE=firestore` and `GCP_PROJECT_ID` (ADR 022, ADR 026). For Firestore, sign in first with `gcloud auth application-default login`.
+
+```sh
+uv run python -m scripts.manage_accounts invite --email sam@example.com
+uv run python -m scripts.manage_accounts ban --email sam@example.com
+uv run python -m scripts.manage_accounts unban --email sam@example.com
+```
+
+`invite` prints a one-time code valid for 7 days; send it to the person privately. They redeem it in the app with a password of at least 10 characters. Inviting an existing account again lets them reset their password. `ban` and `unban` print the account's new status, or exit with code 1 when there is no account for the email.
+
+### `python -m scripts.build_snapshot`
+
+Builds or verifies the serving snapshot the container image is made from (ADR 025).
+
+```sh
+# A new snapshot of the files the API loads, with the hosted index
+ASSISTANT_VECTOR_STORE_PATH=assistant/vector_store_workers_ai   uv run python -m scripts.build_snapshot --out ../snapshot
+
+# Leave the assistant index out
+uv run python -m scripts.build_snapshot --out ../snapshot --no-index
+
+# Check a snapshot against its manifest; exits 1 on any difference
+uv run python -m scripts.build_snapshot --verify ../snapshot
+```
+
+It copies both models, the registry, the newest results and fixtures datasets and the index into a new folder laid out like the repository, and writes `manifest.json` with each file's size and SHA-256 and a snapshot ID derived from them. It never writes into a folder that isn't empty. The Dockerfile verifies the snapshot during the build.
+
 ---
 
 ## AI Assistant Index
 
 ### `python -m assistant.pipeline`
 
-Builds the RAG knowledge index. Requires Ollama running with `nomic-embed-text` pulled.
+Builds the RAG knowledge index with the provider `ASSISTANT_PROVIDER` names: Ollama (the default, needs `nomic-embed-text` pulled) or Workers AI (needs `WORKERS_AI_ACCOUNT_ID` and `WORKERS_AI_API_TOKEN`).
 
 **Usage:**
 ```sh
@@ -527,20 +624,63 @@ uv run python -m assistant.pipeline --rebuild
 
 # Build the index only if it does not exist yet; otherwise load it
 uv run python -m assistant.pipeline
+
+# A Workers AI index in its own folder, with its measured cut-off
+ASSISTANT_PROVIDER=workers_ai VECTOR_STORE_PATH=assistant/vector_store_workers_ai \
+  uv run python -m assistant.pipeline --rebuild --min-relevance 0.77
 ```
+
+`--min-relevance` (default 0.81, measured for `nomic-embed-text`) is saved with the embedding model in the index's `index.json`; the backend uses that cut-off and refuses an index whose embedding model doesn't match its own.
 
 Both print `Index built: <N> chunks in <vector store path>`. Without `--rebuild`, an existing index is loaded and its chunk count is printed; nothing is re-embedded.
 
 **Prerequisites:**
 ```sh
 ollama pull nomic-embed-text
-ollama pull llama3.2
+ollama pull qwen2.5:7b-instruct
 ```
 
 **Environment variables:** `assistant.pipeline` reads `OLLAMA_BASE_URL`, `OLLAMA_CHAT_MODEL` and `OLLAMA_EMBED_MODEL` like the backend, plus `VECTOR_STORE_PATH` (default `assistant/vector_store`) and `KNOWLEDGE_BASE_ROOT` (default `.`). The backend names those two `ASSISTANT_VECTOR_STORE_PATH` and `ASSISTANT_KNOWLEDGE_ROOT`; keep them pointing at the same place.
 
 **Outputs:**
-- `assistant/vector_store/` — persisted numpy vector store (embeddings + metadata)
+- `assistant/vector_store/` — persisted numpy vector store (embeddings, documents and `index.json`)
+
+The chat model must support tool calling (`qwen2.5:7b-instruct` and the hosted default both do; see ADR 019 and the [hosted evals](../reports/hosted-assistant-evals.md)), because the assistant calls the prediction, explanation and fixtures services (ADR 018).
+
+### `python -m evaluation.relevance_cutoff`
+
+Embeds the abstention eval's questions with the configured provider and prints each one's best retrieval score against the configured index, then suggests a cut-off midway between the in-scope and out-of-scope groups. Exits 1 if no cut-off separates them.
+
+```sh
+ASSISTANT_PROVIDER=workers_ai VECTOR_STORE_PATH=assistant/vector_store_workers_ai \
+  uv run python -m evaluation.relevance_cutoff
+```
+
+### `python -m evaluation.assistant_grounding`
+
+Asks the assistant for the model's prediction of upcoming fixtures in every league, calls `/v2/predict` and `/v2/explain` for the same matches, and checks each answer quotes the predicted outcome's probability and contains no number those responses or the question don't account for. One extra question names a team that doesn't exist. Exits non-zero if any case fails.
+
+```sh
+LIVE_REFRESH_HOUR=off uv run python -m evaluation.assistant_grounding --per-league 2
+```
+
+### `python -m evaluation.assistant_abstention`
+
+Asks 10 questions the knowledge base answers and 10 it doesn't, and checks the assistant answers the first set and replies "I don't have enough information in my knowledge base to answer that." to the second. Exits non-zero if any case fails.
+
+```sh
+LIVE_REFRESH_HOUR=off uv run python -m evaluation.assistant_abstention
+```
+
+### `python -m evaluation.assistant_season`
+
+Asks seven season questions (a projected table after Boxing Day, a past champion, the next Manchester derby, most clean sheets and most goals this season, next season, a top scorer). For each it runs the season tool the answer should come from and checks the answer names the expected team and contains no number the tool, the question or today's date don't account for; the last two must be refused (ADR 021).
+
+```sh
+LIVE_REFRESH_HOUR=off uv run python -m evaluation.assistant_season
+```
+
+All three need the trained model, match history, fixtures, the index and a running Ollama, so they run locally rather than in CI. `LIVE_REFRESH_HOUR=off` stops the app from downloading new data during the run.
 
 ---
 
@@ -549,9 +689,12 @@ ollama pull llama3.2
 Run from the `frontend/` directory.
 
 ```sh
-# Build debug APK
-./gradlew assembleDebug         # macOS/Linux
-.\gradlew.bat assembleDebug     # Windows PowerShell
+# Build the local debug APK
+./gradlew assembleLocalDebug         # macOS/Linux
+.\gradlew.bat assembleLocalDebug     # Windows PowerShell
+
+# Build the staging app (needs staging.baseUrl in local.properties)
+./gradlew assembleStagingDebug
 
 # Run unit tests
 ./gradlew testDebugUnitTest
@@ -567,7 +710,7 @@ Run from the `frontend/` directory.
 ./gradlew detekt testDebugUnitTest assembleDebug spotlessCheck
 ```
 
-The app calls the backend at `http://10.0.2.2:8000/v2` (the Android emulator's address for your computer).
+The `local` app calls the backend at `http://10.0.2.2:8000/v2` (the Android emulator's address for your computer). The `staging` app, Football Intelligence -stg, calls the address in `staging.baseUrl`.
 
 ---
 
