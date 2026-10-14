@@ -31,7 +31,7 @@ for file in "$here"/alerts/*.json; do
       run gcloud alpha monitoring policies delete "$name" --project="$PROJECT_ID" --quiet
     fi
   done < <(gcloud alpha monitoring policies list --project="$PROJECT_ID" \
-    --filter="displayName=\"$title\"" --format="value(name)")
+    --filter="displayName=\"$title\"" --format="value(name)" | tr -d '\r')
 done
 
 for file in "$here"/metrics/*.yaml; do

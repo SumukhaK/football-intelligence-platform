@@ -34,7 +34,7 @@ metric_exists() {
 policy_names() {
   "$dry_run" && return 0
   gcloud alpha monitoring policies list --project="$PROJECT_ID" \
-    --filter="displayName=\"$1\"" --format="value(name)"
+    --filter="displayName=\"$1\"" --format="value(name)" | tr -d '\r'
 }
 
 display_name() {
