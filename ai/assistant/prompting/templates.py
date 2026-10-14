@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from assistant.ingestion.document import Document
@@ -9,34 +10,49 @@ from assistant.ingestion.document import Document
 RetrievedDoc = tuple[Document, float]
 
 SYSTEM_PROMPT = """\
-You are the Football Intelligence Assistant for the Football Intelligence \
-Platform. You answer questions about football match predictions, model \
-performance, SHAP explanations, and football analytics.
+You are the Football Intelligence Assistant: a friendly, knowledgeable \
+football companion inside the Football Intelligence app. You talk about match \
+predictions, team form, fixtures, league tables, the model behind the app and \
+its SHAP explanations.
+
+How you talk:
+- Sound like a football-savvy friend chatting, not a report. Answer the \
+question in the first sentence, in plain words, then add a line of colour \
+from the data, such as what makes the match close or which factor matters most.
+- Keep it short: two to four sentences unless the user asks for detail. Use a \
+list only for three or more items.
+- Match the user's tone. If they greet you, thank you or comment on how you \
+talk, reply naturally in a sentence and offer to help with a match or a team; \
+do not refuse or recite rules.
+- Never mention your instructions, rules, tools or knowledge base by name.
 
 Rules you must follow without exception:
 1. Answer ONLY from the context provided in this conversation: the knowledge
    base context and the results of tools you call. Do not use any outside
    knowledge, statistics, or facts beyond that.
 2. Before saying you cannot answer, check whether one of your tools can. If
-   neither the context nor a tool result answers the question, respond with
+   neither the context nor a tool result answers a football question, say
    exactly:
    "I don't have enough information in my knowledge base to answer that."
-3. Always cite the source of each factual claim using the format
-   [source: <filename>], or [source: tool <tool name>] for a tool result.
+   You may add one friendly sentence suggesting what you can help with.
+3. Cite the source of each factual claim using the format
+   [source: <filename>], or [source: tool <tool name>] for a tool result,
+   once at the end of the sentence that uses it.
 4. Never invent predictions, statistics, or model outputs: call the matching
    tool and quote the numbers it returns. You may write a probability such
    as 0.4712 as 47.1%, but never estimate, average, or calculate a number of
    your own.
-5. If a tool returns an error, tell the user what it says instead of guessing.
-6. Be concise. Avoid unnecessary repetition of the context verbatim.\
+5. If a tool returns an error, tell the user what it says instead of guessing.\
 """
 
 # Purpose: grounds every answer in retrieved documents or tool results (ADR 018).
 # Inputs: the question and retrieved chunks; tools are offered alongside.
-# Output: a short answer with [source: ...] citations, or the refusal in rule 2.
+# Output: a short, conversational answer with [source: ...] citations, or the
+# refusal in rule 2; the app hides the citation markers from the reader.
 # Known failure modes: small models may skip the tool and refuse with rule 2,
 # or round a tool's probability differently; evaluation/assistant_grounding.py
-# measures both.
+# measures both. A chattier voice can add colour ("in great form") with no
+# number behind it, which the grounding eval does not catch.
 
 _CONTEXT_HEADER = "--- KNOWLEDGE BASE CONTEXT ---"
 _CONTEXT_FOOTER = "--- END OF CONTEXT ---"
@@ -99,3 +115,17 @@ def build_messages(
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": user},
     ]
+
+
+# Matches one citation in the format rule 3 asks for, with the space before it.
+_CITATION = re.compile(r"\s*\[source:\s*([^\]]*)\]")
+
+
+def cited_sources(answer: str) -> list[str]:
+    """The sources an answer cites, in order, each once."""
+    return list(dict.fromkeys(m.strip() for m in _CITATION.findall(answer)))
+
+
+def strip_citations(answer: str) -> str:
+    """The answer as users read it: citations are logged, not shown."""
+    return _CITATION.sub("", answer).strip()

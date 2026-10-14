@@ -7,6 +7,8 @@ from assistant.prompting.templates import (
     SYSTEM_PROMPT,
     build_messages,
     build_user_prompt,
+    cited_sources,
+    strip_citations,
 )
 
 _DOC = Document(
@@ -91,3 +93,15 @@ def test_build_messages_starts_the_user_turn_with_today() -> None:
         "Who tops the league after Boxing Day?", [], today=date(2026, 10, 8)
     )
     assert msgs[1]["content"].startswith("Today's date: 2026-10-08.")
+
+
+def test_citations_are_stripped_for_readers() -> None:
+    answer = (
+        "Everton are favourites [source: tool predict_match]. Close [source: a.md]."
+    )
+    assert strip_citations(answer) == "Everton are favourites. Close."
+
+
+def test_cited_sources_are_listed_once_in_order() -> None:
+    answer = "A [source: b.md]. B [source: tool predict_match]. C [source: b.md]."
+    assert cited_sources(answer) == ["b.md", "tool predict_match"]

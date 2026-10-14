@@ -91,3 +91,17 @@ def test_unavailable_safety_check_fails_closed(accounts: AccountService) -> None
         ChatService(assistant, safety, accounts).chat(HARMFUL, _user(accounts))
     assistant.chat.assert_not_called()
     assert _user(accounts).strikes == 0
+
+
+def test_answers_reach_users_without_sources() -> None:
+    """Citations and sources are logged, not sent (ADR 029)."""
+    assistant = MagicMock()
+    assistant.chat.return_value = MagicMock(
+        answer="Everton 41% [source: tool predict_match].",
+        sources=[MagicMock(source="api.md", excerpt="x", relevance_score=0.8)],
+        confidence=0.8,
+        model="m",
+        retrieved_count=1,
+    )
+    response = ChatService(assistant).chat(HARMFUL)
+    assert (response.answer, response.sources) == ("Everton 41%.", [])
