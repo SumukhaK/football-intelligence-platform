@@ -9,6 +9,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+---
+
+## [2.2.0] — 2026-10-14
+
+The API reports version 2.2.0 (it had stayed at 2.0.0 since v2.0.0).
+
 ### Added
 - The assistant can call tools that run the prediction, SHAP explanation and fixtures services, so it quotes the served model's numbers instead of refusing match questions (#65, ADR 018).
 - Season questions in the assistant: results, head-to-head and the next meeting (for example the next Manchester derby), and the league table on any date, with a goals-model projection of points, goals and clean sheets for dates still ahead. A rule-based router picks the tools and answers player and next-season questions without the model (#76, ADR 021).
@@ -25,6 +31,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A `staging` Android build, Football Intelligence -stg, that installs beside the local one and calls the hosted staging API (#105).
 - The app retries GET requests on 429, 502, 503 and 504 with backoff, honouring a short `Retry-After`; release builds shrink resources (#106).
 - Dependency vulnerability scans in CI: pip-audit over `uv.lock` and OSV-Scanner over the app's release dependencies (#107).
+- A Llama Guard 3 safety check before every chat question, with `ASSISTANT_SAFETY` (off locally, required on Cloud Run with the assistant on). A harmful question gets a fixed refusal with `"model": "safety"` and a strike; the third strike bans the account and ends its sessions. Football swearing passes (#113, ADR 027).
 
 ### Changed
 - The default chat model is `qwen2.5:7b-instruct` instead of `llama3.2`, which misquoted tool numbers and failed both assistant evals (ADR 019).
@@ -41,6 +48,8 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The assistant's relevance cut-off let every retrieved chunk through; it now drops chunks that don't match the question (#66).
 - The likeliest-scores card explains why a draw can top it even when one side is the favourite (#75).
 - The grounding eval no longer flags numbers the assistant repeats from the API's own error message.
+- The Assistant screen keeps the message box above the keyboard, shows **bold** and lists in answers, and leaves out the confidence bar when an answer has no sources (#112).
+- Two tests no longer fail on a machine that has an assistant index or Workers AI credentials in `ai/.env`.
 
 ---
 
@@ -57,6 +66,7 @@ The API is unchanged and still reports version 2.0.0.
 - Every markdown file checked against the code and updated for v2; "Lessons Learned" removed from the README (#57, #58).
 - Branch flow: work merges into `develop`; `main` only takes release pull requests and hotfixes, each tagged. CI runs on pull requests into both, and both branches are protected (#59).
 
+[2.2.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.2.0
 [2.1.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.1.0
 
 ---

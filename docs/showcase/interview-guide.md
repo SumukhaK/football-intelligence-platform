@@ -1,6 +1,6 @@
 # Interview Guide — Football Intelligence Platform
 
-50 questions an interviewer might ask about this project (as of release v2.1.0 and the work merged since), organised by topic, each with a suggested answer, the reasoning behind it, and the trade-offs worth raising proactively.
+50 questions an interviewer might ask about this project (as of release v2.2.0), organised by topic, each with a suggested answer, the reasoning behind it, and the trade-offs worth raising proactively.
 
 ---
 
