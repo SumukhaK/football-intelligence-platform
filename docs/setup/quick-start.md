@@ -70,10 +70,10 @@ Confirm the AI workspace is clean before running any pipelines:
 uv run ruff check .          # Linting — should print: All checks passed!
 uv run black --check .       # Formatting — should print: N files would be left unchanged.
 uv run mypy .                # Type checking — should print: Success: no issues found in N source files
-uv run pytest                # Tests — 1,327 tests
+uv run pytest                # Tests — 1,345 tests
 ```
 
-`uv run pytest` runs all 1,327 tests, including the 37 integration tests. The integration tests need a trained model in `ai/models/latest/` (and one needs network access), so on a clean checkout run `uv run pytest -m "not integration"` (1,290 tests) until you have trained the model below.
+`uv run pytest` runs all 1,345 tests, including the 37 integration tests. The integration tests need a trained model in `ai/models/latest/` (and one needs network access), so on a clean checkout run `uv run pytest -m "not integration"` (1,308 tests) until you have trained the model below.
 
 ---
 
@@ -178,7 +178,7 @@ Verify it is running:
 curl http://localhost:8000/v2/health
 # {"status":"ok","model_loaded":true,"explainability_available":true,"assistant_available":false,
 #  "fixture_features_available":true,"insights_available":true,"matches_through":"<date>",
-#  "last_refresh_at":<time or null>,"last_refresh_error":null,"version":"2.4.0"}
+#  "last_refresh_at":<time or null>,"last_refresh_error":null,"version":"2.5.0"}
 ```
 
 Try a prediction. Only the team names are needed; the server computes the features from match history (ADR 008):
@@ -320,7 +320,7 @@ After setup, verify the following:
 - [ ] `uv run ruff check .` — prints `All checks passed!`
 - [ ] `uv run black --check .` — prints `N files would be left unchanged.`
 - [ ] `uv run mypy .` — prints `Success: no issues found`
-- [ ] `uv run pytest` — all 1,327 tests pass (after training)
+- [ ] `uv run pytest` — all 1,345 tests pass (after training)
 - [ ] The backfill produces `datasets/processed/football_data/match_results_top5_v<ts>.csv`
 - [ ] Feature engineering produces `datasets/features/top5/feature_matrix.parquet`
 - [ ] Training produces `ai/models/latest/model.joblib` and `ai/models/latest/model_card.md`

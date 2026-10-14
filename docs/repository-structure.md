@@ -127,7 +127,7 @@ Only metadata and reports are tracked. CSV and Parquet data files are gitignored
 - `adr/` — Architectural Decision Records. One file per decision, numbered sequentially.
 - `reports/` — stage completion summaries with executive summary, design decisions, tests, and metrics.
 - `releases/` — release notes and readiness reports.
-- `plans/` — plans for the multi-league work, the next phase, hosting, accounts and consent, and assistant guardrails.
+- `plans/` — plans for the multi-league work, the next phase, hosting, accounts and consent, assistant guardrails, and chat memory.
 - `setup/` — installation and quick-start guides.
 - `reference/` — CLI command reference.
 - `api.md` — the full API contract for both versions.

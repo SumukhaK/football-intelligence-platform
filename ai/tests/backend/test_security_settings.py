@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from pydantic import ValidationError
+from pydantic import SecretStr, ValidationError
 
 from backend.app.config import Settings
 
@@ -36,7 +36,10 @@ def test_cloud_starts_with_sign_in_and_a_secret_salt(
 ) -> None:
     monkeypatch.setenv("K_REVISION", "football-api-00001-abc")
     settings = Settings(
-        auth_required=True, telemetry_salt="a-real-secret", assistant_safety=True
+        auth_required=True,
+        telemetry_salt="a-real-secret",
+        assistant_safety=True,
+        history_key=SecretStr("a-real-history-key"),
     )
     assert settings.revision == "football-api-00001-abc"
 
@@ -68,3 +71,13 @@ def test_a_chat_message_at_the_limit_is_accepted(client: TestClient) -> None:
 
 def test_responses_tell_browsers_not_to_sniff(client: TestClient) -> None:
     assert client.get("/v2/health").headers["X-Content-Type-Options"] == "nosniff"
+
+
+def test_cloud_refuses_to_start_with_the_dev_history_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("K_REVISION", "football-api-00001-abc")
+    with pytest.raises(ValidationError, match="HISTORY_KEY"):
+        Settings(
+            auth_required=True, telemetry_salt="a-real-secret", assistant_safety=True
+        )

@@ -436,7 +436,7 @@ uv run pytest tests/training/test_trainer.py
 uv run pytest -m integration
 ```
 
-Expected: 1,327 tests pass with `uv run pytest`. 37 of them are integration tests, which need the trained model in `models/latest/`; `-m "not integration"` runs the other 1,290. Integration tests are not skipped by default.
+Expected: 1,345 tests pass with `uv run pytest`. 37 of them are integration tests, which need the trained model in `models/latest/`; `-m "not integration"` runs the other 1,308. Integration tests are not skipped by default.
 
 ---
 
@@ -678,6 +678,14 @@ Asks seven season questions (a projected table after Boxing Day, a past champion
 
 ```sh
 LIVE_REFRESH_HOUR=off uv run python -m evaluation.assistant_season
+```
+
+### `python -m evaluation.assistant_conversation`
+
+Runs eight short scripted chats with signed history, as the app sends them (ADR 030): two "and the draw?" follow-ups that must quote the draw probability, two "why?" follow-ups that must name a team without inventing numbers, a switch to another match, an edited earlier answer that must be ignored, instructions planted in the history, and (with `ASSISTANT_SAFETY=true`) a harmful request split over two turns. Exits non-zero if any case fails.
+
+```sh
+LIVE_REFRESH_HOUR=off uv run python -m evaluation.assistant_conversation
 ```
 
 All three need the trained model, match history, fixtures, the index and a running Ollama, so they run locally rather than in CI. `LIVE_REFRESH_HOUR=off` stops the app from downloading new data during the run.

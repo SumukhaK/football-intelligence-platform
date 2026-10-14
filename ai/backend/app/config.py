@@ -11,6 +11,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # Tuned on 2022/23 in docs/reports/draw-handling.md (ADR 011).
 DEFAULT_DRAW_POSSIBLE_THRESHOLD = 0.28
 DEV_TELEMETRY_SALT = "local-dev-salt"
+DEV_HISTORY_KEY = "local-dev-history-key"
 
 
 class Settings(BaseSettings):
@@ -38,7 +39,7 @@ class Settings(BaseSettings):
     # 1 on Cloud Run, whose front end appends the address it saw.
     trusted_proxy_hops: int = Field(default=0, ge=0)
     # Largest request body accepted; every body is a small JSON object.
-    max_body_bytes: int = Field(default=16_384, ge=1)
+    max_body_bytes: int = Field(default=24_576, ge=1)
     matches_dir: Path = Path("../datasets/processed/football_data")
     datasets_dir: Path = Path("../datasets")
     # Upcoming fixtures, rebuilt by the daily refresh (ADR 015).
@@ -58,7 +59,7 @@ class Settings(BaseSettings):
     ]
     default_competition: str = "Premier League"
     draw_possible_threshold: float = DEFAULT_DRAW_POSSIBLE_THRESHOLD
-    api_version: str = "2.4.0"
+    api_version: str = "2.5.0"
     log_level: str = "INFO"
     # `json` writes the telemetry contract's log lines (ADR 024); `text` is for
     # reading logs by eye locally.
@@ -94,6 +95,9 @@ class Settings(BaseSettings):
     assistant_safety: bool = False
     ollama_guard_model: str = "llama-guard3:1b"
     workers_ai_guard_model: str = "@cf/meta/llama-guard-3-8b"
+    # Signs the assistant's answers so the app can send them back as chat
+    # history (ADR 030); a secret in the cloud.
+    history_key: SecretStr = SecretStr(DEV_HISTORY_KEY)
     assistant_vector_store_path: Path = Path("assistant/vector_store")
     assistant_knowledge_root: Path = Path(".")
     assistant_top_k: int = 5
@@ -122,6 +126,11 @@ class Settings(BaseSettings):
                 "ASSISTANT_SAFETY must be true on Cloud Run when the assistant "
                 "is on (ADR 027)."
             )
+        if (
+            self.assistant_provider is not None
+            and self.history_key.get_secret_value() == DEV_HISTORY_KEY
+        ):
+            raise ValueError("HISTORY_KEY must be a secret on Cloud Run (ADR 030).")
         return self
 
 

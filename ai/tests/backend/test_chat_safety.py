@@ -105,3 +105,34 @@ def test_answers_reach_users_without_sources() -> None:
     )
     response = ChatService(assistant).chat(HARMFUL)
     assert (response.answer, response.sources) == ("Everton 41%.", [])
+
+
+def test_answers_are_signed_and_history_reaches_the_model() -> None:
+    """With a conversation ID the answer is signed; signed history is passed on."""
+    from backend.app.schemas.assistant import HistoryTurn
+    from backend.app.services.chat_history import ChatHistory
+
+    history = ChatHistory("test-key")
+    assistant = MagicMock()
+    assistant.chat.return_value = MagicMock(
+        answer="Draw 25%.", sources=[], confidence=0.0, model="m", retrieved_count=0
+    )
+    safety = _safety([])
+    earlier = [
+        HistoryTurn(role="user", content="Everton v Chelsea?"),
+        HistoryTurn(
+            role="assistant",
+            content="Everton 41%.",
+            signature=history.sign("anonymous", "conv-1234", "Everton 41%."),
+        ),
+    ]
+    request = ChatRequest(
+        message="And the draw?", conversation_id="conv-1234", history=earlier
+    )
+    response = ChatService(assistant, safety, history=history).chat(request)
+    assert response.signature == history.sign("anonymous", "conv-1234", "Draw 25%.")
+    question, messages = assistant.chat.call_args.args
+    assert question == "And the draw?" and len(messages) == 2
+    safety.harmful_categories.assert_called_once_with(
+        "And the draw?", ["Everton v Chelsea?"]
+    )

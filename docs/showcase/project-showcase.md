@@ -8,7 +8,7 @@ A complete technical write-up of the platform's design, engineering decisions, a
 
 The Football Intelligence Platform is an end-to-end AI system for Europe's top five football leagues. It ingests 26 seasons of match results (46,709 matches), engineers 42 leakage-safe pre-match features, trains and evaluates an XGBoost classifier, and explains every prediction with SHAP in plain football language. A Dixon-Coles goals model adds likely scorelines and goal markets. A versioned FastAPI backend serves all of this, refreshes its data daily without a restart, rate limits clients, and can require invite-only sign-in and consent when hosted. An LLM assistant (Ollama locally, Cloudflare Workers AI when hosted) is grounded in the platform's own documents via RAG, and calls the API's own prediction, fixtures and season services as tools. A native Android app built with Compose Multiplatform signs in with an invite, opens on upcoming fixtures (tap one to predict it), shows team crests, and keeps working offline.
 
-It was built in 12 stages up to release v1.0.0, then extended in v2.0.0, v2.0.1, v2.1.0, v2.2.0, v2.3.0 and v2.4.0, by a single engineer, with every structural change recorded as an ADR. Since then it has been made ready to host on Cloud Run: structured telemetry, a container image, probes, a hosted model for the assistant and accounts in Firestore, all opt-in. The result: 1,502 tests (1,327 Python, 175 Android), 29 ADRs, no cloud dependency for local use, and a reproducible pipeline. On the 2023/24 test season the model reaches 52.5% accuracy and a log loss of 0.976, against 55.0% and 0.955 for bookmakers.
+It was built in 12 stages up to release v1.0.0, then extended in v2.0.0, v2.0.1, v2.1.0, v2.2.0, v2.3.0, v2.4.0 and v2.5.0, by a single engineer, with every structural change recorded as an ADR. Since then it has been made ready to host on Cloud Run: structured telemetry, a container image, probes, a hosted model for the assistant and accounts in Firestore, all opt-in. The result: 1,531 tests (1,345 Python, 186 Android), 30 ADRs, no cloud dependency for local use, and a reproducible pipeline. On the 2023/24 test season the model reaches 52.5% accuracy and a log loss of 0.976, against 55.0% and 0.955 for bookmakers.
 
 This document explains *why* each major component exists and the trade-offs behind it — not just what was built.
 
@@ -53,8 +53,10 @@ flowchart TD
     end
 
     Pred --> Model[XGBoost Model\nmodels/latest/model.joblib]
+    Chat --> Guard[Llama Guard\nsafety + strikes]
+    Chat --> Memory[Signed chat history\nlast 4 exchanges, kept on the phone]
     Chat --> Tools[Tools and season router]
-    Chat --> RAG[RAG Pipeline\nOllama + VectorStore]
+    Chat --> RAG[RAG Pipeline\nOllama or Workers AI + VectorStore]
 
     Model -. produced by .-> Pipeline[AI Training Pipeline]
     RAG -. grounded in .-> KB[Knowledge Base\nmodel cards, ADRs, reports]
@@ -156,17 +158,22 @@ flowchart TD
     B --> C[TextChunker]
     C --> D[OllamaEmbedder\nnomic-embed-text]
     D --> E[VectorStore\nnumpy, cosine similarity]
-    Q[User Question] --> F[Retriever\ntop 5]
+    Q[User Question] --> S{Llama Guard\nquestion + earlier questions}
+    S -- unsafe --> R[Fixed refusal + strike]
+    S -- safe --> F[Retriever\ntop 5]
     E --> F
     F --> G{Relevance\nfilter}
-    G --> H[System Prompt\nsource-only]
-    H --> I[OllamaGenerator\nqwen2.5 7B]
-    I --> J[Answer + Citations]
+    HIS[Signed chat history\nlast 4 exchanges] --> H
+    G --> H[System Prompt\nsource-only, history is context]
+    H --> I[Generator\nqwen2.5 7B or Gemma 4 26B]
+    I --> J[Answer, citations logged\nnot shown]
 ```
 
 The assistant cannot answer from parametric knowledge alone — the system prompt constrains it to retrieved context, and if nothing relevant is retrieved it must say so. This is a deliberate trade-off: smaller, more constrained answers over fluent but ungrounded ones.
 
 **Tools and a router.** For a match prediction, its explanation or upcoming fixtures, the model calls `predict_match`, `explain_match` or `upcoming_fixtures`, which run the same services as `/v2/predict`, `/v2/explain` and `/v2/fixtures` ([ADR 018](../adr/018-assistant-tool-calling.md)). Season questions (the table on any date, results, head-to-head, the next derby) are read first by a rule-based `SeasonRouter`, which calls `league_table` and `team_matches` itself; for a future date the table adds a Dixon-Coles projection of the remaining fixtures. Player questions get a fixed reply with no model call ([ADR 021](../adr/021-season-tools-and-router.md)). Three local evals check this: grounding, abstention and season answers.
+
+**Chat memory.** The app sends the last 4 exchanges with each question. The server signs every answer it sends, so a modified app can't slip in words the assistant never said, and it stores no conversation ([ADR 030](../adr/030-short-term-chat-memory.md)). Llama Guard reads the user's earlier questions with the new one, and numbers still come only from tools called for the new question.
 
 ---
 
@@ -204,10 +211,10 @@ Compose Multiplatform keeps the UI layer (Composables, theme, navigation contrac
 
 | Layer | Approach | Count |
 |---|---|---|
-| AI, data pipeline and backend | Unit and API contract tests (`TestClient` with mocked AI services) | 1,290 |
+| AI, data pipeline and backend | Unit and API contract tests (`TestClient` with mocked AI services) | 1,308 |
 | Backend integration | `TestClient` with the **real** trained model — no mocks | 37 |
-| Android | ViewModels (test-first), repositories with Ktor `MockEngine`, cache, session token, retries, formatting | 175 |
-| **Total** | | **1,502** |
+| Android | ViewModels (test-first), repositories with Ktor `MockEngine`, cache, session token, retries, formatting | 186 |
+| **Total** | | **1,531** |
 
 The integration suite deliberately avoids mocking the model — it asserts on real SHAP values being finite, real probabilities summing to 1.0, and latency staying under threshold. This catches bugs (numerical issues, serialization mismatches, performance regressions) that contract tests with mocks cannot.
 
@@ -254,6 +261,7 @@ Semantic versioning, six releases to date:
 | v2.2.0 | Assistant tools and season router, crests, accounts and consent, telemetry, everything needed to host on Cloud Run, and a safety check for the beta |
 | v2.3.0 | Staging live on Cloud Run, crash reports from the staging app, consent notice version 2 |
 | v2.4.0 | A conversational assistant; its sources are logged, not shown |
+| v2.5.0 | Short-term chat memory with signed history, a conversation eval |
 
 Each release follows the same gate: full test suite green, all quality checks clean, release notes written, before the version is tagged.
 

@@ -18,6 +18,7 @@ from assistant.generation.generator import (
     ToolCall,
     ToolCallingGenerator,
 )
+from assistant.grounding import ungrounded_numbers
 from assistant.prompting.templates import (
     DEFAULT_MIN_RELEVANCE,
     build_messages,
@@ -71,6 +72,8 @@ class _Turn:
     prompt_tokens: int | None = None
     completion_tokens: int | None = None
     cost_usd: float | None = None
+    history_turns: int = 0
+    history_chars: int = 0
 
     def add_usage(self, step: ChatTurn) -> None:
         """Add one model call's reported usage; unreported stays None."""
@@ -122,8 +125,13 @@ class AssistantService:
         self._clock = clock
         self._min_relevance = min_relevance
 
-    def chat(self, question: str) -> AssistantResponse:
+    def chat(
+        self, question: str, history: Sequence[dict[str, str]] = ()
+    ) -> AssistantResponse:
         """Answer *question* using RAG over the local knowledge base.
+
+        ``history`` is the chat so far, checked and trimmed by the caller
+        (ADR 030); it helps the model read follow-ups but is never a source.
 
         Raises:
             ValueError: When *question* is empty.
@@ -139,7 +147,8 @@ class AssistantService:
                 "Run the assistant pipeline to build the index first."
             )
 
-        turn = _Turn(self._clock())
+        turn = _Turn(self._clock(), history_turns=len(history))
+        turn.history_chars = sum(len(message["content"]) for message in history)
         route = self._route(question)
         if route is not None and route.reply is not None:
             response = _routed_reply(route.reply)
@@ -152,14 +161,50 @@ class AssistantService:
         today = self._today() if route is not None else None
         messages: list[dict[str, Any]] = list(
             build_messages(
-                question, retrieved, min_relevance=self._min_relevance, today=today
+                question,
+                retrieved,
+                min_relevance=self._min_relevance,
+                today=today,
+                history=history,
             )
         )
         if route is not None:
             self._run_calls(messages, route.calls, turn)
-        response = self._response(self._answer(messages, turn), retrieved)
+        answer = self._answer(messages, turn)
+        if history:
+            answer = self._recheck(messages, answer, turn)
+        response = self._response(answer, retrieved)
         self._log_answer(question, response, retrieved, turn, routed=False)
         return response
+
+    def _recheck(self, messages: list[dict[str, Any]], answer: str, turn: _Turn) -> str:
+        """Ask once more when a follow-up's numbers came from no tool this turn.
+
+        With history in view the model may reuse or work out an earlier
+        number instead of calling the tool again (ADR 030). The sources are
+        this turn's user message and tool results, never earlier answers.
+        """
+        sources = [m["content"] for m in messages if m["role"] in ("user", "tool")]
+        invented = ungrounded_numbers(answer, sources)
+        if not invented:
+            return answer
+        emit(
+            logger,
+            EventName.GUARDRAIL_EVENT,
+            "A follow-up answer used numbers no tool returned; asking again",
+            kind="grounding",
+            outcome="retried",
+        )
+        messages.append({"role": "assistant", "content": answer})
+        messages.append(
+            {
+                "role": "user",
+                "content": f"These numbers came from no tool in this turn: "
+                f"{', '.join(invented)}. Call the tool again and answer with "
+                "its numbers only.",
+            }
+        )
+        return self._answer(messages, turn)
 
     def _log_answer(
         self,
@@ -190,6 +235,8 @@ class AssistantService:
             duration_ms=round((self._clock() - turn.started) * 1000),
             sources=[source.source for source in response.sources],
             cited=cited_sources(response.answer),
+            history_turns=turn.history_turns,
+            history_tokens=turn.history_chars // 4,
         )
         if _NO_INFO_MARKER in response.answer:
             reason = "model_declined" if retrieved or turn.rounds else "no_retrieval"

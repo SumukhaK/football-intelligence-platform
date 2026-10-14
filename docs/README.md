@@ -58,6 +58,7 @@ Maintained by the project architect. The implementation engineer updates documen
 | [Hosting Execution Tracker](plans/hosting-execution-tracker.md) | Ordered deployment steps with status, exit checks and the evidence each step produces |
 | [Accounts and Consent Plan](plans/accounts-and-consent-plan.md) | Invite-only accounts, sessions and consent for the assistant |
 | [Assistant Guardrails Analysis](plans/assistant-guardrails-analysis.md) | Safety, scope routing, caching and limits for the hosted assistant |
+| [Chat Memory Plan](plans/chat-memory-plan.md) | Short-term chat memory: signed history on the phone, limits, cost and safety rails |
 | [Next Phase Plan](plans/next-phase-plan.md) | Testing gaps, draw handling, scoreline predictions: order, design, impact analysis |
 | [Five Leagues Plan](plans/five-leagues-plan.md) | Serving all five leagues in the API and app |
 | [Multi-League Retraining Plan](plans/multi-league-retraining-plan.md) | Goal, data profile and phased plan for retraining on top-5 league data |
@@ -111,6 +112,7 @@ Maintained by the project architect. The implementation engineer updates documen
 | [v2.2.0 Release Notes](releases/v2.2.0.md) | Assistant tools, accounts, telemetry, hosting readiness, safety check |
 | [v2.3.0 Release Notes](releases/v2.3.0.md) | Staging live on Cloud Run, crash reports in the staging app |
 | [v2.4.0 Release Notes](releases/v2.4.0.md) | A conversational assistant; sources logged, not shown |
+| [v2.5.0 Release Notes](releases/v2.5.0.md) | Chat memory with signed history; one top bar colour; no error flash |
 | [v2.0.1 Release Notes](releases/v2.0.1.md) | Faster offline fallback in the app, demo video |
 | [v2.0.0 Release Notes](releases/v2.0.0.md) | Five leagues, versioned API, fixtures, goals model, offline app |
 | [v1.0.0 Release Notes](releases/v1.0.0.md) | Full release notes for the complete platform (Stages 1–12) |
@@ -130,7 +132,7 @@ docs/
   demo/           # Stage-by-stage demo scripts for technical interviews
   design/         # Design concepts (app icon and launch screen, ADR 016)
   observability/  # Telemetry contract, event catalogue and local stack guide (ADR 024)
-  plans/          # Plans for the work after Stage 12 (leagues, hosting, accounts, guardrails)
+  plans/          # Plans for the work after Stage 12 (leagues, hosting, accounts, guardrails, chat memory)
   reference/      # CLI command reference
   releases/       # Release notes and readiness reports
   reports/        # Stage summaries, model/data experiment reports and hosting measurements

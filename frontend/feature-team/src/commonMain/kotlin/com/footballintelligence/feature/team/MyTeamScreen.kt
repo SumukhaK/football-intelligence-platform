@@ -13,7 +13,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -22,6 +21,7 @@ import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
 import com.footballintelligence.core.ui.OfflineBanner
 import com.footballintelligence.core.ui.RefreshableContent
+import com.footballintelligence.core.ui.appBarColors
 import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.team.resources.Res
 import com.footballintelligence.feature.team.resources.my_team_title
@@ -49,11 +49,7 @@ fun MyTeamScreen(
             TopAppBar(
                 title = { Text(stringResource(Res.string.my_team_title)) },
                 actions = actions,
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                ),
+                colors = appBarColors(),
             )
         },
         modifier = modifier,

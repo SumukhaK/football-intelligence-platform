@@ -20,8 +20,8 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
+from assistant.grounding import ungrounded_numbers
 from backend.app.services.team_resolver import aliases, normalise
-from evaluation.assistant_grounding import ungrounded_numbers
 from inference.fixture_features import season_for_date
 
 Expected = Callable[[Callable[..., dict[str, Any]]], tuple[str | None, dict[str, Any]]]

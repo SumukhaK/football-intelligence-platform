@@ -37,6 +37,7 @@ import com.footballintelligence.core.ui.LoadingView
 import com.footballintelligence.core.ui.OfflineBanner
 import com.footballintelligence.core.ui.RefreshableContent
 import com.footballintelligence.core.ui.TeamCrest
+import com.footballintelligence.core.ui.appBarColors
 import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.prediction.resources.Res
 import com.footballintelligence.feature.prediction.resources.action_predict
@@ -73,6 +74,7 @@ fun PredictionScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                colors = appBarColors(),
                 title = { Text(stringResource(Res.string.prediction_title)) },
                 navigationIcon = { BackButton(onClick = onBack) },
                 actions = actions,

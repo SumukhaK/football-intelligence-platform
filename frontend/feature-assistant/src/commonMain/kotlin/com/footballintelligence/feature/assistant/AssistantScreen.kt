@@ -29,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,12 +49,14 @@ import com.footballintelligence.core.model.MessageRole
 import com.footballintelligence.core.model.SourceCitation
 import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.KickoffLoader
+import com.footballintelligence.core.ui.appBarColors
 import com.footballintelligence.feature.assistant.resources.Res
 import com.footballintelligence.feature.assistant.resources.assistant_title
 import com.footballintelligence.feature.assistant.resources.cd_message_input
 import com.footballintelligence.feature.assistant.resources.cd_send_message
 import com.footballintelligence.feature.assistant.resources.confidence
 import com.footballintelligence.feature.assistant.resources.input_placeholder
+import com.footballintelligence.feature.assistant.resources.new_chat
 import com.footballintelligence.feature.assistant.resources.source_item
 import com.footballintelligence.feature.assistant.resources.sources
 import com.footballintelligence.feature.assistant.resources.unavailable_body
@@ -72,13 +75,25 @@ fun AssistantScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {},
+    onNewChat: () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
+                colors = appBarColors(),
                 title = { Text(stringResource(Res.string.assistant_title)) },
                 navigationIcon = { BackButton(onClick = onBack) },
-                actions = actions,
+                actions = {
+                    if (uiState is AssistantUiState.Chatting) {
+                        TextButton(onClick = onNewChat) {
+                            Text(
+                                stringResource(Res.string.new_chat),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                            )
+                        }
+                    }
+                    actions()
+                },
             )
         },
         modifier = modifier,

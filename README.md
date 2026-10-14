@@ -20,7 +20,7 @@ The Football Intelligence Platform ingests 26 seasons of match data from Europe'
 
 It is a complete, working system — not a notebook or a prototype. Twelve build stages take it from an empty repository to a tested, documented, end-to-end product: ingestion → validation → feature engineering → model training → explainability → a FastAPI backend → a locally-grounded RAG assistant → a Compose Multiplatform Android app → full integration testing.
 
-**1,502 tests: 1,327 Python and 175 Android. Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes results and fixtures daily without a restart, and the app keeps working offline with the last data it saw.** It is also ready to host: a container image, health probes, structured logs and traces, alerts as code, and a hosted model for the assistant, all off by default so the local setup is unchanged.
+**1,531 tests: 1,345 Python and 186 Android. Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes results and fixtures daily without a restart, and the app keeps working offline with the last data it saw.** It is also ready to host: a container image, health probes, structured logs and traces, alerts as code, and a hosted model for the assistant, all off by default so the local setup is unchanged.
 
 ---
 
@@ -53,7 +53,7 @@ This project demonstrates AI engineering as a discipline: not just "can I train 
 | **Full reproducibility** | Entire pipeline (ingest → features → train → explain) runs in under 15 seconds from one CLI command |
 | **Observability** | JSON logs to one versioned telemetry contract, a request ID on every request and log line, OpenTelemetry traces across retrieval, tool calls and generation, retries with backoff on every outbound download, a local Grafana stack, and Cloud Monitoring metrics and alerts kept as code (ADR 024) |
 | **Hosting-ready** | A non-root container image built from a verified artifact snapshot, `/v2/live` and `/v2/ready` probes, a Firestore account store, and a server that refuses unsafe cloud defaults (ADR 025, ADR 026). CI builds and probes the image and scans Python and Gradle dependencies |
-| **End-to-end test coverage** | 1,327 Python tests (including 37 integration tests against the real model, most of which skip on a machine without one) and 175 Android tests (ViewModels written test-first, repositories, network, cache, retries, loader) |
+| **End-to-end test coverage** | 1,345 Python tests (including 37 integration tests against the real model, most of which skip on a machine without one) and 186 Android tests (ViewModels written test-first, repositories, network, cache, retries, loader) |
 | **No cloud needed locally** | Runs entirely on a laptop: no managed database, no cloud LLM, no hosted vector store. The cloud pieces are opt-in settings |
 
 ---
@@ -82,7 +82,7 @@ flowchart TD
     J --> K["FastAPI Backend\n/v2: predict · explain · insights · fixtures · teams\n/v1: original Premier League model\nrate limited"]
     NG --> K
     FS --> K
-    K --> L["AI Assistant\nRAG · numpy vector store\nOllama locally · Workers AI hosted\ntools: predict · explain · fixtures"]
+    K --> L["AI Assistant\nRAG · numpy vector store\nOllama locally · Workers AI hosted\ntools: predict · explain · fixtures\nsigned short-term chat memory"]
     K --> M["Android App\nCompose Multiplatform · MVVM · Ktor · Koin\noffline cache · pull to refresh"]
 
     classDef source fill:#E3F2FD,stroke:#1E88E5,color:#0D2A4A
@@ -111,7 +111,7 @@ flowchart TD
 | **Hosting** | Docker, Google Cloud Run, Firestore, Secret Manager, Cloud Logging, Trace and Monitoring (staging not yet deployed) |
 | **Mobile** | Kotlin, Compose Multiplatform, Ktor client, Koin DI, AndroidX Navigation Compose, Material 3 |
 | **Tooling** | uv (Python dependency management), Gradle 8.8, Ruff, Black, MyPy, Detekt, Spotless, ShellCheck |
-| **Testing** | pytest (1,327 tests), JUnit 5, MockK, Ktor MockEngine (175 tests) |
+| **Testing** | pytest (1,345 tests), JUnit 5, MockK, Ktor MockEngine (186 tests) |
 | **CI/CD** | GitHub Actions: lint, types, tests, container build and probe, pip-audit and OSV-Scanner |
 
 ---
@@ -383,10 +383,10 @@ uv run python -m scripts.manage_accounts invite --email you@example.com
 ### Running Tests
 
 ```sh
-# Python: 1,327 tests (the 36 integration tests need a trained model)
+# Python: 1,345 tests (the 36 integration tests need a trained model)
 cd ai && uv run pytest
 
-# Android: unit tests, lint and formatting (175 tests)
+# Android: unit tests, lint and formatting (186 tests)
 cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
 ```
 

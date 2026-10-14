@@ -18,6 +18,7 @@ Status values: `Not started`, `In progress`, `Blocked (reason)`, `Done (date)`.
 | 3a | Invite-only accounts and consent | [plan](accounts-and-consent-plan.md) | In progress (sign-in and consent checked on staging through the API on 14 October 2026; the app walkthrough to go) |
 | 3 | Connect the hosted LLM | 1 | In progress (on in staging since 14 October 2026 and quoting the API's numbers; evals against staging to go) |
 | 3b | Guardrails gateway: safety, scope router, cache, limits | [analysis](assistant-guardrails-analysis.md) | In progress (safety check and strikes done, ADR 027; cache, budgets and the rules sheet to go) |
+| 3c | Short-term chat memory | [plan](chat-memory-plan.md) | In progress (built and released in v2.5.0; staging deploy with the `history-key` secret to go) |
 | 4 | Observability: logs, traces, metrics, alerts | 6 | In progress (request IDs, traces, local stack, and metrics and alerts as code done; apply and dashboard to go) |
 | 5 | CI/CD with the eval gate | 6 | Not started |
 | 5a | Security hardening | this tracker | Done (11 October 2026) |
@@ -111,6 +112,19 @@ The season router (ADR 021) is the first piece.
 
 Done when: a harmful question adds a strike without a model call, and in prod an over-budget user is refused before any tokens are spent.
 Evidence: tests and staging logs.
+
+## 3c. Short-term chat memory
+
+Plan: [chat-memory-plan.md](chat-memory-plan.md). Decision: [ADR 030](../adr/030-short-term-chat-memory.md). Ships in v2.5.0.
+
+- [x] Design approved: signed history on the phone, 4 exchanges, 30-minute reset, consent unchanged (15 October 2026).
+- [x] Backend: optional `history`, `conversation_id` and `signature`; HMAC with `HISTORY_KEY`; trimming; Llama Guard over the user's turns; the history prompt rule; log counts.
+- [x] `evaluation/assistant_conversation.py` passes on Workers AI (8/8), and abstention (20/20), grounding (11/11) and season (7/7) still pass (15 October 2026).
+- [x] App: keeps the signed window, New chat, 30-minute idle reset (ViewModel tests first; checked on the emulator 15 October 2026).
+- [ ] Staging: `history-key` secret mounted; history tokens and neurons per answer checked in the logs.
+
+Done when: a follow-up such as "and the draw?" is answered from the conversation on staging, a forged turn is ignored, and all four evals pass.
+Evidence: eval output in `docs/reports/hosted-assistant-evals.md` and staging logs.
 
 ## 4. Observability: logs, traces, metrics, alerts
 
