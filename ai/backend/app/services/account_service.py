@@ -26,6 +26,8 @@ INVITE_LIFETIME = timedelta(days=7)
 SESSION_LIFETIME = timedelta(days=30)
 MAX_FAILED_LOGINS = 5
 LOCKOUT = timedelta(minutes=15)
+# Harmful questions before a permanent ban (ADR 027).
+MAX_STRIKES = 3
 _SCRYPT = {"n": 2**14, "r": 8, "p": 1, "dklen": 32}
 
 
@@ -249,8 +251,24 @@ class AccountService:
         self._store.save_user(user)
         return user
 
+    def add_strike(self, email: str) -> User:
+        """Count one harmful question against ``email``; the last one bans.
+
+        Raises:
+            KeyError: If there is no such user.
+        """
+        user = self._store.get_user(_normalise(email))
+        if user is None:
+            raise KeyError(email)
+        user.strikes += 1
+        self._store.save_user(user)
+        if user.strikes >= MAX_STRIKES:
+            user = self.set_banned(user.email, True)
+        self._log("strike", "blocked" if user.status == "banned" else "ok", user.email)
+        return user
+
     def set_banned(self, email: str, banned: bool) -> User:
-        """Ban or unban ``email``; a ban ends every session.
+        """Ban or unban ``email``; a ban ends every session, an unban clears strikes.
 
         Raises:
             KeyError: If there is no such user.
@@ -259,6 +277,8 @@ class AccountService:
         if user is None:
             raise KeyError(email)
         user.status = "banned" if banned else "active"
+        if not banned:
+            user.strikes = 0
         self._store.save_user(user)
         if banned:
             self.revoke_sessions(user.email)

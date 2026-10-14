@@ -109,3 +109,4 @@ ADRs are never deleted.
 | [024](024-structured-telemetry-and-opentelemetry.md) | Structured telemetry and OpenTelemetry | Accepted |
 | [025](025-cloud-serving-on-cloud-run.md) | Cloud serving on Cloud Run | Accepted |
 | [026](026-firestore-account-store.md) | Firestore for the account store | Accepted |
+| [027](027-assistant-safety-check-and-strikes.md) | Assistant safety check and strikes | Accepted |

@@ -35,6 +35,9 @@ class AssistantSettings(BaseSettings):
     # Reasoning models think before answering unless told not to; off keeps
     # answers inside the app's 30-second request budget.
     workers_ai_thinking: bool = False
+    # The Llama Guard model that checks each question (ADR 027).
+    ollama_guard_model: str = "llama-guard3:1b"
+    workers_ai_guard_model: str = "@cf/meta/llama-guard-3-8b"
 
     vector_store_path: Path = Path("assistant/vector_store")
     knowledge_base_root: Path = Path(".")

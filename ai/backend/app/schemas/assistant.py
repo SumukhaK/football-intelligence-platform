@@ -41,7 +41,11 @@ class ChatResponse(BaseModel):
         ..., ge=0.0, le=1.0, description="Proxy confidence based on retrieval score."
     )
     model: str = Field(
-        ..., description="Chat model that wrote the answer, or 'router'."
+        ...,
+        description=(
+            "Chat model that wrote the answer, 'router', or 'safety' for a "
+            "refused question."
+        ),
     )
     retrieved_count: int = Field(
         ..., ge=0, description="Number of document chunks retrieved."

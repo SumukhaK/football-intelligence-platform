@@ -285,3 +285,13 @@ def test_emails_never_reach_the_log(
     with pytest.raises(InvalidCredentialsError):
         logged.login(EMAIL, "wrong password")
     assert "example.com" not in caplog.text.lower().replace("ref:sam@example.com", "")
+
+
+def test_strikes_ban_on_the_third(accounts: AccountService) -> None:
+    """Two strikes warn; the third bans and ends every session (ADR 027)."""
+    token = _signed_up(accounts)
+    assert accounts.add_strike(EMAIL).status == "active"
+    assert accounts.add_strike(EMAIL).strikes == 2
+    assert accounts.add_strike(EMAIL).status == "banned"
+    with pytest.raises(NotSignedInError):
+        accounts.authenticate(token)

@@ -441,6 +441,15 @@ players or seasons that have not started get a fixed reply without calling
 the model; those responses have `"model": "router"`, `"sources": []` and
 `"confidence": 0.0`.
 
+With `ASSISTANT_SAFETY=true` (required on Cloud Run when the assistant is on),
+Llama Guard 3 checks every question before anything else (ADR 027). A harmful
+question gets a fixed refusal with `"model": "safety"`, `"sources": []` and
+`"confidence": 0.0`, and adds a strike to the signed-in user; the answer says
+how many strikes they have. The third strike bans the account and ends its
+sessions, so the next request gets `403 Account blocked`. Swearing about
+football is not harmful. If the safety model can't be reached, chat returns
+`503` and no strike is added.
+
 ---
 
 ## Keeping match history current

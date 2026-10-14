@@ -139,3 +139,11 @@ def test_chat_does_not_log_the_question(
     with caplog.at_level(logging.DEBUG):
         client.post("/assistant/chat", json={"message": question})
     assert all(question not in record.getMessage() for record in caplog.records)
+
+
+def test_chat_without_a_token_has_no_user(
+    client: TestClient, mock_chat_service: MagicMock
+) -> None:
+    """Locally, with sign-in off, chat runs for nobody in particular."""
+    client.post("/assistant/chat", json={"message": "Hi"})
+    assert mock_chat_service.chat.call_args.args[1] is None

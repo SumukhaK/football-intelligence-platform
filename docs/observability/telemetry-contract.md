@@ -64,7 +64,7 @@ Durations are integers in milliseconds, named `duration_ms`.
 | `component.load` | INFO when ok, WARNING when degraded or failed | Each startup load in `main.py`, and each reload after a refresh | `component` (one of the component names below), `status` (`ok`, `degraded`, `failed`), `duration_ms`, `reason` (string or null) |
 | `component.degraded` | WARNING | A request needs a component that is not loaded and gets a 503 | `component`, `route` |
 | `ratelimit.rejected` | WARNING | The rate limiter returns 429 | `route`, `client_ref`, `retry_after_s` (int) |
-| `auth.event` | INFO, WARNING for `failed`, `locked_out`, `blocked` | An account action finishes | `action` (`sign_in`, `sign_out`, `redeem_invite`, `consent`), `outcome` (`ok`, `failed`, `locked_out`, `blocked`, `consent_required`, `invalid_invite`, `weak_password`, `not_signed_in`), `user_ref` (optional, only when the account is known) |
+| `auth.event` | INFO, WARNING for `failed`, `locked_out`, `blocked` | An account action finishes | `action` (`sign_in`, `sign_out`, `redeem_invite`, `consent`, `strike`), `outcome` (`ok`, `failed`, `locked_out`, `blocked`, `consent_required`, `invalid_invite`, `weak_password`, `not_signed_in`), `user_ref` (optional, only when the account is known) |
 | `refresh.run` | INFO when ok, WARNING when failed | Each daily refresh attempt finishes | `status` (`ok`, `failed`), `duration_ms`, `dataset` (file name or null), `error` (string or null) |
 | `data.freshness` | INFO | After match data loads, and after each refresh | `competition`, `matches_through` (ISO date or null), `age_hours` (number or null) |
 | `assistant.answer` | INFO | Each chat answer is returned | `path` (`router`, `model`, `model_with_tools`), `question_chars` (int), `retrieved_count` (int), `top_score` (number or null), `confidence` (number), `tool_rounds` (int), `model`, `prompt_tokens` (int or null), `completion_tokens` (int or null), `cost_usd` (number or null), `duration_ms` |
@@ -73,7 +73,7 @@ Durations are integers in milliseconds, named `duration_ms`.
 | `dependency.call` | INFO when ok, WARNING when failed | Each attempt of an outbound call | `dependency` (`ollama_chat`, `ollama_embed`, `football_data`, `openfootball`, `workers_ai`), `operation`, `status` (`ok`, `timeout`, `http_error`, `connection_error`, `error`), `http_status` (int or null), `attempt` (int, starts at 1), `duration_ms` |
 | `retry` | WARNING | A failed attempt will be retried | `dependency`, `operation`, `attempt` (the attempt that failed), `max_attempts`, `wait_ms`, `cause` |
 | `fallback` | WARNING | A degraded path is used instead of the normal one | `from_path`, `to_path`, `cause` |
-| `guardrail.event` | INFO | Reserved for hosting step 3b (safety, cache, budget) | `kind`, `outcome` |
+| `guardrail.event` | INFO | The safety check blocks a question (ADR 027); later also the cache and budget | `kind` (`safety`), `outcome` (`refused` when signed out, `strike`, `banned`), `categories` (optional, Llama Guard hazard codes such as `S1`) |
 
 ### Component names
 

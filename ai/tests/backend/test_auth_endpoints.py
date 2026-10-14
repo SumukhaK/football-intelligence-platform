@@ -150,3 +150,15 @@ def test_crest_images_stay_open(app_client: TestClient) -> None:
     """Image loaders send no token, so crest redirects need no sign-in."""
     response = app_client.get("/v2/teams/Arsenal/crest", follow_redirects=False)
     assert response.status_code in (307, 404)
+
+
+def test_chat_knows_the_signed_in_user(
+    signed_app: FastAPI, app_client: TestClient, mock_chat_service: MagicMock
+) -> None:
+    """Chat passes the signed-in user on, so a harmful question can add a strike."""
+    signed_app.state.chat_service = mock_chat_service
+    headers = _sign_up(signed_app, app_client)
+    _consent(app_client, headers)
+    app_client.post("/v2/assistant/chat", json={"message": "Hi"}, headers=headers)
+    user = mock_chat_service.chat.call_args.args[1]
+    assert user.email == EMAIL
