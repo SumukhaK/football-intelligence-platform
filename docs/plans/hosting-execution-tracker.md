@@ -18,7 +18,7 @@ Status values: `Not started`, `In progress`, `Blocked (reason)`, `Done (date)`.
 | 3a | Invite-only accounts and consent | [plan](accounts-and-consent-plan.md) | In progress (sign-in and consent checked on staging through the API on 14 October 2026; the app walkthrough to go) |
 | 3 | Connect the hosted LLM | 1 | In progress (on in staging since 14 October 2026 and quoting the API's numbers; evals against staging to go) |
 | 3b | Guardrails gateway: safety, scope router, cache, limits | [analysis](assistant-guardrails-analysis.md) | In progress (safety check and strikes done, ADR 027; cache, budgets and the rules sheet to go) |
-| 3c | Short-term chat memory | [plan](chat-memory-plan.md) | In progress (design approved, ADR 030; building for v2.5.0) |
+| 3c | Short-term chat memory | [plan](chat-memory-plan.md) | In progress (built and released in v2.5.0; staging deploy with the `history-key` secret to go) |
 | 4 | Observability: logs, traces, metrics, alerts | 6 | In progress (request IDs, traces, local stack, and metrics and alerts as code done; apply and dashboard to go) |
 | 5 | CI/CD with the eval gate | 6 | Not started |
 | 5a | Security hardening | this tracker | Done (11 October 2026) |
