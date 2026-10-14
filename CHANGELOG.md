@@ -31,6 +31,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The chat route runs the model call in FastAPI's thread pool, so a slow answer no longer blocks other requests, and question text is no longer logged (#86).
 - Hardening for hosting: the rate limiter reads the client address behind a trusted proxy, bodies over 16 KB get 413, chat messages are capped at 1000 characters, responses send `nosniff`, and the server refuses to start on Cloud Run with sign-in off or the development telemetry salt (#101).
 - `anyio`, `pillow`, `virtualenv` and Ktor moved to versions without known advisories (#107).
+- A new 2-minute demo video recorded in October 2026, showing sign-in, My Team, fixtures, predictions, explanations, the assistant on Workers AI, offline mode, the API docs and one chat request's JSON log events. It is served from the project website, which now describes the hosting work.
 - Removed `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`, which don't apply to a single-maintainer portfolio project, and the duplicate stage 8 and 10 docs under `ai/docs/`; the README now states the licence and the data sources' terms up front.
 
 ### Fixed
