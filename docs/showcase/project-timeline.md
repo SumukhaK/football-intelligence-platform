@@ -300,10 +300,18 @@ Those are the counts at v1.0.0.
 
 ---
 
+## Release v2.5.0 (2026-10-15)
+
+**Deliverables (PRs #126–#130, ADR 030):** short-term chat memory. The phone keeps the last 4 exchanges and the server signs its answers, so nothing is stored. Llama Guard reads the earlier questions, and a follow-up's numbers are checked in code. A conversation eval scored 8/8. The release also brings one top bar colour on every screen and no error flash on New prediction.
+
+**Git Tag:** v2.5.0
+
+---
+
 ## Next
 
 The closed beta with invited friends on the staging app.
 
 ---
 
-**Today: 9 releases, 29 ADRs, 1,502 tests (1,327 Python, 175 Android). One engineer.**
+**Today: 10 releases, 30 ADRs, 1,531 tests (1,345 Python, 186 Android). One engineer.**

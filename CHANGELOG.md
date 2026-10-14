@@ -9,6 +9,10 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+---
+
+## [2.5.0] — 2026-10-15
+
 ### Added
 - Chat memory design: ADR 030 and the chat memory plan (signed history kept on the phone, 4 exchanges, nothing stored on the server), with tracker step 3c.
 - Chat memory on the server: `POST /v2/assistant/chat` takes an optional `conversation_id` and `history` and signs every answer; forged history is ignored, long history trimmed, and Llama Guard reads the user's earlier questions with the new one. Request bodies may now be 24 KB (ADR 030).
@@ -101,6 +105,7 @@ The API is unchanged and still reports version 2.0.0.
 - Every markdown file checked against the code and updated for v2; "Lessons Learned" removed from the README (#57, #58).
 - Branch flow: work merges into `develop`; `main` only takes release pull requests and hotfixes, each tagged. CI runs on pull requests into both, and both branches are protected (#59).
 
+[2.5.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.5.0
 [2.4.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.4.0
 [2.3.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.3.0
 [2.2.0]: https://github.com/SumukhaK/football-intelligence-platform/releases/tag/v2.2.0

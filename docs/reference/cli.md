@@ -436,7 +436,7 @@ uv run pytest tests/training/test_trainer.py
 uv run pytest -m integration
 ```
 
-Expected: 1,327 tests pass with `uv run pytest`. 37 of them are integration tests, which need the trained model in `models/latest/`; `-m "not integration"` runs the other 1,290. Integration tests are not skipped by default.
+Expected: 1,345 tests pass with `uv run pytest`. 37 of them are integration tests, which need the trained model in `models/latest/`; `-m "not integration"` runs the other 1,308. Integration tests are not skipped by default.
 
 ---
 
