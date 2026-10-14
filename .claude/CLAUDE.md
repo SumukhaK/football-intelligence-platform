@@ -279,7 +279,7 @@ Local development must work without any cloud services. All external dependencie
 
 ## 19. Project Stages
 
-These were the original stages. The project was built in 12 stages up to release v1.0.0 (`docs/reports/stage-NN-summary.md`), then extended in v2.0.0, v2.0.1, v2.1.0 and v2.2.0 (`docs/releases/`; v2.2.0 added telemetry, the container image, the hosted assistant, accounts in Firestore and the safety check). Hosting work follows `docs/plans/hosting-execution-tracker.md`; cloud features are opt-in settings, so the local core loop still needs no cloud.
+These were the original stages. The project was built in 12 stages up to release v1.0.0 (`docs/reports/stage-NN-summary.md`), then extended in v2.0.0, v2.0.1, v2.1.0, v2.2.0 and v2.3.0 (`docs/releases/`; v2.2.0 added telemetry, the container image, the hosted assistant, accounts in Firestore and the safety check; v2.3.0 put staging live on Cloud Run and added crash reports to the staging app). Hosting work follows `docs/plans/hosting-execution-tracker.md`; cloud features are opt-in settings, so the local core loop still needs no cloud.
 
 **Stage 1 — Data Foundation**
 Ingest raw football data, validate schemas, build a processed dataset ready for modelling.
