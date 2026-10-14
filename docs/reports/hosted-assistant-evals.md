@@ -37,6 +37,12 @@ The default is Gemma 4 26B with `WORKERS_AI_THINKING=false`: it passes both eval
 
 Over the 31 answers with thinking off, the mean list price was $0.000146 per answer, about 13 neurons. That is roughly 750 answers a day inside Workers AI's free 10,000 neurons, before embeddings, which are much cheaper.
 
+## Conversational voice (15 October 2026)
+
+The first use of staging on a phone showed stiff, report-like answers. The system prompt gained a "How you talk" section: answer first in plain words, then add one line of context from the data, keep to two to four sentences, and reply naturally to small talk without reciting rules. The grounding rules are unchanged. The app now hides the `[source: ...]` markers, which the server keeps for tracing.
+
+Rerun with `@cf/google/gemma-4-26b-a4b-it`, thinking off: abstention 20/20, grounding 11/11, season 7/7. The grounding eval used to count "Ligue 1" as an invented number when an answer suggested other leagues; it now treats the league name as a name.
+
 ## Still to do
 
 - Run both evals against staging (tracker step 3).

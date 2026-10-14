@@ -88,3 +88,8 @@ def test_unknown_team_answer_may_repeat_the_api_error() -> None:
     error = {"error": "Unknown team", "detail": "'Atlantis FC' did not play in 2026/27"}
     answer = "Atlantis FC did not play in the Premier League 2026/27."
     assert score_unknown_team_answer(question, answer, error).passed
+
+
+def test_a_league_name_is_not_a_number() -> None:
+    answer = "I can help with the Premier League or Ligue 1 instead."
+    assert ungrounded_numbers(answer, []) == []
