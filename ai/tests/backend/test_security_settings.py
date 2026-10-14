@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
-from pydantic import ValidationError
+from pydantic import SecretStr, ValidationError
 
 from backend.app.config import Settings
 
@@ -39,7 +39,7 @@ def test_cloud_starts_with_sign_in_and_a_secret_salt(
         auth_required=True,
         telemetry_salt="a-real-secret",
         assistant_safety=True,
-        history_key="a-real-history-key",
+        history_key=SecretStr("a-real-history-key"),
     )
     assert settings.revision == "football-api-00001-abc"
 
