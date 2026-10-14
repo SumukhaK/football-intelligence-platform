@@ -139,6 +139,11 @@ A staging build without an `https://` address fails straight away instead
 of producing an app that can't reach anything. `-PstagingBaseUrl=...` works
 too; CI passes a placeholder so `assembleDebug` builds both flavors.
 
+The staging build sends crash reports to Firebase Crashlytics once the user
+has accepted the notice (ADR 028). It needs the owner's Firebase config at
+`app/src/staging/google-services.json`, which is kept out of Git; without it
+the build still works and sends nothing. The `local` build has no Firebase code.
+
 The rest of the network settings are in `core-network/src/commonMain/.../NetworkConfig.kt`:
 
 ```kotlin

@@ -9,6 +9,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- Crash reports from the staging app through Firebase Crashlytics, sent only after the user accepts the notice. The notice is now version 2: it names crash reports and the hosted model, so everyone is asked again. The local build has no Firebase code (ADR 028).
+
 ---
 
 ## [2.2.0] — 2026-10-14

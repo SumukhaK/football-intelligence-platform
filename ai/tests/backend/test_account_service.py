@@ -175,8 +175,8 @@ def test_new_invite_resets_the_password(accounts: AccountService) -> None:
 def test_consent_is_recorded(accounts: AccountService, clock: Clock) -> None:
     """Accepting the notice stores the version, time and question opt-in."""
     user = accounts.authenticate(_signed_up(accounts))
-    user = accounts.record_consent(user, version=1, store_questions=True)
-    assert (user.consent_version, user.store_questions) == (1, True)
+    user = accounts.record_consent(user, version=CONSENT_VERSION, store_questions=True)
+    assert (user.consent_version, user.store_questions) == (CONSENT_VERSION, True)
     assert user.consented_at == clock.now.isoformat()
 
 
