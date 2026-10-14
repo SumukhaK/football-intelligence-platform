@@ -178,7 +178,7 @@ Verify it is running:
 curl http://localhost:8000/v2/health
 # {"status":"ok","model_loaded":true,"explainability_available":true,"assistant_available":false,
 #  "fixture_features_available":true,"insights_available":true,"matches_through":"<date>",
-#  "last_refresh_at":<time or null>,"last_refresh_error":null,"version":"2.5.0"}
+#  "last_refresh_at":<time or null>,"last_refresh_error":null,"version":"2.5.1"}
 ```
 
 Try a prediction. Only the team names are needed; the server computes the features from match history (ADR 008):

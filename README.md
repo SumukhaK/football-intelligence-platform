@@ -20,7 +20,7 @@ The Football Intelligence Platform ingests 26 seasons of match data from Europe'
 
 It is a complete, working system — not a notebook or a prototype. Twelve build stages take it from an empty repository to a tested, documented, end-to-end product: ingestion → validation → feature engineering → model training → explainability → a FastAPI backend → a locally-grounded RAG assistant → a Compose Multiplatform Android app → full integration testing.
 
-**1,531 tests: 1,345 Python and 186 Android. Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes results and fixtures daily without a restart, and the app keeps working offline with the last data it saw.** It is also ready to host: a container image, health probes, structured logs and traces, alerts as code, and a hosted model for the assistant, all off by default so the local setup is unchanged.
+**1,531 tests: 1,345 Python and 186 Android. Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes results and fixtures daily without a restart, and the app keeps working offline with the last data it saw.** It is also hosted: since 14 October 2026 a private, invite-only staging service runs on Google Cloud Run, with the assistant on Cloudflare Workers AI, short-term chat memory, a safety check and alerts. The cloud features are all off by default, so the local setup is unchanged.
 
 ---
 
@@ -108,7 +108,7 @@ flowchart TD
 | **Explainability** | SHAP 0.52 (`TreeExplainer`), Matplotlib |
 | **AI Assistant** | Ollama locally (`qwen2.5:7b-instruct`, `nomic-embed-text`); Cloudflare Workers AI hosted (`gemma-4-26b-a4b-it`, `qwen3-embedding-0.6b`); numpy vector store, custom RAG pipeline |
 | **Backend** | FastAPI, Pydantic v2, `pydantic-settings`, uvicorn, OpenTelemetry |
-| **Hosting** | Docker, Google Cloud Run, Firestore, Secret Manager, Cloud Logging, Trace and Monitoring (staging not yet deployed) |
+| **Hosting** | Docker, Cloud Build, Google Cloud Run, Firestore, Secret Manager, Cloud Logging, Trace and Monitoring (invite-only staging live since 14 October 2026, v2.5.0) |
 | **Mobile** | Kotlin, Compose Multiplatform, Ktor client, Koin DI, AndroidX Navigation Compose, Material 3 |
 | **Tooling** | uv (Python dependency management), Gradle 8.8, Ruff, Black, MyPy, Detekt, Spotless, ShellCheck |
 | **Testing** | pytest (1,345 tests), JUnit 5, MockK, Ktor MockEngine (186 tests) |
