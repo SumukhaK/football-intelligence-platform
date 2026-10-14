@@ -9,6 +9,10 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- The assistant talks like a football-savvy friend: the answer first, one line of context, natural replies to small talk; the grounding rules are unchanged (#122).
+- Chat answers reach users without sources or `[source: ...]` markers; the server logs both in `assistant.answer` (ADR 029).
+
 ---
 
 ## [2.3.0] — 2026-10-15

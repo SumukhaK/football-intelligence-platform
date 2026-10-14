@@ -18,7 +18,11 @@ from assistant.generation.generator import (
     ToolCall,
     ToolCallingGenerator,
 )
-from assistant.prompting.templates import DEFAULT_MIN_RELEVANCE, build_messages
+from assistant.prompting.templates import (
+    DEFAULT_MIN_RELEVANCE,
+    build_messages,
+    cited_sources,
+)
 from assistant.retrieval.retriever import RetrievedDoc, retrieve
 from assistant.retrieval.vector_store import VectorStore
 from assistant.tools.routing import Route, Router
@@ -184,6 +188,8 @@ class AssistantService:
             completion_tokens=turn.completion_tokens,
             cost_usd=None if turn.cost_usd is None else round(turn.cost_usd, 6),
             duration_ms=round((self._clock() - turn.started) * 1000),
+            sources=[source.source for source in response.sources],
+            cited=cited_sources(response.answer),
         )
         if _NO_INFO_MARKER in response.answer:
             reason = "model_declined" if retrieved or turn.rounds else "no_retrieval"

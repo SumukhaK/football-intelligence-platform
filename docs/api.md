@@ -426,6 +426,9 @@ provider is unreachable, out of quota or too slow. Predictions keep working.
 `workers_ai` (Cloudflare Workers AI, using `WORKERS_AI_ACCOUNT_ID`,
 `WORKERS_AI_API_TOKEN`, `WORKERS_AI_CHAT_MODEL` and `WORKERS_AI_EMBED_MODEL`)
 or `off`. `model` in the response names the chat model that wrote the answer.
+`sources` is always empty and the answer carries no `[source: ...]` markers:
+the model still cites, but the server logs its sources and citations in
+`assistant.answer` instead of sending them (ADR 029).
 
 For a match prediction, its SHAP explanation or a league's upcoming fixtures,
 the assistant calls tools that run the same services as `/v2/predict`,
