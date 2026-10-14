@@ -26,6 +26,7 @@ Maintained by the project architect. The implementation engineer updates documen
 |---|---|
 | [API Reference](api.md) | Both API versions, every endpoint, request fields, responses, errors and the rate limit |
 | [CLI Reference](reference/cli.md) | Every supported CLI command with options, examples, and expected output |
+| [Observability](observability/README.md) | Telemetry contract (log lines, request IDs, events, traces), the [local Grafana stack](observability/local-stack.md) and the cloud metrics and alerts |
 | [Repository Structure](repository-structure.md) | Every top-level directory: purpose, what belongs, what does not |
 
 ### Architecture
@@ -66,6 +67,8 @@ Maintained by the project architect. The implementation engineer updates documen
 | [Refit on All Seasons](reports/refit-all-seasons.md) | Frozen-split model vs a refit on every season through 2025/26, on the same 250 matches of 2026/27 (ADR 017) |
 | [Goals Model](reports/goals-model.md) | Dixon-Coles scoreline model and its evaluation |
 | [Kaggle Extras](reports/kaggle-extras.md) | xG, FIFA ratings and Champions League rest days tested; none adopted |
+| [Hosted Assistant Evals](reports/hosted-assistant-evals.md) | Workers AI models and index cut-off measured with both assistant evals |
+| [Hosting Baseline](reports/hosting-baseline.md) | Checks, image size, boot time per component and memory of the API image |
 | [UI/UX Review](reports/ui-ux-review.md) | App review against mobile design guidelines |
 
 ### Demos
@@ -123,10 +126,11 @@ docs/
   adr/            # Architectural Decision Records
   demo/           # Stage-by-stage demo scripts for technical interviews
   design/         # Design concepts (app icon and launch screen, ADR 016)
+  observability/  # Telemetry contract, event catalogue and local stack guide (ADR 024)
   plans/          # Plans for the work after Stage 12 (leagues, hosting, accounts, guardrails)
   reference/      # CLI command reference
   releases/       # Release notes and readiness reports
-  reports/        # Stage summaries and model/data experiment reports
+  reports/        # Stage summaries, model/data experiment reports and hosting measurements
   setup/          # Installation and quick-start guides
   showcase/       # Recruiter-facing showcase: portfolio summary, timeline, interview guide, demo scripts, demo video
   README.md       # This index

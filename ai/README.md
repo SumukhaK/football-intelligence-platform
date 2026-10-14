@@ -18,7 +18,7 @@ This directory owns:
 - Feature engineering for model training.
 - XGBoost model training and serialisation.
 - SHAP explainability — every prediction includes a SHAP explanation.
-- Retrieval-augmented generation pipeline using Ollama.
+- Retrieval-augmented generation pipeline: Ollama locally, Cloudflare Workers AI when hosted (ADR 025).
 - The Dixon-Coles goals model behind scoreline insights and league table projections.
 - The FastAPI backend (`backend/`), which serves all of the above.
 - Prompt templates and retrieval configuration.
@@ -36,7 +36,8 @@ This directory owns:
 ai/
   config/               # Settings (pydantic-settings) and path layout
   shared/               # Common types, exceptions, and constants
-    telemetry/          # Request IDs, JSON log lines and the event catalogue (ADR 024)
+    telemetry/          # Request IDs, JSON log lines, the event catalogue, traces and retries (ADR 024)
+    snapshot.py         # Serving snapshots: copy, manifest and verify (ADR 025)
   providers/            # Data provider adapters (football-data.co.uk used; FBref, Understat adapters)
   ingestion/            # Downloader, storage, season backfill, daily live refresh, fixtures (openfootball)
   validation/           # DataFrame-level rules and schema compatibility checks
@@ -54,7 +55,6 @@ ai/
   model_registry/       # JSON model registry with git commit traceability
   assistant/            # RAG assistant: ingestion, chunking, embeddings, retrieval, generation
   backend/              # FastAPI application (see backend/README.md at the repo root)
-  docs/                 # Stage 8 and 10 demo guides and reports
   rag/, prompts/, datasets/  # Empty; the RAG code lives in assistant/, prompts in assistant/prompting/templates.py
   models/               # Serialised model artefacts (gitignored)
 ```
@@ -166,7 +166,7 @@ uv run pytest --cov --cov-report=term-missing
 - The assistant never invents facts. Every response is grounded in retrieved data or model output.
 - SHAP values accompany every prediction.
 - Prompt templates are version-controlled and tested.
-- Model selection favours the smallest Ollama model that meets quality thresholds.
+- Model selection favours the smallest model that meets quality thresholds: `qwen2.5:7b-instruct` locally (ADR 019), Gemma 4 26B on Workers AI ([evals](../docs/reports/hosted-assistant-evals.md)).
 - Fine-tuning and LoRA are out of scope. Improve quality through better retrieval and better prompts.
 - No model is merged without a passing evaluation run.
 
@@ -229,6 +229,8 @@ assistant/
   retrieval/      # VectorStore (numpy, file-persisted) + cosine retrieve()
   prompting/      # System prompt + build_messages()
   generation/     # Generator protocols + OllamaGenerator (plain and tool-calling chat)
+  workers_ai.py   # Workers AI embedder and generator (OpenAI-compatible REST, ADR 025)
+  providers.py    # Builds the configured provider's embedder and generator
   tools/          # Tool definition, run_tool() and the Router protocol (routing.py)
   services/       # AssistantService — retrieve, prompt, run tool calls, answer
   pipeline.py     # AssistantPipeline facade: build_index / load_index / query
@@ -245,6 +247,12 @@ uv run python -m assistant.pipeline --rebuild
 
 The default chat model is `qwen2.5:7b-instruct` (ADR 019); set
 `OLLAMA_CHAT_MODEL` to use another.
+
+With `ASSISTANT_PROVIDER=workers_ai` the same command embeds with Workers AI.
+Give the hosted index its own folder with `VECTOR_STORE_PATH`, and record its
+measured cut-off with `--min-relevance` (`python -m evaluation.relevance_cutoff`
+suggests one). The index saves its embedding model and cut-off in `index.json`,
+and the server refuses an index whose model doesn't match its embedder.
 
 ### Knowledge sources loaded
 

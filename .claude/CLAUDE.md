@@ -10,7 +10,7 @@ Build an AI-first football analytics application that demonstrates practical AI 
 
 - Ingest and process structured football match and player data into a queryable dataset.
 - Train an XGBoost model to predict match outcomes with interpretable SHAP explanations.
-- Build a football intelligence assistant using Ollama with prompt engineering and retrieval-augmented generation.
+- Build a football intelligence assistant with prompt engineering and retrieval-augmented generation: Ollama locally, a hosted model (Cloudflare Workers AI) when deployed (ADR 025).
 - Deliver a Compose Multiplatform Android-first frontend that consumes a FastAPI backend.
 - Demonstrate AI engineering practices: grounding, explainability, evaluation, and data quality.
 
@@ -57,7 +57,7 @@ The system follows Clean Architecture with strict layer separation. Each layer h
 - Prompt templates are version-controlled in `ai/assistant/prompting/templates.py` (`playbook/` is reserved for future template docs). They are tested like code.
 - Retrieval is done with lightweight vector search over processed datasets. No external embedding APIs in development.
 - Evaluation of the assistant is structured: track retrieval precision, answer faithfulness, and hallucination rate.
-- Model selection favours the smallest Ollama model that meets quality thresholds.
+- Model selection favours the smallest model that meets quality thresholds (ADR 019 locally; `docs/reports/hosted-assistant-evals.md` for the hosted model).
 - Never recommend fine-tuning. Improve quality through better retrieval, better prompts, and better data.
 
 ---
@@ -127,6 +127,7 @@ ai/             # ML training, SHAP analysis, evaluation scripts
 datasets/       # Raw and processed football data
 scripts/        # Setup, migration, and automation scripts
 tools/          # Shared CLI utilities
+infrastructure/ # Cloud metrics and alert policies as code (ADR 024)
 ```
 
 - One `README.md` per top-level directory explaining its purpose and contents.
@@ -278,7 +279,7 @@ Local development must work without any cloud services. All external dependencie
 
 ## 19. Project Stages
 
-These were the original stages. The project was built in 12 stages up to release v1.0.0 (`docs/reports/stage-NN-summary.md`), then extended in v2.0.0, v2.0.1 and v2.1.0 (`docs/releases/`).
+These were the original stages. The project was built in 12 stages up to release v1.0.0 (`docs/reports/stage-NN-summary.md`), then extended in v2.0.0, v2.0.1 and v2.1.0 (`docs/releases/`). Hosting work since then (telemetry, the container image, the hosted assistant, accounts in Firestore) follows `docs/plans/hosting-execution-tracker.md`; cloud features are opt-in settings, so the local core loop still needs no cloud.
 
 **Stage 1 — Data Foundation**
 Ingest raw football data, validate schemas, build a processed dataset ready for modelling.

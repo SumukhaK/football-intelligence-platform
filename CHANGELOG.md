@@ -17,11 +17,26 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Assistant evals: a grounding check that answers quote `/v2/predict` without invented numbers, and an abstention check for "I don't know" (#65, #66).
 - Invite-only sign-in and consent for hosted deployments: invites, sessions, a consent notice, bans and `scripts.manage_accounts`. Off locally (`AUTH_REQUIRED`); on, it guards every `/v2` data route and drops `/v1` (#79, ADR 022).
 - Android sign-in: a Sign in / Invite code screen under a green header, a consent notice after the first sign-in with an opt-in for storing question text, and Sign out in Settings. The app sends the session token on every request and returns to sign-in on a 401 (#84, ADR 022).
+- Favourite team onboarding and a My Team tab with the team's next match, and a season outlook for that team: projected finish and points and the chance of the title, top four and relegation, from `GET /v2/teams/{team}/outlook` (#80, #83, ADR 023).
+- Structured telemetry (ADR 024), in six steps: a versioned telemetry contract and event catalogue (#87); an `X-Request-ID` on every response and JSON log lines with `LOG_FORMAT=json` (#88); contract events for component loads, errors, sign-in, the daily refresh and the assistant (#89); OpenTelemetry traces of each request, retrieval, tool call and model call, to a local collector or Cloud Trace (#91); retries with backoff on outbound downloads, each attempt recorded (#92); and a local Grafana stack plus Cloud Monitoring metrics and alert policies as code in `infrastructure/monitoring/` (#100).
+- Hosting groundwork (ADR 025): `/v2/live` and `/v2/ready` probes (#95), immutable serving snapshots with a verified manifest (`scripts.build_snapshot`, #98), a non-root container image built and probed in CI (#99), and a baseline of boot time and memory (#108).
+- A Cloudflare Workers AI provider for the assistant, chosen with `ASSISTANT_PROVIDER` (Ollama stays the default), with deadlines, one retry, token counts and cost in the logs (#97). Its own index records the embedding model and cut-off, and the server refuses a mismatched index; Gemma 4 26B passes both assistant evals and is the hosted default (#103).
+- A Firestore account store for the cloud, chosen with `ACCOUNT_STORE` (#102, ADR 026).
+- A `staging` Android build, Football Intelligence -stg, that installs beside the local one and calls the hosted staging API (#105).
+- The app retries GET requests on 429, 502, 503 and 504 with backoff, honouring a short `Retry-After`; release builds shrink resources (#106).
+- Dependency vulnerability scans in CI: pip-audit over `uv.lock` and OSV-Scanner over the app's release dependencies (#107).
 
 ### Changed
 - The default chat model is `qwen2.5:7b-instruct` instead of `llama3.2`, which misquoted tool numbers and failed both assistant evals (ADR 019).
+- The chat route runs the model call in FastAPI's thread pool, so a slow answer no longer blocks other requests, and question text is no longer logged (#86).
+- Hardening for hosting: the rate limiter reads the client address behind a trusted proxy, bodies over 16 KB get 413, chat messages are capped at 1000 characters, responses send `nosniff`, and the server refuses to start on Cloud Run with sign-in off or the development telemetry salt (#101).
+- `anyio`, `pillow`, `virtualenv` and Ktor moved to versions without known advisories (#107).
+- Removed `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`, which don't apply to a single-maintainer portfolio project, and the duplicate stage 8 and 10 docs under `ai/docs/`; the README now states the licence and the data sources' terms up front.
 
 ### Fixed
+- Every settings class reads the shared `ai/.env` again; keys meant for one no longer stop the others from loading (#96).
+- `ASSISTANT_PROVIDER=off` turns the assistant off instead of stopping the server from starting (#104).
+- Release builds failed in R8 on a missing SLF4J class; they build again (#106).
 - The assistant's relevance cut-off let every retrieved chunk through; it now drops chunks that don't match the question (#66).
 - The likeliest-scores card explains why a draw can top it even when one side is the favourite (#75).
 - The grounding eval no longer flags numbers the assistant repeats from the API's own error message.

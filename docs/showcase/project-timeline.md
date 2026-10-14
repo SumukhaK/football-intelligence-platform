@@ -278,6 +278,8 @@ Those are the counts at v1.0.0.
 
 **Deliverables (ADRs 017–022):** the served model refit on every season to 2025/26 (ADR 017); assistant tools for predictions, explanations and fixtures (ADR 018), with `qwen2.5:7b-instruct` as the default chat model (ADR 019); season tools and a rule-based router for tables, results and derbies (ADR 021); grounding, abstention and season evals; team crests and league emblems (ADR 020); tap a fixture to predict it; invite-only sign-in and consent for hosted deployments, off locally (ADR 022).
 
+**Hosting groundwork (ADRs 023–026, PRs #80–#109):** a team season outlook (ADR 023); structured telemetry in six steps: a contract, request IDs and JSON logs, events, OpenTelemetry traces, retries with backoff, and a local Grafana stack with Cloud Monitoring alerts as code (ADR 024); and everything the API needs to run on Cloud Run: the chat model call moved off the event loop, liveness and readiness probes, verified artifact snapshots, a non-root container image, a Cloudflare Workers AI provider with its own index and a model chosen by both evals, request limits and a proxy-aware rate limiter, accounts in Firestore, a staging Android build with GET retries, and dependency scans in CI (ADR 025, ADR 026). The staging deployment is next.
+
 ---
 
-**Today: 6 releases, 23 ADRs, 1,135 tests (970 Python, 165 Android). One engineer.**
+**Today: 6 releases, 26 ADRs, 1,473 tests (1,304 Python, 169 Android). One engineer.**

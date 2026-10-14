@@ -6,9 +6,9 @@ A complete technical write-up of the platform's design, engineering decisions, a
 
 ## Executive Summary
 
-The Football Intelligence Platform is an end-to-end AI system for Europe's top five football leagues. It ingests 26 seasons of match results (46,709 matches), engineers 42 leakage-safe pre-match features, trains and evaluates an XGBoost classifier, and explains every prediction with SHAP in plain football language. A Dixon-Coles goals model adds likely scorelines and goal markets. A versioned FastAPI backend serves all of this, refreshes its data daily without a restart, rate limits clients, and can require invite-only sign-in and consent when hosted. A local LLM assistant is grounded in the platform's own documents via RAG, and calls the API's own prediction, fixtures and season services as tools. A native Android app built with Compose Multiplatform signs in with an invite, opens on upcoming fixtures (tap one to predict it), shows team crests, and keeps working offline.
+The Football Intelligence Platform is an end-to-end AI system for Europe's top five football leagues. It ingests 26 seasons of match results (46,709 matches), engineers 42 leakage-safe pre-match features, trains and evaluates an XGBoost classifier, and explains every prediction with SHAP in plain football language. A Dixon-Coles goals model adds likely scorelines and goal markets. A versioned FastAPI backend serves all of this, refreshes its data daily without a restart, rate limits clients, and can require invite-only sign-in and consent when hosted. An LLM assistant (Ollama locally, Cloudflare Workers AI when hosted) is grounded in the platform's own documents via RAG, and calls the API's own prediction, fixtures and season services as tools. A native Android app built with Compose Multiplatform signs in with an invite, opens on upcoming fixtures (tap one to predict it), shows team crests, and keeps working offline.
 
-It was built in 12 stages up to release v1.0.0, then extended in v2.0.0, v2.0.1 and v2.1.0, by a single engineer, with every structural change recorded as an ADR. The result: 1,135 tests (970 Python, 165 Android), 23 ADRs, zero cloud dependency, and a reproducible pipeline. On the 2023/24 test season the model reaches 52.5% accuracy and a log loss of 0.976, against 55.0% and 0.955 for bookmakers.
+It was built in 12 stages up to release v1.0.0, then extended in v2.0.0, v2.0.1 and v2.1.0, by a single engineer, with every structural change recorded as an ADR. Since then it has been made ready to host on Cloud Run: structured telemetry, a container image, probes, a hosted model for the assistant and accounts in Firestore, all opt-in. The result: 1,473 tests (1,304 Python, 169 Android), 26 ADRs, no cloud dependency for local use, and a reproducible pipeline. On the 2023/24 test season the model reaches 52.5% accuracy and a log loss of 0.976, against 55.0% and 0.955 for bookmakers.
 
 This document explains *why* each major component exists and the trade-offs behind it — not just what was built.
 
@@ -85,10 +85,14 @@ Every structural decision has an ADR (full text and index in [`docs/adr/`](../ad
 | Crests hot-linked from football-data.org | Quicker to scan; URLs only, no images in the repository | [020](../adr/020-team-crests-from-football-data-org.md) |
 | Season tools and a rule-based router | The 7B model refused most season questions; code now picks the tools | [021](../adr/021-season-tools-and-router.md) |
 | Invite-only accounts and consent | A stable identity per person for hosting; off by default locally | [022](../adr/022-invite-only-accounts-and-consent.md) |
+| Team season outlook | A projected finish and title, top-four and relegation chances per team | [023](../adr/023-team-season-outlook-endpoint.md) |
+| Structured telemetry and OpenTelemetry | One versioned contract for logs, events and traces, read by a separate ops console | [024](../adr/024-structured-telemetry-and-opentelemetry.md) |
+| Cloud serving on Cloud Run | Scale-to-zero container, probes, immutable snapshots, a hosted model provider | [025](../adr/025-cloud-serving-on-cloud-run.md) |
+| Firestore for accounts | Cloud Run's disk is wiped on restart, so accounts live in Firestore | [026](../adr/026-firestore-account-store.md) |
 
 Decisions made without a formal ADR but worth noting:
 
-- **Ollama over a hosted LLM API.** Keeps the entire system runnable offline with zero API cost and zero data leaving the machine.
+- **Ollama locally, a hosted API only when hosted.** Local development stays offline with zero API cost and no data leaving the machine; the hosted API (Workers AI's free tier) sits behind the same interfaces and is picked by one setting (ADR 025).
 - **numpy vector store over a managed vector DB.** At a few hundred document chunks, exact cosine similarity in numpy is faster to build, debug, and deploy than a vector database.
 - **Koin over Hilt/Dagger.** Compose Multiplatform's KMP target needs DI that works outside the Android annotation-processor toolchain.
 
@@ -101,7 +105,7 @@ Decisions made without a formal ADR but worth noting:
 - **Honest evaluation.** Hyperparameters are tuned by season walk-forward cross-validation on training seasons only. Every candidate is compared with the current model and with bookmaker odds on the same matches, and promoted only if a paired bootstrap interval excludes zero.
 - **Training/serving parity.** The server builds all 42 features from match history with the training pipeline itself; clients send only team names.
 - **Per-prediction explainability in plain language.** `POST /v2/explain` returns SHAP attribution for the specific match, with a fan-friendly label and value for every feature ("Arsenal win rate at home · 68%").
-- **Grounded-by-construction assistant.** The system prompt restricts the LLM to retrieved context, requires citations and a fixed "not enough information" reply, and the backend returns `503`, not a hallucination, when Ollama is offline. Numbers for matches and seasons come from tools that run the API's own services.
+- **Grounded-by-construction assistant.** The system prompt restricts the LLM to retrieved context, requires citations and a fixed "not enough information" reply, and the backend returns `503`, not a hallucination, when the model provider is down. Each index records its embedding model, and the server refuses to search one built with a different model. Numbers for matches and seasons come from tools that run the API's own services.
 - **Reproducible pipeline, not a notebook.** Backfill, features, training and explainability are scripted CLI commands (see the root README's Quick Start); every dataset and model is versioned.
 
 ---
@@ -170,6 +174,10 @@ The assistant cannot answer from parametric knowledge alone — the system promp
 
 FastAPI was chosen for native async support, automatic OpenAPI generation, and first-class Pydantic v2 integration. Key patterns:
 
+- **Blocking work off the event loop.** The chat route is a plain `def`, so FastAPI runs the model call in its thread pool and a slow answer never holds up other requests.
+- **Telemetry.** An `X-Request-ID` on every response, one JSON log line per event in a versioned contract, OpenTelemetry spans for retrieval, each tool call and each model call, and retries with backoff on outbound calls (ADR 024).
+- **Ready to host.** `/v2/live` and `/v2/ready` for the platform, a non-root image built from a verified snapshot, a proxy-aware rate limiter, request size limits, and settings that refuse to start in the cloud with sign-in off (ADR 025).
+
 - **Lifespan-based DI.** Both models, match history, goals models, fixtures and the assistant load once at startup into `app.state` — no per-request model reloading.
 - **API versions.** `/v2` is current. `/v1` and the unversioned paths keep the v1.0.0 contract with the original Premier League model, so older clients keep working.
 - **Invite-only sign-in.** With `AUTH_REQUIRED=true`, every `/v2` data route needs a session token and accepted consent, and `/v1` is not mounted. It is off by default, so local development needs no token ([ADR 022](../adr/022-invite-only-accounts-and-consent.md)).
@@ -196,10 +204,10 @@ Compose Multiplatform keeps the UI layer (Composables, theme, navigation contrac
 
 | Layer | Approach | Count |
 |---|---|---|
-| AI, data pipeline and backend | Unit and API contract tests (`TestClient` with mocked AI services) | 933 |
-| Backend integration | `TestClient` with the **real** trained model — no mocks | 37 |
-| Android | ViewModels (test-first), repositories with Ktor `MockEngine`, cache, session token, formatting | 165 |
-| **Total** | | **1,050** |
+| AI, data pipeline and backend | Unit and API contract tests (`TestClient` with mocked AI services) | 1,268 |
+| Backend integration | `TestClient` with the **real** trained model — no mocks | 36 |
+| Android | ViewModels (test-first), repositories with Ktor `MockEngine`, cache, session token, retries, formatting | 169 |
+| **Total** | | **1,473** |
 
 The integration suite deliberately avoids mocking the model — it asserts on real SHAP values being finite, real probabilities summing to 1.0, and latency staying under threshold. This catches bugs (numerical issues, serialization mismatches, performance regressions) that contract tests with mocks cannot.
 
@@ -262,9 +270,8 @@ Each release follows the same gate: full test suite green, all quality checks cl
 
 Not built yet, and each a deliberate scope decision:
 
-- Retrieval hit rate and faithfulness metrics for the assistant, run in CI (the grounding, abstention and season evals need Ollama and run locally).
+- Retrieval hit rate and faithfulness metrics for the assistant, run in CI (the grounding, abstention and season evals need a model provider and run locally; the hosting plan gates releases on them, step 5).
 - Player-level data (lineups, injuries) from a reliable source.
 - Automated monitoring of live accuracy and calibration, with drift alerts.
-- A shared account store for several server instances (ADR 022), HTTPS for public deployment; a shared rate-limit store behind a load balancer.
-- Automatic retries with backoff for downloads and LLM calls.
+- The staging deployment itself, then a closed beta and production ([hosting tracker](../plans/hosting-execution-tracker.md)). Accounts already live in Firestore for the cloud (ADR 026); the rate limiter is still per instance, which is fine at one instance.
 - Fine-tuning or LoRA training of any language model stays out of scope — a deliberate choice, not a gap.

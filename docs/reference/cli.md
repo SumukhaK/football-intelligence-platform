@@ -436,7 +436,7 @@ uv run pytest tests/training/test_trainer.py
 uv run pytest -m integration
 ```
 
-Expected: 970 tests pass with `uv run pytest`. 37 of them are integration tests, which need the trained model in `models/latest/`; `-m "not integration"` runs the other 933. Integration tests are not skipped by default.
+Expected: 1,304 tests pass with `uv run pytest`. 36 of them are integration tests, which need the trained model in `models/latest/`; `-m "not integration"` runs the other 1,268. Integration tests are not skipped by default.
 
 ---
 
@@ -547,11 +547,12 @@ Set them in `ai/.env` (copy `ai/.env.example`). Every value below is the default
 | `POST` | `/v2/predict` | Match outcome prediction (H/D/A) with probabilities |
 | `POST` | `/v2/explain` | Prediction + full SHAP feature contributions |
 | `POST` | `/v2/insights` | Likely scores, expected goals and goal markets from the goals model |
-| `POST` | `/v2/assistant/chat` | RAG assistant chat (requires Ollama + built index) |
+| `POST` | `/v2/assistant/chat` | RAG assistant chat (needs a built index and its provider: Ollama, or Workers AI with `ASSISTANT_PROVIDER=workers_ai`) |
 | `GET` | `/v2/teams/{team}/crest` | Redirect to the team's crest image (ADR 020) |
 | `GET` | `/v2/competitions/{competition}/emblem` | Redirect to the league's emblem image (ADR 020) |
 | `POST` | `/v2/auth/redeem-invite`, `/v2/auth/login`, `/v2/auth/logout` | Invite-only sign-in (ADR 022) |
 | `GET` / `POST` | `/v2/me`, `/v2/me/consent` | The signed-in user, and accepting the notice |
+| `GET` | `/v2/live`, `/v2/ready` | Liveness and readiness probes (ADR 025) |
 | `GET` | `/docs` | Swagger UI — interactive API documentation |
 | `GET` | `/redoc` | ReDoc — alternative API documentation |
 
@@ -581,7 +582,7 @@ curl -s -X POST http://localhost:8000/v2/predict \
 
 ### `python -m scripts.manage_accounts`
 
-Invites people and bans or unbans accounts in `ACCOUNTS_PATH` (ADR 022).
+Invites people and bans or unbans accounts in `ACCOUNTS_PATH`, or in Firestore with `ACCOUNT_STORE=firestore` and `GCP_PROJECT_ID` (ADR 022, ADR 026). For Firestore, sign in first with `gcloud auth application-default login`.
 
 ```sh
 uv run python -m scripts.manage_accounts invite --email sam@example.com
@@ -591,13 +592,30 @@ uv run python -m scripts.manage_accounts unban --email sam@example.com
 
 `invite` prints a one-time code valid for 7 days; send it to the person privately. They redeem it in the app with a password of at least 10 characters. Inviting an existing account again lets them reset their password. `ban` and `unban` print the account's new status, or exit with code 1 when there is no account for the email.
 
+### `python -m scripts.build_snapshot`
+
+Builds or verifies the serving snapshot the container image is made from (ADR 025).
+
+```sh
+# A new snapshot of the files the API loads, with the hosted index
+ASSISTANT_VECTOR_STORE_PATH=assistant/vector_store_workers_ai   uv run python -m scripts.build_snapshot --out ../snapshot
+
+# Leave the assistant index out
+uv run python -m scripts.build_snapshot --out ../snapshot --no-index
+
+# Check a snapshot against its manifest; exits 1 on any difference
+uv run python -m scripts.build_snapshot --verify ../snapshot
+```
+
+It copies both models, the registry, the newest results and fixtures datasets and the index into a new folder laid out like the repository, and writes `manifest.json` with each file's size and SHA-256 and a snapshot ID derived from them. It never writes into a folder that isn't empty. The Dockerfile verifies the snapshot during the build.
+
 ---
 
 ## AI Assistant Index
 
 ### `python -m assistant.pipeline`
 
-Builds the RAG knowledge index. Requires Ollama running with `nomic-embed-text` pulled.
+Builds the RAG knowledge index with the provider `ASSISTANT_PROVIDER` names: Ollama (the default, needs `nomic-embed-text` pulled) or Workers AI (needs `WORKERS_AI_ACCOUNT_ID` and `WORKERS_AI_API_TOKEN`).
 
 **Usage:**
 ```sh
@@ -606,7 +624,13 @@ uv run python -m assistant.pipeline --rebuild
 
 # Build the index only if it does not exist yet; otherwise load it
 uv run python -m assistant.pipeline
+
+# A Workers AI index in its own folder, with its measured cut-off
+ASSISTANT_PROVIDER=workers_ai VECTOR_STORE_PATH=assistant/vector_store_workers_ai \
+  uv run python -m assistant.pipeline --rebuild --min-relevance 0.77
 ```
+
+`--min-relevance` (default 0.81, measured for `nomic-embed-text`) is saved with the embedding model in the index's `index.json`; the backend uses that cut-off and refuses an index whose embedding model doesn't match its own.
 
 Both print `Index built: <N> chunks in <vector store path>`. Without `--rebuild`, an existing index is loaded and its chunk count is printed; nothing is re-embedded.
 
@@ -619,9 +643,18 @@ ollama pull qwen2.5:7b-instruct
 **Environment variables:** `assistant.pipeline` reads `OLLAMA_BASE_URL`, `OLLAMA_CHAT_MODEL` and `OLLAMA_EMBED_MODEL` like the backend, plus `VECTOR_STORE_PATH` (default `assistant/vector_store`) and `KNOWLEDGE_BASE_ROOT` (default `.`). The backend names those two `ASSISTANT_VECTOR_STORE_PATH` and `ASSISTANT_KNOWLEDGE_ROOT`; keep them pointing at the same place.
 
 **Outputs:**
-- `assistant/vector_store/` — persisted numpy vector store (embeddings + metadata)
+- `assistant/vector_store/` — persisted numpy vector store (embeddings, documents and `index.json`)
 
-The chat model must support tool calling (`qwen2.5:7b-instruct` does; see ADR 019 for why it is the default), because the assistant calls the prediction, explanation and fixtures services (ADR 018).
+The chat model must support tool calling (`qwen2.5:7b-instruct` and the hosted default both do; see ADR 019 and the [hosted evals](../reports/hosted-assistant-evals.md)), because the assistant calls the prediction, explanation and fixtures services (ADR 018).
+
+### `python -m evaluation.relevance_cutoff`
+
+Embeds the abstention eval's questions with the configured provider and prints each one's best retrieval score against the configured index, then suggests a cut-off midway between the in-scope and out-of-scope groups. Exits 1 if no cut-off separates them.
+
+```sh
+ASSISTANT_PROVIDER=workers_ai VECTOR_STORE_PATH=assistant/vector_store_workers_ai \
+  uv run python -m evaluation.relevance_cutoff
+```
 
 ### `python -m evaluation.assistant_grounding`
 
@@ -656,9 +689,12 @@ All three need the trained model, match history, fixtures, the index and a runni
 Run from the `frontend/` directory.
 
 ```sh
-# Build debug APK
-./gradlew assembleDebug         # macOS/Linux
-.\gradlew.bat assembleDebug     # Windows PowerShell
+# Build the local debug APK
+./gradlew assembleLocalDebug         # macOS/Linux
+.\gradlew.bat assembleLocalDebug     # Windows PowerShell
+
+# Build the staging app (needs staging.baseUrl in local.properties)
+./gradlew assembleStagingDebug
 
 # Run unit tests
 ./gradlew testDebugUnitTest
@@ -674,7 +710,7 @@ Run from the `frontend/` directory.
 ./gradlew detekt testDebugUnitTest assembleDebug spotlessCheck
 ```
 
-The app calls the backend at `http://10.0.2.2:8000/v2` (the Android emulator's address for your computer).
+The `local` app calls the backend at `http://10.0.2.2:8000/v2` (the Android emulator's address for your computer). The `staging` app, Football Intelligence -stg, calls the address in `staging.baseUrl`.
 
 ---
 

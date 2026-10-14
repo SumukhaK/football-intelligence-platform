@@ -70,10 +70,10 @@ Confirm the AI workspace is clean before running any pipelines:
 uv run ruff check .          # Linting — should print: All checks passed!
 uv run black --check .       # Formatting — should print: N files would be left unchanged.
 uv run mypy .                # Type checking — should print: Success: no issues found in N source files
-uv run pytest                # Tests — 970 tests
+uv run pytest                # Tests — 1,304 tests
 ```
 
-`uv run pytest` runs all 970 tests, including the 37 integration tests. The integration tests need a trained model in `ai/models/latest/` (and one needs network access), so on a clean checkout run `uv run pytest -m "not integration"` (933 tests) until you have trained the model below.
+`uv run pytest` runs all 1,304 tests, including the 36 integration tests. The integration tests need a trained model in `ai/models/latest/` (and one needs network access), so on a clean checkout run `uv run pytest -m "not integration"` (1,268 tests) until you have trained the model below.
 
 ---
 
@@ -189,9 +189,9 @@ curl -X POST http://localhost:8000/v2/predict -H "Content-Type: application/json
 
 Interactive API docs are at `http://localhost:8000/docs`. The full contract is in [`docs/api.md`](../api.md).
 
-### Step 6 — Build the AI Assistant Index (optional — requires Ollama)
+### Step 6 — Build the AI Assistant Index (optional)
 
-The assistant requires [Ollama](https://ollama.com) running locally with two models pulled.
+Locally the assistant uses [Ollama](https://ollama.com) with two models pulled.
 
 ```sh
 # Pull models (one-time, ~5 GB)
@@ -204,6 +204,8 @@ uv run python -m assistant.pipeline --rebuild
 
 It prints `Index built: <N> chunks in assistant/vector_store`. Restart the backend after building the index — it will detect the index and enable `/v2/assistant/chat`.
 
+To use Cloudflare Workers AI instead of Ollama, add `WORKERS_AI_ACCOUNT_ID` and `WORKERS_AI_API_TOKEN` to `ai/.env`, build a second index with the hosted embedding model, and start the backend with `ASSISTANT_PROVIDER=workers_ai` and `ASSISTANT_VECTOR_STORE_PATH` pointing at it. The commands are in [the hosted evals report](../reports/hosted-assistant-evals.md). The server refuses an index built with a different embedding model than the one it queries with (ADR 025).
+
 ---
 
 ## Build Android
@@ -215,14 +217,14 @@ Requires JDK 17+ on your `PATH`.
 cd frontend
 
 # Build debug APK
-./gradlew assembleDebug        # macOS/Linux
-.\gradlew.bat assembleDebug    # Windows PowerShell
+./gradlew assembleLocalDebug        # macOS/Linux
+.\gradlew.bat assembleLocalDebug    # Windows PowerShell
 
 # Run all frontend checks
 ./gradlew detekt testDebugUnitTest assembleDebug spotlessCheck
 ```
 
-The debug APK is written to `frontend/app/build/outputs/apk/debug/app-debug.apk`.
+The debug APK is written to `frontend/app/build/outputs/apk/local/debug/app-local-debug.apk`. The `staging` flavor builds a second app for the hosted staging API; see [the frontend README](../../frontend/README.md#backend-base-url).
 
 The app calls the backend at `http://10.0.2.2:8000/v2`, which is the Android emulator's address for your computer. Start the backend (Step 5) before opening the app. If the backend is not reachable, the app shows saved data with an offline banner; pull down to refresh.
 
@@ -318,7 +320,7 @@ After setup, verify the following:
 - [ ] `uv run ruff check .` — prints `All checks passed!`
 - [ ] `uv run black --check .` — prints `N files would be left unchanged.`
 - [ ] `uv run mypy .` — prints `Success: no issues found`
-- [ ] `uv run pytest` — all 970 tests pass (after training)
+- [ ] `uv run pytest` — all 1,304 tests pass (after training)
 - [ ] The backfill produces `datasets/processed/football_data/match_results_top5_v<ts>.csv`
 - [ ] Feature engineering produces `datasets/features/top5/feature_matrix.parquet`
 - [ ] Training produces `ai/models/latest/model.joblib` and `ai/models/latest/model_card.md`

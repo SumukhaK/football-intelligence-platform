@@ -14,7 +14,14 @@ Presentation layer. This module knows about all feature modules. No feature modu
 - `AuthRoutes` — the sign-in and notice routes, drawn edge to edge, and `FollowSession`, which returns to sign-in from any screen when the session ends (sign out or a 401) (ADR 022).
 - `TeamPickerRoute` — the favourite team picker, for onboarding and from Settings.
 - `TopLevelDestination`, `BottomNavBar` — Fixtures, Predict, My Team and Assistant.
-- `di/AppModule` — the session, HTTP client, response cache, API service and auth API.
+- `di/AppModule` — the session, HTTP client, response cache, API service and auth API. `NetworkConfig` takes its base URL from the build flavor.
+
+## Build flavors
+
+- `local` — `com.footballintelligence.app`, calls the API on the developer's PC at `http://10.0.2.2:8000`.
+- `staging` — `com.footballintelligence.app.stg`, named Football Intelligence -stg, calls the hosted staging API at `staging.baseUrl` from `frontend/local.properties`. Building a staging APK by name without an `https://` address fails.
+
+Release builds are minified and resource-shrunk by R8; `proguard-rules.pro` holds the one extra rule they need.
 
 ## Responsibilities
 
