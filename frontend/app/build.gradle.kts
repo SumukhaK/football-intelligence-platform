@@ -91,14 +91,20 @@ dependencies {
     testRuntimeOnly(libs.junit5.engine)
 }
 
-// A staging APK with no address would install and then fail every request.
+// A staging APK with no address would install and then fail every request,
+// so asking for one by name fails at once. `assembleDebug` and the like still
+// build it with an empty address, so a local build needs no staging URL.
 val stagingUrlIsSet = stagingBaseUrl.startsWith("https://")
+val stagingRequested = gradle.startParameter.taskNames.any { it.contains("Staging") }
 tasks
     .matching { it.name.matches(Regex("(assemble|bundle|install)Staging.*")) }
     .configureEach {
-        // A local copy, so the action holds a Boolean, not the build script.
+        // Local copies, so the action holds Booleans, not the build script.
         val urlIsSet = stagingUrlIsSet
+        val requested = stagingRequested
         doFirst {
-            check(urlIsSet) { "Set staging.baseUrl=https://... in frontend/local.properties" }
+            check(urlIsSet || !requested) {
+                "Set staging.baseUrl=https://... in frontend/local.properties"
+            }
         }
     }
