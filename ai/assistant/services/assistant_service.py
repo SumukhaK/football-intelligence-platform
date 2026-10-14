@@ -18,6 +18,7 @@ from assistant.generation.generator import (
     ToolCall,
     ToolCallingGenerator,
 )
+from assistant.grounding import ungrounded_numbers
 from assistant.prompting.templates import (
     DEFAULT_MIN_RELEVANCE,
     build_messages,
@@ -169,9 +170,41 @@ class AssistantService:
         )
         if route is not None:
             self._run_calls(messages, route.calls, turn)
-        response = self._response(self._answer(messages, turn), retrieved)
+        answer = self._answer(messages, turn)
+        if history:
+            answer = self._recheck(messages, answer, turn)
+        response = self._response(answer, retrieved)
         self._log_answer(question, response, retrieved, turn, routed=False)
         return response
+
+    def _recheck(self, messages: list[dict[str, Any]], answer: str, turn: _Turn) -> str:
+        """Ask once more when a follow-up's numbers came from no tool this turn.
+
+        With history in view the model may reuse or work out an earlier
+        number instead of calling the tool again (ADR 030). The sources are
+        this turn's user message and tool results, never earlier answers.
+        """
+        sources = [m["content"] for m in messages if m["role"] in ("user", "tool")]
+        invented = ungrounded_numbers(answer, sources)
+        if not invented:
+            return answer
+        emit(
+            logger,
+            EventName.GUARDRAIL_EVENT,
+            "A follow-up answer used numbers no tool returned; asking again",
+            kind="grounding",
+            outcome="retried",
+        )
+        messages.append({"role": "assistant", "content": answer})
+        messages.append(
+            {
+                "role": "user",
+                "content": f"These numbers came from no tool in this turn: "
+                f"{', '.join(invented)}. Call the tool again and answer with "
+                "its numbers only.",
+            }
+        )
+        return self._answer(messages, turn)
 
     def _log_answer(
         self,

@@ -161,3 +161,27 @@ def test_tool_results_round_probabilities() -> None:
     )
     result = _call(state, "predict_match", home_team="Arsenal", away_team="Chelsea")
     assert (result["probability_home"], result["probability_draw"]) == (0.65, 0.227)
+
+
+def test_a_match_without_a_league_is_found_in_the_teams_league() -> None:
+    """A follow-up such as "why?" may name no league; the teams decide it."""
+    state = _state()
+    state.season_service = MagicMock()
+    rosters = {
+        "Premier League": ["Arsenal", "Leeds"],
+        "Bundesliga": ["Bayern Munich", "Dortmund"],
+    }
+    state.season_service.teams.side_effect = lambda league: rosters[league]
+    result = _call(
+        state, "explain_match", home_team="Bayern Munich", away_team="Dortmund"
+    )
+    assert result["competition"] == "Bundesliga"
+
+
+def test_a_match_in_no_served_league_falls_back_to_the_default() -> None:
+    state = _state()
+    state.season_service = MagicMock()
+    state.season_service.teams.return_value = ["Arsenal", "Leeds"]
+    _call(state, "predict_match", home_team="Atlantis FC", away_team="Arsenal")
+    sent = state.prediction_service.predict.call_args.args[0]
+    assert sent.competition == "Premier League"

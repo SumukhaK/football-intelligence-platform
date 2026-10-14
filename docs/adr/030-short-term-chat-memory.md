@@ -48,7 +48,9 @@ Constraints:
 5. **History is context, never evidence.** The history enters as earlier chat
    turns below the system prompt. A new prompt rule says every number must come
    from a tool called in this turn. Answers are stored without citations
-   (ADR 029).
+   (ADR 029). Because a prompt rule alone did not hold, a follow-up answer is
+   checked in code: if it holds a number that neither this turn's tool results
+   nor its context account for, the model is asked once more.
 6. **Nothing new is stored.** The server keeps no conversation. Logs gain
    `history_turns`, `history_tokens` and `history_dropped` (counts only). The
    consent notice stays at version 2.

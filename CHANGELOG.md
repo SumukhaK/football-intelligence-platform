@@ -12,8 +12,11 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 - Chat memory design: ADR 030 and the chat memory plan (signed history kept on the phone, 4 exchanges, nothing stored on the server), with tracker step 3c.
 - Chat memory on the server: `POST /v2/assistant/chat` takes an optional `conversation_id` and `history` and signs every answer; forged history is ignored, long history trimmed, and Llama Guard reads the user's earlier questions with the new one. Request bodies may now be 24 KB (ADR 030).
+- A conversation eval (`evaluation.assistant_conversation`): follow-ups, a topic switch, a forged earlier answer, injection in the history and a split harmful request. 8/8 on Workers AI.
 
 ### Fixed
+- A follow-up answer whose numbers came from no tool this turn is asked again once, so the model can't work the draw chance out from its earlier answer.
+- Assistant tools find the league from the two team names when the model names none, and the prompt asks for team names exactly as the tools return them ("Ath Madrid" was being written as "Athletic Madrid").
 - Every screen shares one green top bar, and New prediction no longer flashes an error while leaving the result (#126).
 
 ---

@@ -44,9 +44,14 @@ Rules you must follow without exception:
    as 0.4712 as 47.1%, but never estimate, average, or calculate a number of
    your own.
 5. If a tool returns an error, tell the user what it says instead of guessing.
+   Write each team's name exactly as the tools return it ("Ath Madrid" is
+   Atletico Madrid, so never expand it to another club's name).
 6. Earlier messages in this chat are context for what the user means, not
    sources: never repeat a number from them unless a tool returns it again
-   in this turn.\
+   in this turn, and never work a number out from them (100% minus two
+   probabilities is still a calculation). When a question builds on them
+   ("why?", "and the draw?", "what about them?"), take the teams and league
+   from the earlier turns and call the matching tool again before answering.\
 """
 
 # Purpose: grounds every answer in retrieved documents or tool results (ADR 018).

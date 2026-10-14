@@ -43,6 +43,15 @@ The first use of staging on a phone showed stiff, report-like answers. The syste
 
 Rerun with `@cf/google/gemma-4-26b-a4b-it`, thinking off: abstention 20/20, grounding 11/11, season 7/7. The grounding eval used to count "Ligue 1" as an invented number when an answer suggested other leagues; it now treats the league name as a name.
 
+## Chat memory (15 October 2026)
+
+The first run of the new conversation eval (`evaluation.assistant_conversation`, ADR 030) found two weaknesses, both now fixed:
+
+- **Worked-out numbers in follow-ups.** Asked "and the draw?", the model often skipped the tool. It took 100% minus the two win chances from its earlier answer, and sometimes got it wrong (25.3% or 25.7% for a true 24.7%). Prompt wording did not stop it. The server now checks a follow-up's numbers against this turn's tool results and context, and asks the model once more when any number came from nowhere.
+- **Wrong club names.** The model wrote "Ath Madrid" as "Athletic Madrid", and its next tool call failed on that name. The prompt now says to write team names exactly as the tools return them. A tool call that names no league now finds the league the two teams play in, instead of defaulting to the Premier League.
+
+Run with `@cf/google/gemma-4-26b-a4b-it`, thinking off, the safety check on: abstention 20/20, grounding 11/11, season 7/7, conversation 8/8.
+
 ## Still to do
 
 - Run both evals against staging (tracker step 3).
