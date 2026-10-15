@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -44,6 +45,7 @@ import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.home.resources.Res
 import com.footballintelligence.feature.home.resources.cd_fixture
 import com.footballintelligence.feature.home.resources.cd_fixture_predict
+import com.footballintelligence.feature.home.resources.cd_fixture_your_team
 import com.footballintelligence.feature.home.resources.cd_league_tab
 import com.footballintelligence.feature.home.resources.fixture_time_tbc
 import com.footballintelligence.feature.home.resources.fixtures_empty
@@ -150,10 +152,18 @@ private fun FixtureList(days: List<FixtureDay>, league: String, onFixtureClick: 
 @Composable
 private fun FixtureCard(fixture: FixtureRow, onClick: () -> Unit) {
     val time = fixture.time ?: stringResource(Res.string.fixture_time_tbc)
-    val description = stringResource(Res.string.cd_fixture, fixture.homeTeam, fixture.awayTeam, time)
+    val match = stringResource(Res.string.cd_fixture, fixture.homeTeam, fixture.awayTeam, time)
+    val description = if (fixture.isYourTeam) stringResource(Res.string.cd_fixture_your_team, match) else match
     val clickLabel = stringResource(Res.string.cd_fixture_predict)
+    // Your team's matches stand out in the colour the result card uses.
+    val colors = if (fixture.isYourTeam) {
+        CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+    } else {
+        CardDefaults.cardColors()
+    }
     Card(
         onClick = onClick,
+        colors = colors,
         modifier = Modifier
             .fillMaxWidth()
             .clearAndSetSemantics {

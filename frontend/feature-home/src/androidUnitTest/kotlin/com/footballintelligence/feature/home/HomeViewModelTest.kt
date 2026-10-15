@@ -40,8 +40,8 @@ class HomeViewModelTest {
             NetworkResult.Success(FixturesResponse(competition, fixtures), cachedAt)
     }
 
-    private fun viewModel(favouriteLeague: String? = null) =
-        HomeViewModel(repository, favouriteLeague, zone, Locale.US)
+    private fun viewModel(favouriteLeague: String? = null, yourTeam: String? = null) =
+        HomeViewModel(repository, favouriteLeague, zone, Locale.US, yourTeam)
 
     @BeforeEach
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
@@ -89,6 +89,13 @@ class HomeViewModelTest {
             listOf(FixtureRow("Arsenal", "Leeds", "12:30"), FixtureRow("Man City", "Fulham", null)),
             state.days.first().fixtures,
         )
+    }
+
+    @Test
+    fun `your team's fixtures are marked`() {
+        respond("Premier League")
+        val state = viewModel(yourTeam = "Leeds").state.value as HomeUiState.Success
+        assertEquals(listOf(true, false), state.days.first().fixtures.map { it.isYourTeam })
     }
 
     @Test

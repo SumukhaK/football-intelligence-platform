@@ -4,6 +4,7 @@
     <string name="fixtures_empty">No upcoming %1$s fixtures yet.</string>
     <string name="fixture_time_tbc">TBC</string>
     <string name="cd_fixture">%1$s against %2$s, kick-off %3$s</string>
+    <string name="cd_fixture_your_team">%1$s. Your team</string>
     <string name="cd_fixture_predict">Predict this match</string>
     <string name="cd_league_tab">Show %1$s fixtures</string>
     <string name="backend_status">Backend Status</string>

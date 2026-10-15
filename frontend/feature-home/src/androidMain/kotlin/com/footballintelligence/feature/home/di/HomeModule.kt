@@ -17,6 +17,9 @@ import org.koin.dsl.module
 val homeModule = module {
     single<HealthRepository> { DefaultHealthRepository(api = get()) }
     single<FixturesRepository> { DefaultFixturesRepository(api = get()) }
-    viewModel { HomeViewModel(repository = get(), favouriteLeague = get<FavouriteTeamStore>().load()?.league) }
+    viewModel {
+        val favourite = get<FavouriteTeamStore>().load()
+        HomeViewModel(repository = get(), favouriteLeague = favourite?.league, yourTeam = favourite?.team)
+    }
     viewModel { BackendStatusViewModel(repository = get()) }
 }
