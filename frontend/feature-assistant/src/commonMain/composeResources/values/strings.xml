@@ -13,7 +13,6 @@
     <string name="starters_heading">Try asking</string>
     <string name="starter_pick">How does the app pick a winner?</string>
     <string name="starter_next_match">Who is favourite in my team's next match?</string>
-    <string name="starter_draw_tag">What does the Draw possible tag mean?</string>
     <string name="unavailable_title">Assistant Unavailable</string>
     <string name="unavailable_body">The AI assistant requires Ollama running locally with the knowledge index built. %1$s</string>
 </resources>

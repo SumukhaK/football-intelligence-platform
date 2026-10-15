@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.footballintelligence.feature.assistant.resources.Res
-import com.footballintelligence.feature.assistant.resources.starter_draw_tag
 import com.footballintelligence.feature.assistant.resources.starter_next_match
 import com.footballintelligence.feature.assistant.resources.starter_pick
 import com.footballintelligence.feature.assistant.resources.starters_heading
@@ -29,7 +28,6 @@ import org.jetbrains.compose.resources.stringResource
 private val STARTERS: List<StringResource> = listOf(
     Res.string.starter_pick,
     Res.string.starter_next_match,
-    Res.string.starter_draw_tag,
 )
 
 /** The empty chat: what the assistant is for, and starter questions that send on a tap. */
