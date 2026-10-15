@@ -6,9 +6,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.footballintelligence.feature.team.resources.Res
 import com.footballintelligence.feature.team.resources.cd_outlook_chart
 import com.footballintelligence.feature.team.resources.outlook_chart_axis
+import com.footballintelligence.feature.team.resources.outlook_percent
 import com.footballintelligence.feature.team.resources.outlook_relegation
 import com.footballintelligence.feature.team.resources.outlook_title
 import com.footballintelligence.feature.team.resources.outlook_top_four
@@ -56,11 +57,14 @@ fun ChanceChart(history: List<ChancePoint>, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = modifier.clearAndSetSemantics { contentDescription = description },
     ) {
-        Canvas(Modifier.fillMaxWidth().height(CHART_HEIGHT)) {
-            drawGrid(grid)
-            drawChance(history.map { it.title }, colors.title)
-            drawChance(history.map { it.topFour }, colors.topFour)
-            drawChance(history.map { it.relegation }, colors.relegation)
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            ScaleLabels()
+            Canvas(Modifier.weight(1f).height(CHART_HEIGHT)) {
+                drawGrid(grid)
+                drawChance(history.map { it.title }, colors.title)
+                drawChance(history.map { it.topFour }, colors.topFour)
+                drawChance(history.map { it.relegation }, colors.relegation)
+            }
         }
         Text(
             stringResource(Res.string.outlook_chart_axis, first.played, last.played),
@@ -84,6 +88,21 @@ internal fun chanceColors() = ChanceColors(
     topFour = MaterialTheme.colorScheme.tertiary,
     relegation = MaterialTheme.colorScheme.error,
 )
+
+/** The 100%, 50% and 0% marks beside the grid lines, so a low line reads as low. */
+@Composable
+private fun ScaleLabels() {
+    Box(Modifier.width(SCALE_WIDTH).height(CHART_HEIGHT)) {
+        SCALE_MARKS.forEach { (place, level) ->
+            Text(
+                stringResource(Res.string.outlook_percent, percent(level)),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(place),
+            )
+        }
+    }
+}
 
 @Composable
 private fun Legend(label: String, color: Color) {
@@ -122,3 +141,5 @@ private const val PERCENT = 100
 // Lines at 0, 50% and 100%.
 private val GRID_LEVELS = listOf(0f, 0.5f, 1f)
 private val CHART_HEIGHT = 120.dp
+private val SCALE_WIDTH = 32.dp
+private val SCALE_MARKS = listOf(Alignment.TopEnd to 1f, Alignment.CenterEnd to 0.5f, Alignment.BottomEnd to 0f)
