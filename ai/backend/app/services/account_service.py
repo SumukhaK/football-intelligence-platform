@@ -60,6 +60,20 @@ class InvalidInviteError(AuthError):
     outcome = "invalid_invite"
 
 
+class InviteAlreadyUsedError(AuthError):
+    """The right code, already used: the account exists, so sign in instead."""
+
+    status_code, error = 409, "Invite already used"
+    outcome = "invite_used"
+
+
+class InviteExpiredError(AuthError):
+    """The right code, past its 7 days."""
+
+    status_code, error = 410, "Invite expired"
+    outcome = "invite_expired"
+
+
 class WeakPasswordError(AuthError):
     """The chosen password is too short."""
 
@@ -155,13 +169,16 @@ class AccountService:
     def _redeem(self, email: str, code: str, password: str) -> NewSession:
         invite = self._store.get_invite(email)
         now = self._clock()
-        if (
-            invite is None
-            or invite.redeemed_at is not None
-            or datetime.fromisoformat(invite.expires_at) < now
-            or not hmac.compare_digest(invite.code_hash, _digest(code))
-        ):
+        # Only someone holding the right code learns more than "wrong".
+        if invite is None or not hmac.compare_digest(invite.code_hash, _digest(code)):
             raise InvalidInviteError("The invite code is wrong, used or expired.")
+        if invite.redeemed_at is not None:
+            raise InviteAlreadyUsedError(
+                "This code already set up your account. Sign in with the password "
+                "you chose, or ask for a new code to reset it."
+            )
+        if datetime.fromisoformat(invite.expires_at) < now:
+            raise InviteExpiredError("This code has expired. Ask for a new one.")
         if len(password) < MIN_PASSWORD_LENGTH:
             raise WeakPasswordError(f"Use at least {MIN_PASSWORD_LENGTH} characters.")
         user = self._store.get_user(email) or User(email, "", now.isoformat())

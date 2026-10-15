@@ -35,7 +35,12 @@ _ERRORS = {
         "Sets the password for an invited email with the one-time code from "
         "the owner, and signs in. Redeeming a new code resets the password."
     ),
-    responses={400: _ERRORS[400], 422: {"description": "Password too short."}},
+    responses={
+        400: _ERRORS[400],
+        409: {"description": "The right code, already used: sign in instead."},
+        410: {"description": "The right code, expired: ask for a new one."},
+        422: {"description": "Password too short."},
+    },
 )
 def redeem_invite(
     body: RedeemInviteRequest, accounts: AccountServiceDep
