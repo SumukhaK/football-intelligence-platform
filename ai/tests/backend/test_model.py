@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 
@@ -110,6 +111,8 @@ def test_v1_model_returns_model_name(
 ) -> None:
     """GET /v1/model carries the same public model name."""
     mock_registry.list_versions.return_value = [mock_registry.latest.return_value]
-    client.app.state.v1_model_version = "test-v1"
+    app = client.app
+    assert isinstance(app, FastAPI)
+    app.state.v1_model_version = "test-v1"
     response = client.get("/v1/model")
     assert response.json()["model_name"] == "Drishti"
