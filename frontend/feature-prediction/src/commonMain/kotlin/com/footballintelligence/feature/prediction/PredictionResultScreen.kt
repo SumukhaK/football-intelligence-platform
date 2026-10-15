@@ -1,7 +1,5 @@
 package com.footballintelligence.feature.prediction
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,7 +16,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -26,7 +23,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +34,8 @@ import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LeagueEmblem
 import com.footballintelligence.core.ui.LoadingView
 import com.footballintelligence.core.ui.OfflineBanner
+import com.footballintelligence.core.ui.OutcomeBar
+import com.footballintelligence.core.ui.OutcomeSplit
 import com.footballintelligence.core.ui.RefreshableContent
 import com.footballintelligence.core.ui.TeamCrest
 import com.footballintelligence.core.ui.appBarColors
@@ -45,14 +43,10 @@ import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.prediction.resources.Res
 import com.footballintelligence.feature.prediction.resources.action_explain
 import com.footballintelligence.feature.prediction.resources.action_new_prediction
-import com.footballintelligence.feature.prediction.resources.confidence
 import com.footballintelligence.feature.prediction.resources.draw_possible
 import com.footballintelligence.feature.prediction.resources.draw_possible_detail
 import com.footballintelligence.feature.prediction.resources.fixture
 import com.footballintelligence.feature.prediction.resources.no_prediction
-import com.footballintelligence.feature.prediction.resources.outcome_draw
-import com.footballintelligence.feature.prediction.resources.outcome_team_win
-import com.footballintelligence.feature.prediction.resources.percent
 import com.footballintelligence.feature.prediction.resources.probabilities
 import com.footballintelligence.feature.prediction.resources.result_title
 import org.jetbrains.compose.resources.stringResource
@@ -152,9 +146,15 @@ private fun ResultContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(stringResource(Res.string.probabilities), style = MaterialTheme.typography.titleSmall)
-                ProbabilityRow(stringResource(Res.string.outcome_team_win, result.homeTeam), result.probabilityHome)
-                ProbabilityRow(stringResource(Res.string.outcome_draw), result.probabilityDraw)
-                ProbabilityRow(stringResource(Res.string.outcome_team_win, result.awayTeam), result.probabilityAway)
+                OutcomeBar(
+                    homeTeam = result.homeTeam,
+                    awayTeam = result.awayTeam,
+                    split = OutcomeSplit(
+                        home = percentOf(result.probabilityHome),
+                        draw = percentOf(result.probabilityDraw),
+                        away = percentOf(result.probabilityAway),
+                    ),
+                )
             }
         }
 
@@ -207,10 +207,6 @@ private fun ResultHeader(result: PredictionResult, winner: String?) {
             if (result.drawPossible) {
                 DrawPossibleTag()
             }
-            Text(
-                stringResource(Res.string.confidence, percentOf(result.confidence)),
-                style = MaterialTheme.typography.bodyLarge,
-            )
         }
     }
 }
@@ -237,30 +233,6 @@ private fun ResultActions(onExplain: () -> Unit, onNewPrediction: () -> Unit) {
 }
 
 @Composable
-private fun ProbabilityRow(label: String, probability: Double) {
-    val fill = remember { Animatable(0f) }
-    LaunchedEffect(probability) {
-        fill.animateTo(probability.toFloat(), tween(durationMillis = FILL_MILLIS))
-    }
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(label, style = MaterialTheme.typography.bodyMedium)
-            Text(
-                stringResource(Res.string.percent, percentOf(probability)),
-                style = MaterialTheme.typography.titleSmall,
-            )
-        }
-        LinearProgressIndicator(
-            progress = { fill.value },
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-}
-
-@Composable
 private fun DrawPossibleTag() {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
@@ -279,5 +251,3 @@ private fun DrawPossibleTag() {
         )
     }
 }
-
-private const val FILL_MILLIS = 700

@@ -17,6 +17,7 @@ import com.footballintelligence.core.model.ScoreProbability
 import com.footballintelligence.feature.team.repository.TeamRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
+import com.footballintelligence.core.ui.OutcomeSplit
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -125,12 +126,14 @@ class MyTeamViewModelTest {
         respond()
         val state = viewModel().state.value as MyTeamUiState.Success
         val expected = NextMatch(
+            team = "Arsenal",
             homeTeam = "Everton",
             awayTeam = "Arsenal",
             day = "Sun 18 Oct",
             time = "16:30",
             pick = TeamOutcome.WIN,
             pickPercent = 52,
+            split = OutcomeSplit(home = 20, draw = 28, away = 52),
             drawPossible = true,
             reasons = listOf(MatchReason("a", "0.4"), MatchReason("b", "0.3"), MatchReason("c", "0.2")),
             scorelines = listOf(Scoreline(0, 1, 14), Scoreline(1, 1, 12), Scoreline(0, 2, 11)),
