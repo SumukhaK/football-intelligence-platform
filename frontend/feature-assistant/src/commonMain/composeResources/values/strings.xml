@@ -2,7 +2,7 @@
 <resources>
     <string name="assistant_title">AI Assistant</string>
     <string name="new_chat">New chat</string>
-    <string name="input_placeholder">Ask about football analytics...</string>
+    <string name="input_placeholder">Ask about a match or a pick…</string>
     <string name="cd_message_input">Message input</string>
     <string name="cd_send_message">Send message</string>
     <string name="confidence">Confidence: %1$s%</string>
