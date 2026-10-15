@@ -2,7 +2,6 @@
 <resources>
     <string name="home_title">Football Intelligence</string>
     <string name="fixtures_empty">No upcoming %1$s fixtures yet.</string>
-    <string name="fixtures_versus">vs</string>
     <string name="fixture_time_tbc">TBC</string>
     <string name="cd_fixture">%1$s against %2$s, kick-off %3$s</string>
     <string name="cd_fixture_predict">Predict this match</string>

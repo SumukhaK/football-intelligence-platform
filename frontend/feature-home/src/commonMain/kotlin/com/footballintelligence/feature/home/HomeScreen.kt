@@ -47,7 +47,6 @@ import com.footballintelligence.feature.home.resources.cd_fixture_predict
 import com.footballintelligence.feature.home.resources.cd_league_tab
 import com.footballintelligence.feature.home.resources.fixture_time_tbc
 import com.footballintelligence.feature.home.resources.fixtures_empty
-import com.footballintelligence.feature.home.resources.fixtures_versus
 import com.footballintelligence.feature.home.resources.home_title
 import org.jetbrains.compose.resources.stringResource
 
@@ -168,7 +167,7 @@ private fun FixtureCard(fixture: FixtureRow, onClick: () -> Unit) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
                 time,
@@ -176,15 +175,10 @@ private fun FixtureCard(fixture: FixtureRow, onClick: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.width(TIME_WIDTH),
             )
-            TeamName(fixture.homeTeam, TextAlign.End)
-            TeamCrest(fixture.homeTeam)
-            Text(
-                stringResource(Res.string.fixtures_versus),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            TeamCrest(fixture.awayTeam)
-            TeamName(fixture.awayTeam, TextAlign.Start)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                TeamLine(fixture.homeTeam)
+                TeamLine(fixture.awayTeam)
+            }
             // The row opens the prediction; the chevron says so to sighted users.
             Icon(
                 Icons.AutoMirrored.Filled.KeyboardArrowRight,
@@ -195,18 +189,23 @@ private fun FixtureCard(fixture: FixtureRow, onClick: () -> Unit) {
     }
 }
 
-/** One line per name so rows keep one height; a long name ends in an ellipsis instead of breaking mid-word. */
+/**
+ * One team per line, home above away, as most football apps list matches: a
+ * name gets the row's full width, so long names neither break mid-word nor
+ * get cut short.
+ */
 @Composable
-private fun RowScope.TeamName(team: String, align: TextAlign) {
-    Text(
-        team,
-        style = MaterialTheme.typography.bodyLarge,
-        fontWeight = FontWeight.Medium,
-        textAlign = align,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        modifier = Modifier.weight(1f),
-    )
+private fun TeamLine(team: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        TeamCrest(team)
+        Text(
+            team,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
 }
 
 private val TIME_WIDTH = 44.dp
