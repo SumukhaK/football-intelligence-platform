@@ -133,8 +133,11 @@ never marks the API unready. `/health` stays the place for diagnostics.
 
 ## GET /model
 
-Registry entry of the served model: `model_version`, `dataset_version`,
-`training_timestamp`, `git_commit` and `metrics`. Returns 503 when no
+Registry entry of the served model: `model_name`, `model_version`,
+`dataset_version`, `training_timestamp`, `git_commit` and `metrics`.
+`model_name` is the model's public name, `Drishti` by default
+(`PREDICTION_MODEL_NAME`, ADR 033); `model_version` stays the technical
+identifier. Returns 503 when no
 model is registered. A model trained with a test season reports its test
 metrics (`accuracy`, `log_loss`, ...). The served refit (ADR 017) has no test
 season, so it reports its scores on the current season so far, named by season

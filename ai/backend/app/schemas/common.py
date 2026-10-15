@@ -73,6 +73,9 @@ class ReadyResponse(BaseModel):
 class ModelInfoResponse(BaseModel):
     """Response body for GET /model."""
 
+    model_name: str = Field(
+        ..., description="Public name of the prediction model, e.g. Drishti."
+    )
     model_version: str = Field(..., description="Registered model version tag.")
     dataset_version: str = Field(
         ..., description="Source dataset version the model was trained on."

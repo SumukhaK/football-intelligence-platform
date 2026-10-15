@@ -14,6 +14,7 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Request
 
+from backend.app.config import get_settings
 from backend.app.dependencies import (
     FixtureFeatureServiceDep,
     OptionalFixtureFeatureServiceDep,
@@ -155,6 +156,7 @@ def model_v1(request: Request) -> ModelInfoResponse:
     if entry is None:
         raise ModelNotAvailableError("The v1 model is not in the registry.")
     return ModelInfoResponse(
+        model_name=get_settings().prediction_model_name,
         model_version=entry.version,
         dataset_version=entry.source_dataset_version,
         training_timestamp=entry.created_at.isoformat(),

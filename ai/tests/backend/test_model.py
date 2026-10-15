@@ -20,6 +20,22 @@ def test_model_returns_version(client: TestClient) -> None:
     assert response.json()["model_version"] == "test-v1"
 
 
+def test_model_returns_model_name(client: TestClient) -> None:
+    """GET /model body includes the public model name from settings."""
+    response = client.get("/v2/model")
+    assert response.json()["model_name"] == "Drishti"
+
+
+def test_model_name_comes_from_settings(client: TestClient) -> None:
+    """GET /model reports whatever PREDICTION_MODEL_NAME is set to."""
+    from backend.app.config import get_settings
+
+    settings = get_settings().model_copy(update={"prediction_model_name": "Other"})
+    with patch("backend.app.routers.model.get_settings", return_value=settings):
+        response = client.get("/v2/model")
+    assert response.json()["model_name"] == "Other"
+
+
 def test_model_returns_dataset_version(client: TestClient) -> None:
     """GET /model body includes dataset_version."""
     response = client.get("/v2/model")
@@ -87,3 +103,13 @@ def test_model_503_when_registry_empty(tmp_path: Path) -> None:
             with TestClient(bare_app, raise_server_exceptions=False) as c:
                 response = c.get("/v2/model")
     assert response.status_code == 503
+
+
+def test_v1_model_returns_model_name(
+    client: TestClient, mock_registry: MagicMock
+) -> None:
+    """GET /v1/model carries the same public model name."""
+    mock_registry.list_versions.return_value = [mock_registry.latest.return_value]
+    client.app.state.v1_model_version = "test-v1"
+    response = client.get("/v1/model")
+    assert response.json()["model_name"] == "Drishti"

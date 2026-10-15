@@ -115,3 +115,4 @@ ADRs are never deleted.
 | [030](030-short-term-chat-memory.md) | Short-term chat memory with signed history | Accepted |
 | [031](031-favourite-team-in-chat.md) | The favourite team in chat | Accepted |
 | [032](032-specific-invite-errors.md) | Specific errors for used and expired invites | Accepted |
+| [033](033-public-model-name-drishti.md) | A public name for the prediction model: Drishti | Accepted |
