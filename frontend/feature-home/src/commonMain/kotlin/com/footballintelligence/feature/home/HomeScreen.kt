@@ -8,10 +8,14 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
@@ -28,6 +32,7 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
@@ -42,7 +47,6 @@ import com.footballintelligence.feature.home.resources.cd_fixture_predict
 import com.footballintelligence.feature.home.resources.cd_league_tab
 import com.footballintelligence.feature.home.resources.fixture_time_tbc
 import com.footballintelligence.feature.home.resources.fixtures_empty
-import com.footballintelligence.feature.home.resources.fixtures_versus
 import com.footballintelligence.feature.home.resources.home_title
 import org.jetbrains.compose.resources.stringResource
 
@@ -169,28 +173,39 @@ private fun FixtureCard(fixture: FixtureRow, onClick: () -> Unit) {
                 time,
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(0.22f),
+                modifier = Modifier.width(TIME_WIDTH),
             )
-            Text(
-                fixture.homeTeam,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.End,
-                modifier = Modifier.weight(0.35f),
-            )
-            TeamCrest(fixture.homeTeam)
-            Text(
-                stringResource(Res.string.fixtures_versus),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            TeamCrest(fixture.awayTeam)
-            Text(
-                fixture.awayTeam,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.weight(0.35f),
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                TeamLine(fixture.homeTeam)
+                TeamLine(fixture.awayTeam)
+            }
+            // The row opens the prediction; the chevron says so to sighted users.
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
 }
+
+/**
+ * One team per line, home above away, as most football apps list matches: a
+ * name gets the row's full width, so long names neither break mid-word nor
+ * get cut short.
+ */
+@Composable
+private fun TeamLine(team: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        TeamCrest(team)
+        Text(
+            team,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+private val TIME_WIDTH = 44.dp

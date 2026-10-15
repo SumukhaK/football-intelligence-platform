@@ -83,7 +83,8 @@ class AssistantViewModel(
                     } else {
                         val errorMessage = ChatMessage(
                             role = MessageRole.ASSISTANT,
-                            text = "Error: ${result.message}",
+                            text = result.message,
+                            errorKind = result.kind,
                         )
                         conversationHistory.add(errorMessage)
                         _state.value = AssistantUiState.Chatting(conversationHistory.toList())

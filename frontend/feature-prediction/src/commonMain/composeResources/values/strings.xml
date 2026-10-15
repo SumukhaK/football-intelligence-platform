@@ -20,6 +20,7 @@
     <string name="outcome_draw">Draw</string>
     <string name="draw_possible">Draw possible</string>
     <string name="draw_possible_detail">About 3 in 10 games like this end level.</string>
+    <string name="your_team">Your team: %1$s</string>
     <string name="confidence">Confidence: %1$s%</string>
     <string name="model_version">Model: %1$s</string>
     <string name="probabilities">Probabilities</string>
@@ -52,7 +53,6 @@
     <string name="explanation_title">Explanation</string>
     <string name="no_explanation">No explanation loaded.</string>
     <string name="prediction_label">Prediction: %1$s</string>
-    <string name="dataset_and_model">Dataset: %1$s · Model: %2$s</string>
     <string name="leans_title">Why the model leans this way</string>
     <string name="leans_subtitle">Factors that pushed toward this prediction</string>
     <string name="against_title">What counts against it</string>
