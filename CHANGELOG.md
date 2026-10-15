@@ -9,6 +9,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- The README demo thumbnail is back to an app screenshot beside the title and a play button, now showing My Team for Manchester United, instead of the plain "Prediction" title card.
+
 ### Fixed
 - A 429 from Cloud Run while no instance is free yet (an HTML page, not the backend's JSON) now reads "The server is waking up" instead of the sign-in lockout message, and "Can't reach the server" no longer tells friends to check that a backend is running.
 
