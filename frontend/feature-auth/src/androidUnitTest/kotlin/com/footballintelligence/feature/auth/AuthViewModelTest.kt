@@ -9,8 +9,12 @@ import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -68,6 +72,34 @@ class AuthViewModelTest {
         assertEquals(AuthUiState.Loading, vm.state.value)
         vm.submit()
         coVerify(exactly = 1) { repository.signIn(any(), any()) }
+    }
+
+    @Test
+    fun `a slow sign-in says the server is waking up`() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val answer = CompletableDeferred<NetworkResult<Unit>>()
+        coEvery { repository.signIn(any(), any()) } coAnswers { answer.await() }
+        fillSignIn()
+        vm.submit()
+        advanceTimeBy(WAKING_UP_AFTER_MS - 1)
+        assertEquals(AuthUiState.Loading, vm.state.value)
+        advanceTimeBy(2)
+        assertEquals(AuthUiState.WakingUp, vm.state.value)
+        vm.submit()
+        coVerify(exactly = 1) { repository.signIn(any(), any()) }
+        answer.complete(NetworkResult.Error("Unauthorized", code = 401))
+        advanceUntilIdle()
+        assertEquals(AuthProblem.WRONG_CREDENTIALS, (vm.state.value as AuthUiState.Error).problem)
+    }
+
+    @Test
+    fun `a quick failure never shows the waking up message`() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        coEvery { repository.signIn(any(), any()) } returns NetworkResult.Error("Unauthorized", code = 401)
+        fillSignIn()
+        vm.submit()
+        advanceUntilIdle()
+        assertEquals(AuthProblem.WRONG_CREDENTIALS, (vm.state.value as AuthUiState.Error).problem)
     }
 
     @ParameterizedTest

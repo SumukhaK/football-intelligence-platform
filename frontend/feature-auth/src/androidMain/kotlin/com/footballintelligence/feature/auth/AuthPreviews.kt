@@ -36,6 +36,10 @@ private fun SignInLoadingPreview() = Auth(signInForm, AuthUiState.Loading)
 
 @Preview(heightDp = 844, widthDp = 390)
 @Composable
+private fun SignInWakingUpPreview() = Auth(signInForm, AuthUiState.WakingUp)
+
+@Preview(heightDp = 844, widthDp = 390)
+@Composable
 private fun SignInErrorPreview() = Auth(signInForm, AuthUiState.Error(AuthProblem.WRONG_CREDENTIALS))
 
 @Preview(heightDp = 844, widthDp = 390)

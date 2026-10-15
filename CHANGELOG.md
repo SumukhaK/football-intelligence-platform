@@ -20,6 +20,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - A 429 from Cloud Run while no instance is free yet (an HTML page, not the backend's JSON) now reads "The server is waking up" instead of the sign-in lockout message, and "Can't reach the server" no longer tells friends to check that a backend is running.
+- Signing in while the server starts from cold no longer fails at 30 seconds. The app pings the server when it opens or comes back to the front, so it starts booting early; sign-in and invite redemption wait up to 60 seconds and say "The server is waking up" after 4; and a sign-in Cloud Run turns away with its own 429 (the request never reached the app) is retried, up to twice like a GET.
 
 ---
 
