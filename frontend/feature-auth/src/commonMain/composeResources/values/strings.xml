@@ -15,6 +15,7 @@
     <string name="action_create_account">Create account</string>
     <string name="cd_show_password">Show password</string>
     <string name="cd_hide_password">Hide password</string>
+    <string name="waking_up">The server is waking up. This can take up to a minute the first time.</string>
     <string name="error_wrong_credentials">That email and password don't match.</string>
     <string name="error_too_many_tries">Too many tries. Wait 15 minutes and try again.</string>
     <string name="error_invalid_invite">That code doesn't match this email. Check both, or paste the code instead of typing it.</string>

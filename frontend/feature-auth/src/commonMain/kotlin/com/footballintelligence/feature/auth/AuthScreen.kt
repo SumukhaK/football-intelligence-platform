@@ -58,6 +58,7 @@ import com.footballintelligence.feature.auth.resources.error_wrong_credentials
 import com.footballintelligence.feature.auth.resources.ic_kickoff
 import com.footballintelligence.feature.auth.resources.tab_invite_code
 import com.footballintelligence.feature.auth.resources.tab_sign_in
+import com.footballintelligence.feature.auth.resources.waking_up
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -115,7 +116,7 @@ private fun Header() {
 
 @Composable
 private fun AuthSheet(form: AuthForm, uiState: AuthUiState, events: AuthEvents, modifier: Modifier) {
-    val loading = uiState == AuthUiState.Loading
+    val loading = uiState.isBusy
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -131,6 +132,13 @@ private fun AuthSheet(form: AuthForm, uiState: AuthUiState, events: AuthEvents, 
         }
         Column(Modifier.padding(top = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             SubmitButton(form, loading, events.onSubmit)
+            if (uiState == AuthUiState.WakingUp) {
+                Text(
+                    stringResource(Res.string.waking_up),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
             if (uiState is AuthUiState.Error) {
                 Text(
                     authErrorText(uiState),

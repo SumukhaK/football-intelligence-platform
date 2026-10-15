@@ -51,12 +51,22 @@ enum class AuthProblem {
 sealed class AuthUiState {
     data object Idle : AuthUiState()
     data object Loading : AuthUiState()
+
+    /** Still loading after [WAKING_UP_AFTER_MS]: the server is most likely starting from cold. */
+    data object WakingUp : AuthUiState()
     data class Error(
         val problem: AuthProblem,
         val kind: ErrorKind = ErrorKind.UNKNOWN,
         val message: String = "",
     ) : AuthUiState()
 }
+
+/** True while a sign-in is on its way: the form is locked and the button spins. */
+val AuthUiState.isBusy: Boolean
+    get() = this == AuthUiState.Loading || this == AuthUiState.WakingUp
+
+/** The server answers in about a second when warm; longer means it is starting up. */
+const val WAKING_UP_AFTER_MS = 4_000L
 
 /** The backend's sign-in failures (ADR 022) as screen errors. */
 fun NetworkResult.Error.toAuthError(): AuthUiState.Error {

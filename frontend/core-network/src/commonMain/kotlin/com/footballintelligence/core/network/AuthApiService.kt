@@ -7,6 +7,7 @@ import com.footballintelligence.core.model.NetworkResult
 import com.footballintelligence.core.model.RedeemInviteRequest
 import com.footballintelligence.core.model.SessionResponse
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -17,6 +18,8 @@ import io.ktor.http.isSuccess
 /**
  * Sign-in and consent endpoints (ADR 022). Never cached: a saved answer
  * would sign someone in, or skip the notice, without asking the server.
+ * Sign-in is often the first request after the server scaled to zero, so it
+ * waits [NetworkConfig.signInTimeoutMs] rather than the usual timeout.
  */
 class AuthApiService(
     private val client: HttpClient,
@@ -24,13 +27,22 @@ class AuthApiService(
 ) {
     private val base get() = "${config.baseUrl}/${config.apiVersion}"
 
+    /**
+     * Asks the liveness probe so a server scaled to zero starts booting
+     * before the user's first real request. The answer, or its absence, is
+     * ignored: this only saves time.
+     */
+    suspend fun wake() {
+        guarded { NetworkResult.Success(client.get("$base/live")) }
+    }
+
     /** Checks an email and password and returns a session token. */
     suspend fun login(request: LoginRequest): NetworkResult<SessionResponse> =
-        guarded { postJson("$base/auth/login", request).decode() }
+        guarded { postJson("$base/auth/login", request, config.signInTimeoutMs).decode() }
 
     /** Sets the password for an invited email with its one-time code, and signs in. */
     suspend fun redeemInvite(request: RedeemInviteRequest): NetworkResult<SessionResponse> =
-        guarded { postJson("$base/auth/redeem-invite", request).decode() }
+        guarded { postJson("$base/auth/redeem-invite", request, config.signInTimeoutMs).decode() }
 
     /** Ends the session behind the current token. */
     suspend fun logout(): NetworkResult<Unit> =
@@ -46,9 +58,13 @@ class AuthApiService(
     suspend fun acceptConsent(request: ConsentRequest): NetworkResult<Me> =
         guarded { postJson("$base/me/consent", request).decode() }
 
-    private suspend inline fun <reified T> postJson(url: String, body: T) =
+    private suspend inline fun <reified T> postJson(url: String, body: T, timeoutMs: Long = config.timeoutMs) =
         client.post(url) {
             contentType(ContentType.Application.Json)
             setBody(body)
+            timeout {
+                requestTimeoutMillis = timeoutMs
+                socketTimeoutMillis = timeoutMs
+            }
         }
 }

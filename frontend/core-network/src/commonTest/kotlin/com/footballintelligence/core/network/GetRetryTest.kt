@@ -51,6 +51,36 @@ class GetRetryTest {
     }
 
     @Test
+    fun `a POST is retried when Cloud Run had no instance free`() = runTest {
+        // Cloud Run's own 429 is a page, not the backend's JSON: the request never reached the app.
+        var posts = 0
+        val response = HttpClient(
+            MockEngine {
+                posts++
+                if (posts == 1) {
+                    respond("<html>Rate exceeded.</html>", HttpStatusCode.TooManyRequests, HTML)
+                } else {
+                    respond("{}", HttpStatusCode.OK, JSON)
+                }
+            },
+        ) { installGetRetry(Random(0)) }.post("http://test/v2/auth/login")
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals(2, posts)
+    }
+
+    @Test
+    fun `a POST is not retried when the backend itself says too many requests`() = runTest {
+        var posts = 0
+        HttpClient(
+            MockEngine {
+                posts++
+                respond("""{"error":"Too many attempts"}""", HttpStatusCode.TooManyRequests, JSON)
+            },
+        ) { installGetRetry(Random(0)) }.post("http://test/v2/auth/login")
+        assertEquals(1, posts)
+    }
+
+    @Test
     fun `a client error is not retried`() = runTest {
         client(HttpStatusCode.NotFound to null).get("http://test/v2/teams/x")
         assertEquals(1, calls)
@@ -64,7 +94,7 @@ class GetRetryTest {
 
     @Test
     fun `a short Retry-After is honoured`() {
-        assertTrue(isRetryable(HttpMethod.Get, 429, retryAfterSeconds = 2))
+        assertTrue(isRetryable(HttpMethod.Get, 429, retryAfterSeconds = 2, fromPlatform = false))
         assertEquals(2_000L, retryDelayMs(retry = 1, retryAfterSeconds = 2, random = Random(0)))
     }
 
@@ -78,8 +108,11 @@ class GetRetryTest {
 
     @Test
     fun `writes and other statuses are never retryable`() {
-        assertFalse(isRetryable(HttpMethod.Post, 503, retryAfterSeconds = null))
-        assertFalse(isRetryable(HttpMethod.Get, 500, retryAfterSeconds = null))
-        assertFalse(isRetryable(HttpMethod.Get, 401, retryAfterSeconds = null))
+        assertFalse(isRetryable(HttpMethod.Post, 503, retryAfterSeconds = null, fromPlatform = true))
+        assertFalse(isRetryable(HttpMethod.Get, 500, retryAfterSeconds = null, fromPlatform = false))
+        assertFalse(isRetryable(HttpMethod.Get, 401, retryAfterSeconds = null, fromPlatform = false))
     }
 }
+
+private val HTML = headersOf("Content-Type", "text/html")
+private val JSON = headersOf("Content-Type", "application/json")
