@@ -28,18 +28,18 @@ class AssistantRepositoryTest {
 
     @Test
     fun `chat sends message to api and returns success`() = runTest {
-        coEvery { api.chat(ChatRequest("test question", "conv-1", emptyList())) } returns
+        coEvery { api.chat(ChatRequest("test question", "conv-1", emptyList(), null)) } returns
             NetworkResult.Success(response)
-        val result = repository.chat("test question", "conv-1", emptyList())
+        val result = repository.chat("test question", "conv-1", emptyList(), null)
         assertTrue(result is NetworkResult.Success)
         assertEquals(response, (result as NetworkResult.Success).data)
-        coVerify(exactly = 1) { api.chat(ChatRequest("test question", "conv-1", emptyList())) }
+        coVerify(exactly = 1) { api.chat(ChatRequest("test question", "conv-1", emptyList(), null)) }
     }
 
     @Test
     fun `chat returns error on api failure`() = runTest {
         coEvery { api.chat(any()) } returns NetworkResult.Error("503", 503)
-        val result = repository.chat("hello", "conv-1", emptyList())
+        val result = repository.chat("hello", "conv-1", emptyList(), null)
         assertTrue(result is NetworkResult.Error)
         assertEquals(503, (result as NetworkResult.Error).code)
     }
