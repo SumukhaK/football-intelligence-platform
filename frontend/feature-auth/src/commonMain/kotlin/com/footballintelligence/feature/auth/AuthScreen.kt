@@ -50,6 +50,8 @@ import com.footballintelligence.feature.auth.resources.auth_app_name
 import com.footballintelligence.feature.auth.resources.auth_invite_only
 import com.footballintelligence.feature.auth.resources.error_blocked
 import com.footballintelligence.feature.auth.resources.error_invalid_invite
+import com.footballintelligence.feature.auth.resources.error_invite_expired
+import com.footballintelligence.feature.auth.resources.error_invite_used
 import com.footballintelligence.feature.auth.resources.error_password_too_short
 import com.footballintelligence.feature.auth.resources.error_too_many_tries
 import com.footballintelligence.feature.auth.resources.error_wrong_credentials
@@ -212,6 +214,8 @@ private fun authErrorText(error: AuthUiState.Error): String = when (error.proble
     AuthProblem.WRONG_CREDENTIALS -> stringResource(Res.string.error_wrong_credentials)
     AuthProblem.TOO_MANY_TRIES -> stringResource(Res.string.error_too_many_tries)
     AuthProblem.INVALID_INVITE -> stringResource(Res.string.error_invalid_invite)
+    AuthProblem.INVITE_USED -> stringResource(Res.string.error_invite_used)
+    AuthProblem.INVITE_EXPIRED -> stringResource(Res.string.error_invite_expired)
     AuthProblem.PASSWORD_TOO_SHORT -> stringResource(Res.string.error_password_too_short)
     AuthProblem.BLOCKED -> stringResource(Res.string.error_blocked)
     AuthProblem.OTHER -> errorMessage(error.kind, error.message)

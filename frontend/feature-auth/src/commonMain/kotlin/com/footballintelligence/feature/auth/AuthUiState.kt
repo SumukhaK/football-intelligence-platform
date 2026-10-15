@@ -38,6 +38,8 @@ enum class AuthProblem {
     WRONG_CREDENTIALS,
     TOO_MANY_TRIES,
     INVALID_INVITE,
+    INVITE_USED,
+    INVITE_EXPIRED,
     PASSWORD_TOO_SHORT,
     BLOCKED,
 
@@ -67,6 +69,8 @@ private fun authProblemFor(code: Int?): AuthProblem =
         HTTP_BAD_REQUEST -> AuthProblem.INVALID_INVITE
         HTTP_UNAUTHORIZED -> AuthProblem.WRONG_CREDENTIALS
         HTTP_FORBIDDEN -> AuthProblem.BLOCKED
+        HTTP_CONFLICT -> AuthProblem.INVITE_USED
+        HTTP_GONE -> AuthProblem.INVITE_EXPIRED
         HTTP_UNPROCESSABLE -> AuthProblem.PASSWORD_TOO_SHORT
         HTTP_TOO_MANY_REQUESTS -> AuthProblem.TOO_MANY_TRIES
         else -> AuthProblem.OTHER
@@ -78,5 +82,7 @@ const val MIN_PASSWORD_LENGTH = 10
 private const val HTTP_BAD_REQUEST = 400
 private const val HTTP_UNAUTHORIZED = 401
 private const val HTTP_FORBIDDEN = 403
+private const val HTTP_CONFLICT = 409
+private const val HTTP_GONE = 410
 private const val HTTP_UNPROCESSABLE = 422
 private const val HTTP_TOO_MANY_REQUESTS = 429

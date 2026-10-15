@@ -24,4 +24,16 @@ class AuthErrorTest {
         assertEquals(AuthProblem.OTHER, error.problem)
         assertEquals(ErrorKind.SERVER_BUSY, error.kind)
     }
+
+    @Test
+    fun `a used invite says the account already exists`() {
+        val error = NetworkResult.Error("Sign in instead.", 409, ErrorKind.REJECTED).toAuthError()
+        assertEquals(AuthProblem.INVITE_USED, error.problem)
+    }
+
+    @Test
+    fun `an expired invite says so`() {
+        val error = NetworkResult.Error("Expired.", 410, ErrorKind.REJECTED).toAuthError()
+        assertEquals(AuthProblem.INVITE_EXPIRED, error.problem)
+    }
 }

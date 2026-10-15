@@ -73,7 +73,9 @@ Errors:
 
 | Status | `error` | When |
 |---|---|---|
-| 400 | `Invalid invite` | The code is wrong, already used, or older than 7 days. |
+| 400 | `Invalid invite` | No invite for this email, or the code is wrong. |
+| 409 | `Invite already used` | The right code, already redeemed: the account exists, so sign in. Only the code's holder gets this answer. |
+| 410 | `Invite expired` | The right code, older than 7 days: ask for a new one. |
 | 401 | `Not signed in` | No token, or an unknown, expired or revoked one. |
 | 401 | `Invalid credentials` | Wrong email or password; the message never says which. |
 | 403 | `Consent required` | The current notice has not been accepted, or `version` is not the current one. |

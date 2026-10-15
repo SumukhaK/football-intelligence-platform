@@ -17,6 +17,8 @@ from backend.app.services.account_service import (
     ConsentRequiredError,
     InvalidCredentialsError,
     InvalidInviteError,
+    InviteAlreadyUsedError,
+    InviteExpiredError,
     NotSignedInError,
     TooManyAttemptsError,
     WeakPasswordError,
@@ -72,10 +74,10 @@ def test_redeemed_invite_signs_in(accounts: AccountService) -> None:
 
 
 def test_invite_codes_are_single_use(accounts: AccountService) -> None:
-    """A redeemed code cannot be used again."""
+    """A redeemed code cannot be used again, and says the account exists."""
     code = accounts.create_invite(EMAIL)
     accounts.redeem_invite(EMAIL, code, PASSWORD)
-    with pytest.raises(InvalidInviteError):
+    with pytest.raises(InviteAlreadyUsedError):
         accounts.redeem_invite(EMAIL, code, "another password")
 
 
@@ -87,8 +89,16 @@ def test_wrong_or_expired_invite_is_refused(
     with pytest.raises(InvalidInviteError):
         accounts.redeem_invite(EMAIL, "wrong", PASSWORD)
     clock.now += timedelta(days=8)
-    with pytest.raises(InvalidInviteError):
+    with pytest.raises(InviteExpiredError):
         accounts.redeem_invite(EMAIL, code, PASSWORD)
+
+
+def test_a_used_code_with_a_typo_is_still_just_wrong(accounts: AccountService) -> None:
+    """Only the right code learns that the account exists."""
+    code = accounts.create_invite(EMAIL)
+    accounts.redeem_invite(EMAIL, code, PASSWORD)
+    with pytest.raises(InvalidInviteError):
+        accounts.redeem_invite(EMAIL, code + "x", PASSWORD)
 
 
 def test_uninvited_email_cannot_sign_up(accounts: AccountService) -> None:
