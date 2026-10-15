@@ -1,7 +1,7 @@
 package com.footballintelligence.core.ui
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -13,6 +13,6 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun SettingsButton(onClick: () -> Unit) {
     IconButton(onClick = onClick) {
-        Icon(Icons.Default.Settings, contentDescription = stringResource(Res.string.cd_settings))
+        Icon(Icons.Outlined.Settings, contentDescription = stringResource(Res.string.cd_settings))
     }
 }

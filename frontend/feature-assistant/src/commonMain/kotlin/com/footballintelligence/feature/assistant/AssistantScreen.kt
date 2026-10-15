@@ -44,6 +44,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import com.footballintelligence.core.designsystem.GreenOnPrimary
 import com.footballintelligence.core.model.ChatMessage
 import com.footballintelligence.core.model.MessageRole
 import com.footballintelligence.core.model.SourceCitation
@@ -89,7 +90,7 @@ fun AssistantScreen(
                         TextButton(onClick = onNewChat) {
                             Text(
                                 stringResource(Res.string.new_chat),
-                                color = MaterialTheme.colorScheme.onPrimary,
+                                color = GreenOnPrimary,
                             )
                         }
                     }

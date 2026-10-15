@@ -11,6 +11,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - The About screen scrolls to the end and is redesigned: the real app version, three short sections on how the app works, its data and what it is built with, and a link to fip-ai.dev. It no longer shows the old version 2.1.0, llama3.2 or SQLite.
+- The README demo thumbnail is back to an app screenshot beside the title and a play button, now showing My Team for Manchester United, instead of the plain "Prediction" title card.
 
 ### Fixed
 - Redeeming an invite code again now says the account already exists and to sign in (409), and an expired code says it expired (410). Before, both read as "wrong, used or expired". Only someone holding the right code gets the specific answer.
@@ -19,6 +20,8 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The assistant knows your favourite team: the app sends it with each question, so "where will we finish?" and "when do we play next?" are answered for that team (ADR 031). The conversation eval gains a case for it (9/9 on Workers AI).
 
 ### Fixed
+- In dark mode the top bar is the same deep green as in light mode, not the bright green that glared on a phone screen, and the settings gear is the finer outlined icon.
+- The season outlook's top-four and relegation chances no longer show in two shades of pink in dark mode: top four is gold and relegation red in both themes, and dark-mode error text is red instead of pale pink.
 - A 429 from Cloud Run while no instance is free yet (an HTML page, not the backend's JSON) now reads "The server is waking up" instead of the sign-in lockout message, and "Can't reach the server" no longer tells friends to check that a backend is running.
 - Signing in while the server starts from cold no longer fails at 30 seconds. The app pings the server when it opens or comes back to the front, so it starts booting early; sign-in and invite redemption wait up to 60 seconds and say "The server is waking up" after 4; and a sign-in Cloud Run turns away with its own 429 (the request never reached the app) is retried, up to twice like a GET.
 

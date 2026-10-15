@@ -13,6 +13,12 @@ val GreenSecondaryContainer = Color(0xFFC8E6C9)
 val ErrorRed = Color(0xFFB71C1C)
 val ErrorRedContainer = Color(0xFFFFCDD2)
 
+// A red that still reads as red on the dark surface; the pale container red read as pink there.
+val ErrorRedDark = Color(0xFFEF5350)
+
+val GoldTertiary = Color(0xFF9A5B00)
+val GoldTertiaryDark = Color(0xFFFFD54F)
+
 val NeutralSurface = Color(0xFFF5F5F5)
 val NeutralSurfaceDark = Color(0xFF1C1C1C)
 
