@@ -7,7 +7,7 @@
     <string name="league">League</string>
     <string name="home_team">Home Team</string>
     <string name="away_team">Away Team</string>
-    <string name="versus">vs</string>
+    <string name="swap_teams">Swap home and away</string>
     <string name="action_predict">Predict Match Outcome</string>
     <string name="cd_predict">Predict match outcome</string>
     <string name="cd_team_dropdown">%1$s dropdown: %2$s</string>
