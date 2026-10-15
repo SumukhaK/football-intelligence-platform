@@ -308,7 +308,7 @@ private fun AppNavHost(
         }
 
         composable(Screen.About.route) {
-            AboutScreen(onBack = { navController.popBackStack() })
+            AboutScreen(versionName = BuildConfig.VERSION_NAME, onBack = { navController.popBackStack() })
         }
     }
 }
