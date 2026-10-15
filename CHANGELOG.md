@@ -13,6 +13,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The README demo thumbnail is back to an app screenshot beside the title and a play button, now showing My Team for Manchester United, instead of the plain "Prediction" title card.
 
 ### Fixed
+- In dark mode the top bar is the same deep green as in light mode, not the bright green that glared on a phone screen, and the settings gear is the finer outlined icon.
 - The season outlook's top-four and relegation chances no longer show in two shades of pink in dark mode: top four is gold and relegation red in both themes, and dark-mode error text is red instead of pale pink.
 - A 429 from Cloud Run while no instance is free yet (an HTML page, not the backend's JSON) now reads "The server is waking up" instead of the sign-in lockout message, and "Can't reach the server" no longer tells friends to check that a backend is running.
 
