@@ -58,7 +58,12 @@ sealed class AuthUiState {
 
 /** The backend's sign-in failures (ADR 022) as screen errors. */
 fun NetworkResult.Error.toAuthError(): AuthUiState.Error {
-    val problem = when (code) {
+    val problem = if (kind == ErrorKind.SERVER_BUSY) AuthProblem.OTHER else authProblemFor(code)
+    return AuthUiState.Error(problem, kind, message)
+}
+
+private fun authProblemFor(code: Int?): AuthProblem =
+    when (code) {
         HTTP_BAD_REQUEST -> AuthProblem.INVALID_INVITE
         HTTP_UNAUTHORIZED -> AuthProblem.WRONG_CREDENTIALS
         HTTP_FORBIDDEN -> AuthProblem.BLOCKED
@@ -66,8 +71,6 @@ fun NetworkResult.Error.toAuthError(): AuthUiState.Error {
         HTTP_TOO_MANY_REQUESTS -> AuthProblem.TOO_MANY_TRIES
         else -> AuthProblem.OTHER
     }
-    return AuthUiState.Error(problem, kind, message)
-}
 
 /** The backend's minimum password length for an invite. */
 const val MIN_PASSWORD_LENGTH = 10

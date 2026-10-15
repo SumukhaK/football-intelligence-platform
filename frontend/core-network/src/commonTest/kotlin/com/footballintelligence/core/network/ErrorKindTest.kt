@@ -69,4 +69,21 @@ class ErrorKindTest {
         val result = api(respondWith(HttpStatusCode.InternalServerError)).predict(request)
         assertEquals(ErrorKind.UNKNOWN, (result as NetworkResult.Error).kind)
     }
+
+    @Test
+    fun `a 429 from the hosting platform means the server is busy`() = runTest {
+        // Cloud Run answers 429 with an HTML page when no instance is free yet.
+        val engine = MockEngine { respond("<html>Rate exceeded.</html>", HttpStatusCode.TooManyRequests) }
+        val result = api(engine).predict(request)
+        assertEquals(ErrorKind.SERVER_BUSY, (result as NetworkResult.Error).kind)
+    }
+
+    @Test
+    fun `a 429 from the backend keeps its reason`() = runTest {
+        val body = """{"error":"Too many attempts","detail":"Too many failed sign-ins. Try again later."}"""
+        val result = api(respondWith(HttpStatusCode.TooManyRequests, body)).predict(request)
+        result as NetworkResult.Error
+        assertEquals(ErrorKind.REJECTED, result.kind)
+        assertEquals("Too many failed sign-ins. Try again later.", result.message)
+    }
 }
