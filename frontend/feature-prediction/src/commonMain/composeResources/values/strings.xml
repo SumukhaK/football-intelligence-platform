@@ -52,7 +52,6 @@
     <string name="explanation_title">Explanation</string>
     <string name="no_explanation">No explanation loaded.</string>
     <string name="prediction_label">Prediction: %1$s</string>
-    <string name="dataset_and_model">Dataset: %1$s · Model: %2$s</string>
     <string name="leans_title">Why the model leans this way</string>
     <string name="leans_subtitle">Factors that pushed toward this prediction</string>
     <string name="against_title">What counts against it</string>
