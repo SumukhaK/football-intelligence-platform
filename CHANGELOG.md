@@ -9,6 +9,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- The About screen scrolls to the end and is redesigned: the real app version, three short sections on how the app works, its data and what it is built with, and a link to fip-ai.dev. It no longer shows the old version 2.1.0, llama3.2 or SQLite.
+
 ### Fixed
 - Redeeming an invite code again now says the account already exists and to sign in (409), and an expired code says it expired (410). Before, both read as "wrong, used or expired". Only someone holding the right code gets the specific answer.
 
