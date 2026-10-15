@@ -14,10 +14,10 @@ import com.footballintelligence.core.model.OutcomeProbabilities
 import com.footballintelligence.core.model.PredictionRequest
 import com.footballintelligence.core.model.PredictionResult
 import com.footballintelligence.core.model.ScoreProbability
+import com.footballintelligence.core.ui.OutcomeSplit
 import com.footballintelligence.feature.team.repository.TeamRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
-import com.footballintelligence.core.ui.OutcomeSplit
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers

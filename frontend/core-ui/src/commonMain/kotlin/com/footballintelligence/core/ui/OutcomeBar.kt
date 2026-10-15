@@ -29,9 +29,6 @@ import com.footballintelligence.core.ui.resources.outcome_bar_note
 import com.footballintelligence.core.ui.resources.outcome_bar_team
 import org.jetbrains.compose.resources.stringResource
 
-/** Whole-number chances of a home win, a draw and an away win. */
-data class OutcomeSplit(val home: Int, val draw: Int, val away: Int)
-
 /**
  * Home win, draw and away win as one bar with a crest at each end, and a note
  * that the pick adds up every scoreline, so a 1-1 top score next to a win
