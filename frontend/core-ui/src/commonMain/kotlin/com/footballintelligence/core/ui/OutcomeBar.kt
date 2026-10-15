@@ -26,11 +26,12 @@ import com.footballintelligence.core.ui.resources.Res
 import com.footballintelligence.core.ui.resources.cd_outcome_bar
 import com.footballintelligence.core.ui.resources.outcome_bar_draw
 import com.footballintelligence.core.ui.resources.outcome_bar_note
-import com.footballintelligence.core.ui.resources.outcome_bar_team
+import com.footballintelligence.core.ui.resources.outcome_bar_percent
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * Home win, draw and away win as one bar with a crest at each end, and a note
+ * Home win, draw and away win as one bar with a crest at each end (the crest
+ * names the side, so its percentage never gets cut off), and a note
  * that the pick adds up every scoreline, so a 1-1 top score next to a win
  * pick does not read as a contradiction.
  */
@@ -51,9 +52,9 @@ fun OutcomeBar(homeTeam: String, awayTeam: String, split: OutcomeSplit, modifier
                     Segment(split.away, MaterialTheme.colorScheme.tertiary)
                 }
                 Row(Modifier.fillMaxWidth()) {
-                    Label(stringResource(Res.string.outcome_bar_team, homeTeam, split.home), TextAlign.Start)
+                    Label(stringResource(Res.string.outcome_bar_percent, split.home), TextAlign.Start)
                     Label(stringResource(Res.string.outcome_bar_draw, split.draw), TextAlign.Center)
-                    Label(stringResource(Res.string.outcome_bar_team, awayTeam, split.away), TextAlign.End)
+                    Label(stringResource(Res.string.outcome_bar_percent, split.away), TextAlign.End)
                 }
             }
             TeamCrest(awayTeam, size = 28.dp)
