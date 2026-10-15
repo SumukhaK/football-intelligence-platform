@@ -2,8 +2,10 @@ package com.footballintelligence.feature.assistant
 
 import com.footballintelligence.core.model.ChatFavouriteTeam
 import com.footballintelligence.core.model.ChatResponse
+import com.footballintelligence.core.model.ErrorKind
 import com.footballintelligence.core.model.FavouriteTeam
 import com.footballintelligence.core.model.HistoryTurn
+import com.footballintelligence.core.model.MessageRole
 import com.footballintelligence.core.model.NetworkResult
 import com.footballintelligence.feature.assistant.repository.AssistantRepository
 import io.mockk.coEvery
@@ -95,6 +97,17 @@ class AssistantViewModelTest {
         vm.send("Broken?")
         vm.send("Next?")
         assertEquals(emptyList<HistoryTurn>(), sentHistory.last())
+    }
+
+    @Test
+    fun `a failed question shows a plain-language error, not the raw exception`() {
+        val vm = viewModel()
+        coEvery { repository.chat("Lost?", any(), any(), any()) } returns
+            NetworkResult.Error("Connect timeout [url=http://10.0.2.2:8000]", kind = ErrorKind.OFFLINE)
+        vm.send("Lost?")
+        val reply = (vm.state.value as AssistantUiState.Chatting).messages.last()
+        assertEquals(MessageRole.ASSISTANT, reply.role)
+        assertEquals(ErrorKind.OFFLINE, reply.errorKind)
     }
 
     @Test

@@ -14,6 +14,8 @@ data class ChatMessage(
     val confidence: Double? = null,
     /** The server's signature on an answer, sent back as chat history (ADR 030). */
     val signature: String? = null,
+    /** Set only on a failed question's reply; the screen turns it into plain-language text. */
+    val errorKind: ErrorKind? = null,
 )
 
 /** One earlier message sent with a question so the assistant can follow up (ADR 030). */

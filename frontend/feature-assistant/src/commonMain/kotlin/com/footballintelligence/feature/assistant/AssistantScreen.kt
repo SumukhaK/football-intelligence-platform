@@ -50,6 +50,7 @@ import com.footballintelligence.core.model.SourceCitation
 import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.KickoffLoader
 import com.footballintelligence.core.ui.appBarColors
+import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.assistant.resources.Res
 import com.footballintelligence.feature.assistant.resources.assistant_title
 import com.footballintelligence.feature.assistant.resources.cd_message_input
@@ -224,8 +225,13 @@ private fun MessageBubble(message: ChatMessage) {
                     )
                     .padding(12.dp),
             ) {
+                val error = message.errorKind?.let { errorMessage(it, message.text) }
                 Text(
-                    text = if (isUser) AnnotatedString(message.text) else formatAnswer(message.text),
+                    text = when {
+                        isUser -> AnnotatedString(message.text)
+                        error != null -> AnnotatedString(error)
+                        else -> formatAnswer(message.text)
+                    },
                     color = if (isUser) {
                         MaterialTheme.colorScheme.onPrimary
                     } else {
