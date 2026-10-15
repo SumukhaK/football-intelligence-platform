@@ -9,6 +9,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- A 429 from Cloud Run while no instance is free yet (an HTML page, not the backend's JSON) now reads "The server is waking up" instead of the sign-in lockout message, and "Can't reach the server" no longer tells friends to check that a backend is running.
+
 ---
 
 ## [2.5.1] — 2026-10-15

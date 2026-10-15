@@ -139,12 +139,14 @@ internal suspend inline fun <reified T> HttpResponse.decode(): NetworkResult<T> 
     if (status.isSuccess()) NetworkResult.Success(body()) else toError()
 
 /** This failed response as an error, keeping the server's explanation. */
-internal suspend fun HttpResponse.toError(): NetworkResult.Error =
-    NetworkResult.Error(
-        message = serverDetail() ?: "HTTP ${status.value}: ${status.description}",
+internal suspend fun HttpResponse.toError(): NetworkResult.Error {
+    val detail = serverDetail()
+    return NetworkResult.Error(
+        message = detail ?: "HTTP ${status.value}: ${status.description}",
         code = status.value,
-        kind = errorKindFor(status.value),
+        kind = errorKindFor(status.value, fromBackend = detail != null),
     )
+}
 
 /** The `detail` of the backend's structured error body, if it has one. */
 private suspend fun HttpResponse.serverDetail(): String? =
@@ -154,12 +156,21 @@ private suspend fun HttpResponse.serverDetail(): String? =
 @Serializable
 private data class ErrorBody(val error: String = "", val detail: String = "")
 
-/** Classifies an HTTP error status for the UI. */
-internal fun errorKindFor(status: Int): ErrorKind = when (status) {
-    in SERVER_BUSY_CODES -> ErrorKind.SERVER_BUSY
-    in CLIENT_ERROR_CODES -> ErrorKind.REJECTED
+/**
+ * Classifies an HTTP error status for the UI.
+ *
+ * A 429 that isn't the backend's own JSON error comes from the hosting
+ * platform while no server instance is free yet (Cloud Run scaling up), so it
+ * means "busy", not a sign-in lockout.
+ */
+internal fun errorKindFor(status: Int, fromBackend: Boolean = true): ErrorKind = when {
+    status == HTTP_TOO_MANY_REQUESTS && !fromBackend -> ErrorKind.SERVER_BUSY
+    status in SERVER_BUSY_CODES -> ErrorKind.SERVER_BUSY
+    status in CLIENT_ERROR_CODES -> ErrorKind.REJECTED
     else -> ErrorKind.UNKNOWN
 }
+
+private const val HTTP_TOO_MANY_REQUESTS = 429
 
 private val SERVER_BUSY_CODES = 502..504
 private val CLIENT_ERROR_CODES = 400..499
