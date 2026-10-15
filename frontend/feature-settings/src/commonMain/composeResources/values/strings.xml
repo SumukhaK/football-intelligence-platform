@@ -4,7 +4,7 @@
     <string name="settings_title">Settings</string>
     <string name="section_analytics">Analytics</string>
     <string name="model_info_title">Model Information</string>
-    <string name="model_info_summary">Version, metrics, and training details</string>
+    <string name="model_info_summary">Drishti, the prediction model: version, metrics and training details</string>
     <string name="cd_open_model_info">Open model information</string>
     <string name="about_title">About</string>
     <string name="about_summary">App version and project information</string>
@@ -44,7 +44,9 @@
 
     <!-- Model information -->
     <string name="section_registry">Registry</string>
-    <string name="model_version">Model Version</string>
+    <string name="model_name_fallback">Drishti</string>
+    <string name="model_tagline">Match outcome predictor</string>
+    <string name="model_version_line">Version %1$s</string>
     <string name="dataset_version">Dataset Version</string>
     <string name="training_timestamp">Training Timestamp</string>
     <string name="git_commit">Git Commit</string>
