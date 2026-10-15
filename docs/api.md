@@ -459,6 +459,8 @@ the model still cites, but the server logs its sources and citations in
   for this question, never from the history.
 - Without `conversation_id` and `history`, the endpoint behaves as before.
 
+**Favourite team (ADR 031).** `"favourite_team": {"team": "Man United", "competition": "Premier League"}` tells the assistant who "we" and "my team" are. Each field is at most 60 characters of letters, digits, spaces and `.'&()-`. The team is added to the question for the model and the season router, but not to the safety check or the history.
+
 For a match prediction, its SHAP explanation or a league's upcoming fixtures,
 the assistant calls tools that run the same services as `/v2/predict`,
 `/v2/explain` and `/v2/fixtures`, so it quotes the latest model's numbers

@@ -2,7 +2,9 @@ package com.footballintelligence.feature.assistant
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.footballintelligence.core.model.ChatFavouriteTeam
 import com.footballintelligence.core.model.ChatMessage
+import com.footballintelligence.core.model.FavouriteTeam
 import com.footballintelligence.core.model.MessageRole
 import com.footballintelligence.core.model.NetworkResult
 import com.footballintelligence.core.model.SourceCitation
@@ -22,6 +24,7 @@ class AssistantViewModel(
     private val repository: AssistantRepository,
     private val now: () -> Long = System::currentTimeMillis,
     private val newConversationId: () -> String = ::randomConversationId,
+    private val favouriteTeam: () -> FavouriteTeam? = { null },
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<AssistantUiState>(AssistantUiState.Idle)
@@ -53,7 +56,8 @@ class AssistantViewModel(
         _isSending.value = true
 
         viewModelScope.launch {
-            when (val result = repository.chat(text, conversationId, history)) {
+            val team = favouriteTeam()?.let { ChatFavouriteTeam(it.team, it.league) }
+            when (val result = repository.chat(text, conversationId, history, team)) {
                 is NetworkResult.Success -> {
                     val response = result.data
                     val assistantMessage = ChatMessage(
