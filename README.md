@@ -44,7 +44,7 @@ This project demonstrates AI engineering as a discipline: not just "can I train 
 
 | Capability | Description |
 |---|---|
-| **Match outcome prediction** | XGBoost classifier predicting Home Win / Draw / Away Win for all five leagues, with a "draw possible" tag for tight games (ADR 011) |
+| **Match outcome prediction** | XGBoost classifier predicting Home Win / Draw / Away Win for all five leagues, with a `draw_possible` flag in the API for tight games (ADR 011) |
 | **Scorelines and goal markets** | Time-weighted Dixon-Coles goals model per league: five most likely scores, expected goals, both teams to score, over/under lines and clean sheets (ADR 009) |
 | **Per-prediction explainability** | SHAP `TreeExplainer` attaches feature-level attribution to every prediction, shown in plain football language ("Arsenal win rate at home · 68%") |
 | **Grounded AI assistant** | RAG pipeline (numpy vector store; Ollama locally, Cloudflare Workers AI when hosted, ADR 025) answers football questions using only retrieved platform data, with source citations, and calls the API's own prediction, explanation and fixtures services as tools for match questions (ADR 018); season questions (tables on any date with a goals-model projection, results, the next derby) go through a rule-based router to internal season tools (ADR 021) |
@@ -275,7 +275,7 @@ flowchart TD
     class E serve
 ```
 
-The app opens on upcoming fixtures, grouped by day, with one tab per league and the Premier League first; kick-off times are in the phone's time zone. Tapping a fixture opens its prediction. Team crests and league emblems come from football-data.org through the API's redirects (ADR 020). On first launch the app asks for a favourite league and team. A bottom bar switches between Fixtures, Predict, My Team and Assistant, with Settings behind a top-right icon. My Team shows the favourite team's next match with its pick, top three reasons, likeliest scores and clean-sheet chance. Prediction starts with a league picker filled from `GET /v2/competitions`, and the result shows win/draw/loss probabilities, a draw tag for tight games, and the goals model's likely scores and goal markets. Every answer is saved: without a connection the app shows the last data it had under an offline banner, and pulling down fetches fresh data. Errors are explained in plain language. See [frontend/README.md](frontend/README.md) for the full module graph.
+The app opens on upcoming fixtures, grouped by day, with one tab per league and the Premier League first; kick-off times are in the phone's time zone. Tapping a fixture opens its prediction. Team crests and league emblems come from football-data.org through the API's redirects (ADR 020). On first launch the app asks for a favourite league and team. A bottom bar switches between Fixtures, Predict, My Team and Assistant, with Settings behind a top-right icon. My Team shows the favourite team's next match with its pick, top three reasons, likeliest scores and clean-sheet chance. Prediction starts with a league picker filled from `GET /v2/competitions`, and the result shows win, draw and loss chances on one bar, and the goals model's likely scores and goal markets. Every answer is saved: without a connection the app shows the last data it had under an offline banner, and pulling down fetches fresh data. Errors are explained in plain language. See [frontend/README.md](frontend/README.md) for the full module graph.
 
 ## Backend Services
 
