@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -84,17 +83,18 @@ private fun InsightsContent(insights: Insights) {
 
 @Composable
 private fun TopScoresCard(insights: Insights) {
-    val top = insights.topScores.maxOfOrNull { it.probability } ?: 0.0
     SectionCard(title = stringResource(Res.string.top_scores_title)) {
         insights.topScores.forEach { score ->
-            ScoreRow(score = score, insights = insights, scale = top)
+            ScoreRow(score = score, insights = insights)
         }
         MutedText(stringResource(Res.string.top_scores_note))
     }
 }
 
+// No bars: scaled to the top score, a 13% chance filled the whole bar and
+// looked surer than a 71% win above it. Plain numbers match the markets list.
 @Composable
-private fun ScoreRow(score: ScoreProbability, insights: Insights, scale: Double) {
+private fun ScoreRow(score: ScoreProbability, insights: Insights) {
     val percentText = stringResource(Res.string.percent, percentOf(score.probability))
     val description = stringResource(
         Res.string.cd_score_row,
@@ -104,21 +104,15 @@ private fun ScoreRow(score: ScoreProbability, insights: Insights, scale: Double)
         score.away,
         percentOf(score.probability),
     )
-    Column(
-        modifier = Modifier.clearAndSetSemantics { contentDescription = description },
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+    Row(
+        modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = description },
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(
-                stringResource(Res.string.score_line, score.home, score.away),
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            Text(percentText, style = MaterialTheme.typography.titleSmall)
-        }
-        LinearProgressIndicator(
-            progress = { if (scale > 0) (score.probability / scale).toFloat() else 0f },
-            modifier = Modifier.fillMaxWidth(),
+        Text(
+            stringResource(Res.string.score_line, score.home, score.away),
+            style = MaterialTheme.typography.bodyLarge,
         )
+        Text(percentText, style = MaterialTheme.typography.titleSmall)
     }
 }
 
