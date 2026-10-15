@@ -49,6 +49,7 @@ import com.footballintelligence.feature.prediction.resources.fixture
 import com.footballintelligence.feature.prediction.resources.no_prediction
 import com.footballintelligence.feature.prediction.resources.probabilities
 import com.footballintelligence.feature.prediction.resources.result_title
+import com.footballintelligence.feature.prediction.resources.your_team
 import org.jetbrains.compose.resources.stringResource
 
 /** Displays the prediction result and offers navigation to the explanation. */
@@ -107,7 +108,7 @@ fun PredictionResultScreen(
             ) {
                 Column {
                     OfflineBanner(state.savedAt)
-                    ResultContent(result = state.result, insightsState = insightsState)
+                    ResultContent(result = state.result, insightsState = insightsState, yourTeam = state.yourTeam)
                 }
             }
             is PredictionInputUiState.Idle -> ErrorView(
@@ -123,6 +124,7 @@ fun PredictionResultScreen(
 private fun ResultContent(
     result: PredictionResult,
     insightsState: InsightsUiState,
+    yourTeam: String?,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -134,7 +136,7 @@ private fun ResultContent(
     ) {
         val winner = winningTeam(result.predictedResult, result.homeTeam, result.awayTeam)
         Box {
-            ResultHeader(result, winner)
+            ResultHeader(result, winner, yourTeam)
             if (winner != null) {
                 Confetti(Modifier.matchParentSize())
             }
@@ -162,9 +164,12 @@ private fun ResultContent(
     }
 }
 
-/** The result card. A predicted win shows the winner's crest large; a draw shows both. */
+/**
+ * The result card. A predicted win shows the winner's crest large; a draw shows
+ * both. [yourTeam], when set, is the fan's saved team and gets a tag.
+ */
 @Composable
-private fun ResultHeader(result: PredictionResult, winner: String?) {
+private fun ResultHeader(result: PredictionResult, winner: String?, yourTeam: String?) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -199,6 +204,7 @@ private fun ResultHeader(result: PredictionResult, winner: String?) {
                 stringResource(Res.string.fixture, result.homeTeam, result.awayTeam),
                 style = MaterialTheme.typography.titleMedium,
             )
+            yourTeam?.let { YourTeamTag(it) }
             Text(
                 outcomeLabel(result.predictedResult, result.homeTeam, result.awayTeam),
                 style = MaterialTheme.typography.displaySmall,
@@ -230,6 +236,19 @@ private fun ResultActions(onExplain: () -> Unit, onNewPrediction: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+private fun YourTeamTag(team: String) {
+    Text(
+        text = stringResource(Res.string.your_team, team),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onPrimary,
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.primary)
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+    )
 }
 
 @Composable

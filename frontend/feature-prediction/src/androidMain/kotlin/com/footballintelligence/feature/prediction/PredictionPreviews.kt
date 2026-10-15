@@ -144,7 +144,7 @@ private fun Result(
 
 @Preview(heightDp = 1600)
 @Composable
-private fun ResultWithInsightsPreview() = Result(PredictionInputUiState.Success(samplePrediction))
+private fun ResultWithInsightsPreview() = Result(PredictionInputUiState.Success(samplePrediction, yourTeam = "Arsenal"))
 
 @Preview
 @Composable
