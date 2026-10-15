@@ -114,3 +114,4 @@ ADRs are never deleted.
 | [029](029-assistant-sources-logged-not-shown.md) | Assistant sources are logged, not shown | Accepted |
 | [030](030-short-term-chat-memory.md) | Short-term chat memory with signed history | Accepted |
 | [031](031-favourite-team-in-chat.md) | The favourite team in chat | Accepted |
+| [032](032-specific-invite-errors.md) | Specific errors for used and expired invites | Accepted |
