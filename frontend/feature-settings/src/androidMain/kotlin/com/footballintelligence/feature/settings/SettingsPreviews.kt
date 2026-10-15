@@ -25,7 +25,7 @@ private fun SettingsPreview() {
 @Composable
 private fun AboutPreview() {
     PreviewSurface {
-        AboutScreen(onBack = {})
+        AboutScreen(versionName = "2.6.0", onBack = {})
     }
 }
 

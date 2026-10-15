@@ -36,7 +36,6 @@ import com.footballintelligence.feature.prediction.resources.Res
 import com.footballintelligence.feature.prediction.resources.against_subtitle
 import com.footballintelligence.feature.prediction.resources.against_title
 import com.footballintelligence.feature.prediction.resources.confidence
-import com.footballintelligence.feature.prediction.resources.dataset_and_model
 import com.footballintelligence.feature.prediction.resources.explanation_title
 import com.footballintelligence.feature.prediction.resources.fixture
 import com.footballintelligence.feature.prediction.resources.impact_big
@@ -101,7 +100,7 @@ private fun ExplanationContent(
     ) {
         Card(
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
             ),
             modifier = Modifier.fillMaxWidth(),
         ) {
@@ -126,10 +125,6 @@ private fun ExplanationContent(
                 Text(
                     stringResource(Res.string.confidence, percentOf(result.confidence)),
                     style = MaterialTheme.typography.bodyMedium,
-                )
-                Text(
-                    stringResource(Res.string.dataset_and_model, result.datasetVersion, result.modelVersion),
-                    style = MaterialTheme.typography.labelSmall,
                 )
             }
         }

@@ -1,7 +1,11 @@
 package com.footballintelligence.feature.assistant
 
+import com.footballintelligence.core.model.ChatFavouriteTeam
 import com.footballintelligence.core.model.ChatResponse
+import com.footballintelligence.core.model.ErrorKind
+import com.footballintelligence.core.model.FavouriteTeam
 import com.footballintelligence.core.model.HistoryTurn
+import com.footballintelligence.core.model.MessageRole
 import com.footballintelligence.core.model.NetworkResult
 import com.footballintelligence.feature.assistant.repository.AssistantRepository
 import io.mockk.coEvery
@@ -27,6 +31,8 @@ class AssistantViewModelTest {
     private var ids = 0
     private val sentHistory = mutableListOf<List<HistoryTurn>>()
     private val sentIds = mutableListOf<String>()
+    private val sentTeams = mutableListOf<ChatFavouriteTeam?>()
+    private var favourite: FavouriteTeam? = null
 
     private fun answer(text: String, signature: String? = "sig-$text") = ChatResponse(
         answer = text,
@@ -41,6 +47,7 @@ class AssistantViewModelTest {
         repository = repository,
         now = { clock },
         newConversationId = { "conv-${++ids}" },
+        favouriteTeam = { favourite },
     )
 
     @BeforeEach
@@ -48,9 +55,10 @@ class AssistantViewModelTest {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         val history = slot<List<HistoryTurn>>()
         val id = slot<String>()
-        coEvery { repository.chat(any(), capture(id), capture(history)) } answers {
+        coEvery { repository.chat(any(), capture(id), capture(history), any()) } answers {
             sentIds += id.captured
             sentHistory += history.captured
+            sentTeams += arg<ChatFavouriteTeam?>(3)
             NetworkResult.Success(answer("A to ${firstArg<String>()}"))
         }
     }
@@ -85,10 +93,21 @@ class AssistantViewModelTest {
     @Test
     fun `an unsigned answer and its question are not sent back`() {
         val vm = viewModel()
-        coEvery { repository.chat("Broken?", any(), any()) } returns NetworkResult.Error("HTTP 500", 500)
+        coEvery { repository.chat("Broken?", any(), any(), any()) } returns NetworkResult.Error("HTTP 500", 500)
         vm.send("Broken?")
         vm.send("Next?")
         assertEquals(emptyList<HistoryTurn>(), sentHistory.last())
+    }
+
+    @Test
+    fun `a failed question shows a plain-language error, not the raw exception`() {
+        val vm = viewModel()
+        coEvery { repository.chat("Lost?", any(), any(), any()) } returns
+            NetworkResult.Error("Connect timeout [url=http://10.0.2.2:8000]", kind = ErrorKind.OFFLINE)
+        vm.send("Lost?")
+        val reply = (vm.state.value as AssistantUiState.Chatting).messages.last()
+        assertEquals(MessageRole.ASSISTANT, reply.role)
+        assertEquals(ErrorKind.OFFLINE, reply.errorKind)
     }
 
     @Test
@@ -120,6 +139,19 @@ class AssistantViewModelTest {
         vm.send("And the draw?")
         assertEquals(emptyList<HistoryTurn>(), sentHistory.last())
         assertEquals(listOf("conv-1", "conv-2"), sentIds)
-        coVerify(exactly = 2) { repository.chat(any(), any(), any()) }
+        coVerify(exactly = 2) { repository.chat(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `the saved favourite team goes with each question`() {
+        favourite = FavouriteTeam(league = "Premier League", team = "Man United")
+        viewModel().send("Where will we finish?")
+        assertEquals(ChatFavouriteTeam("Man United", "Premier League"), sentTeams.single())
+    }
+
+    @Test
+    fun `no favourite team sends none`() {
+        viewModel().send("Hello?")
+        assertEquals(null, sentTeams.single())
     }
 }

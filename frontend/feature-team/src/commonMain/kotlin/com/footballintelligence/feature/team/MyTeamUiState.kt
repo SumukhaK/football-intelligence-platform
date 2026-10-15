@@ -1,6 +1,7 @@
 package com.footballintelligence.feature.team
 
 import com.footballintelligence.core.model.ErrorKind
+import com.footballintelligence.core.ui.OutcomeSplit
 
 /** UI state for the My Team screen: the favourite team's next match. */
 sealed class MyTeamUiState {
@@ -15,22 +16,27 @@ sealed class MyTeamUiState {
 }
 
 /**
- * The "Your next match" card. [pick] is from the favourite team's side;
+ * The "Your next match" card for [team]. [pick] is from that team's side;
  * [time] is null until the league confirms it, and [cleanSheetPercent] is null
  * when the goals model is unavailable.
  */
 data class NextMatch(
+    val team: String,
     val homeTeam: String,
     val awayTeam: String,
     val day: String,
     val time: String?,
     val pick: TeamOutcome,
     val pickPercent: Int,
+    val split: OutcomeSplit,
     val drawPossible: Boolean,
     val reasons: List<MatchReason>,
     val scorelines: List<Scoreline>,
     val cleanSheetPercent: Int?,
 )
+
+/** The team [team] plays against. */
+val NextMatch.opponent: String get() = if (homeTeam == team) awayTeam else homeTeam
 
 /** The predicted result for the favourite team. */
 enum class TeamOutcome { WIN, DRAW, LOSS }

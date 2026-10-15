@@ -59,7 +59,7 @@ class ChatService:
             if harmful:
                 return self._signed(self._refuse(harmful, user), who, request)
             result = self._service.chat(  # type: ignore[attr-defined]
-                request.message, earlier.messages
+                with_favourite(request), earlier.messages
             )
         except ValueError as exc:
             raise ValueError(str(exc)) from exc
@@ -120,6 +120,21 @@ class ChatService:
         return ChatResponse(
             answer=answer, sources=[], confidence=0.0, model="safety", retrieved_count=0
         )
+
+
+def with_favourite(request: ChatRequest) -> str:
+    """The question as the assistant reads it, naming the user's team (ADR 031).
+
+    The note goes after the question in the user's own voice, so the season
+    router finds the team and the model reads "we" as that team.
+    """
+    favourite = request.favourite_team
+    if favourite is None:
+        return request.message
+    return (
+        f"{request.message}\n\n(About me: I support {favourite.team} in the "
+        f"{favourite.competition}.)"
+    )
 
 
 def _strike_message(strikes: int) -> str:

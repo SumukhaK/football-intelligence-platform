@@ -73,7 +73,9 @@ Errors:
 
 | Status | `error` | When |
 |---|---|---|
-| 400 | `Invalid invite` | The code is wrong, already used, or older than 7 days. |
+| 400 | `Invalid invite` | No invite for this email, or the code is wrong. |
+| 409 | `Invite already used` | The right code, already redeemed: the account exists, so sign in. Only the code's holder gets this answer. |
+| 410 | `Invite expired` | The right code, older than 7 days: ask for a new one. |
 | 401 | `Not signed in` | No token, or an unknown, expired or revoked one. |
 | 401 | `Invalid credentials` | Wrong email or password; the message never says which. |
 | 403 | `Consent required` | The current notice has not been accepted, or `version` is not the current one. |
@@ -458,6 +460,8 @@ the model still cites, but the server logs its sources and citations in
   new one can add a strike. Numbers in the answer always come from tools called
   for this question, never from the history.
 - Without `conversation_id` and `history`, the endpoint behaves as before.
+
+**Favourite team (ADR 031).** `"favourite_team": {"team": "Man United", "competition": "Premier League"}` tells the assistant who "we" and "my team" are. Each field is at most 60 characters of letters, digits, spaces and `.'&()-`. The team is added to the question for the model and the season router, but not to the safety check or the history.
 
 For a match prediction, its SHAP explanation or a league's upcoming fixtures,
 the assistant calls tools that run the same services as `/v2/predict`,

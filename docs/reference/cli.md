@@ -682,7 +682,7 @@ LIVE_REFRESH_HOUR=off uv run python -m evaluation.assistant_season
 
 ### `python -m evaluation.assistant_conversation`
 
-Runs eight short scripted chats with signed history, as the app sends them (ADR 030): two "and the draw?" follow-ups that must quote the draw probability, two "why?" follow-ups that must name a team without inventing numbers, a switch to another match, an edited earlier answer that must be ignored, instructions planted in the history, and (with `ASSISTANT_SAFETY=true`) a harmful request split over two turns. Exits non-zero if any case fails.
+Runs nine short scripted chats with signed history, as the app sends them (ADR 030): two "and the draw?" follow-ups that must quote the draw probability, two "why?" follow-ups that must name a team without inventing numbers, a switch to another match, an edited earlier answer that must be ignored, instructions planted in the history, a "where will we finish?" question with a favourite team set, and (with `ASSISTANT_SAFETY=true`) a harmful request split over two turns. Exits non-zero if any case fails.
 
 ```sh
 LIVE_REFRESH_HOUR=off uv run python -m evaluation.assistant_conversation

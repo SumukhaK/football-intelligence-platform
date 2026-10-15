@@ -13,6 +13,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockRequestHandleScope
 import io.ktor.client.engine.mock.respond
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.HttpRequestData
 import io.ktor.client.request.HttpResponseData
@@ -52,6 +53,7 @@ class AuthRepositoryTest {
                     },
                 ) {
                     install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
+                    install(HttpTimeout)
                     install(bearerAuth(session))
                 },
                 NetworkConfig(baseUrl = "http://test"),

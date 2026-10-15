@@ -3,6 +3,7 @@ package com.footballintelligence.feature.prediction
 import com.footballintelligence.core.model.Competition
 import com.footballintelligence.core.model.CompetitionsResponse
 import com.footballintelligence.core.model.ExpectedGoals
+import com.footballintelligence.core.model.FavouriteTeam
 import com.footballintelligence.core.model.GoalMarkets
 import com.footballintelligence.core.model.Insights
 import com.footballintelligence.core.model.NetworkResult
@@ -140,6 +141,30 @@ class PredictionViewModelTest {
 
         coVerify(exactly = 1) { repository.predict(request) }
         assertEquals(PredictionInputUiState.Success(prediction), viewModel.predictionState.value)
+    }
+
+    @Test
+    fun `a match with the saved team marks it as yours`() {
+        coEvery { repository.teams("Premier League") } returns NetworkResult.Success(teams)
+        coEvery { repository.predict(fixture) } returns NetworkResult.Success(prediction)
+        coEvery { repository.insights(fixture) } returns NetworkResult.Success(insights)
+        val viewModel = PredictionViewModel(repository) { FavouriteTeam("Premier League", "Chelsea") }
+
+        viewModel.predict("Arsenal", "Chelsea")
+
+        assertEquals("Chelsea", (viewModel.predictionState.value as PredictionInputUiState.Success).yourTeam)
+    }
+
+    @Test
+    fun `a match without the saved team marks no side`() {
+        coEvery { repository.teams("Premier League") } returns NetworkResult.Success(teams)
+        coEvery { repository.predict(fixture) } returns NetworkResult.Success(prediction)
+        coEvery { repository.insights(fixture) } returns NetworkResult.Success(insights)
+        val viewModel = PredictionViewModel(repository) { FavouriteTeam("Premier League", "Leeds") }
+
+        viewModel.predict("Arsenal", "Chelsea")
+
+        assertEquals(null, (viewModel.predictionState.value as PredictionInputUiState.Success).yourTeam)
     }
 
     @Test

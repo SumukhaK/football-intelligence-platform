@@ -10,13 +10,16 @@ import io.ktor.http.encodeURLPathPart
  *
  * [connectTimeoutMs] is short so an unreachable server falls back to saved
  * data quickly; [timeoutMs] bounds a request once connected, because some
- * answers take the server a while to compute.
+ * answers take the server a while to compute. [signInTimeoutMs] is longer
+ * still: sign-in is usually the request that wakes a server scaled to zero,
+ * and a cold start plus the password check can pass 30 seconds.
  */
 data class NetworkConfig(
     val baseUrl: String = "http://10.0.2.2:8000",
     val apiVersion: String = "v2",
     val timeoutMs: Long = 30_000L,
     val connectTimeoutMs: Long = 5_000L,
+    val signInTimeoutMs: Long = 60_000L,
 ) {
     /** URL of [team]'s crest; the server redirects it to the image (ADR 020). */
     fun crestUrl(team: String): String =
