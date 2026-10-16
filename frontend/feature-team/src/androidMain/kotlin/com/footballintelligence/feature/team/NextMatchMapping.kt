@@ -55,7 +55,6 @@ internal fun nextMatch(
             draw = percent(prediction.probabilityDraw),
             away = percent(prediction.probabilityAway),
         ),
-        drawPossible = prediction.drawPossible,
         reasons = explanation?.topPositiveFeatures.orEmpty()
             .sortedByDescending { it.shapValue }
             .take(REASONS_SHOWN)

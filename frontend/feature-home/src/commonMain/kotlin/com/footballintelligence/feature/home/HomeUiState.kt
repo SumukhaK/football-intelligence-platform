@@ -14,5 +14,8 @@ sealed class HomeUiState {
 /** Fixtures on one day, under a heading such as "Sat 10 Oct". */
 data class FixtureDay(val label: String, val fixtures: List<FixtureRow>)
 
-/** One fixture as shown; [time] is null until the league confirms it. */
-data class FixtureRow(val homeTeam: String, val awayTeam: String, val time: String?)
+/**
+ * One fixture as shown; [time] is null until the league confirms it, and
+ * [isYourTeam] is true when the fan's saved team plays.
+ */
+data class FixtureRow(val homeTeam: String, val awayTeam: String, val time: String?, val isYourTeam: Boolean = false)

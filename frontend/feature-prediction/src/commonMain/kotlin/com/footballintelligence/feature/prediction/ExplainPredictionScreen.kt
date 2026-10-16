@@ -15,8 +15,13 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -46,6 +51,8 @@ import com.footballintelligence.feature.prediction.resources.leans_title
 import com.footballintelligence.feature.prediction.resources.no_explanation
 import com.footballintelligence.feature.prediction.resources.nothing_notable
 import com.footballintelligence.feature.prediction.resources.prediction_label
+import com.footballintelligence.feature.prediction.resources.show_all
+import com.footballintelligence.feature.prediction.resources.show_fewer
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.abs
@@ -169,8 +176,22 @@ private fun FeatureSection(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             HorizontalDivider()
-            features.forEach { feature ->
+            // Most factors are small; the strongest few carry the story, the rest wait behind a tap.
+            var showAll by rememberSaveable { mutableStateOf(false) }
+            val shown = if (showAll) features else features.take(FEATURES_SHOWN)
+            shown.forEach { feature ->
                 FeatureRow(feature = feature, strongest = strongest, isPositive = isPositive)
+            }
+            if (features.size > FEATURES_SHOWN) {
+                TextButton(onClick = { showAll = !showAll }) {
+                    Text(
+                        if (showAll) {
+                            stringResource(Res.string.show_fewer)
+                        } else {
+                            stringResource(Res.string.show_all, features.size)
+                        },
+                    )
+                }
             }
             if (features.isEmpty()) {
                 Text(
@@ -208,6 +229,8 @@ private fun FeatureRow(feature: FeatureContribution, strongest: Double, isPositi
         )
     }
 }
+
+private const val FEATURES_SHOWN = 5
 
 private fun impactText(impact: Impact): StringResource = when (impact) {
     Impact.BIG -> Res.string.impact_big

@@ -63,7 +63,7 @@ Accounts are invite-only. The owner creates an invite with `uv run python -m scr
 
 | Method | Path | Body | Returns |
 |---|---|---|---|
-| POST | `/v2/auth/redeem-invite` | `email`, `code`, `password` (10+ characters) | `{ "token", "expires_at" }`. Creates the account, or resets its password with a new invite, and ends older sessions. |
+| POST | `/v2/auth/redeem-invite` | `email`, `code` (as `XXXX-XXXX`; case, spaces and dashes are ignored), `password` (10+ characters) | `{ "token", "expires_at" }`. Creates the account, or resets its password with a new invite, and ends older sessions. |
 | POST | `/v2/auth/login` | `email`, `password` | `{ "token", "expires_at" }`. Sessions last 30 days. |
 | POST | `/v2/auth/logout` | none | 204; ends the session behind the token. |
 | GET | `/v2/me` | none | `email`, `consent_required`, `consent_version`, `consent_text`, `store_questions` |
@@ -133,8 +133,11 @@ never marks the API unready. `/health` stays the place for diagnostics.
 
 ## GET /model
 
-Registry entry of the served model: `model_version`, `dataset_version`,
-`training_timestamp`, `git_commit` and `metrics`. Returns 503 when no
+Registry entry of the served model: `model_name`, `model_version`,
+`dataset_version`, `training_timestamp`, `git_commit` and `metrics`.
+`model_name` is the model's public name, `Drishti` by default
+(`PREDICTION_MODEL_NAME`, ADR 033); `model_version` stays the technical
+identifier. Returns 503 when no
 model is registered. A model trained with a test season reports its test
 metrics (`accuracy`, `log_loss`, ...). The served refit (ADR 017) has no test
 season, so it reports its scores on the current season so far, named by season

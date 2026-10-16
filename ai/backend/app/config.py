@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     # The original model behind API v1 and unversioned paths (ADR 014).
     v1_model_path: Path = Path("../ai/models/runs/20260630_132617/model.joblib")
     v1_model_version: str = "20260630_132617"
+    # Public name of the match prediction model shown to users (ADR 033).
+    prediction_model_name: str = "Drishti"
     # Requests per client per minute; `off` turns rate limiting off (ADR 014).
     rate_limit_per_minute: int | None = Field(default=120, ge=1)
     # Proxies in front of the server that append to X-Forwarded-For: 0 locally,

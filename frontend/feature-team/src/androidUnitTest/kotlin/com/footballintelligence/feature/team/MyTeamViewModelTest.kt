@@ -134,7 +134,6 @@ class MyTeamViewModelTest {
             pick = TeamOutcome.WIN,
             pickPercent = 52,
             split = OutcomeSplit(home = 20, draw = 28, away = 52),
-            drawPossible = true,
             reasons = listOf(MatchReason("a", "0.4"), MatchReason("b", "0.3"), MatchReason("c", "0.2")),
             scorelines = listOf(Scoreline(0, 1, 14), Scoreline(1, 1, 12), Scoreline(0, 2, 11)),
             cleanSheetPercent = 31,
