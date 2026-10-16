@@ -43,8 +43,6 @@ import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.prediction.resources.Res
 import com.footballintelligence.feature.prediction.resources.action_explain
 import com.footballintelligence.feature.prediction.resources.action_new_prediction
-import com.footballintelligence.feature.prediction.resources.draw_possible
-import com.footballintelligence.feature.prediction.resources.draw_possible_detail
 import com.footballintelligence.feature.prediction.resources.fixture
 import com.footballintelligence.feature.prediction.resources.no_prediction
 import com.footballintelligence.feature.prediction.resources.probabilities
@@ -210,9 +208,6 @@ private fun ResultHeader(result: PredictionResult, winner: String?, yourTeam: St
                 style = MaterialTheme.typography.displaySmall,
                 color = MaterialTheme.colorScheme.primary,
             )
-            if (result.drawPossible) {
-                DrawPossibleTag()
-            }
         }
     }
 }
@@ -249,24 +244,4 @@ private fun YourTeamTag(team: String) {
             .background(MaterialTheme.colorScheme.primary)
             .padding(horizontal = 12.dp, vertical = 4.dp),
     )
-}
-
-@Composable
-private fun DrawPossibleTag() {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = stringResource(Res.string.draw_possible),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onTertiaryContainer,
-            modifier = Modifier
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.tertiaryContainer)
-                .padding(horizontal = 12.dp, vertical = 4.dp),
-        )
-        Text(
-            text = stringResource(Res.string.draw_possible_detail),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-        )
-    }
 }

@@ -63,8 +63,6 @@ import com.footballintelligence.feature.assistant.resources.source_item
 import com.footballintelligence.feature.assistant.resources.sources
 import com.footballintelligence.feature.assistant.resources.unavailable_body
 import com.footballintelligence.feature.assistant.resources.unavailable_title
-import com.footballintelligence.feature.assistant.resources.welcome_body
-import com.footballintelligence.feature.assistant.resources.welcome_title
 import org.jetbrains.compose.resources.stringResource
 
 /** Multi-turn chat interface for the Football Intelligence Assistant. */
@@ -147,7 +145,7 @@ private fun ChatContent(
         ) {
             if (messages.isEmpty()) {
                 item {
-                    WelcomeMessage()
+                    WelcomeMessage(onAsk = onSend)
                 }
             }
             items(messages) { message ->
@@ -275,23 +273,6 @@ private fun SourcesSection(sources: List<SourceCitation>) {
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun WelcomeMessage() {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Spacer(Modifier.height(32.dp))
-        Text(stringResource(Res.string.welcome_title), style = MaterialTheme.typography.titleMedium)
-        Text(
-            stringResource(Res.string.welcome_body),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 

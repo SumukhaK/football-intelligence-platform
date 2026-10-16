@@ -10,7 +10,7 @@ private val sampleDays = listOf(
     FixtureDay(
         "Sat 10 Oct",
         listOf(
-            FixtureRow("Arsenal", "Leeds", "12:30"),
+            FixtureRow("Arsenal", "Leeds", "12:30", isYourTeam = true),
             FixtureRow("Aston Villa", "Brentford", "15:00"),
             FixtureRow("Man City", "Fulham", null),
         ),

@@ -29,7 +29,6 @@ data class NextMatch(
     val pick: TeamOutcome,
     val pickPercent: Int,
     val split: OutcomeSplit,
-    val drawPossible: Boolean,
     val reasons: List<MatchReason>,
     val scorelines: List<Scoreline>,
     val cleanSheetPercent: Int?,

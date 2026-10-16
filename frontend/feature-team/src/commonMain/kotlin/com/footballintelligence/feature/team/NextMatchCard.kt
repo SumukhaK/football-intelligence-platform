@@ -5,11 +5,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import com.footballintelligence.core.ui.OutcomeBar
 import com.footballintelligence.feature.team.resources.Res
 import com.footballintelligence.feature.team.resources.next_match_clean_sheet
-import com.footballintelligence.feature.team.resources.next_match_draw_possible
 import com.footballintelligence.feature.team.resources.next_match_heading
 import com.footballintelligence.feature.team.resources.next_match_pick
 import com.footballintelligence.feature.team.resources.next_match_pick_chance
@@ -98,15 +95,6 @@ private fun Pick(match: NextMatch) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-        }
-        if (match.drawPossible) {
-            Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.tertiaryContainer) {
-                Text(
-                    stringResource(Res.string.next_match_draw_possible),
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                )
-            }
         }
     }
 }

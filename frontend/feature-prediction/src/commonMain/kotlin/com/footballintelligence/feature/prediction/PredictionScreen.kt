@@ -2,14 +2,10 @@ package com.footballintelligence.feature.prediction
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -49,8 +47,8 @@ import com.footballintelligence.feature.prediction.resources.league
 import com.footballintelligence.feature.prediction.resources.prediction_title
 import com.footballintelligence.feature.prediction.resources.season_note
 import com.footballintelligence.feature.prediction.resources.select_teams
+import com.footballintelligence.feature.prediction.resources.swap_teams
 import com.footballintelligence.feature.prediction.resources.teams_must_differ
-import com.footballintelligence.feature.prediction.resources.versus
 import org.jetbrains.compose.resources.stringResource
 
 /** Team selection screen for submitting a match prediction. */
@@ -173,22 +171,16 @@ private fun PredictionInputContent(
             teams = teams,
             onTeamSelected = { awayTeam = it },
         )
-        Spacer(Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
+        // The dropdowns already name both teams; a swap saves re-picking both for the reverse fixture.
+        TextButton(
+            onClick = {
+                val home = homeTeam
+                homeTeam = awayTeam
+                awayTeam = home
+            },
+            modifier = Modifier.align(Alignment.CenterHorizontally),
         ) {
-            Text(
-                text = homeTeam,
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Spacer(Modifier.width(12.dp))
-            Text(stringResource(Res.string.versus), style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.width(12.dp))
-            Text(
-                text = awayTeam,
-                style = MaterialTheme.typography.titleMedium,
-            )
+            Text(stringResource(Res.string.swap_teams))
         }
         val predictDescription = stringResource(Res.string.cd_predict)
         Button(

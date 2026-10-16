@@ -20,7 +20,6 @@
     <string name="next_match_pick_chance">%1$d% chance</string>
     <string name="outcome_team_win">%1$s win</string>
     <string name="outcome_draw">Draw</string>
-    <string name="next_match_draw_possible">Draw possible</string>
     <string name="next_match_reasons">Why</string>
     <string name="next_match_scorelines">Likeliest scores</string>
     <string name="next_match_scoreline">%1$d-%2$d</string>

@@ -26,6 +26,7 @@ class HomeViewModel(
     favouriteLeague: String? = null,
     private val zone: ZoneId = ZoneId.systemDefault(),
     private val locale: Locale = Locale.getDefault(),
+    private val yourTeam: String? = null,
 ) : ViewModel() {
 
     /** League tabs, in display order. */
@@ -91,7 +92,12 @@ class HomeViewModel(
                 FixtureDay(
                     label = formatMatchDay(day, locale),
                     fixtures = onDay.map {
-                        FixtureRow(it.homeTeam, it.awayTeam, it.kickoff?.let { k -> formatKickoff(k, zone, locale) })
+                        FixtureRow(
+                            homeTeam = it.homeTeam,
+                            awayTeam = it.awayTeam,
+                            time = it.kickoff?.let { k -> formatKickoff(k, zone, locale) },
+                            isYourTeam = yourTeam == it.homeTeam || yourTeam == it.awayTeam,
+                        )
                     },
                 )
             }

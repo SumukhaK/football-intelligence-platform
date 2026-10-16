@@ -16,7 +16,6 @@ private val sampleMatch = NextMatch(
     pick = TeamOutcome.WIN,
     pickPercent = 52,
     split = OutcomeSplit(home = 20, draw = 28, away = 52),
-    drawPossible = true,
     reasons = listOf(
         MatchReason("Arsenal team strength rating", "1618"),
         MatchReason("Arsenal wins in last 10", "7 of 10"),
