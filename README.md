@@ -53,7 +53,7 @@ This project demonstrates AI engineering as a discipline: not just "can I train 
 | **Full reproducibility** | Entire pipeline (ingest → features → train → explain) runs in under 15 seconds from one CLI command |
 | **Observability** | JSON logs to one versioned telemetry contract (1.1.0), a request ID on every request and log line, a hashed `user_ref` (never the email) on requests and assistant turns of signed-in users, OpenTelemetry traces across retrieval, tool calls and generation, retries with backoff on every outbound download, a local Grafana stack, and Cloud Monitoring metrics and alerts kept as code (ADR 024) |
 | **Hosting-ready** | A non-root container image built from a verified artifact snapshot, `/v2/live` and `/v2/ready` probes, a Firestore account store, and a server that refuses unsafe cloud defaults (ADR 025, ADR 026). CI builds and probes the image and scans Python and Gradle dependencies |
-| **End-to-end test coverage** | 1,373 Python tests (including 36 integration tests against the real model, most of which skip on a machine without one) and 207 Android tests (ViewModels written test-first, repositories, network, cache, retries, loader) |
+| **End-to-end test coverage** | 1,373 Python tests (including 37 integration tests against the real model, most of which skip on a machine without one) and 207 Android tests (ViewModels written test-first, repositories, network, cache, retries, loader) |
 | **No cloud needed locally** | Runs entirely on a laptop: no managed database, no cloud LLM, no hosted vector store. The cloud pieces are opt-in settings |
 
 ---
@@ -384,7 +384,7 @@ uv run python -m scripts.manage_accounts invite --email you@example.com
 ### Running Tests
 
 ```sh
-# Python: 1,373 tests (the 36 integration tests need a trained model)
+# Python: 1,373 tests (the 37 integration tests need a trained model)
 cd ai && uv run pytest
 
 # Android: unit tests, lint and formatting (207 tests)
