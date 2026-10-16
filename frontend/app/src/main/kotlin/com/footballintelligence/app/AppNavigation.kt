@@ -1,8 +1,11 @@
 package com.footballintelligence.app
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -43,10 +46,12 @@ import org.koin.androidx.compose.koinViewModel
 
 /**
  * Root of the app: the navigation graph, with a bottom bar on the top-level
- * screens (fixtures, predict, my team, assistant) and Settings behind the
+ * screens (fixtures, predict, my team, assistant), hidden while the keyboard
+ * is open, and Settings behind the
  * top bar's settings icon. The app starts at sign-in without a session, else
  * at the notice check (ADR 022); then onboarding on first launch, else home.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AppNavigation(navController: NavHostController, signedIn: Boolean) {
     val favourite: FavouriteTeamViewModel = koinViewModel()
@@ -57,9 +62,11 @@ fun AppNavigation(navController: NavHostController, signedIn: Boolean) {
     val entry by navController.currentBackStackEntryAsState()
     val route = entry?.destination?.route
     val current = TopLevelDestination.forRoute(route)
+    // While typing, the keyboard needs the room more than the tabs do.
+    val typing = WindowInsets.isImeVisible
     Scaffold(
         bottomBar = {
-            if (current != null) {
+            if (current != null && !typing) {
                 BottomNavBar(current = current, onSelect = { navController.navigateTo(it) })
             }
         },
@@ -266,7 +273,6 @@ private fun AppNavHost(
                 uiState = state,
                 isSending = isSending,
                 onSend = vm::send,
-                onBack = { navController.popBackStack() },
                 actions = settingsAction,
                 onNewChat = vm::newChat,
             )

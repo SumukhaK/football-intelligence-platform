@@ -23,7 +23,7 @@ private val sampleConversation = listOf(
 @Composable
 private fun Assistant(state: AssistantUiState, isSending: Boolean = false) {
     PreviewSurface {
-        AssistantScreen(uiState = state, isSending = isSending, onSend = {}, onBack = {})
+        AssistantScreen(uiState = state, isSending = isSending, onSend = {})
     }
 }
 
