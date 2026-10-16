@@ -88,6 +88,7 @@ Durations are integers in milliseconds, named `duration_ms`.
 | `fresh_match_data` | `previous_match_data` | Daily refresh failed; old data kept |
 | `fresh_fixtures` | `previous_fixtures` | Fixtures refresh failed; old fixtures kept |
 | `server_features` | `supplied_features_only` | Match history did not load; predictions use request features only |
+| `store_question` | `question_not_stored` | Saving an opted-in question failed; the chat still answers (ADR 034) |
 | `tool_calling` | `answer_without_tools` | The tool loop reached its round limit and the model was asked to answer without tools |
 
 ## 4. Traces

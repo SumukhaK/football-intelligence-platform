@@ -116,3 +116,4 @@ ADRs are never deleted.
 | [031](031-favourite-team-in-chat.md) | The favourite team in chat | Accepted |
 | [032](032-specific-invite-errors.md) | Specific errors for used and expired invites | Accepted |
 | [033](033-public-model-name-drishti.md) | A public name for the prediction model: Drishti | Accepted |
+| [034](034-storing-opted-in-question-text.md) | Storing question text for users who opted in | Accepted |

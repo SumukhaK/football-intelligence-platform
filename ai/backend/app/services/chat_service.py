@@ -50,6 +50,14 @@ class ChatService:
         """
         who = user.email if user is not None else "anonymous"
         earlier = self._checked_history(who, request)
+        response, outcome = self._respond(request, user, earlier)
+        self._save_question(user, request, outcome, response.model)
+        return self._signed(response, who, request)
+
+    def _respond(
+        self, request: ChatRequest, user: User | None, earlier: CheckedHistory
+    ) -> tuple[ChatResponse, str]:
+        """The answer or the refusal, with its ADR 034 outcome."""
         try:
             harmful = (
                 self._safety.harmful_categories(request.message, earlier.user_questions)
@@ -57,7 +65,7 @@ class ChatService:
                 else []
             )
             if harmful:
-                return self._signed(self._refuse(harmful, user), who, request)
+                return self._refuse(harmful, user)
             result = self._service.chat(  # type: ignore[attr-defined]
                 with_favourite(request), earlier.messages
             )
@@ -75,7 +83,27 @@ class ChatService:
             model=result.model,
             retrieved_count=result.retrieved_count,
         )
-        return self._signed(response, who, request)
+        return response, "answered"
+
+    def _save_question(
+        self, user: User | None, request: ChatRequest, outcome: str, model: str
+    ) -> None:
+        """Store the question for an opted-in user; a failure never fails the chat."""
+        if user is None or self._accounts is None:
+            return
+        try:
+            self._accounts.record_question(
+                user, request.message, outcome, model, request.conversation_id
+            )
+        except Exception as exc:  # noqa: BLE001 — any store failure is logged
+            emit(
+                logger,
+                EventName.FALLBACK,
+                "Question was not stored",
+                from_path="store_question",
+                to_path="question_not_stored",
+                cause=type(exc).__name__,
+            )
 
     def _checked_history(self, who: str, request: ChatRequest) -> CheckedHistory:
         """The history the model may see; drops and trims are logged."""
@@ -101,7 +129,9 @@ class ChatService:
         signature = self._history.sign(who, request.conversation_id, response.answer)
         return response.model_copy(update={"signature": signature})
 
-    def _refuse(self, categories: list[str], user: User | None) -> ChatResponse:
+    def _refuse(
+        self, categories: list[str], user: User | None
+    ) -> tuple[ChatResponse, str]:
         """A fixed refusal; the user's strike count goes up when signed in."""
         answer = "I can't help with that question."
         outcome = "refused"
@@ -117,9 +147,10 @@ class ChatService:
             outcome=outcome,
             categories=categories,
         )
-        return ChatResponse(
+        response = ChatResponse(
             answer=answer, sources=[], confidence=0.0, model="safety", retrieved_count=0
         )
+        return response, outcome
 
 
 def with_favourite(request: ChatRequest) -> str:

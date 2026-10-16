@@ -24,6 +24,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 - Logs name the signed-in user by `user_ref` on `http.request` and on every assistant turn (`assistant.answer`, `assistant.tool`, `assistant.abstain`, `guardrail.event`), never by email. Telemetry contract 1.1.0.
 - Invite codes are 8 characters as `XXXX-XXXX` with no lookalike letters or digits, and redeem however they are typed (any case, with or without spaces and dashes). Codes sent before this keep working until they expire.
+- For signed-in users who allowed it on the consent screen, the text of each question is saved with its outcome, model and conversation (not the answer) and deleted after 90 days by a Firestore TTL policy (ADR 034). A failed save never fails the chat.
 - The assistant knows your favourite team: the app sends it with each question, so "where will we finish?" and "when do we play next?" are answered for that team (ADR 031). The conversation eval gains a case for it (9/9 on Workers AI).
 
 ### Fixed
