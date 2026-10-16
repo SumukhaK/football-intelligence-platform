@@ -22,6 +22,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Redeeming an invite code again now says the account already exists and to sign in (409), and an expired code says it expired (410). Before, both read as "wrong, used or expired". Only someone holding the right code gets the specific answer.
 
 ### Added
+- For signed-in users who allowed it on the consent screen, the text of each question is saved with its outcome, model and conversation (not the answer) and deleted after 90 days by a Firestore TTL policy (ADR 034). A failed save never fails the chat.
 - The assistant knows your favourite team: the app sends it with each question, so "where will we finish?" and "when do we play next?" are answered for that team (ADR 031). The conversation eval gains a case for it (9/9 on Workers AI).
 
 ### Fixed

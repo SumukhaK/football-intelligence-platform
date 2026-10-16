@@ -1,4 +1,4 @@
-"""Storage for accounts, invites and sessions (ADR 022).
+"""Storage for accounts, invites, sessions and opted-in questions (ADR 022, 034).
 
 ``AccountStore`` is the interface. ``JsonAccountStore`` keeps everything in one
 JSON file, enough for local use and tests. ``FirestoreAccountStore`` keeps it in
@@ -10,7 +10,9 @@ from __future__ import annotations
 import json
 import os
 import threading
+import uuid
 from dataclasses import asdict, dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
@@ -55,6 +57,19 @@ class Session:
     revoked: bool = False
 
 
+@dataclass
+class QuestionRecord:
+    """One question from a user who opted in to storing them (ADR 034)."""
+
+    email: str
+    asked_at: str
+    question: str
+    outcome: str  # "answered", "refused", "strike" or "banned"
+    model: str
+    conversation_id: str | None
+    expires_at: str
+
+
 class AccountStore(Protocol):
     """Reads and writes users, invites and sessions."""
 
@@ -84,6 +99,10 @@ class AccountStore(Protocol):
 
     def sessions_for(self, email: str) -> list[Session]:
         """Every session of ``email``."""
+        ...
+
+    def save_question(self, record: QuestionRecord) -> None:
+        """Add one stored question."""
         ...
 
 
@@ -127,9 +146,13 @@ class JsonAccountStore:
         rows = self._read()["sessions"].values()
         return [Session(**row) for row in rows if row["email"] == email]
 
+    def save_question(self, record: QuestionRecord) -> None:
+        """Add one stored question; the JSON store never expires them."""
+        self._write("questions", uuid.uuid4().hex, asdict(record))
+
     def _read(self) -> dict[str, dict[str, dict[str, Any]]]:
         if not self._path.exists():
-            return {"users": {}, "invites": {}, "sessions": {}}
+            return {"users": {}, "invites": {}, "sessions": {}, "questions": {}}
         data: dict[str, dict[str, dict[str, Any]]] = json.loads(
             self._path.read_text(encoding="utf-8")
         )
@@ -138,7 +161,7 @@ class JsonAccountStore:
     def _write(self, table: str, key: str, row: dict[str, Any]) -> None:
         with self._lock:
             data = self._read()
-            data[table][key] = row
+            data.setdefault(table, {})[key] = row
             self._path.parent.mkdir(parents=True, exist_ok=True)
             temporary = self._path.with_suffix(".tmp")
             temporary.write_text(json.dumps(data, indent=2), encoding="utf-8")
@@ -146,7 +169,7 @@ class JsonAccountStore:
 
 
 class FirestoreAccountStore:
-    """Users, invites and sessions as Firestore documents (ADR 026).
+    """Users, invites, sessions and questions as Firestore documents (ADR 026).
 
     Each kind is a collection keyed like the JSON store: users and invites by
     email, sessions by token hash. ``client`` is a ``firestore.Client``.
@@ -192,6 +215,13 @@ class FirestoreAccountStore:
             filter=FieldFilter("email", "==", email)
         )
         return [Session(**doc.to_dict()) for doc in query.stream()]
+
+    def save_question(self, record: QuestionRecord) -> None:
+        """Add one stored question under a random ID."""
+        row: dict[str, Any] = asdict(record)
+        # A TTL policy only deletes documents whose field is a timestamp.
+        row["expires_at"] = datetime.fromisoformat(record.expires_at)
+        self._set("questions", uuid.uuid4().hex, row)
 
     def _collection(self, name: str) -> Any:
         return self._client.collection(self._prefix + name)

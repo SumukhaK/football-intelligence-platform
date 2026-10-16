@@ -84,6 +84,7 @@ Backend first, then the Android screens. Details in [accounts-and-consent-plan.m
 - [x] `/v2/auth/*`, `/v2/me`, `/v2/me/consent`; every `/v2` data route needs a session and current consent when `AUTH_REQUIRED` is on.
 - [x] Owner script: invite (also resets a password), ban, unban.
 - [x] Android: redeem invite, sign in, consent screen, token storage, 401 and 403 handling (#84).
+- [ ] Ops, once per project: a Firestore TTL policy so opted-in questions are deleted after 90 days (ADR 034). With the collection prefix in use (for example `staging_`): `gcloud firestore fields ttls update expires_at --collection-group=<prefix>questions --enable-ttl --database=<FIRESTORE_DATABASE> --project=<GCP_PROJECT_ID>`. Check with `gcloud firestore fields ttls list --database=<FIRESTORE_DATABASE>`. Until it is set, records are kept.
 
 Done when: an invited friend can redeem an invite, agree to the notice and use the app, and nobody else can.
 Evidence: integration tests and a staging walkthrough.

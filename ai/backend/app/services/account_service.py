@@ -14,6 +14,7 @@ from backend.app.consent import CONSENT_VERSION
 from backend.app.services.account_store import (
     AccountStore,
     Invite,
+    QuestionRecord,
     Session,
     User,
 )
@@ -26,6 +27,7 @@ INVITE_LIFETIME = timedelta(days=7)
 SESSION_LIFETIME = timedelta(days=30)
 MAX_FAILED_LOGINS = 5
 LOCKOUT = timedelta(minutes=15)
+QUESTION_LIFETIME = timedelta(days=90)
 # Harmful questions before a permanent ban (ADR 027).
 MAX_STRIKES = 3
 _SCRYPT = {"n": 2**14, "r": 8, "p": 1, "dklen": 32}
@@ -267,6 +269,30 @@ class AccountService:
         user.store_questions = store_questions
         self._store.save_user(user)
         return user
+
+    def record_question(
+        self,
+        user: User,
+        question: str,
+        outcome: str,
+        model: str,
+        conversation_id: str | None,
+    ) -> None:
+        """Store ``question`` if ``user`` opted in; kept for 90 days (ADR 034)."""
+        if not user.store_questions:
+            return
+        now = self._clock()
+        self._store.save_question(
+            QuestionRecord(
+                email=user.email,
+                asked_at=now.isoformat(),
+                question=question,
+                outcome=outcome,
+                model=model,
+                conversation_id=conversation_id,
+                expires_at=(now + QUESTION_LIFETIME).isoformat(),
+            )
+        )
 
     def add_strike(self, email: str) -> User:
         """Count one harmful question against ``email``; the last one bans.
