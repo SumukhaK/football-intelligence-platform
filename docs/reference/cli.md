@@ -590,7 +590,7 @@ uv run python -m scripts.manage_accounts ban --email sam@example.com
 uv run python -m scripts.manage_accounts unban --email sam@example.com
 ```
 
-`invite` prints a one-time code valid for 7 days; send it to the person privately. They redeem it in the app with a password of at least 10 characters. Inviting an existing account again lets them reset their password. `ban` and `unban` print the account's new status, or exit with code 1 when there is no account for the email.
+`invite` prints a one-time code valid for 7 days, such as `K7QM-3XWD` (8 characters without the lookalikes I, L, O, U, 0 and 1; case, spaces and dashes don't matter when it is typed); send it to the person privately. They redeem it in the app with a password of at least 10 characters. Inviting an existing account again lets them reset their password. `ban` and `unban` print the account's new status, or exit with code 1 when there is no account for the email.
 
 ### `python -m scripts.build_snapshot`
 

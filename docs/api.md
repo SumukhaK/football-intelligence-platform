@@ -63,7 +63,7 @@ Accounts are invite-only. The owner creates an invite with `uv run python -m scr
 
 | Method | Path | Body | Returns |
 |---|---|---|---|
-| POST | `/v2/auth/redeem-invite` | `email`, `code`, `password` (10+ characters) | `{ "token", "expires_at" }`. Creates the account, or resets its password with a new invite, and ends older sessions. |
+| POST | `/v2/auth/redeem-invite` | `email`, `code` (as `XXXX-XXXX`; case, spaces and dashes are ignored), `password` (10+ characters) | `{ "token", "expires_at" }`. Creates the account, or resets its password with a new invite, and ends older sessions. |
 | POST | `/v2/auth/login` | `email`, `password` | `{ "token", "expires_at" }`. Sessions last 30 days. |
 | POST | `/v2/auth/logout` | none | 204; ends the session behind the token. |
 | GET | `/v2/me` | none | `email`, `consent_required`, `consent_version`, `consent_text`, `store_questions` |
