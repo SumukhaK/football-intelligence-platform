@@ -48,7 +48,6 @@ import com.footballintelligence.core.designsystem.GreenOnPrimary
 import com.footballintelligence.core.model.ChatMessage
 import com.footballintelligence.core.model.MessageRole
 import com.footballintelligence.core.model.SourceCitation
-import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.KickoffLoader
 import com.footballintelligence.core.ui.appBarColors
 import com.footballintelligence.core.ui.errorMessage
@@ -72,7 +71,6 @@ fun AssistantScreen(
     uiState: AssistantUiState,
     isSending: Boolean,
     onSend: (String) -> Unit,
-    onBack: () -> Unit,
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {},
     onNewChat: () -> Unit = {},
@@ -82,7 +80,6 @@ fun AssistantScreen(
             TopAppBar(
                 colors = appBarColors(),
                 title = { Text(stringResource(Res.string.assistant_title)) },
-                navigationIcon = { BackButton(onClick = onBack) },
                 actions = {
                     if (uiState is AssistantUiState.Chatting) {
                         TextButton(onClick = onNewChat) {
