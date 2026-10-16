@@ -15,6 +15,8 @@ from fastapi.testclient import TestClient
 from backend.app.exceptions import unexpected_error_handler
 from backend.app.middleware.rate_limit import RateLimitMiddleware, SlidingWindowLimiter
 from backend.app.middleware.request_context import RequestContextMiddleware
+from shared.telemetry.context import set_user_ref
+from shared.telemetry.events import EventName, emit
 from shared.telemetry.json_formatter import JsonFormatter
 
 ROUTE_LOGGER = logging.getLogger("tests.request_context.route")
@@ -40,6 +42,13 @@ def _app(limit: int = 100) -> TestClient:
     def team(team: str) -> dict[str, str]:
         ROUTE_LOGGER.info("Inside the route")
         return {"team": team}
+
+    @app.get("/me")
+    def me() -> dict[str, str]:
+        # A sync route runs in the thread pool, like the real chat route.
+        set_user_ref("ref-1")
+        emit(ROUTE_LOGGER, EventName.ASSISTANT_ABSTAIN, "Abstained", reason="x")
+        return {}
 
     @app.get("/boom")
     def boom() -> dict[str, str]:
@@ -202,3 +211,16 @@ def test_a_429_logs_its_error_code(logs: pytest.LogCaptureFixture) -> None:
 def test_a_crash_logs_its_error_code(logs: pytest.LogCaptureFixture) -> None:
     _app().get("/boom")
     assert [r["error_code"] for r in _requests(logs)] == ["Internal server error"]
+
+
+def test_a_signed_in_request_logs_its_user_ref(logs: pytest.LogCaptureFixture) -> None:
+    client = _app()
+    client.get("/me")
+    client.get("/teams/chelsea")
+    abstain = [
+        r.__dict__["attributes"]
+        for r in logs.records
+        if getattr(r, "event", None) == "assistant.abstain"
+    ]
+    assert abstain == [{"reason": "x", "user_ref": "ref-1"}]
+    assert [r.get("user_ref") for r in _requests(logs)] == ["ref-1", None]

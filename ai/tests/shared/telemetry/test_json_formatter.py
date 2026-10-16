@@ -49,7 +49,7 @@ def test_every_common_field_is_present() -> None:
     assert data["service"] == "football-api"
     assert data["revision"] == "rev-1"
     assert data["api_version"] == "2.0.0"
-    assert data["contract_version"] == "1.0.0"
+    assert data["contract_version"] == "1.1.0"
     assert data["event"] is None
     assert data["attributes"] == {}
     assert data["request_id"] is None

@@ -28,6 +28,7 @@ from backend.app.services.account_store import (
     FirestoreAccountStore,
     JsonAccountStore,
 )
+from shared.telemetry.context import get_user_ref, reset_user_ref, start_user_ref
 from tests.backend.fake_firestore import FakeFirestore
 
 EMAIL = "Sam@Example.com"
@@ -286,6 +287,19 @@ def test_consent_is_logged(logged: AccountService, events: Events) -> None:
     logged.record_consent(user, CONSENT_VERSION, False)
     consent = [(s, o) for s, a, o, _ in _auth(events) if a == "consent"]
     assert consent == [("INFO", "consent_required"), ("INFO", "ok")]
+
+
+def test_authenticating_names_the_user_for_the_request(logged: AccountService) -> None:
+    token = _signed_up(logged)
+    scope = start_user_ref()
+    try:
+        with pytest.raises(NotSignedInError):
+            logged.authenticate("unknown")
+        assert get_user_ref() is None
+        logged.authenticate(token)
+        assert get_user_ref() == "ref:sam@example.com"
+    finally:
+        reset_user_ref(scope)
 
 
 def test_emails_never_reach_the_log(

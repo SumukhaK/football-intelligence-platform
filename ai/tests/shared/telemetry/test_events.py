@@ -7,6 +7,7 @@ from typing import Any
 
 import pytest
 
+from shared.telemetry.context import reset_user_ref, set_user_ref, start_user_ref
 from shared.telemetry.events import EventName, emit
 
 EVENTS_JSON = (
@@ -107,3 +108,27 @@ def test_emit_can_attach_an_exception(caplog: pytest.LogCaptureFixture) -> None:
         emit(LOGGER, EventName.APP_CRASH, "Crashed", exc_info=error, route="/x")
     assert caplog.records[0].exc_info is not None
     assert caplog.records[0].exc_info[1] is error
+
+
+def _attributes(caplog: pytest.LogCaptureFixture, name: EventName) -> dict[str, Any]:
+    caplog.clear()
+    with caplog.at_level(logging.DEBUG, logger=LOGGER.name):
+        emit(LOGGER, name, "Something happened", status="ok")
+    (record,) = caplog.records
+    attributes: dict[str, Any] = record.__dict__["attributes"]
+    return attributes
+
+
+def test_user_ref_is_added_only_to_user_events(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    set_user_ref("ignored outside a request")
+    assert "user_ref" not in _attributes(caplog, EventName.ASSISTANT_TOOL)
+    token = start_user_ref()
+    try:
+        assert "user_ref" not in _attributes(caplog, EventName.ASSISTANT_TOOL)
+        set_user_ref("ref-1")
+        assert _attributes(caplog, EventName.ASSISTANT_TOOL)["user_ref"] == "ref-1"
+        assert "user_ref" not in _attributes(caplog, EventName.REFRESH_RUN)
+    finally:
+        reset_user_ref(token)
