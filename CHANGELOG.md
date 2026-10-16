@@ -17,6 +17,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Redeeming an invite code again now says the account already exists and to sign in (409), and an expired code says it expired (410). Before, both read as "wrong, used or expired". Only someone holding the right code gets the specific answer.
 
 ### Added
+- Logs name the signed-in user by `user_ref` on `http.request` and on every assistant turn (`assistant.answer`, `assistant.tool`, `assistant.abstain`, `guardrail.event`), never by email. Telemetry contract 1.1.0.
 - The assistant knows your favourite team: the app sends it with each question, so "where will we finish?" and "when do we play next?" are answered for that team (ADR 031). The conversation eval gains a case for it (9/9 on Workers AI).
 
 ### Fixed

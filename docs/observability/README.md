@@ -57,7 +57,7 @@ checks every event the tests emit against `telemetry-events.json`, and
 `ai/tests/backend/test_log_privacy.py` checks that no question or email is
 logged.
 
-Contract version: **1.0.0**. The decision behind it is
+Contract version: **1.1.0**. The decision behind it is
 [ADR 024](../adr/024-structured-telemetry-and-opentelemetry.md).
 
 The read-only ops console lives in its own repository,

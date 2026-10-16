@@ -6,6 +6,8 @@ import logging
 from enum import StrEnum
 from typing import Any
 
+from shared.telemetry.context import get_user_ref
+
 
 class EventName(StrEnum):
     """Every event the backend may emit."""
@@ -46,6 +48,16 @@ _OK_STATUS_EVENTS = frozenset(
 )
 _HTTP_STATUS_EVENTS = frozenset({EventName.HTTP_REQUEST, EventName.APP_ERROR})
 _AUTH_WARNING_OUTCOMES = frozenset({"failed", "locked_out", "blocked"})
+# Events that carry the signed-in user's user_ref when there is one.
+_USER_REF_EVENTS = frozenset(
+    {
+        EventName.HTTP_REQUEST,
+        EventName.ASSISTANT_ANSWER,
+        EventName.ASSISTANT_TOOL,
+        EventName.ASSISTANT_ABSTAIN,
+        EventName.GUARDRAIL_EVENT,
+    }
+)
 
 
 def _http_level(name: EventName, status: object) -> int:
@@ -81,6 +93,9 @@ def emit(
     **attributes: Any,
 ) -> None:
     """Log event ``name`` with ``attributes``, at the contract's level by default."""
+    user_ref = get_user_ref()
+    if user_ref is not None and name in _USER_REF_EVENTS:
+        attributes.setdefault("user_ref", user_ref)
     chosen = severity(name, attributes) if level is None else level
     logger.log(
         chosen,

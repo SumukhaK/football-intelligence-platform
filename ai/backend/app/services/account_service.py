@@ -17,6 +17,7 @@ from backend.app.services.account_store import (
     Session,
     User,
 )
+from shared.telemetry.context import set_user_ref
 from shared.telemetry.events import EventName, emit
 
 logger = logging.getLogger(__name__)
@@ -248,6 +249,8 @@ class AccountService:
             raise NotSignedInError("Sign in to continue.")
         if user.status == "banned":
             raise AccountBlockedError("This account is blocked.")
+        if self._user_ref is not None:
+            set_user_ref(self._user_ref(user.email))
         return user
 
     def record_consent(self, user: User, version: int, store_questions: bool) -> User:
