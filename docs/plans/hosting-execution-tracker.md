@@ -84,7 +84,7 @@ Backend first, then the Android screens. Details in [accounts-and-consent-plan.m
 - [x] `/v2/auth/*`, `/v2/me`, `/v2/me/consent`; every `/v2` data route needs a session and current consent when `AUTH_REQUIRED` is on.
 - [x] Owner script: invite (also resets a password), ban, unban.
 - [x] Android: redeem invite, sign in, consent screen, token storage, 401 and 403 handling (#84).
-- [ ] Ops, once per project: a Firestore TTL policy so opted-in questions are deleted after 90 days (ADR 034). With the collection prefix in use (for example `staging_`): `gcloud firestore fields ttls update expires_at --collection-group=<prefix>questions --enable-ttl --database=<FIRESTORE_DATABASE> --project=<GCP_PROJECT_ID>`. Check with `gcloud firestore fields ttls list --database=<FIRESTORE_DATABASE>`. Until it is set, records are kept.
+- [x] Ops, once per project: a Firestore TTL policy so opted-in questions are deleted after 90 days (ADR 034). With the collection prefix in use (for example `staging_`): `gcloud firestore fields ttls update expires_at --collection-group=<prefix>questions --enable-ttl --database=<FIRESTORE_DATABASE> --project=<GCP_PROJECT_ID>`. Check with `gcloud firestore fields ttls list --database=<FIRESTORE_DATABASE>`. Until it is set, records are kept. Staging: `staging_questions` set and ACTIVE on 17 October 2026.
 
 Done when: an invited friend can redeem an invite, agree to the notice and use the app, and nobody else can.
 Evidence: integration tests and a staging walkthrough.
@@ -123,6 +123,7 @@ Plan: [chat-memory-plan.md](chat-memory-plan.md). Decision: [ADR 030](../adr/030
 - [x] `evaluation/assistant_conversation.py` passes on Workers AI (8/8), and abstention (20/20), grounding (11/11) and season (7/7) still pass (15 October 2026).
 - [x] App: keeps the signed window, New chat, 30-minute idle reset (ViewModel tests first; checked on the emulator 15 October 2026).
 - [x] Staging: `history-key` secret mounted; v2.5.0 deployed 15 October 2026 (built with Cloud Build). Checked through the public URL: sign-in, consent, predict, a signed follow-up ("and the draw?" got 24.7%) and a forged history ignored.
+- [x] Staging: v2.6.0 deployed 17 October 2026 (image `da8a236`, revision 00005, built with Cloud Build); `/v2/ready` ready and `/v2/health` version 2.6.0 with the assistant on. The first image (14 October) was deleted from Artifact Registry; `da8a236`, `a2afef3` and `ec72966` remain.
 
 Done when: a follow-up such as "and the draw?" is answered from the conversation on staging, a forged turn is ignored, and all four evals pass.
 Evidence: eval output in `docs/reports/hosted-assistant-evals.md` and staging logs.
