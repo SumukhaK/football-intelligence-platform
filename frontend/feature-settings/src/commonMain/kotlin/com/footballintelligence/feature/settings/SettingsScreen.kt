@@ -44,9 +44,10 @@ import com.footballintelligence.feature.settings.resources.sign_out_summary
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * Settings screen with links to Model Info and About. [status] is shown first;
- * the app passes the backend status card. [myTeam] follows the links; the app
- * passes the favourite team section. Sign out ends the session (ADR 022).
+ * Settings screen with links to Model Info and About. [myTeam] comes first, as
+ * the setting people change most; the app passes the favourite team section.
+ * [status], the backend status card, is a diagnostic and comes last. Sign out
+ * ends the session (ADR 022).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,7 +80,7 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            status()
+            myTeam()
             Text(stringResource(Res.string.section_analytics), style = MaterialTheme.typography.labelMedium)
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column {
@@ -118,7 +119,6 @@ fun SettingsScreen(
                     )
                 }
             }
-            myTeam()
             Text(stringResource(Res.string.section_account), style = MaterialTheme.typography.labelMedium)
             Card(modifier = Modifier.fillMaxWidth()) {
                 ListItem(
@@ -130,6 +130,7 @@ fun SettingsScreen(
                     modifier = Modifier.clickable(onClick = onSignOut),
                 )
             }
+            status()
         }
     }
 }

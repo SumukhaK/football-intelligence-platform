@@ -44,12 +44,13 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import com.footballintelligence.core.designsystem.GreenOnPrimary
 import com.footballintelligence.core.model.ChatMessage
 import com.footballintelligence.core.model.MessageRole
 import com.footballintelligence.core.model.SourceCitation
-import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.KickoffLoader
 import com.footballintelligence.core.ui.appBarColors
+import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.assistant.resources.Res
 import com.footballintelligence.feature.assistant.resources.assistant_title
 import com.footballintelligence.feature.assistant.resources.cd_message_input
@@ -61,8 +62,6 @@ import com.footballintelligence.feature.assistant.resources.source_item
 import com.footballintelligence.feature.assistant.resources.sources
 import com.footballintelligence.feature.assistant.resources.unavailable_body
 import com.footballintelligence.feature.assistant.resources.unavailable_title
-import com.footballintelligence.feature.assistant.resources.welcome_body
-import com.footballintelligence.feature.assistant.resources.welcome_title
 import org.jetbrains.compose.resources.stringResource
 
 /** Multi-turn chat interface for the Football Intelligence Assistant. */
@@ -72,7 +71,6 @@ fun AssistantScreen(
     uiState: AssistantUiState,
     isSending: Boolean,
     onSend: (String) -> Unit,
-    onBack: () -> Unit,
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {},
     onNewChat: () -> Unit = {},
@@ -82,13 +80,12 @@ fun AssistantScreen(
             TopAppBar(
                 colors = appBarColors(),
                 title = { Text(stringResource(Res.string.assistant_title)) },
-                navigationIcon = { BackButton(onClick = onBack) },
                 actions = {
                     if (uiState is AssistantUiState.Chatting) {
                         TextButton(onClick = onNewChat) {
                             Text(
                                 stringResource(Res.string.new_chat),
-                                color = MaterialTheme.colorScheme.onPrimary,
+                                color = GreenOnPrimary,
                             )
                         }
                     }
@@ -145,7 +142,7 @@ private fun ChatContent(
         ) {
             if (messages.isEmpty()) {
                 item {
-                    WelcomeMessage()
+                    WelcomeMessage(onAsk = onSend)
                 }
             }
             items(messages) { message ->
@@ -224,8 +221,13 @@ private fun MessageBubble(message: ChatMessage) {
                     )
                     .padding(12.dp),
             ) {
+                val error = message.errorKind?.let { errorMessage(it, message.text) }
                 Text(
-                    text = if (isUser) AnnotatedString(message.text) else formatAnswer(message.text),
+                    text = when {
+                        isUser -> AnnotatedString(message.text)
+                        error != null -> AnnotatedString(error)
+                        else -> formatAnswer(message.text)
+                    },
                     color = if (isUser) {
                         MaterialTheme.colorScheme.onPrimary
                     } else {
@@ -268,23 +270,6 @@ private fun SourcesSection(sources: List<SourceCitation>) {
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun WelcomeMessage() {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Spacer(Modifier.height(32.dp))
-        Text(stringResource(Res.string.welcome_title), style = MaterialTheme.typography.titleMedium)
-        Text(
-            stringResource(Res.string.welcome_body),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 

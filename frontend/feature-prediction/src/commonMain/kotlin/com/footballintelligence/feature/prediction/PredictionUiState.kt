@@ -21,7 +21,13 @@ sealed class TeamsUiState {
 sealed class PredictionInputUiState {
     data object Idle : PredictionInputUiState()
     data object Loading : PredictionInputUiState()
-    data class Success(val result: PredictionResult, val savedAt: String? = null) : PredictionInputUiState()
+
+    /** [yourTeam] is the fan's saved team when it plays in this match, so the screen can mark it. */
+    data class Success(
+        val result: PredictionResult,
+        val savedAt: String? = null,
+        val yourTeam: String? = null,
+    ) : PredictionInputUiState()
     data class Error(val message: String, val kind: ErrorKind = ErrorKind.UNKNOWN) : PredictionInputUiState()
 }
 

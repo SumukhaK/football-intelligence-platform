@@ -63,17 +63,19 @@ Accounts are invite-only. The owner creates an invite with `uv run python -m scr
 
 | Method | Path | Body | Returns |
 |---|---|---|---|
-| POST | `/v2/auth/redeem-invite` | `email`, `code`, `password` (10+ characters) | `{ "token", "expires_at" }`. Creates the account, or resets its password with a new invite, and ends older sessions. |
+| POST | `/v2/auth/redeem-invite` | `email`, `code` (as `XXXX-XXXX`; case, spaces and dashes are ignored), `password` (10+ characters) | `{ "token", "expires_at" }`. Creates the account, or resets its password with a new invite, and ends older sessions. |
 | POST | `/v2/auth/login` | `email`, `password` | `{ "token", "expires_at" }`. Sessions last 30 days. |
 | POST | `/v2/auth/logout` | none | 204; ends the session behind the token. |
 | GET | `/v2/me` | none | `email`, `consent_required`, `consent_version`, `consent_text`, `store_questions` |
-| POST | `/v2/me/consent` | `version`, `store_questions` (default false) | The updated `/v2/me` body |
+| POST | `/v2/me/consent` | `version`, `store_questions` (default false) | The updated `/v2/me` body. With `store_questions` true, each later chat question's text is kept for 90 days (not the answer, ADR 034); false stops it. |
 
 Errors:
 
 | Status | `error` | When |
 |---|---|---|
-| 400 | `Invalid invite` | The code is wrong, already used, or older than 7 days. |
+| 400 | `Invalid invite` | No invite for this email, or the code is wrong. |
+| 409 | `Invite already used` | The right code, already redeemed: the account exists, so sign in. Only the code's holder gets this answer. |
+| 410 | `Invite expired` | The right code, older than 7 days: ask for a new one. |
 | 401 | `Not signed in` | No token, or an unknown, expired or revoked one. |
 | 401 | `Invalid credentials` | Wrong email or password; the message never says which. |
 | 403 | `Consent required` | The current notice has not been accepted, or `version` is not the current one. |
@@ -98,7 +100,7 @@ Service status.
   "matches_through": "2026-09-20",
   "last_refresh_at": "2026-09-29T07:01:31+05:30",
   "last_refresh_error": null,
-  "version": "2.5.1"
+  "version": "2.6.0"
 }
 ```
 
@@ -131,8 +133,11 @@ never marks the API unready. `/health` stays the place for diagnostics.
 
 ## GET /model
 
-Registry entry of the served model: `model_version`, `dataset_version`,
-`training_timestamp`, `git_commit` and `metrics`. Returns 503 when no
+Registry entry of the served model: `model_name`, `model_version`,
+`dataset_version`, `training_timestamp`, `git_commit` and `metrics`.
+`model_name` is the model's public name, `Drishti` by default
+(`PREDICTION_MODEL_NAME`, ADR 033); `model_version` stays the technical
+identifier. Returns 503 when no
 model is registered. A model trained with a test season reports its test
 metrics (`accuracy`, `log_loss`, ...). The served refit (ADR 017) has no test
 season, so it reports its scores on the current season so far, named by season
@@ -458,6 +463,8 @@ the model still cites, but the server logs its sources and citations in
   new one can add a strike. Numbers in the answer always come from tools called
   for this question, never from the history.
 - Without `conversation_id` and `history`, the endpoint behaves as before.
+
+**Favourite team (ADR 031).** `"favourite_team": {"team": "Man United", "competition": "Premier League"}` tells the assistant who "we" and "my team" are. Each field is at most 60 characters of letters, digits, spaces and `.'&()-`. The team is added to the question for the model and the season router, but not to the safety check or the history.
 
 For a match prediction, its SHAP explanation or a league's upcoming fixtures,
 the assistant calls tools that run the same services as `/v2/predict`,

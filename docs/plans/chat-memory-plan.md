@@ -72,3 +72,5 @@ Measured prices on Workers AI (15 October 2026): Gemma 4 26B about 0.009 neurons
 3. `evaluation/assistant_conversation.py`: about 15 scripted chats; all four evals pass on Workers AI.
 4. App (test-first): the ViewModel keeps the signed window, a New chat action, the 30-minute reset.
 5. Release v2.5.0; deploy to staging with the `history-key` secret; watch `history_tokens` and neurons per answer.
+
+The app also sends the user's favourite team with each question, so "we" and "my team" are understood ([ADR 031](../adr/031-favourite-team-in-chat.md)).

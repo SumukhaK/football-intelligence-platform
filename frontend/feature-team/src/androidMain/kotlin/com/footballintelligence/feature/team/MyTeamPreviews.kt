@@ -4,16 +4,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.footballintelligence.core.model.FavouriteTeam
 import com.footballintelligence.core.model.SERVED_LEAGUES
+import com.footballintelligence.core.ui.OutcomeSplit
 import com.footballintelligence.core.ui.PreviewSurface
 
 private val sampleMatch = NextMatch(
+    team = "Arsenal",
     homeTeam = "Everton",
     awayTeam = "Arsenal",
     day = "Sun 18 Oct",
     time = "16:30",
     pick = TeamOutcome.WIN,
     pickPercent = 52,
-    drawPossible = true,
+    split = OutcomeSplit(home = 20, draw = 28, away = 52),
     reasons = listOf(
         MatchReason("Arsenal team strength rating", "1618"),
         MatchReason("Arsenal wins in last 10", "7 of 10"),

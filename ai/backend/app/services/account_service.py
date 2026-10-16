@@ -14,9 +14,12 @@ from backend.app.consent import CONSENT_VERSION
 from backend.app.services.account_store import (
     AccountStore,
     Invite,
+    QuestionRecord,
     Session,
     User,
 )
+from backend.app.services.invite_codes import new_invite_code, normalise_invite_code
+from shared.telemetry.context import set_user_ref
 from shared.telemetry.events import EventName, emit
 
 logger = logging.getLogger(__name__)
@@ -26,6 +29,7 @@ INVITE_LIFETIME = timedelta(days=7)
 SESSION_LIFETIME = timedelta(days=30)
 MAX_FAILED_LOGINS = 5
 LOCKOUT = timedelta(minutes=15)
+QUESTION_LIFETIME = timedelta(days=90)
 # Harmful questions before a permanent ban (ADR 027).
 MAX_STRIKES = 3
 _SCRYPT = {"n": 2**14, "r": 8, "p": 1, "dklen": 32}
@@ -58,6 +62,20 @@ class InvalidInviteError(AuthError):
 
     status_code, error = 400, "Invalid invite"
     outcome = "invalid_invite"
+
+
+class InviteAlreadyUsedError(AuthError):
+    """The right code, already used: the account exists, so sign in instead."""
+
+    status_code, error = 409, "Invite already used"
+    outcome = "invite_used"
+
+
+class InviteExpiredError(AuthError):
+    """The right code, past its 7 days."""
+
+    status_code, error = 410, "Invite expired"
+    outcome = "invite_expired"
 
 
 class WeakPasswordError(AuthError):
@@ -130,10 +148,14 @@ class AccountService:
 
     def create_invite(self, email: str) -> str:
         """A one-time code for ``email``; replaces any earlier invite."""
-        code = secrets.token_urlsafe(16)
+        code = new_invite_code()
         expires = self._clock() + INVITE_LIFETIME
         self._store.save_invite(
-            Invite(_normalise(email), _digest(code), expires.isoformat())
+            Invite(
+                _normalise(email),
+                _digest(normalise_invite_code(code)),
+                expires.isoformat(),
+            )
         )
         return code
 
@@ -155,13 +177,16 @@ class AccountService:
     def _redeem(self, email: str, code: str, password: str) -> NewSession:
         invite = self._store.get_invite(email)
         now = self._clock()
-        if (
-            invite is None
-            or invite.redeemed_at is not None
-            or datetime.fromisoformat(invite.expires_at) < now
-            or not hmac.compare_digest(invite.code_hash, _digest(code))
-        ):
+        # Only someone holding the right code learns more than "wrong".
+        if invite is None or not _code_matches(invite.code_hash, code):
             raise InvalidInviteError("The invite code is wrong, used or expired.")
+        if invite.redeemed_at is not None:
+            raise InviteAlreadyUsedError(
+                "This code already set up your account. Sign in with the password "
+                "you chose, or ask for a new code to reset it."
+            )
+        if datetime.fromisoformat(invite.expires_at) < now:
+            raise InviteExpiredError("This code has expired. Ask for a new one.")
         if len(password) < MIN_PASSWORD_LENGTH:
             raise WeakPasswordError(f"Use at least {MIN_PASSWORD_LENGTH} characters.")
         user = self._store.get_user(email) or User(email, "", now.isoformat())
@@ -231,6 +256,8 @@ class AccountService:
             raise NotSignedInError("Sign in to continue.")
         if user.status == "banned":
             raise AccountBlockedError("This account is blocked.")
+        if self._user_ref is not None:
+            set_user_ref(self._user_ref(user.email))
         return user
 
     def record_consent(self, user: User, version: int, store_questions: bool) -> User:
@@ -250,6 +277,30 @@ class AccountService:
         user.store_questions = store_questions
         self._store.save_user(user)
         return user
+
+    def record_question(
+        self,
+        user: User,
+        question: str,
+        outcome: str,
+        model: str,
+        conversation_id: str | None,
+    ) -> None:
+        """Store ``question`` if ``user`` opted in; kept for 90 days (ADR 034)."""
+        if not user.store_questions:
+            return
+        now = self._clock()
+        self._store.save_question(
+            QuestionRecord(
+                email=user.email,
+                asked_at=now.isoformat(),
+                question=question,
+                outcome=outcome,
+                model=model,
+                conversation_id=conversation_id,
+                expires_at=(now + QUESTION_LIFETIME).isoformat(),
+            )
+        )
 
     def add_strike(self, email: str) -> User:
         """Count one harmful question against ``email``; the last one bans.
@@ -320,6 +371,17 @@ def _normalise(email: str) -> str:
 def _digest(secret: str) -> str:
     """SHA-256 of a high-entropy secret (tokens and codes, not passwords)."""
     return hashlib.sha256(secret.encode()).hexdigest()
+
+
+def _code_matches(code_hash: str, code: str) -> bool:
+    """Whether ``code`` is the invite's, typed loosely or (for older codes) exactly.
+
+    Codes sent before the ``XXXX-XXXX`` format were stored as the digest of the
+    raw code; they keep working until they expire.
+    """
+    normalised = hmac.compare_digest(code_hash, _digest(normalise_invite_code(code)))
+    raw = hmac.compare_digest(code_hash, _digest(code))
+    return normalised or raw
 
 
 def _hash_password(password: str) -> str:

@@ -5,11 +5,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,9 +17,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.footballintelligence.core.ui.OutcomeBar
 import com.footballintelligence.feature.team.resources.Res
 import com.footballintelligence.feature.team.resources.next_match_clean_sheet
-import com.footballintelligence.feature.team.resources.next_match_draw_possible
 import com.footballintelligence.feature.team.resources.next_match_heading
 import com.footballintelligence.feature.team.resources.next_match_pick
 import com.footballintelligence.feature.team.resources.next_match_pick_chance
@@ -33,8 +31,7 @@ import com.footballintelligence.feature.team.resources.next_match_time_tbc
 import com.footballintelligence.feature.team.resources.next_match_versus
 import com.footballintelligence.feature.team.resources.next_match_when
 import com.footballintelligence.feature.team.resources.outcome_draw
-import com.footballintelligence.feature.team.resources.outcome_loss
-import com.footballintelligence.feature.team.resources.outcome_win
+import com.footballintelligence.feature.team.resources.outcome_team_win
 import org.jetbrains.compose.resources.stringResource
 
 /** "Your next match": fixture, pick, reasons, likeliest scores and clean-sheet chance. */
@@ -50,6 +47,7 @@ fun NextMatchCard(match: NextMatch, modifier: Modifier = Modifier) {
             )
             Fixture(match)
             Pick(match)
+            OutcomeBar(match.homeTeam, match.awayTeam, match.split)
             if (match.reasons.isNotEmpty()) {
                 HorizontalDivider()
                 Reasons(match.reasons)
@@ -84,13 +82,11 @@ private fun Fixture(match: NextMatch) {
 
 @Composable
 private fun Pick(match: NextMatch) {
-    val outcome = stringResource(
-        when (match.pick) {
-            TeamOutcome.WIN -> Res.string.outcome_win
-            TeamOutcome.DRAW -> Res.string.outcome_draw
-            TeamOutcome.LOSS -> Res.string.outcome_loss
-        },
-    )
+    val outcome = when (match.pick) {
+        TeamOutcome.WIN -> stringResource(Res.string.outcome_team_win, match.team)
+        TeamOutcome.DRAW -> stringResource(Res.string.outcome_draw)
+        TeamOutcome.LOSS -> stringResource(Res.string.outcome_team_win, match.opponent)
+    }
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Column(Modifier.weight(1f)) {
             Text(stringResource(Res.string.next_match_pick, outcome), style = MaterialTheme.typography.titleMedium)
@@ -99,15 +95,6 @@ private fun Pick(match: NextMatch) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-        }
-        if (match.drawPossible) {
-            Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.tertiaryContainer) {
-                Text(
-                    stringResource(Res.string.next_match_draw_possible),
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                )
-            }
         }
     }
 }

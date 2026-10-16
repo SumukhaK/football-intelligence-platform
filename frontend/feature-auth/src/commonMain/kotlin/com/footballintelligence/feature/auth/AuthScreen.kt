@@ -50,12 +50,15 @@ import com.footballintelligence.feature.auth.resources.auth_app_name
 import com.footballintelligence.feature.auth.resources.auth_invite_only
 import com.footballintelligence.feature.auth.resources.error_blocked
 import com.footballintelligence.feature.auth.resources.error_invalid_invite
+import com.footballintelligence.feature.auth.resources.error_invite_expired
+import com.footballintelligence.feature.auth.resources.error_invite_used
 import com.footballintelligence.feature.auth.resources.error_password_too_short
 import com.footballintelligence.feature.auth.resources.error_too_many_tries
 import com.footballintelligence.feature.auth.resources.error_wrong_credentials
 import com.footballintelligence.feature.auth.resources.ic_kickoff
 import com.footballintelligence.feature.auth.resources.tab_invite_code
 import com.footballintelligence.feature.auth.resources.tab_sign_in
+import com.footballintelligence.feature.auth.resources.waking_up
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -113,7 +116,7 @@ private fun Header() {
 
 @Composable
 private fun AuthSheet(form: AuthForm, uiState: AuthUiState, events: AuthEvents, modifier: Modifier) {
-    val loading = uiState == AuthUiState.Loading
+    val loading = uiState.isBusy
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -129,6 +132,13 @@ private fun AuthSheet(form: AuthForm, uiState: AuthUiState, events: AuthEvents, 
         }
         Column(Modifier.padding(top = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             SubmitButton(form, loading, events.onSubmit)
+            if (uiState == AuthUiState.WakingUp) {
+                Text(
+                    stringResource(Res.string.waking_up),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
             if (uiState is AuthUiState.Error) {
                 Text(
                     authErrorText(uiState),
@@ -212,6 +222,8 @@ private fun authErrorText(error: AuthUiState.Error): String = when (error.proble
     AuthProblem.WRONG_CREDENTIALS -> stringResource(Res.string.error_wrong_credentials)
     AuthProblem.TOO_MANY_TRIES -> stringResource(Res.string.error_too_many_tries)
     AuthProblem.INVALID_INVITE -> stringResource(Res.string.error_invalid_invite)
+    AuthProblem.INVITE_USED -> stringResource(Res.string.error_invite_used)
+    AuthProblem.INVITE_EXPIRED -> stringResource(Res.string.error_invite_expired)
     AuthProblem.PASSWORD_TOO_SHORT -> stringResource(Res.string.error_password_too_short)
     AuthProblem.BLOCKED -> stringResource(Res.string.error_blocked)
     AuthProblem.OTHER -> errorMessage(error.kind, error.message)

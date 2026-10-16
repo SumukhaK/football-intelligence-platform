@@ -15,7 +15,12 @@ from starlette.datastructures import Headers, MutableHeaders
 from starlette.requests import Request
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from shared.telemetry.context import reset_request_id, set_request_id
+from shared.telemetry.context import (
+    reset_request_id,
+    reset_user_ref,
+    set_request_id,
+    start_user_ref,
+)
 from shared.telemetry.events import EventName, emit
 from shared.telemetry.request_id import REQUEST_ID_HEADER, parse_or_create
 
@@ -64,6 +69,7 @@ class RequestContextMiddleware:
             return
         request_id = parse_or_create(Headers(scope=scope).get(REQUEST_ID_HEADER))
         token = set_request_id(request_id)
+        user_token = start_user_ref()
         started = self._clock()
         status = 500
 
@@ -85,6 +91,7 @@ class RequestContextMiddleware:
             # outside this middleware and needs it for its log line and header.
             raise
         self._log_request(scope, status, started, _error_code(scope))
+        reset_user_ref(user_token)
         reset_request_id(token)
 
     def _log_request(

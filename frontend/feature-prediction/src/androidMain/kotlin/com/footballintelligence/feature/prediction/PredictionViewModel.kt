@@ -3,8 +3,10 @@ package com.footballintelligence.feature.prediction
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.footballintelligence.core.common.formatSavedAt
+import com.footballintelligence.core.model.FavouriteTeam
 import com.footballintelligence.core.model.NetworkResult
 import com.footballintelligence.core.model.PredictionRequest
+import com.footballintelligence.core.model.PredictionResult
 import com.footballintelligence.core.model.TeamsResponse
 import com.footballintelligence.feature.prediction.repository.PredictionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +17,7 @@ import kotlinx.coroutines.launch
 /** ViewModel for team selection, prediction and explanation. */
 class PredictionViewModel(
     private val repository: PredictionRepository,
+    private val favouriteTeam: () -> FavouriteTeam? = { null },
 ) : ViewModel() {
 
     private val _competitionsState =
@@ -121,10 +124,7 @@ class PredictionViewModel(
         loadInsights(request)
         viewModelScope.launch {
             _predictionState.value = when (val result = repository.predict(request)) {
-                is NetworkResult.Success -> PredictionInputUiState.Success(
-                    result.data,
-                    savedAt = result.cachedAt?.let { formatSavedAt(it) },
-                )
+                is NetworkResult.Success -> successState(result.data, result.cachedAt, favouriteTeam())
                 is NetworkResult.Error -> PredictionInputUiState.Error(result.message, result.kind)
                 is NetworkResult.Loading -> PredictionInputUiState.Loading
             }
@@ -156,10 +156,7 @@ class PredictionViewModel(
         viewModelScope.launch {
             val result = repository.predict(request)
             if (result is NetworkResult.Success) {
-                _predictionState.value = PredictionInputUiState.Success(
-                    result.data,
-                    savedAt = result.cachedAt?.let { formatSavedAt(it) },
-                )
+                _predictionState.value = successState(result.data, result.cachedAt, favouriteTeam())
             }
             _isRefreshing.value = false
         }
@@ -218,3 +215,11 @@ private fun TeamsResponse.toUiState(savedAt: String?): TeamsUiState =
     } else {
         TeamsUiState.Success(season, teams, savedAt)
     }
+
+/** A shown prediction; [favourite] is marked as the fan's team when it plays in the match. */
+private fun successState(result: PredictionResult, cachedAt: String?, favourite: FavouriteTeam?) =
+    PredictionInputUiState.Success(
+        result,
+        savedAt = cachedAt?.let { formatSavedAt(it) },
+        yourTeam = favourite?.team?.takeIf { it == result.homeTeam || it == result.awayTeam },
+    )

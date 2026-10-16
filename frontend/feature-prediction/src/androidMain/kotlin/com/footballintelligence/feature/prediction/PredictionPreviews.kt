@@ -144,7 +144,7 @@ private fun Result(
 
 @Preview(heightDp = 1600)
 @Composable
-private fun ResultWithInsightsPreview() = Result(PredictionInputUiState.Success(samplePrediction))
+private fun ResultWithInsightsPreview() = Result(PredictionInputUiState.Success(samplePrediction, yourTeam = "Arsenal"))
 
 @Preview
 @Composable
@@ -165,7 +165,7 @@ private fun ResultPreview() = Result(PredictionInputUiState.Success(samplePredic
 
 @Preview
 @Composable
-private fun ResultDrawPossiblePreview() = Result(
+private fun ResultClosePreview() = Result(
     PredictionInputUiState.Success(
         samplePrediction.copy(
             homeTeam = "Everton",
@@ -174,7 +174,6 @@ private fun ResultDrawPossiblePreview() = Result(
             probabilityDraw = 0.30,
             probabilityAway = 0.31,
             confidence = 0.39,
-            drawPossible = true,
         ),
     ),
 )

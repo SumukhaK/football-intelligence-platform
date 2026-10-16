@@ -46,6 +46,14 @@ private fun StatusChipPreview() {
     }
 }
 
+@Preview(widthDp = 360)
+@Composable
+private fun OutcomeBarPreview() {
+    PreviewSurface {
+        OutcomeBar("Arsenal", "Aston Villa", OutcomeSplit(home = 71, draw = 18, away = 12))
+    }
+}
+
 @Preview
 @Composable
 private fun BackButtonPreview() {

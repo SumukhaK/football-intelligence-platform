@@ -6,6 +6,8 @@ import kotlinx.serialization.Serializable
 /** Mirrors GET /model response. */
 @Serializable
 data class ModelInfo(
+    // Null from backends older than ADR 033; the app then shows its own copy of the name.
+    @SerialName("model_name") val modelName: String? = null,
     @SerialName("model_version") val modelVersion: String,
     @SerialName("dataset_version") val datasetVersion: String,
     @SerialName("training_timestamp") val trainingTimestamp: String,

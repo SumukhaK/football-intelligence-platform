@@ -316,10 +316,18 @@ Those are the counts at v1.0.0.
 
 ---
 
+## Release v2.6.0 (2026-10-17)
+
+**Deliverables (PRs #135–#150, ADRs 031–034):** fixes from the first days of the staging beta. Cold sign-ins wait for the server to wake, invite errors say what went wrong, and codes are easy to type. The assistant knows the saved favourite team, question text is kept 90 days for users who opted in, and every assistant log line carries the hashed user reference. The model is named Drishti, and the app gets clearer picks, a new About screen and dark-mode fixes.
+
+**Git Tag:** v2.6.0
+
+---
+
 ## Next
 
 The closed beta with invited friends on the staging app.
 
 ---
 
-**Today: 11 releases, 30 ADRs, 1,531 tests (1,345 Python, 186 Android). One engineer.**
+**Today: 12 releases, 34 ADRs, 1,580 tests (1,373 Python, 207 Android). One engineer.**

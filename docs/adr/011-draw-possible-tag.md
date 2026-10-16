@@ -42,3 +42,7 @@ on 2026-09-28 was "tag only": keep the pick and flag tight games.
   winner. The app wording must not say a draw is likely.
 - Any retrained model, or the Dixon-Coles blend (ADR 009), must re-run
   `evaluation.draw_analysis` and re-tune the threshold before release.
+
+## Update, 15 October 2026
+
+The app no longer shows the tag. Next to a picked win, a "Draw possible" label read to fans as two answers at once, and a close loss got no label at all. The single win/draw/loss bar on the result and My Team screens already shows when a game is tight. The API still returns `draw_possible`, and the assistant's prediction tool still uses it, so the threshold and its tuning rule above still apply.

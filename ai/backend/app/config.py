@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     # The original model behind API v1 and unversioned paths (ADR 014).
     v1_model_path: Path = Path("../ai/models/runs/20260630_132617/model.joblib")
     v1_model_version: str = "20260630_132617"
+    # Public name of the match prediction model shown to users (ADR 033).
+    prediction_model_name: str = "Drishti"
     # Requests per client per minute; `off` turns rate limiting off (ADR 014).
     rate_limit_per_minute: int | None = Field(default=120, ge=1)
     # Proxies in front of the server that append to X-Forwarded-For: 0 locally,
@@ -59,7 +61,7 @@ class Settings(BaseSettings):
     ]
     default_competition: str = "Premier League"
     draw_possible_threshold: float = DEFAULT_DRAW_POSSIBLE_THRESHOLD
-    api_version: str = "2.5.1"
+    api_version: str = "2.6.0"
     log_level: str = "INFO"
     # `json` writes the telemetry contract's log lines (ADR 024); `text` is for
     # reading logs by eye locally.

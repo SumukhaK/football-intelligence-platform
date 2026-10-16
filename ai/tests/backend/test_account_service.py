@@ -17,6 +17,8 @@ from backend.app.services.account_service import (
     ConsentRequiredError,
     InvalidCredentialsError,
     InvalidInviteError,
+    InviteAlreadyUsedError,
+    InviteExpiredError,
     NotSignedInError,
     TooManyAttemptsError,
     WeakPasswordError,
@@ -26,6 +28,7 @@ from backend.app.services.account_store import (
     FirestoreAccountStore,
     JsonAccountStore,
 )
+from shared.telemetry.context import get_user_ref, reset_user_ref, start_user_ref
 from tests.backend.fake_firestore import FakeFirestore
 
 EMAIL = "Sam@Example.com"
@@ -72,10 +75,10 @@ def test_redeemed_invite_signs_in(accounts: AccountService) -> None:
 
 
 def test_invite_codes_are_single_use(accounts: AccountService) -> None:
-    """A redeemed code cannot be used again."""
+    """A redeemed code cannot be used again, and says the account exists."""
     code = accounts.create_invite(EMAIL)
     accounts.redeem_invite(EMAIL, code, PASSWORD)
-    with pytest.raises(InvalidInviteError):
+    with pytest.raises(InviteAlreadyUsedError):
         accounts.redeem_invite(EMAIL, code, "another password")
 
 
@@ -87,8 +90,16 @@ def test_wrong_or_expired_invite_is_refused(
     with pytest.raises(InvalidInviteError):
         accounts.redeem_invite(EMAIL, "wrong", PASSWORD)
     clock.now += timedelta(days=8)
-    with pytest.raises(InvalidInviteError):
+    with pytest.raises(InviteExpiredError):
         accounts.redeem_invite(EMAIL, code, PASSWORD)
+
+
+def test_a_used_code_with_a_typo_is_still_just_wrong(accounts: AccountService) -> None:
+    """Only the right code learns that the account exists."""
+    code = accounts.create_invite(EMAIL)
+    accounts.redeem_invite(EMAIL, code, PASSWORD)
+    with pytest.raises(InvalidInviteError):
+        accounts.redeem_invite(EMAIL, code + "x", PASSWORD)
 
 
 def test_uninvited_email_cannot_sign_up(accounts: AccountService) -> None:
@@ -276,6 +287,19 @@ def test_consent_is_logged(logged: AccountService, events: Events) -> None:
     logged.record_consent(user, CONSENT_VERSION, False)
     consent = [(s, o) for s, a, o, _ in _auth(events) if a == "consent"]
     assert consent == [("INFO", "consent_required"), ("INFO", "ok")]
+
+
+def test_authenticating_names_the_user_for_the_request(logged: AccountService) -> None:
+    token = _signed_up(logged)
+    scope = start_user_ref()
+    try:
+        with pytest.raises(NotSignedInError):
+            logged.authenticate("unknown")
+        assert get_user_ref() is None
+        logged.authenticate(token)
+        assert get_user_ref() == "ref:sam@example.com"
+    finally:
+        reset_user_ref(scope)
 
 
 def test_emails_never_reach_the_log(

@@ -436,7 +436,7 @@ uv run pytest tests/training/test_trainer.py
 uv run pytest -m integration
 ```
 
-Expected: 1,345 tests pass with `uv run pytest`. 37 of them are integration tests, which need the trained model in `models/latest/`; `-m "not integration"` runs the other 1,308. Integration tests are not skipped by default.
+Expected: 1,373 tests pass with `uv run pytest`. 37 of them are integration tests, which need the trained model in `models/latest/`; `-m "not integration"` runs the other 1,336. Integration tests are not skipped by default.
 
 ---
 
@@ -590,7 +590,7 @@ uv run python -m scripts.manage_accounts ban --email sam@example.com
 uv run python -m scripts.manage_accounts unban --email sam@example.com
 ```
 
-`invite` prints a one-time code valid for 7 days; send it to the person privately. They redeem it in the app with a password of at least 10 characters. Inviting an existing account again lets them reset their password. `ban` and `unban` print the account's new status, or exit with code 1 when there is no account for the email.
+`invite` prints a one-time code valid for 7 days, such as `K7QM-3XWD` (8 characters without the lookalikes I, L, O, U, 0 and 1; case, spaces and dashes don't matter when it is typed); send it to the person privately. They redeem it in the app with a password of at least 10 characters. Inviting an existing account again lets them reset their password. `ban` and `unban` print the account's new status, or exit with code 1 when there is no account for the email.
 
 ### `python -m scripts.build_snapshot`
 
@@ -682,7 +682,7 @@ LIVE_REFRESH_HOUR=off uv run python -m evaluation.assistant_season
 
 ### `python -m evaluation.assistant_conversation`
 
-Runs eight short scripted chats with signed history, as the app sends them (ADR 030): two "and the draw?" follow-ups that must quote the draw probability, two "why?" follow-ups that must name a team without inventing numbers, a switch to another match, an edited earlier answer that must be ignored, instructions planted in the history, and (with `ASSISTANT_SAFETY=true`) a harmful request split over two turns. Exits non-zero if any case fails.
+Runs nine short scripted chats with signed history, as the app sends them (ADR 030): two "and the draw?" follow-ups that must quote the draw probability, two "why?" follow-ups that must name a team without inventing numbers, a switch to another match, an edited earlier answer that must be ignored, instructions planted in the history, a "where will we finish?" question with a favourite team set, and (with `ASSISTANT_SAFETY=true`) a harmful request split over two turns. Exits non-zero if any case fails.
 
 ```sh
 LIVE_REFRESH_HOUR=off uv run python -m evaluation.assistant_conversation

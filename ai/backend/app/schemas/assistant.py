@@ -33,6 +33,27 @@ class HistoryTurn(BaseModel):
     )
 
 
+class FavouriteTeam(BaseModel):
+    """The team the user picked in the app, so "we" and "my team" mean it (ADR 031)."""
+
+    team: str = Field(
+        ...,
+        min_length=1,
+        max_length=60,
+        pattern=r"^[\w .'&()-]+$",
+        description="The team as the API names it.",
+        examples=["Man United"],
+    )
+    competition: str = Field(
+        ...,
+        min_length=1,
+        max_length=40,
+        pattern=r"^[\w .'&()-]+$",
+        description="The team's league.",
+        examples=["Premier League"],
+    )
+
+
 class ChatRequest(BaseModel):
     """Input for POST /assistant/chat."""
 
@@ -49,6 +70,11 @@ class ChatRequest(BaseModel):
         max_length=64,
         pattern="^[A-Za-z0-9_-]+$",
         description="The app's ID for this chat; needed when history is sent.",
+    )
+    favourite_team: FavouriteTeam | None = Field(
+        default=None,
+        description='The user\'s favourite team, so questions about "we" or '
+        '"my team" are answered for it (ADR 031).',
     )
     history: list[HistoryTurn] = Field(
         default_factory=list,

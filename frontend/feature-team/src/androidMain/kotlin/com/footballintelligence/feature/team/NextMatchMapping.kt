@@ -9,6 +9,7 @@ import com.footballintelligence.core.model.Insights
 import com.footballintelligence.core.model.PredictionResult
 import com.footballintelligence.core.model.label
 import com.footballintelligence.core.model.valueText
+import com.footballintelligence.core.ui.OutcomeSplit
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -42,13 +43,18 @@ internal fun nextMatch(
 ): NextMatch {
     val atHome = fixture.homeTeam == team
     return NextMatch(
+        team = team,
         homeTeam = fixture.homeTeam,
         awayTeam = fixture.awayTeam,
         day = formatMatchDay(fixtureDay(fixture.matchDate, fixture.kickoff, zone), locale),
         time = fixture.kickoff?.let { formatKickoff(it, zone, locale) },
         pick = teamOutcome(prediction.predictedResult, atHome),
         pickPercent = percent(prediction.confidence),
-        drawPossible = prediction.drawPossible,
+        split = OutcomeSplit(
+            home = percent(prediction.probabilityHome),
+            draw = percent(prediction.probabilityDraw),
+            away = percent(prediction.probabilityAway),
+        ),
         reasons = explanation?.topPositiveFeatures.orEmpty()
             .sortedByDescending { it.shapValue }
             .take(REASONS_SHOWN)

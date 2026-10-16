@@ -55,7 +55,7 @@ class HealthResponse(BaseModel):
         default=None,
         description="Why the last refresh failed; null when it succeeded.",
     )
-    version: str = Field(..., description="API version string.", examples=["2.5.1"])
+    version: str = Field(..., description="API version string.", examples=["2.6.0"])
 
 
 class LiveResponse(BaseModel):
@@ -73,6 +73,9 @@ class ReadyResponse(BaseModel):
 class ModelInfoResponse(BaseModel):
     """Response body for GET /model."""
 
+    model_name: str = Field(
+        ..., description="Public name of the prediction model, e.g. Drishti."
+    )
     model_version: str = Field(..., description="Registered model version tag.")
     dataset_version: str = Field(
         ..., description="Source dataset version the model was trained on."

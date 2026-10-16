@@ -13,6 +13,7 @@ private val LightColorScheme = lightColorScheme(
     onPrimaryContainer = GreenOnPrimaryContainer,
     secondary = GreenSecondary,
     secondaryContainer = GreenSecondaryContainer,
+    tertiary = GoldTertiary,
     error = ErrorRed,
     errorContainer = ErrorRedContainer,
     surface = NeutralSurface,
@@ -25,7 +26,8 @@ private val DarkColorScheme = darkColorScheme(
     onPrimaryContainer = GreenOnPrimary,
     secondary = GreenSecondaryContainer,
     secondaryContainer = GreenSecondary,
-    error = ErrorRedContainer,
+    tertiary = GoldTertiaryDark,
+    error = ErrorRedDark,
     errorContainer = ErrorRed,
     surface = NeutralSurfaceDark,
 )
