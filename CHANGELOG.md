@@ -13,8 +13,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The match prediction model has a public name, Drishti (Sanskrit for "vision"). `GET /model` returns it as `model_name`, set by `PREDICTION_MODEL_NAME` (ADR 033); `model_version` stays the technical identifier.
 - The About screen scrolls to the end and is redesigned: the real app version, three short sections on how the app works, its data and what it is built with, and a link to fip-ai.dev. It no longer shows the old version 2.1.0, llama3.2 or SQLite.
 - The README demo thumbnail is back to an app screenshot beside the title and a play button, now showing My Team for Manchester United, instead of the plain "Prediction" title card.
+- Result and My Team show win, draw and loss chances on one bar with a crest at each end, and the pick names the team ("Man United win"). A note under the bar explains why a 1-1 can be the likeliest score next to a win pick. Version ids appear only in Model information, and Settings lists the favourite team first.
+- The app no longer shows the "Draw possible" label, because next to a win pick it read as two answers. The bar shows close games instead, and the API still returns `draw_possible` (ADR 011 update).
+- Fixtures tints your team's matches (and screen readers say "Your team"). The assistant opens with a plainer intro and two starter questions. The season chart is labelled 0%, 50% and 100%. Likeliest scores are plain numbers without bars. Explain shows the five strongest factors each way, with "Show all". Predict has a "Swap home and away" button.
 
 ### Fixed
+- Fixture rows list home above away on their own lines, so full team names fit, and show a chevron to say they can be tapped. A failed assistant question shows the same plain error wording as other screens, not the raw exception.
 - Redeeming an invite code again now says the account already exists and to sign in (409), and an expired code says it expired (410). Before, both read as "wrong, used or expired". Only someone holding the right code gets the specific answer.
 
 ### Added
