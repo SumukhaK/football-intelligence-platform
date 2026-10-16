@@ -4,7 +4,7 @@
 
 **An AI-first football analytics platform — from raw match data to an explainable, grounded, mobile-native prediction experience.**
 
-[![CI](https://img.shields.io/badge/CI-passing-brightgreen)](.github/workflows) [![Tests](https://img.shields.io/badge/tests-1473-brightgreen)](docs/reports/) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Python](https://img.shields.io/badge/python-3.12-blue)](ai/pyproject.toml) [![Kotlin](https://img.shields.io/badge/kotlin-Compose%20Multiplatform-purple)](frontend/)
+[![CI](https://img.shields.io/badge/CI-passing-brightgreen)](.github/workflows) [![Tests](https://img.shields.io/badge/tests-1580-brightgreen)](docs/reports/) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Python](https://img.shields.io/badge/python-3.12-blue)](ai/pyproject.toml) [![Kotlin](https://img.shields.io/badge/kotlin-Compose%20Multiplatform-purple)](frontend/)
 
 Licensed under the [MIT License](LICENSE). Match data, fixtures and crests come from third parties under their own terms; see [Data sources and licences](#data-sources-and-licences).
 
@@ -20,7 +20,7 @@ The Football Intelligence Platform ingests 26 seasons of match data from Europe'
 
 It is a complete, working system — not a notebook or a prototype. Twelve build stages take it from an empty repository to a tested, documented, end-to-end product: ingestion → validation → feature engineering → model training → explainability → a FastAPI backend → a locally-grounded RAG assistant → a Compose Multiplatform Android app → full integration testing.
 
-**1,531 tests: 1,345 Python and 186 Android. Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes results and fixtures daily without a restart, and the app keeps working offline with the last data it saw.** It is also hosted: since 14 October 2026 a private, invite-only staging service runs on Google Cloud Run, with the assistant on Cloudflare Workers AI, short-term chat memory, a safety check and alerts. The cloud features are all off by default, so the local setup is unchanged.
+**1,580 tests: 1,373 Python and 207 Android. Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes results and fixtures daily without a restart, and the app keeps working offline with the last data it saw.** It is also hosted: since 14 October 2026 a private, invite-only staging service runs on Google Cloud Run, with the assistant on Cloudflare Workers AI, short-term chat memory, a safety check and alerts. Since v2.6.0 invite codes are short and easy to type, and question text is saved for 90 days only for users who opted in (ADR 034). The cloud features are all off by default, so the local setup is unchanged.
 
 ---
 
@@ -47,13 +47,13 @@ This project demonstrates AI engineering as a discipline: not just "can I train 
 | **Match outcome prediction** | XGBoost classifier predicting Home Win / Draw / Away Win for all five leagues, with a `draw_possible` flag in the API for tight games (ADR 011) |
 | **Scorelines and goal markets** | Time-weighted Dixon-Coles goals model per league: five most likely scores, expected goals, both teams to score, over/under lines and clean sheets (ADR 009) |
 | **Per-prediction explainability** | SHAP `TreeExplainer` attaches feature-level attribution to every prediction, shown in plain football language ("Arsenal win rate at home · 68%") |
-| **Grounded AI assistant** | RAG pipeline (numpy vector store; Ollama locally, Cloudflare Workers AI when hosted, ADR 025) answers football questions using only retrieved platform data, with source citations, and calls the API's own prediction, explanation and fixtures services as tools for match questions (ADR 018); season questions (tables on any date with a goals-model projection, results, the next derby) go through a rule-based router to internal season tools (ADR 021) |
-| **Production-shaped backend** | Versioned FastAPI (`/v1` frozen, `/v2` current, ADR 014), server-side match features, upcoming fixtures, a daily in-process data refresh (ADR 013), a per-client rate limit that reads the real client address behind a proxy, request size limits, invite-only sign-in with consent for hosted deployments (ADR 022), liveness and readiness probes, structured errors, OpenAPI docs. The chat route runs the model call in a worker thread, so a slow answer never blocks other requests |
+| **Grounded AI assistant** | RAG pipeline (numpy vector store; Ollama locally, Cloudflare Workers AI when hosted, ADR 025) answers football questions using only retrieved platform data, with source citations, and calls the API's own prediction, explanation and fixtures services as tools for match questions (ADR 018); season questions (tables on any date with a goals-model projection, results, the next derby) go through a rule-based router to internal season tools (ADR 021), and "we" means the user's favourite team (ADR 031) |
+| **Production-shaped backend** | Versioned FastAPI (`/v1` frozen, `/v2` current, ADR 014), server-side match features, upcoming fixtures, a daily in-process data refresh (ADR 013), a per-client rate limit that reads the real client address behind a proxy, request size limits, invite-only sign-in with consent for hosted deployments (ADR 022) using `XXXX-XXXX` invite codes without look-alike characters, opted-in question text kept for 90 days (ADR 034), liveness and readiness probes, structured errors, OpenAPI docs. The chat route runs the model call in a worker thread, so a slow answer never blocks other requests |
 | **Native Android client** | Compose Multiplatform app with invite-only sign-in and a consent notice, that opens on upcoming fixtures by league (tap one to predict it), with team crests, bottom navigation, a league picker, offline mode with saved data, pull to refresh, MVVM, StateFlow, Koin DI and previews for every screen |
 | **Full reproducibility** | Entire pipeline (ingest → features → train → explain) runs in under 15 seconds from one CLI command |
-| **Observability** | JSON logs to one versioned telemetry contract, a request ID on every request and log line, OpenTelemetry traces across retrieval, tool calls and generation, retries with backoff on every outbound download, a local Grafana stack, and Cloud Monitoring metrics and alerts kept as code (ADR 024) |
+| **Observability** | JSON logs to one versioned telemetry contract (1.1.0), a request ID on every request and log line, a hashed `user_ref` (never the email) on requests and assistant turns of signed-in users, OpenTelemetry traces across retrieval, tool calls and generation, retries with backoff on every outbound download, a local Grafana stack, and Cloud Monitoring metrics and alerts kept as code (ADR 024) |
 | **Hosting-ready** | A non-root container image built from a verified artifact snapshot, `/v2/live` and `/v2/ready` probes, a Firestore account store, and a server that refuses unsafe cloud defaults (ADR 025, ADR 026). CI builds and probes the image and scans Python and Gradle dependencies |
-| **End-to-end test coverage** | 1,345 Python tests (including 37 integration tests against the real model, most of which skip on a machine without one) and 186 Android tests (ViewModels written test-first, repositories, network, cache, retries, loader) |
+| **End-to-end test coverage** | 1,373 Python tests (including 36 integration tests against the real model, most of which skip on a machine without one) and 207 Android tests (ViewModels written test-first, repositories, network, cache, retries, loader) |
 | **No cloud needed locally** | Runs entirely on a laptop: no managed database, no cloud LLM, no hosted vector store. The cloud pieces are opt-in settings |
 
 ---
@@ -70,7 +70,7 @@ flowchart TD
         C["Canonical Dataset\ndatasets/processed/\nProcessedMatch · 46,709 matches\ntop 5 leagues · 2000/01–2025/26"] --> D
         D["Feature Engineering\n9 feature generators · FeatureRegistry\nKahn topology sort · leakage prevention"] --> E
         E["Feature Matrix\n42 pre-match features · 46,709 rows"] --> F
-        F["Model Training\nXGBoost · season-based split\nearly stopping · season walk-forward CV\nserved model refit on all seasons"] --> G
+        F["Model Training · Drishti\nXGBoost · season-based split\nearly stopping · season walk-forward CV\nserved model refit on all seasons"] --> G
         G["Evaluation\naccuracy · F1 · log-loss · ROC AUC"] --> H
         H["Model Registry\nmodels/registry.json\ngit commit traceability"]
         F --> I["Model Artifacts\nmodels/latest/model.joblib"]
@@ -82,7 +82,8 @@ flowchart TD
     J --> K["FastAPI Backend\n/v2: predict · explain · insights · fixtures · teams\n/v1: original Premier League model\nrate limited"]
     NG --> K
     FS --> K
-    K --> L["AI Assistant\nRAG · numpy vector store\nOllama locally · Workers AI hosted\ntools: predict · explain · fixtures\nsigned short-term chat memory"]
+    K <--> AS["Accounts Store\nFirestore hosted · JSON locally\naccounts · invites · opted-in questions (90-day TTL)"]
+    K --> L["AI Assistant\nRAG · numpy vector store\nOllama locally · Workers AI hosted\ntools: predict · explain · fixtures\nsigned short-term chat memory · favourite-team context"]
     K --> M["Android App\nCompose Multiplatform · MVVM · Ktor · Koin\noffline cache · pull to refresh"]
 
     classDef source fill:#E3F2FD,stroke:#1E88E5,color:#0D2A4A
@@ -91,7 +92,7 @@ flowchart TD
     classDef serve fill:#FFF3E0,stroke:#FB8C00,color:#4A2A00
     classDef client fill:#E0F7FA,stroke:#00ACC1,color:#003B44
     class A,FX source
-    class B,C,D,E,FS data
+    class B,C,D,E,FS,AS data
     class F,G,H,I,J,NG model
     class K,L serve
     class M client
@@ -111,7 +112,7 @@ flowchart TD
 | **Hosting** | Docker, Cloud Build, Google Cloud Run, Firestore, Secret Manager, Cloud Logging, Trace and Monitoring (invite-only staging live since 14 October 2026, v2.5.0) |
 | **Mobile** | Kotlin, Compose Multiplatform, Ktor client, Koin DI, AndroidX Navigation Compose, Material 3 |
 | **Tooling** | uv (Python dependency management), Gradle 8.8, Ruff, Black, MyPy, Detekt, Spotless, ShellCheck |
-| **Testing** | pytest (1,345 tests), JUnit 5, MockK, Ktor MockEngine (186 tests) |
+| **Testing** | pytest (1,373 tests), JUnit 5, MockK, Ktor MockEngine (207 tests) |
 | **CI/CD** | GitHub Actions: lint, types, tests, container build and probe, pip-audit and OSV-Scanner |
 
 ---
@@ -275,7 +276,7 @@ flowchart TD
     class E serve
 ```
 
-The app opens on upcoming fixtures, grouped by day, with one tab per league and the Premier League first; kick-off times are in the phone's time zone. Tapping a fixture opens its prediction. Team crests and league emblems come from football-data.org through the API's redirects (ADR 020). On first launch the app asks for a favourite league and team. A bottom bar switches between Fixtures, Predict, My Team and Assistant, with Settings behind a top-right icon. My Team shows the favourite team's next match with its pick, top three reasons, likeliest scores and clean-sheet chance. Prediction starts with a league picker filled from `GET /v2/competitions`, and the result shows win, draw and loss chances on one bar, and the goals model's likely scores and goal markets. Every answer is saved: without a connection the app shows the last data it had under an offline banner, and pulling down fetches fresh data. Errors are explained in plain language. See [frontend/README.md](frontend/README.md) for the full module graph.
+The app opens on upcoming fixtures, grouped by day, with one tab per league and the Premier League first; kick-off times are in the phone's time zone. Tapping a fixture opens its prediction. Team crests and league emblems come from football-data.org through the API's redirects (ADR 020). On first launch the app asks for a favourite league and team. A bottom bar switches between Fixtures, Predict, My Team and Assistant (it hides while the keyboard is open, so the chat gets the room), with Settings behind a top-right icon. My Team shows the favourite team's next match with its pick, top three reasons, likeliest scores and clean-sheet chance. Prediction starts with a league picker filled from `GET /v2/competitions`, and the result shows win, draw and loss chances on one bar, and the goals model's likely scores and goal markets. Every answer is saved: without a connection the app shows the last data it had under an offline banner, and pulling down fetches fresh data. Errors are explained in plain language. See [frontend/README.md](frontend/README.md) for the full module graph.
 
 ## Backend Services
 
@@ -373,7 +374,7 @@ adb install app/build/outputs/apk/local/debug/app-local-debug.apk
 
 The `local` build calls API v2 at `http://10.0.2.2:8000/v2` (the Android emulator's alias for the host machine's localhost). The `staging` build installs beside it as Football Intelligence -stg and calls the hosted staging API, whose address goes in `frontend/local.properties` as `staging.baseUrl` ([frontend README](frontend/README.md#backend-base-url)).
 
-The app opens on invite-only sign-in (ADR 022), whether or not the backend has `AUTH_REQUIRED` on. Create an invite, then enter the printed code on the Invite code tab with a password of at least 10 characters:
+The app opens on invite-only sign-in (ADR 022), whether or not the backend has `AUTH_REQUIRED` on. Create an invite, then enter the printed code (such as `K7QM-3XWD`; case, spaces and dashes don't matter) on the Invite code tab with a password of at least 10 characters:
 
 ```sh
 cd ai
@@ -383,10 +384,10 @@ uv run python -m scripts.manage_accounts invite --email you@example.com
 ### Running Tests
 
 ```sh
-# Python: 1,345 tests (the 36 integration tests need a trained model)
+# Python: 1,373 tests (the 36 integration tests need a trained model)
 cd ai && uv run pytest
 
-# Android: unit tests, lint and formatting (186 tests)
+# Android: unit tests, lint and formatting (207 tests)
 cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
 ```
 
@@ -397,7 +398,7 @@ cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
 | Document | Purpose |
 |---|---|
 | [Documentation Index](docs/README.md) | Full documentation map |
-| [ADR Index](docs/adr/README.md) | All 26 architectural decision records |
+| [ADR Index](docs/adr/README.md) | All 34 architectural decision records |
 | [Stage Reports](docs/reports/) | Detailed report for every build stage (1–12) |
 | [Demo Scripts](docs/demo/README.md) | Per-stage manual verification guides |
 | [Showcase Demo](docs/showcase/demo-script.md) | 5, 10 and 20-minute demo scripts and a [screenshot checklist](docs/showcase/screenshots/README.md) |

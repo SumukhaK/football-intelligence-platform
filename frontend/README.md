@@ -38,7 +38,8 @@ core-testing/, feature-match/ — empty, nothing depends on them
 
 The app opens on sign-in (ADR 022): a green header over a sheet with two
 tabs, Sign in and Invite code, which can be tapped or swiped. Invite code sets
-a password with the one-time code from the owner. The session token is kept in
+a password with the one-time code from the owner, such as `K7QM-3XWD` (case,
+spaces and dashes don't matter). The session token is kept in
 private SharedPreferences (app backup is off, so it never leaves the device)
 and sent as `Authorization: Bearer <token>` on every request. After sign-in the
 app calls `GET /v2/me`; if the current notice still needs accepting it shows
@@ -54,6 +55,8 @@ transition) and back. The choice is saved in SharedPreferences and the picker
 is not shown again. Fixtures opens on the favourite league's tab, listed first. A bottom bar
 switches between Fixtures, Predict,
 My Team and Assistant; a settings icon at the top right of each opens Settings.
+The bar hides while the keyboard is open, so the chat gets the room, and the
+Assistant has no back arrow, like the other tabs.
 The Assistant remembers the chat (ADR 030): with each question it sends its
 last 4 signed exchanges, so "and the draw?" follows on. New chat in its top bar,
 or 30 minutes without a question, starts a fresh conversation.

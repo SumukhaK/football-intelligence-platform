@@ -10,6 +10,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Changed
+- The README (test counts, architecture diagram with the accounts store and Drishti), the showcase, the frontend README and the website describe the v2.6.0 changes.
 - The Assistant tab has no back arrow any more, like the other tabs, and the bottom bar is hidden while the keyboard is open.
 - The match prediction model has a public name, Drishti (Sanskrit for "vision"). `GET /model` returns it as `model_name`, set by `PREDICTION_MODEL_NAME` (ADR 033); `model_version` stays the technical identifier.
 - The About screen scrolls to the end and is redesigned: the real app version, three short sections on how the app works, its data and what it is built with, and a link to fip-ai.dev. It no longer shows the old version 2.1.0, llama3.2 or SQLite.
