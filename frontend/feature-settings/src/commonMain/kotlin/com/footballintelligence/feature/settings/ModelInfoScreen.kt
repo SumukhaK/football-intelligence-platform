@@ -29,13 +29,15 @@ import com.footballintelligence.feature.settings.resources.Res
 import com.footballintelligence.feature.settings.resources.dataset_version
 import com.footballintelligence.feature.settings.resources.git_commit
 import com.footballintelligence.feature.settings.resources.model_info_title
-import com.footballintelligence.feature.settings.resources.model_version
+import com.footballintelligence.feature.settings.resources.model_name_fallback
+import com.footballintelligence.feature.settings.resources.model_tagline
+import com.footballintelligence.feature.settings.resources.model_version_line
 import com.footballintelligence.feature.settings.resources.section_metrics
 import com.footballintelligence.feature.settings.resources.section_registry
 import com.footballintelligence.feature.settings.resources.training_timestamp
 import org.jetbrains.compose.resources.stringResource
 
-/** Displays model version, training metadata, and evaluation metrics. */
+/** Displays the model's name and version, training metadata, and evaluation metrics. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModelInfoScreen(
@@ -86,8 +88,8 @@ private fun ModelInfoContent(info: ModelInfo, modifier: Modifier = Modifier) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        ModelHeader(info)
         InfoCard(title = stringResource(Res.string.section_registry)) {
-            InfoRow(stringResource(Res.string.model_version), info.modelVersion)
             InfoRow(stringResource(Res.string.dataset_version), info.datasetVersion)
             InfoRow(stringResource(Res.string.training_timestamp), info.trainingTimestamp.take(19).replace("T", " "))
             info.gitCommit?.let { commit ->
@@ -104,6 +106,22 @@ private fun ModelInfoContent(info: ModelInfo, modifier: Modifier = Modifier) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ModelHeader(info: ModelInfo) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            info.modelName ?: stringResource(Res.string.model_name_fallback),
+            style = MaterialTheme.typography.headlineMedium,
+        )
+        Text(stringResource(Res.string.model_tagline), style = MaterialTheme.typography.bodyLarge)
+        Text(
+            stringResource(Res.string.model_version_line, info.modelVersion),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

@@ -6,6 +6,7 @@ import com.footballintelligence.core.model.ModelInfo
 import com.footballintelligence.core.ui.PreviewSurface
 
 private val sampleModelInfo = ModelInfo(
+    modelName = "Drishti",
     modelVersion = "20260928_123224",
     datasetVersion = "top5-2000-2026",
     trainingTimestamp = "2026-09-28T12:32:24Z",

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request
 
+from backend.app.config import get_settings
 from backend.app.exceptions import ModelNotAvailableError
 from backend.app.schemas.common import ModelInfoResponse
 
@@ -16,7 +17,8 @@ router = APIRouter(tags=["Model"])
     summary="Current model information",
     description=(
         "Returns metadata for the currently loaded model: "
-        "version, dataset version, training timestamp, git commit, and metrics."
+        "public name, version, dataset version, training timestamp, git commit, "
+        "and metrics."
     ),
     responses={
         503: {"description": "Model registry not available."},
@@ -33,6 +35,7 @@ def model_info(request: Request) -> ModelInfoResponse:
         raise ModelNotAvailableError("No model versions registered.")
 
     return ModelInfoResponse(
+        model_name=get_settings().prediction_model_name,
         model_version=entry.version,
         dataset_version=entry.source_dataset_version,
         training_timestamp=entry.created_at.isoformat(),
