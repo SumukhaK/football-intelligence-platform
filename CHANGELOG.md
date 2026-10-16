@@ -9,6 +9,16 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+---
+
+## [2.6.0] — 2026-10-17
+
+### Added
+- Logs name the signed-in user by `user_ref` on `http.request` and on every assistant turn (`assistant.answer`, `assistant.tool`, `assistant.abstain`, `guardrail.event`), never by email. Telemetry contract 1.1.0.
+- Invite codes are 8 characters as `XXXX-XXXX` with no lookalike letters or digits, and redeem however they are typed (any case, with or without spaces and dashes). Codes sent before this keep working until they expire.
+- For signed-in users who allowed it on the consent screen, the text of each question is saved with its outcome, model and conversation (not the answer) and deleted after 90 days by a Firestore TTL policy (ADR 034). A failed save never fails the chat.
+- The assistant knows your favourite team: the app sends it with each question, so "where will we finish?" and "when do we play next?" are answered for that team (ADR 031). The conversation eval gains a case for it (9/9 on Workers AI).
+
 ### Changed
 - The README (test counts, architecture diagram with the accounts store and Drishti), the showcase, the frontend README and the website describe the v2.6.0 changes.
 - The Assistant tab has no back arrow any more, like the other tabs, and the bottom bar is hidden while the keyboard is open.
@@ -22,14 +32,6 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Fixture rows list home above away on their own lines, so full team names fit, and show a chevron to say they can be tapped. A failed assistant question shows the same plain error wording as other screens, not the raw exception.
 - Redeeming an invite code again now says the account already exists and to sign in (409), and an expired code says it expired (410). Before, both read as "wrong, used or expired". Only someone holding the right code gets the specific answer.
-
-### Added
-- Logs name the signed-in user by `user_ref` on `http.request` and on every assistant turn (`assistant.answer`, `assistant.tool`, `assistant.abstain`, `guardrail.event`), never by email. Telemetry contract 1.1.0.
-- Invite codes are 8 characters as `XXXX-XXXX` with no lookalike letters or digits, and redeem however they are typed (any case, with or without spaces and dashes). Codes sent before this keep working until they expire.
-- For signed-in users who allowed it on the consent screen, the text of each question is saved with its outcome, model and conversation (not the answer) and deleted after 90 days by a Firestore TTL policy (ADR 034). A failed save never fails the chat.
-- The assistant knows your favourite team: the app sends it with each question, so "where will we finish?" and "when do we play next?" are answered for that team (ADR 031). The conversation eval gains a case for it (9/9 on Workers AI).
-
-### Fixed
 - In dark mode the top bar is the same deep green as in light mode, not the bright green that glared on a phone screen, and the settings gear is the finer outlined icon.
 - The season outlook's top-four and relegation chances no longer show in two shades of pink in dark mode: top four is gold and relegation red in both themes, and dark-mode error text is red instead of pale pink.
 - A 429 from Cloud Run while no instance is free yet (an HTML page, not the backend's JSON) now reads "The server is waking up" instead of the sign-in lockout message, and "Can't reach the server" no longer tells friends to check that a backend is running.

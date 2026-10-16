@@ -8,7 +8,7 @@ A complete technical write-up of the platform's design, engineering decisions, a
 
 The Football Intelligence Platform is an end-to-end AI system for Europe's top five football leagues. It ingests 26 seasons of match results (46,709 matches), engineers 42 leakage-safe pre-match features, trains and evaluates an XGBoost classifier, and explains every prediction with SHAP in plain football language. A Dixon-Coles goals model adds likely scorelines and goal markets. A versioned FastAPI backend serves all of this, refreshes its data daily without a restart, rate limits clients, and can require invite-only sign-in and consent when hosted. An LLM assistant (Ollama locally, Cloudflare Workers AI when hosted) is grounded in the platform's own documents via RAG, and calls the API's own prediction, fixtures and season services as tools. A native Android app built with Compose Multiplatform signs in with an invite, opens on upcoming fixtures (tap one to predict it), shows team crests, and keeps working offline.
 
-It was built in 12 stages up to release v1.0.0, then extended in v2.0.0, v2.0.1, v2.1.0, v2.2.0, v2.3.0, v2.4.0 and v2.5.0, by a single engineer, with every structural change recorded as an ADR. Since then it has been made ready to host on Cloud Run: structured telemetry, a container image, probes, a hosted model for the assistant and accounts in Firestore, all opt-in. The result: 1,580 tests (1,373 Python, 207 Android), 34 ADRs, no cloud dependency for local use, and a reproducible pipeline. On the 2023/24 test season the model reaches 52.5% accuracy and a log loss of 0.976, against 55.0% and 0.955 for bookmakers.
+It was built in 12 stages up to release v1.0.0, then extended in v2.0.0, v2.0.1, v2.1.0, v2.2.0, v2.3.0, v2.4.0, v2.5.0 and v2.6.0, by a single engineer, with every structural change recorded as an ADR. Since then it has been made ready to host on Cloud Run: structured telemetry, a container image, probes, a hosted model for the assistant and accounts in Firestore, all opt-in. The result: 1,580 tests (1,373 Python, 207 Android), 34 ADRs, no cloud dependency for local use, and a reproducible pipeline. On the 2023/24 test season the model reaches 52.5% accuracy and a log loss of 0.976, against 55.0% and 0.955 for bookmakers.
 
 This document explains *why* each major component exists and the trade-offs behind it — not just what was built.
 
@@ -211,10 +211,10 @@ Compose Multiplatform keeps the UI layer (Composables, theme, navigation contrac
 
 | Layer | Approach | Count |
 |---|---|---|
-| AI, data pipeline and backend | Unit and API contract tests (`TestClient` with mocked AI services) | 1,308 |
+| AI, data pipeline and backend | Unit and API contract tests (`TestClient` with mocked AI services) | 1,336 |
 | Backend integration | `TestClient` with the **real** trained model — no mocks | 37 |
-| Android | ViewModels (test-first), repositories with Ktor `MockEngine`, cache, session token, retries, formatting | 186 |
-| **Total** | | **1,531** |
+| Android | ViewModels (test-first), repositories with Ktor `MockEngine`, cache, session token, retries, formatting | 207 |
+| **Total** | | **1,580** |
 
 The integration suite deliberately avoids mocking the model — it asserts on real SHAP values being finite, real probabilities summing to 1.0, and latency staying under threshold. This catches bugs (numerical issues, serialization mismatches, performance regressions) that contract tests with mocks cannot.
 
@@ -262,6 +262,7 @@ Semantic versioning, six releases to date:
 | v2.3.0 | Staging live on Cloud Run, crash reports from the staging app, consent notice version 2 |
 | v2.4.0 | A conversational assistant; its sources are logged, not shown |
 | v2.5.0 | Short-term chat memory with signed history, a conversation eval |
+| v2.6.0 | Fixes from the staging beta, easy invite codes, the favourite team in chat, opted-in question text, the Drishti model name |
 
 Each release follows the same gate: full test suite green, all quality checks clean, release notes written, before the version is tagged.
 
