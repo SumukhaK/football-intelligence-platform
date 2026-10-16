@@ -11,7 +11,7 @@ from opentelemetry import trace
 
 from shared.telemetry.context import get_request_id
 
-CONTRACT_VERSION = "1.0.0"
+CONTRACT_VERSION = "1.1.0"
 COMMON_FIELDS = (
     "timestamp",
     "severity",

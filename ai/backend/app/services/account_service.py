@@ -18,6 +18,8 @@ from backend.app.services.account_store import (
     Session,
     User,
 )
+from backend.app.services.invite_codes import new_invite_code, normalise_invite_code
+from shared.telemetry.context import set_user_ref
 from shared.telemetry.events import EventName, emit
 
 logger = logging.getLogger(__name__)
@@ -146,10 +148,14 @@ class AccountService:
 
     def create_invite(self, email: str) -> str:
         """A one-time code for ``email``; replaces any earlier invite."""
-        code = secrets.token_urlsafe(16)
+        code = new_invite_code()
         expires = self._clock() + INVITE_LIFETIME
         self._store.save_invite(
-            Invite(_normalise(email), _digest(code), expires.isoformat())
+            Invite(
+                _normalise(email),
+                _digest(normalise_invite_code(code)),
+                expires.isoformat(),
+            )
         )
         return code
 
@@ -172,7 +178,7 @@ class AccountService:
         invite = self._store.get_invite(email)
         now = self._clock()
         # Only someone holding the right code learns more than "wrong".
-        if invite is None or not hmac.compare_digest(invite.code_hash, _digest(code)):
+        if invite is None or not _code_matches(invite.code_hash, code):
             raise InvalidInviteError("The invite code is wrong, used or expired.")
         if invite.redeemed_at is not None:
             raise InviteAlreadyUsedError(
@@ -250,6 +256,8 @@ class AccountService:
             raise NotSignedInError("Sign in to continue.")
         if user.status == "banned":
             raise AccountBlockedError("This account is blocked.")
+        if self._user_ref is not None:
+            set_user_ref(self._user_ref(user.email))
         return user
 
     def record_consent(self, user: User, version: int, store_questions: bool) -> User:
@@ -363,6 +371,17 @@ def _normalise(email: str) -> str:
 def _digest(secret: str) -> str:
     """SHA-256 of a high-entropy secret (tokens and codes, not passwords)."""
     return hashlib.sha256(secret.encode()).hexdigest()
+
+
+def _code_matches(code_hash: str, code: str) -> bool:
+    """Whether ``code`` is the invite's, typed loosely or (for older codes) exactly.
+
+    Codes sent before the ``XXXX-XXXX`` format were stored as the digest of the
+    raw code; they keep working until they expire.
+    """
+    normalised = hmac.compare_digest(code_hash, _digest(normalise_invite_code(code)))
+    raw = hmac.compare_digest(code_hash, _digest(code))
+    return normalised or raw
 
 
 def _hash_password(password: str) -> str:

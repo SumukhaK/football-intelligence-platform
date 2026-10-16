@@ -5,8 +5,9 @@ Usage:
     uv run python -m scripts.manage_accounts ban --email sam@example.com
     uv run python -m scripts.manage_accounts unban --email sam@example.com
 
-``invite`` prints a one-time code valid for 7 days; send it to the person
-privately. They redeem it in the app with a password of their choosing.
+``invite`` prints a one-time code such as ``K7QM-3XWD``, valid for 7 days;
+send it to the person privately. They redeem it in the app with a password
+of their choosing.
 Inviting an existing account again lets them reset their password. Accounts
 are in ``ACCOUNTS_PATH`` (default ``accounts/accounts.json``), or in Firestore
 with ``ACCOUNT_STORE=firestore`` and ``GCP_PROJECT_ID`` set (ADR 026); sign in
