@@ -241,3 +241,26 @@ Evidence: `docs/reports/incidents/`.
 
 Done when: the operations report is published.
 Evidence: `docs/reports/hosting-operations.md`.
+
+## Deferred application backlog
+
+### A1. Restore the favourite team after reinstall
+
+Status: Not started (explicitly deferred on 18 October 2026).
+
+The owner uninstalled v2.5.1 before installing v2.6.0. The choice currently
+stores only league/team in device SharedPreferences; backup is disabled, so
+uninstall removes it. Onboarding correctly opens when that local choice is
+absent. The account's `User` and `MeResponse` have no favourite, and ADR 031
+uses favourite context per chat without storing it on the server.
+
+- [ ] Write an ADR and API extension for account-backed preferences using the existing Firestore and local JSON account stores.
+- [ ] Add authenticated save/read of league/team; restore before deciding whether onboarding is needed.
+- [ ] Scope the local cache to the signed-in account and migrate an existing local choice safely.
+- [ ] Distinguish a failed read (retry) from a truly absent preference (onboarding); an account's existence alone must never skip onboarding.
+- [ ] Test both stores, authenticated API access, account switching, migration, failed reads, reinstall restoration and truly absent preferences.
+
+Done when: a saved team returns after reinstall and sign-in, while a new
+account still completes onboarding. This patch implements none of it and
+changes no account schema or consent.
+Evidence: future ADR, API documentation, tests and reinstall walkthrough.
