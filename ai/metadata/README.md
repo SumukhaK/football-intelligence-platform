@@ -4,8 +4,8 @@ Dataset provenance records for the ingestion pipeline.
 
 ## Responsibility
 
-Every dataset that enters the platform produces an immutable `DatasetMetadata`
-record. This record is the audit trail: it captures where the data came from,
+The generic downloader and legacy single-season pipeline produce an immutable `DatasetMetadata`
+record. Multi-season backfill and live refresh use per-partition provenance/check report sidecars instead. This record is the audit trail: it captures where the data came from,
 when it arrived, its integrity checksum, and its schema version at ingest time.
 
 ## Key Types
@@ -43,6 +43,5 @@ datasets/raw/{provider_id}/
 ## Contracts
 
 - `DatasetMetadata` is frozen. Records are never mutated after creation.
-- Checksums are verified by `MetadataBuilder.verify_checksum` before any
-  downstream processing uses a stored file.
+- `MetadataBuilder.verify_checksum` is an available verification helper; callers must invoke it explicitly. It is not automatically applied by every downstream loader.
 - A metadata record with a mismatched checksum must not be used.

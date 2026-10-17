@@ -75,7 +75,7 @@ What must change in the codebase as a result?
 - **Accepted:** Decision made and recorded. Implementation may begin.
 - **Deprecated:** Superseded by a newer ADR. The old ADR remains for historical context.
 
-ADRs are never deleted.
+ADRs are never deleted. Context, measurements and implementation status inside an older ADR describe the time of that decision; an Accepted decision does not make every historical observation current. Read later amendments and the [current architecture guide](../architecture.md) before implementation. In particular ADR 025 extends local refresh with snapshot hosting, ADR 026 adds Firestore accounts, ADR 029 moves citations to logs, and ADR 034 adds opted-in question storage.
 
 ---
 

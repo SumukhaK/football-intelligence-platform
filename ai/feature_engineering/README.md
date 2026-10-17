@@ -7,13 +7,13 @@ Transforms the canonical `ProcessedMatch` dataset into a model-ready feature mat
 ## Entry Point
 
 ```sh
-# Auto-detects the latest canonical CSV in datasets/processed/football_data/
-python -m feature_engineering.pipeline
+# Legacy auto-detection under ai/datasets/; run with uv from ai/
+uv run python -m feature_engineering.pipeline
 
 # Explicit paths
-python -m feature_engineering.pipeline \
-  --input datasets/processed/football_data/match_results_v<version>.csv \
-  --output-dir datasets/features
+uv run python -m feature_engineering.pipeline \
+  --input ../datasets/processed/football_data/match_results_top5_v<version>.csv \
+  --output-dir ../datasets/features/top5
 ```
 
 ---

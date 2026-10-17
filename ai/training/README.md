@@ -56,7 +56,7 @@ Without `--no-promote`, the run replaces `latest/`, which the backend serves.
 
 ## Output artifacts
 
-All artifacts are written under `models/`:
+Frozen-split training writes the following under `models/`. A serving refit writes `refit.json` and backtest metadata instead of held-out metrics/plots; promoting it preserves the global frozen evaluation.
 
 ```
 models/
@@ -72,7 +72,7 @@ models/
       feature_importance.png
   runs/<timestamp>/              # Per-run archive (same structure as latest/)
   evaluation/
-    evaluation_report.json       # Global copy of latest evaluation
+    evaluation_report.json       # Global frozen reporting evaluation
 ```
 
 ## Design decisions

@@ -34,7 +34,7 @@ football-intelligence-platform/
 **Purpose:** Claude Code project context.
 
 **Owns:**
-- `CLAUDE.md` — the single authoritative source of project standards, architecture rules, coding conventions, and AI agent instructions.
+- `CLAUDE.md` — repository agent context, read alongside applicable user/AGENTS instructions and accepted ADRs.
 
 **Does not own:** general project documentation (that belongs in `docs/`).
 
@@ -46,7 +46,7 @@ football-intelligence-platform/
 
 **Owns:**
 - `workflows/` — GitHub Actions CI definitions.
-- `ISSUE_TEMPLATE/` — issue templates (today only an ADR request template).
+- `ISSUE_TEMPLATE/` — ADR request, bug report and task templates.
 - `PULL_REQUEST_TEMPLATE.md` — standard PR description template.
 - `CODEOWNERS` — code ownership assignments.
 
@@ -64,7 +64,7 @@ football-intelligence-platform/
 - `providers/` — data provider adapters: `football-data.co.uk`, FBref, Understat.
 - `ingestion/` — HTTP downloader, storage orchestration, `IngestionPipeline`.
 - `validation/` — DataFrame-level quality rules and schema compatibility checks.
-- `preprocessing/` — cleans and normalises validated data into `datasets/processed/`.
+- `preprocessing/` — reserved package; canonicalisation currently lives in `ingestion/`.
 - `schemas/` — Pydantic schema definitions for all datasets (`RawMatch`, `ProcessedMatch`).
 - `metadata/` — `DatasetMetadata` model and `MetadataBuilder`.
 - `feature_engineering/` — 9 composable feature generators, `FeatureRegistry`, `FeaturePipeline`.
@@ -76,7 +76,7 @@ football-intelligence-platform/
 - `assistant/` — the retrieval-grounded assistant: chunking, embeddings, vector store, retrieval, prompt templates (`assistant/prompting/templates.py`) and generation.
 - `model_registry/` — JSON-backed local model registry with versioned `ModelEntry` records.
 - `backend/` — the FastAPI application in `backend/app/`: `routers/`, `services/`, `schemas/`, `middleware/` (rate limiter), `exceptions/`, `routing.py` (which routers are mounted where, ADR 014 and ADR 022), `dependencies.py` and `consent.py` (the consent notice, ADR 022).
-- `scripts/` — operational CLI scripts: `backfill_football_data`, `ingest_football_data`, `refresh_live_dataset`, `refresh_fixtures`, `build_team_crests` (ADR 020), `manage_accounts` (ADR 022), and two experiment scripts (`draw_feature_experiment`, `kaggle_extras_experiment`).
+- `scripts/` — operational CLI scripts: `backfill_football_data`, `ingest_football_data`, `refresh_live_dataset`, `refresh_fixtures`, `build_team_crests` (ADR 020), `manage_accounts` (ADR 022), `build_snapshot` (ADR 025), and two experiment scripts (`draw_feature_experiment`, `kaggle_extras_experiment`).
 - `models/` — trained model output (runs, `latest/`, `registry.json`). Gitignored: only `.gitkeep` is tracked. See `ai/models/` below.
 - `explanations/` — SHAP explanation output. Gitignored.
 - `accounts/` — the account store (`accounts/accounts.json`, ADR 022), created when accounts are used. Gitignored.
@@ -108,13 +108,13 @@ The FastAPI code lives in `ai/backend/app/` so it can import the model, feature 
 - `features/` — the feature matrix (`feature_matrix.parquet`) and feature metadata produced by the feature engineering pipeline. `features/top5/` holds the five-league features the current model uses; the files directly in `features/` are the original single-season Premier League features.
 - `schemas/` — reviewed reference tables: `team_aliases.csv` (ADR 006), `team_crests.csv` and `league_emblems.csv` (ADR 020).
 
-Only metadata and reports are tracked. CSV and Parquet data files are gitignored and generated locally.
+Generated match CSVs and Parquet matrices are ignored; selected metadata/reports and the reviewed reference CSVs under `schemas/` are tracked.
 
 **Does not own:** trained model artifacts (those live in `ai/models/`), or code (that belongs in `ai/`).
 
 **Invariants:**
 - Files in `raw/` are never overwritten. New runs write new versioned files.
-- Every dataset in `processed/` or `features/` has a corresponding metadata sidecar.
+- Processed outputs carry provenance/check reports; feature outputs carry metadata and a generation report. Backfill/live reports differ from the legacy `DatasetMetadata` sidecar.
 - Files that contain secrets or PII must never enter this directory.
 
 ---
@@ -130,7 +130,7 @@ Only metadata and reports are tracked. CSV and Parquet data files are gitignored
 - `plans/` — plans for the multi-league work, the next phase, hosting, accounts and consent, assistant guardrails, and chat memory.
 - `setup/` — installation and quick-start guides.
 - `reference/` — CLI command reference.
-- `api.md` — the full API contract for both versions.
+- `api.md` — API index and prediction/data contract, linked to auth/chat and season outlook references.
 - `showcase/` — project write-up, portfolio summary, interview guide, demo video notes and screenshots.
 - `demo/` — demo scripts for each completed stage, aimed at technical interviewers.
 - `design/` — design concepts (`icon-splash-concepts.html`, ADR 016).
@@ -167,9 +167,9 @@ A few other folders (`ai/`, `architecture/`, `backend/` and similar) are empty p
 
 **Owns:**
 - `runs/<timestamp>/` — per-run artifacts: `model.joblib`, `config.json`, `metrics.json`, `evaluation_report.json`, `model_card.md`, `plots/`.
-- `latest/` — copy of the most recent successful run's artifacts. Always reflects the current best model.
-- `evaluation/` — global evaluation report updated on every training run.
-- `registry.json` — JSON model registry listing all trained versions with git commit, metrics, and framework versions.
+- `latest/` — copy of an explicitly promoted run's serving artifacts; promotion does not prove it is the best model. The current refit has no held-out test season.
+- `evaluation/` — frozen-split evaluation report updated by promoted training runs; serving refit promotion preserves reporting results.
+- `registry.json` — JSON model registry listing promoted versions with git commit, metrics, and framework versions.
 
 **Does not own:** training code (that belongs in `ai/training/`), raw data (that belongs in `datasets/`).
 

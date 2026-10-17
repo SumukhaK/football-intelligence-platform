@@ -9,7 +9,7 @@ Presentation layer. Depends on `core-model`, `core-network`, `core-ui`, `core-de
 ## Contents
 
 - `AuthScreen` — a green header with the Kick-off logo over a sheet with two tabs, Sign in and Invite code, which can be tapped or swiped (a `HorizontalPager` synced with a segmented button row).
-- `AuthViewModel`, `AuthForm`, `AuthUiState` — the typed fields and the request state. Each backend error has its own message: 401 wrong email or password, 429 too many tries, 400 bad invite code, 422 password too short, 403 blocked; anything else uses the app's usual error wording. A new password shorter than 10 characters is caught before sending.
+- `AuthViewModel`, `AuthForm`, `AuthUiState` — the typed fields and the request state. Each backend error has its own message: 401 wrong email or password, 429 too many tries, 400 bad invite code, 409 already used, 410 expired, 422 password too short, 403 blocked; anything else uses the app's usual error wording. A new password shorter than 10 characters is caught before sending.
 - `ConsentScreen`, `ConsentViewModel`, `ConsentUiState` — checks `GET /v2/me`; if the current notice needs accepting, shows the server's text with a "Store my question text" switch (off by default) and accepts with `POST /v2/me/consent`. An outdated notice (403) is fetched again. Offline, it moves on so saved data still shows.
 - `SignOutViewModel` — the Sign out entry in Settings.
 - `AuthRepository` — sign in, redeem invite, sign out, `me` and consent, over `AuthApiService` and `AuthSession` from `core-network`.

@@ -11,7 +11,7 @@ Domain layer. These types flow from the network layer through to the UI. No modu
 - `HealthStatus`, `ModelInfo` — server and model status.
 - `CompetitionsResponse`, `TeamsResponse` — served leagues and their teams.
 - `FixturesResponse`, `Fixture`, `SERVED_LEAGUES` — upcoming fixtures and the league tab order.
-- `PredictionRequest`, `PredictionResult` — win/draw/loss prediction with the draw tag.
+- `PredictionRequest`, `PredictionResult` — win/draw/loss prediction with the API's `draw_possible` field (the current UI does not display the old tag).
 - `ExplanationResult`, `FeatureContribution` — SHAP attribution with fan-friendly labels.
 - `Insights` — likely scores and goal markets from the goals model.
 - `ChatRequest`, `ChatResponse` — assistant conversation.
@@ -24,4 +24,4 @@ Domain layer. These types flow from the network layer through to the UI. No modu
 
 - Pure Kotlin only in `commonMain`. No Android framework.
 - No business logic. These are data structures, not services.
-- All types are serializable with `@Serializable`.
+- Wire request/response DTOs use `@Serializable`; result wrappers, state helpers and storage interfaces are not all serialization targets.

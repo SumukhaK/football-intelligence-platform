@@ -8,7 +8,7 @@ Android client for the Football Intelligence Platform. Built with Compose Multip
 |---|---|---|
 | Kotlin Multiplatform | 2.0.20 | Shared source across Android targets |
 | Compose Multiplatform | 1.7.0 | Shared UI in `commonMain` |
-| Ktor | 2.3.12 | HTTP client for FastAPI backend |
+| Ktor | 2.3.13 | HTTP client for FastAPI backend |
 | Koin | 3.5.6 | Dependency injection |
 | AndroidX Navigation Compose | 2.8.3 | Route-based navigation |
 | AndroidX ViewModel | 2.8.3 | Lifecycle-scoped state holders |
@@ -44,7 +44,7 @@ private SharedPreferences (app backup is off, so it never leaves the device)
 and sent as `Authorization: Bearer <token>` on every request. After sign-in the
 app calls `GET /v2/me`; if the current notice still needs accepting it shows
 the notice from the server with a "Store my question text" switch (off by
-default). Any request answered 401 forgets the token and returns to sign-in,
+default). A 401 for the current request's session token forgets that token and returns to sign-in,
 and Settings has a Sign out entry. Without a connection the app skips the
 notice check and shows saved data.
 
@@ -70,8 +70,8 @@ defence strengths. Tapping it opens the projected table with the team
 highlighted. Settings shows the
 saved team in one My team row; it reopens the picker with the saved league and
 team checked and, once a team is saved, restarts the app so every screen loads
-the new team. Every
-API response is saved in the app's cache directory; when the server can't be
+the new team. Supported successful data
+responses are saved in the app's cache directory; chat and auth responses are not cached. when the server can't be
 reached, screens show the saved data under an offline banner, and pulling down
 on a screen fetches fresh data.
 
@@ -141,9 +141,7 @@ staging.baseUrl=https://<staging service URL>
 ./gradlew assembleStagingDebug
 ```
 
-A staging build without an `https://` address fails straight away instead
-of producing an app that can't reach anything. `-PstagingBaseUrl=...` works
-too; CI passes a placeholder so `assembleDebug` builds both flavors.
+An explicitly named staging assemble/bundle/install task requires an `https://` address. `-PstagingBaseUrl=...` also works. Aggregate tasks such as `assembleDebug` can build staging with an empty address so CI needs no staging URL; that APK cannot reach staging until configured.
 
 The staging build sends crash reports to Firebase Crashlytics once the user
 has accepted the notice (ADR 028). It needs the owner's Firebase config at
@@ -166,4 +164,4 @@ quickly; `timeoutMs` bounds a request once connected. `crestUrl(team)` and
 `emblemUrl(competition)` build the crest and emblem image URLs from the same
 base URL (ADR 020).
 
-For a physical device on your network, change the `local` flavor's `BASE_URL` in `app/build.gradle.kts` to your machine's LAN IP.
+For a physical device on your network, change the `local` flavor's `BASE_URL` in `app/build.gradle.kts` to your machine's LAN IP and allow that host in the Android network security configuration when using cleartext HTTP.

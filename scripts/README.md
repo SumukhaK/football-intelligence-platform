@@ -33,4 +33,4 @@ with `python scripts/check_site.py` before publishing. It validates local
 links, assets and document structure.
 
 Application operational scripts live in `ai/scripts/`: backfill, live refresh,
-fixtures refresh, crest tables and account management.
+fixtures refresh, crest tables, account management and serving snapshot construction.

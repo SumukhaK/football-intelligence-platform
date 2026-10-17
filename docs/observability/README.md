@@ -50,9 +50,9 @@ Where each event is emitted:
 Downloads from football-data.co.uk (`football_data`) and openfootball
 (`openfootball`) retry timeouts, connection errors, 429 (honouring a numeric
 `Retry-After`) and 500/502/503/504 with full-jitter backoff, up to
-`FOOTBALL_AI_HTTP_MAX_RETRIES` retries. Ollama calls are not retried yet; the
-hosted provider adapter will use the same helper. `guardrail.event` comes with
-hosting step 3b. `ai/tests/shared/telemetry/test_contract_conformance.py`
+`FOOTBALL_AI_HTTP_MAX_RETRIES` retries. Ollama calls are not retried. The Workers AI adapter uses the helper with at most
+one retry and a timeout per attempt. `guardrail.event` is implemented for safety,
+history and numeric checks (ADRs 027 and 030). `ai/tests/shared/telemetry/test_contract_conformance.py`
 checks every event the tests emit against `telemetry-events.json`, and
 `ai/tests/backend/test_log_privacy.py` checks that no question or email is
 logged.
@@ -62,4 +62,7 @@ Contract version: **1.1.0**. The decision behind it is
 
 The read-only ops console lives in its own repository,
 `SumukhaK/football-dashboard`, which keeps a copy of the JSON file at
-`contract/telemetry-events.json`.
+`contract/telemetry-events.json`. At the reviewed source snapshot that copy is
+1.0.0 while this backend is 1.1.0; strict consumers may reject newer event
+attributes until the copies are aligned. Question text stays out of telemetry;
+ADR 034 separately stores opted-in questions with a 90-day expiry in the account store.

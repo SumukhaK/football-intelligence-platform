@@ -2,7 +2,7 @@
 
 Approved 15 October 2026 (recommended options). Decision record: [ADR 030](../adr/030-short-term-chat-memory.md). Hosting tracker step 3c. Ships in v2.5.0.
 
-The assistant remembers the last 4 exchanges of a conversation. The phone keeps them and sends them with each question, and the server signs its own answers so a modified app can't forge history. Nothing new is stored on the server.
+The assistant remembers the last 4 exchanges of a conversation. The phone keeps them and sends them with each question, and the server signs its own answers so a modified app can't forge history. This v2.5.0 design stores no server-side conversation. v2.6.0 separately adds opted-in question text stored for 90 days (ADR 034); see the [current chat contract](../api-auth-and-chat.md). Historical cost estimates and the work list below remain as recorded.
 
 ## How one turn works
 

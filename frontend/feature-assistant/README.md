@@ -1,6 +1,6 @@
 # :feature-assistant
 
-Football intelligence assistant screen — a conversational UI over the RAG-powered Ollama backend.
+Football intelligence assistant screen — a conversational UI over the RAG backend with Ollama locally or Workers AI when configured.
 
 ## Ownership
 

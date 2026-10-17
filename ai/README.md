@@ -17,7 +17,7 @@ This directory owns:
 - Raw data ingestion and schema validation.
 - Feature engineering for model training.
 - XGBoost model training and serialisation.
-- SHAP explainability — every prediction includes a SHAP explanation.
+- SHAP explainability — `/v2/explain` returns attributions for a prediction separately from `/v2/predict`.
 - Retrieval-augmented generation pipeline: Ollama locally, Cloudflare Workers AI when hosted (ADR 025).
 - The Dixon-Coles goals model behind scoreline insights and league table projections.
 - The FastAPI backend (`backend/`), which serves all of the above.
@@ -41,7 +41,7 @@ ai/
   providers/            # Data provider adapters (football-data.co.uk used; FBref, Understat adapters)
   ingestion/            # Downloader, storage, season backfill, daily live refresh, fixtures (openfootball)
   validation/           # DataFrame-level rules and schema compatibility checks
-  preprocessing/        # Cleans validated data into datasets/processed/
+  preprocessing/        # Reserved; canonicalisation currently lives in ingestion/
   feature_engineering/  # Computes model-ready features from preprocessed data
   schemas/              # Pydantic schema definitions for all datasets
   metadata/             # DatasetMetadata model and MetadataBuilder
@@ -112,7 +112,7 @@ SchemaValidator             — validates column compatibility with a Pydantic s
 
 ## Metadata Lifecycle
 
-Every ingested dataset produces a `DatasetMetadata` record:
+The downloader and legacy single-season pipeline produce a `DatasetMetadata` record. Multi-season backfill/live refresh instead record partition provenance and checks in their report sidecars:
 
 | Field | Description |
 |---|---|
@@ -163,8 +163,8 @@ uv run pytest --cov --cov-report=term-missing
 
 ## AI Philosophy
 
-- The assistant never invents facts. Every response is grounded in retrieved data or model output.
-- SHAP values accompany every prediction.
+- The goal is evidence-grounded answers. Retrieval, live tools, numeric checks and abstention evaluations reduce specific failure modes, without guaranteeing correctness; sources are logged rather than shown (ADR 029).
+- SHAP explanations are available through the dedicated explanation endpoint.
 - Prompt templates are version-controlled and tested.
 - Model selection favours the smallest model that meets quality thresholds: `qwen2.5:7b-instruct` locally (ADR 019), Gemma 4 26B on Workers AI ([evals](../docs/reports/hosted-assistant-evals.md)).
 - Fine-tuning and LoRA are out of scope. Improve quality through better retrieval and better prompts.
@@ -177,7 +177,7 @@ uv run pytest --cov --cov-report=term-missing
 The feature engineering pipeline transforms a canonical `ProcessedMatch` CSV into a model-ready feature matrix.
 
 ```sh
-# Run with auto-detected latest canonical dataset
+# Legacy auto-detection: single-season files under ai/datasets/ only
 uv run python -m feature_engineering.pipeline
 
 # Run with an explicit input file
@@ -206,7 +206,7 @@ uv run python -m feature_engineering.pipeline --input ../datasets/processed/foot
 | `elo_rating` | 2 | Dynamic Elo ratings (K=32, start=1500) recorded before each match |
 | `strength_of_schedule` | 4 | Rolling average opponent Elo (requires `elo_rating`) |
 
-All rolling features use `.shift(1)` before `.rolling()` to prevent data leakage.
+Rolling-window features shift out the current match; Elo, standings and head-to-head generators record state before applying the result. Training selects the registered pre-match features from a matrix that also retains canonical label columns.
 
 ---
 
@@ -260,6 +260,6 @@ and the server refuses an index whose model doesn't match its embedder.
 - `docs/adr/*.md` — architecture decision records
 - `docs/reports/*.md` — stage summaries and evaluation reports
 - `docs/*.md` — project documentation
-- `ai/models/latest/evaluation_report.json`, `metrics.json`, `config.json` — served model evaluation and settings
+- `ai/models/latest/evaluation_report.json`, `metrics.json`, `config.json` — loaded only when present. The serving refit has no held-out evaluation report; frozen reporting results remain in its source run.
 - `ai/explanations/global_summary.json` — SHAP global explanations
 - `datasets/features/feature_metadata.json`, `feature_generation_report.json` — feature descriptions

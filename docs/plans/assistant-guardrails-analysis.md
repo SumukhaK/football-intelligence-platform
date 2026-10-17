@@ -1,6 +1,6 @@
 # Assistant guardrails, limits and caching: analysis
 
-Analysis from 8 October 2026, with the decisions taken since. The season tools and router it called "answerable later" are built (ADR 021), and so are invite-only accounts and consent (ADR 022), so "No user identity" below no longer holds where sign-in is on. The rest is tracker steps 3a, 3b and 6a in [hosting-execution-tracker.md](hosting-execution-tracker.md).
+Analysis from 8 October 2026, with the decisions taken since. The season tools and router it called "answerable later" are built (ADR 021), and so are invite-only accounts and consent (ADR 022), so "No user identity" below no longer holds where sign-in is on. Current v2.6.0 also implements Firestore accounts, Llama Guard safety/strikes, signed multi-turn history and opted-in question storage (ADRs 026–034). The proposed answer cache, per-user/global token budgets, broader scope gateway and rules sheet remain tracker work. Recommendations below are historical alternatives, not a description of shipped behavior. Status: [hosting-execution-tracker.md](hosting-execution-tracker.md).
 
 ## Decisions (8 October 2026)
 
@@ -12,7 +12,7 @@ Analysis from 8 October 2026, with the decisions taken since. The season tools a
 - **Allowance:** none in the staging beta. Production limits come from beta usage.
 - **Audience:** family and friends only. The app isn't published in any store.
 
-## Where we are today
+## Historical baseline — 8 October 2026
 
 - **Rate limiting:** one in-memory, sliding one-minute window per client IP address, 120 requests a minute (ADR 014). It resets when the server restarts and isn't shared between instances, and IP addresses aren't users: a whole mobile network can share one.
 - **No user identity:** there are no accounts and no device ID, so the server can't count anything "per user" yet.

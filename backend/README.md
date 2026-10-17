@@ -21,16 +21,16 @@ Backend implementation. Follows the standards defined in `.claude/CLAUDE.md` sec
 Clean Architecture with strict layer separation.
 
 - **Schemas:** Pydantic request/response models with field-level validation.
-- **Services:** Thin adapters that convert API types to AI-layer types and back.
+- **Services:** Application orchestration and business rules, with adapters to AI-layer types. Routers delegate to them.
 - **Routers:** FastAPI route handlers — no business logic, only HTTP concerns.
 - **Dependencies:** FastAPI `Depends` functions that read from `app.state`.
-- **Lifespan:** Both models, the match history, goals models and fixtures load once at startup; the daily refresh reloads the data without a restart (ADR 013).
+- **Lifespan:** Both models, the match history, goals models and fixtures load once at startup; the optional daily refresh reloads data without a restart (ADR 013). It is enabled locally by default and disabled in the snapshot container.
 - **Middleware:** A request ID and one `http.request` log event per request (ADR 024), a body size limit, and a per-client sliding-window rate limiter that reads the real client address behind `TRUSTED_PROXY_HOPS` proxies (ADR 014).
 - **Chat:** The chat route is a plain `def`, so FastAPI runs the blocking model call in its thread pool and other requests keep being served.
 - **Assistant provider:** `ASSISTANT_PROVIDER` picks Ollama (default), Workers AI or off (ADR 025).
 - **Telemetry:** JSON logs in the telemetry contract's format with `LOG_FORMAT=json`, and OpenTelemetry traces with `TRACE_EXPORTER` (ADR 024).
 - **Sign-in:** Invite-only accounts in a JSON file locally or Firestore in the cloud (`ACCOUNT_STORE`, ADR 026); with `AUTH_REQUIRED=true` every `/v2` data route needs a signed-in user who accepted the notice (ADR 022).
-- **Cloud safety:** On Cloud Run the settings refuse to load with sign-in off or the development telemetry salt (ADR 025).
+- **Cloud safety:** On Cloud Run the settings require sign-in and a secret telemetry salt; enabled chat also requires safety and a secret history key (ADRs 025, 027, 030).
 
 ---
 
@@ -97,6 +97,7 @@ League model (ADR 014). The full contract is in [docs/api.md](../docs/api.md).
 | GET    | /model               | Model version and training metrics                  |
 | GET    | /competitions        | The five served leagues                             |
 | GET    | /teams               | A league's current teams                            |
+| GET    | /teams/{team}/outlook | Season projection and historical chances (ADR 023) |
 | GET    | /fixtures            | A league's upcoming fixtures (ADR 015)              |
 | POST   | /predict             | Win/draw/loss probabilities and the draw tag        |
 | POST   | /explain             | Prediction plus SHAP feature contributions          |
@@ -123,13 +124,14 @@ All errors return structured JSON:
 
 | HTTP | Condition                                         |
 |------|---------------------------------------------------|
-| 400  | Invite code wrong, used or expired                |
+| 400  | Invite code wrong or not found                |
+| 409 / 410 | Correct invite already used / expired |
 | 401  | Not signed in, or wrong email or password         |
 | 403  | Notice not accepted, or account blocked           |
 | 404  | No crest or emblem known for the name             |
 | 422  | Validation failure, unknown league or team, password too short |
 | 411  | A chunked body without `Content-Length`           |
-| 413  | Body over `MAX_BODY_BYTES` (16 KB)                |
+| 413  | Body over `MAX_BODY_BYTES` (24 KiB; 24,576 bytes)                |
 | 429  | Rate limit reached (`Retry-After` gives seconds), or too many failed sign-ins |
 | 503  | Model, match history, fixtures or assistant not loaded, the model provider failing, or `/v2/ready` with a component missing |
 | 500  | Unexpected server error                           |
@@ -158,7 +160,7 @@ cd ai
 uv run pytest tests/backend/ -v
 ```
 
-224 backend tests cover every endpoint in both versions, the rate limiter,
+Backend tests cover endpoints in both versions, the rate limiter,
 fixtures, sign-in, crests, the assistant's tools and season router, startup,
 error paths and the service units.
 

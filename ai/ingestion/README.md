@@ -4,13 +4,13 @@ Pulls raw football data from source files into `datasets/raw/`.
 
 ## Responsibility
 
-This package owns the boundary between external data sources and the platform. It reads source files, applies no transformations, and writes immutable raw snapshots to `datasets/raw/`.
+This package owns the boundary between external data sources and the platform. It preserves source bytes as immutable raw snapshots, then normalises and validates canonical match/fixture outputs under `datasets/processed/`.
 
 ## Contracts
 
 - Raw data is never modified after ingestion. Treat `datasets/raw/` as append-only.
 - Every ingestion run must record: source identifier, timestamp, row count, and file hash.
-- Data quality failures are loud errors, not silent skips.
+- Normalisation failures are counted and reported. Multi-season ingestion fails above its allowed malformed-row threshold (0.5%) or on integrity failures; the legacy single-season pipeline can report skipped rows.
 
 ## Contents
 

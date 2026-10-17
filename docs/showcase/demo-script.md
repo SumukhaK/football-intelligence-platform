@@ -6,6 +6,8 @@ Three ready-to-run demo scripts, scaled to the time available. If you only need 
 
 ## Prerequisites (all scripts)
 
+For v2.6.0, sign in, accept the current notice and choose a favourite team before the fixture walkthrough. The app opens that league first. Shell examples use POSIX syntax; see the [quick start](../setup/quick-start.md) for Windows guidance.
+
 ```sh
 # Backend dependencies + model artifacts (built by the README Quick Start)
 cd ai && uv sync --extra dev
@@ -20,7 +22,7 @@ LIVE_REFRESH_HOUR=off uv run uvicorn backend.app.main:app --host 0.0.0.0 --reloa
 
 Optional (for the assistant demo): Ollama running with `nomic-embed-text` and `qwen2.5:7b-instruct` pulled (or `ASSISTANT_PROVIDER=workers_ai` with a Workers AI token and its index), and the assistant index built (`uv run python -m assistant.pipeline --rebuild`).
 
-For the Android segments: an emulator running, app installed (`cd frontend && ./gradlew assembleDebug && adb install app/build/outputs/apk/debug/app-debug.apk`).
+For the Android segments: an emulator running, app installed (`cd frontend && ./gradlew assembleLocalDebug && adb install app/build/outputs/apk/local/debug/app-local-debug.apk`).
 
 ---
 
@@ -33,9 +35,9 @@ For the Android segments: an emulator running, app installed (`cd frontend && ./
 |---|---|---|
 | 0:00–0:30 | "This is an AI football analytics platform for Europe's top five leagues — it predicts matches, explains every prediction, and answers questions about its own data, all running locally." | Show the running backend terminal |
 | 0:30–1:30 | "The app opens on upcoming fixtures, one tab per league, in my time zone." | Android app: Fixtures tab, switch from Premier League to Bundesliga |
-| 1:30–3:00 | "Tap a fixture, or pick a league and two teams, and the real model answers." | Tap a fixture (or Predict tab → league → teams → **Predict Match Outcome**) → show probabilities, the draw tag if shown, and the likely scores |
+| 1:30–3:00 | "Tap a fixture, or pick a league and two teams, and the real model answers." | Tap a fixture (or Predict tab → league → teams → **Predict Match Outcome**) → show probabilities and the likely scores |
 | 3:00–4:00 | "Every prediction comes with an explanation — not a black box." | Tap **Explain** → show "Why the model leans this way" and "What counts against it" |
-| 4:00–5:00 | "It's close to the bookmakers using only public results, and 1,050 tests keep it honest." | Mention 52.5% vs 55.0% for bookmakers; open `docs/releases/v2.0.0.md` if asked |
+| 4:00–5:00 | "It's close to the bookmakers using only public results, and the v2.6.0 release records 1,580 tests." | Mention 52.5% vs 55.0% for bookmakers; explain that these held-out scores belong to the frozen reporting model; the serving refit has no test season |
 
 **Expected outputs:** A fixtures list by date; a prediction with three probabilities and likely scores; a plain-language explanation.
 
@@ -52,8 +54,8 @@ For the Android segments: an emulator running, app installed (`cd frontend && ./
 | 1:00–2:30 | Data: 46,709 matches, five leagues, leakage-safe features, season-based split. | Open [ADR 007](../adr/007-season-based-split-and-evaluation.md) |
 | 2:30–4:00 | Model + explainability: "52.5% on a test season, 33% random, 55% bookmakers; every prediction explained via SHAP." | `/docs` → `POST /v2/predict` then `POST /v2/explain`, or curl (below) |
 | 4:00–6:00 | Android app: fixtures, prediction → result → explain, then offline mode. | Live on emulator; stop the backend and pull to refresh to show the offline banner |
-| 6:00–7:30 | AI assistant: grounded RAG and tools, not a raw LLM call. | Ask "What is the model's test accuracy?" → show the cited source; then ask for the Premier League table after Boxing Day |
-| 7:30–9:00 | Testing philosophy: mocked contract tests vs. real-model integration tests. | `uv run pytest tests/integration/ -v` — 37 tests against the real model |
+| 6:00–7:30 | AI assistant: grounded RAG and tools, not a raw LLM call. | Ask "What is the model's test accuracy?" → distinguish frozen reporting scores from the serving refit; show citations in server logs if needed (ADR 029); then ask for the Premier League table after Boxing Day |
+| 7:30–9:00 | Testing philosophy: mocked contract tests vs. real-model integration tests. | `uv run pytest tests/integration/ -v` — real-artifact suite; the 37 marked integration tests also include a live download outside this directory |
 | 9:00–10:00 | Wrap-up: architecture diagram, ADRs, versioned API. | Show the root README architecture diagram |
 
 ```sh
@@ -61,7 +63,7 @@ curl -s -X POST localhost:8000/v2/predict -H "Content-Type: application/json" \
   -d '{"home_team": "Arsenal", "away_team": "Chelsea", "competition": "Premier League"}' | python -m json.tool
 ```
 
-**Expected outputs:** Same as the 5-minute demo, plus a grounded assistant answer with a citation, plus a visible integration test run.
+**Expected outputs:** Same as the 5-minute demo, plus an assistant answer with sources available in server logs, plus a visible integration test run.
 
 ---
 
@@ -79,8 +81,8 @@ curl -s -X POST localhost:8000/v2/predict -H "Content-Type: application/json" \
 | 10:00–13:00 | RAG pipeline: chunking, embedding, retrieval, source-constrained prompting, tool calls and the season router (ADR 018, 021), graceful 503 degradation. | Ask the assistant a question; then stop Ollama and show the same request returning a clean 503 |
 | 13:00–16:00 | Backend architecture: lifespan DI, server-side features, daily refresh without restart, `/v1` vs `/v2`, rate limiting, 422 vs 503 vs 429. | Walk through `ai/backend/app/main.py`; call `/predict` (v1 model) and `/v2/predict` (current model) side by side |
 | 16:00–18:00 | Android architecture: MVVM with StateFlow, Koin DI, the caching decorator for offline mode, ViewModel sharing across Prediction → Result → Explain. | Walk through `frontend/core-network/.../CachingFootballApiService.kt` and `PredictionViewModel.kt` |
-| 18:00–19:30 | Testing strategy: 1,336 unit and contract tests vs. 37 real-model integration tests, plus 207 Android tests. | `uv run pytest -m "not integration"` then `uv run pytest tests/integration/ -v` |
-| 19:30–20:00 | Known limitations and what's next: the hosted API isn't deployed yet (staging is next), the rate limiter is per instance, the assistant evals need a model provider so they run outside CI, results-only data. | Reference the "Future Scope" section of [project-showcase.md](project-showcase.md) |
+| 18:00–19:30 | Testing strategy: Recorded v2.6.0 counts: 1,336 unit and contract tests vs. 37 marked integration tests (real-artifact flows plus one live download), plus 207 Android tests. | `uv run pytest -m "not integration"` then `uv run pytest tests/integration/ -v` |
+| 19:30–20:00 | Known limitations and what's next: staging is recorded live; production, hosted scheduled refresh and release automation remain pending, the rate limiter is per instance, the assistant evals need a model provider so they run outside CI, results-only data. | Reference the "Future Scope" section of [project-showcase.md](project-showcase.md) |
 
 **Expected outputs:** All of the above, plus visible proof of graceful degradation (503 without crashing) and a clear two-tier test run.
 

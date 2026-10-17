@@ -1,5 +1,7 @@
 # Hosted assistant: model choice and evals
 
+> Dated experiment/report snapshot. Metrics and observations apply to the data, models and environment recorded below; they are not a fresh measurement of the current deployment. See the [current overview](../../README.md) for v2.6.0 behavior.
+
 Run 10–11 October 2026 on the developer machine against Cloudflare Workers AI (hosting tracker step 3, ADR 025). Not yet run against staging.
 
 ## Index and retrieval cut-off

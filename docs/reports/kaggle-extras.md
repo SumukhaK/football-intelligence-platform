@@ -1,5 +1,7 @@
 # Kaggle Extras: xG, FIFA Ratings and Champions League Rest Days
 
+> Dated experiment/report snapshot. Metrics and observations apply to the data, models and environment recorded below; they are not a fresh measurement of the current deployment. See the [current overview](../../README.md) for v2.6.0 behavior.
+
 **Date:** 2026-09-29
 **Model:** `20260928_123224` (served configuration, retrained with and without each extra)
 **Plan:** [multi-league plan, phase 7](../plans/multi-league-retraining-plan.md)

@@ -1,5 +1,7 @@
 # Refit on All Seasons: Backtest on 2026/27 So Far
 
+> Dated experiment/report snapshot. Metrics and observations apply to the data, models and environment recorded below; they are not a fresh measurement of the current deployment. See the [current overview](../../README.md) for v2.6.0 behavior.
+
 **Date:** 2026-10-07
 **Reporting model (frozen split):** `20260928_123224`, trained on 2000/01–2021/22 (served until 2026-10-07; still the source of test and holdout results)
 **Serving refit:** `20261007_154105`, trained on 2000/01–2025/26 (46,709 matches), served since 2026-10-07

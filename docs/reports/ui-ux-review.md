@@ -1,5 +1,7 @@
 # UI/UX Review Against the Mobile App UI Design Skill
 
+> Dated experiment/report snapshot. Metrics and observations apply to the data, models and environment recorded below; they are not a fresh measurement of the current deployment. See the [current overview](../../README.md) for v2.6.0 behavior.
+
 **Date:** 2026-09-29
 **Reference:** [ceorkm/mobile-app-ui-design](https://github.com/ceorkm/mobile-app-ui-design) (SKILL.md and references), read as guidance only
 **Screens reviewed:** home, team selection, result with insights, explanation, settings

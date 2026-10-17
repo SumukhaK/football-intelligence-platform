@@ -1,5 +1,7 @@
 # Stage 06 — Feature Engineering Pipeline: Summary
 
+> Historical stage report record. Versions, commands, test totals and limitations below describe that milestone; use the [current quick start](../setup/quick-start.md) and [API reference](../api.md) for v2.6.0 setup and behavior.
+
 **Date:** 2026-06-30
 **Branch:** `feature/ai-stage6-feature-engineering`
 **Commit:** `feat(ai): implement feature engineering pipeline`

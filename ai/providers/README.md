@@ -23,6 +23,8 @@ Providers do NOT perform HTTP requests directly. Transport is handled by
 | FBref | `fbref` | CSV exports | `scores_and_fixtures`, `squad_standard_stats` |
 | Understat | `understat` | Embedded JSON | `match_results` |
 
+Football-data.co.uk is the training/serving source. FBref and Understat provide parsers/adapters for the documented payload formats; they do not constitute complete live website scraping or player-data ingestion workflows.
+
 ## Adding a New Provider
 
 1. Create `providers/{provider_name}.py`.

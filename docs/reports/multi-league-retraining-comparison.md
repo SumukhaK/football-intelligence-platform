@@ -1,5 +1,7 @@
 # Multi-League Retraining: Model Comparison
 
+> Dated experiment/report snapshot. Metrics and observations apply to the data, models and environment recorded below; they are not a fresh measurement of the current deployment. See the [current overview](../../README.md) for v2.6.0 behavior.
+
 > **Update 2026-09-28:** after the ADR 008 Elo rule change, the tuned configuration was retrained and promoted as `20260928_123224` (log loss 0.976 on 2023/24, 0.996 on the holdout). That is the served model. The figures below are for `20260928_120015`, the model it replaced.
 
 ## Update: tuned model promoted (2026-09-28)

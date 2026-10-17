@@ -1,5 +1,7 @@
 # Demo: Stage 5 — Real Dataset Ingestion
 
+> Historical stage demo record. Versions, commands, test totals and limitations below describe that milestone; use the [current quick start](../setup/quick-start.md) and [API reference](../api.md) for v2.6.0 setup and behavior.
+
 Demonstrate live data ingestion from football-data.co.uk, schema validation, and versioned dataset storage.
 
 **Approximate demo time:** 3 minutes

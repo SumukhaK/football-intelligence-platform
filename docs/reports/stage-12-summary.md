@@ -1,5 +1,7 @@
 # Stage 12 — End-to-End Integration & Production Readiness
 
+> Historical stage report record. Versions, commands, test totals and limitations below describe that milestone; use the [current quick start](../setup/quick-start.md) and [API reference](../api.md) for v2.6.0 setup and behavior.
+
 ## Executive Summary
 
 Stage 12 completes the Football Intelligence Platform by validating the integration of every component built across Stages 1–11. The focus was on end-to-end correctness, error resilience, latency measurement, and documentation completeness — not new features.

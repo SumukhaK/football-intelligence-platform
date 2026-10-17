@@ -1,5 +1,7 @@
 # Goals Model: Rolling-Origin Evaluation
 
+> Dated experiment/report snapshot. Metrics and observations apply to the data, models and environment recorded below; they are not a fresh measurement of the current deployment. See the [current overview](../../README.md) for v2.6.0 behavior.
+
 **Date:** 2026-09-28
 **Model:** time-weighted Dixon-Coles per league ([ADR 009](../adr/009-dixon-coles-goals-model.md), `ai/goals/`)
 **Data:** `match_results_live_v20260928_172253.csv` (top five leagues, 2000/01 to 2026/27 so far)

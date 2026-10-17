@@ -326,8 +326,8 @@ Those are the counts at v1.0.0.
 
 ## Next
 
-The closed beta with invited friends on the staging app.
+Continue the invite-only staging beta and the remaining [hosting tracker](../plans/hosting-execution-tracker.md) checks: measurements, automated release/eval gates, hosted scheduled refresh, recovery evidence and production promotion.
 
 ---
 
-**Today: 12 releases, 34 ADRs, 1,580 tests (1,373 Python, 207 Android). One engineer.**
+**At v2.6.0: 12 releases, 34 ADRs, 1,580 tests (1,373 Python, 207 Android). One engineer.**

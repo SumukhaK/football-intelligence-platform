@@ -1,5 +1,7 @@
 # Stage 11 — Demo Guide
 
+> Historical stage demo record. Versions, commands, test totals and limitations below describe that milestone; use the [current quick start](../setup/quick-start.md) and [API reference](../api.md) for v2.6.0 setup and behavior.
+
 > Historical walkthrough of Stage 11 (v1.0.0 era). For the current system, use the root README Quick Start and [docs/demo/README.md](README.md). The steps below describe the current app.
 
 ## Prerequisites

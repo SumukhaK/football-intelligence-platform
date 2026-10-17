@@ -1,5 +1,7 @@
 # Stage 04 — Football Data Ingestion Framework: Summary
 
+> Historical stage report record. Versions, commands, test totals and limitations below describe that milestone; use the [current quick start](../setup/quick-start.md) and [API reference](../api.md) for v2.6.0 setup and behavior.
+
 **Date:** 2026-06-30
 **Branch:** `feature/ai-stage4-data-acquisition`
 **Commit:** `feat(ai): implement extensible football data ingestion framework`

@@ -9,7 +9,7 @@ Get the Football Intelligence Platform running from a clean checkout. Setup take
 The platform has two independent workspaces:
 
 - **AI workspace** (`ai/`) — Python 3.12, managed with uv. Runs the full data-to-model pipeline and the FastAPI backend.
-- **Android workspace** (`frontend/`) — Kotlin + Compose Multiplatform, managed with Gradle. Builds the Android app: Fixtures, Predict, Assistant and Settings tabs, with an offline cache.
+- **Android workspace** (`frontend/`) — Kotlin + Compose Multiplatform, managed with Gradle. Builds the Android app: Fixtures, Predict, My Team and Assistant tabs, with Settings behind an icon, with an offline cache.
 
 Both workspaces are self-contained. You can set up either or both depending on what you want to do.
 
@@ -28,7 +28,7 @@ Both workspaces are self-contained. You can set up either or both depending on w
 | Git | 2.40+ | Standard installation |
 | Network | Active connection | Required for first-run dependency download, data download and the daily refresh |
 
-> **Windows users:** All commands below are written for PowerShell. If you are using Git Bash or WSL, substitute `/` for `\` in paths.
+> Shell blocks use POSIX syntax unless marked Windows PowerShell. In PowerShell use `.\gradlew.bat`, `Copy-Item .env.example .env`, and `$env:NAME="value"` for environment overrides; use `curl.exe` for curl examples.
 
 ---
 
@@ -73,7 +73,7 @@ uv run mypy .                # Type checking — should print: Success: no issue
 uv run pytest                # Tests — 1,373 tests
 ```
 
-`uv run pytest` runs all 1,373 tests, including the 37 integration tests. The integration tests need a trained model in `ai/models/latest/` (and one needs network access), so on a clean checkout run `uv run pytest -m "not integration"` (1,336 tests) until you have trained the model below.
+The v2.6.0 release records 1,373 Python tests, 37 marked integration. Some real-artifact cases skip when model/data files are absent, and one marked test downloads live data. On a clean checkout or offline, use `uv run pytest -m "not integration"`; recorded totals are not a fresh result.
 
 ---
 
@@ -115,13 +115,13 @@ Replace `<timestamp>` with the file name from Step 1. The pipeline prints the in
 ```
 Pipeline complete in <seconds>s
 Rows: <N> in -> <N> out
-Feature columns: 67
+Feature columns: <total columns>
 Validation: PASSED
 
 Outputs written to: ../datasets/features/top5
 ```
 
-`Feature columns: 67` counts every column in the matrix; 42 of them are model features.
+`Feature columns` counts every column in the matrix; 42 of them are model features.
 
 ### Step 3 — Train Model
 
@@ -152,14 +152,17 @@ The pipeline prints the model, feature matrix and output paths, then the number 
 Starts the FastAPI server exposing predictions, explanations, fixtures, insights and (optionally) the AI assistant.
 
 ```sh
-cp .env.example .env   # optional: every value in it is already the default
+cp .env.example .env   # optional; review overrides before starting
 uv run uvicorn backend.app.main:app --reload
 ```
 
-Among the startup log lines you should see:
+If you copy `.env.example`, remove its stale `API_VERSION=2.0.0` override or set
+`API_VERSION=2.6.0`; the current `Settings` default is 2.6.0.
+
+A simplified startup example follows; JSON mode emits structured `component.load` and freshness events:
 
 ```
-Starting Football Intelligence backend v2.0.0
+Starting Football Intelligence backend v2.6.0
 Match history loaded: Premier League <season>, <N> teams      (one line per league)
 Goals models fitted: ...
 Fixtures loaded, downloaded at ...
@@ -248,11 +251,11 @@ After running the complete pipeline, the following files should exist. Paths are
 | `datasets/features/top5/feature_generation_report.json` | Generation report with timing and row counts |
 | `ai/models/latest/model.joblib` | Trained XGBoost model (joblib bundle) |
 | `ai/models/latest/model_card.md` | Auto-generated model card |
-| `ai/models/latest/evaluation_report.json` | Full evaluation report (metrics + CV) |
+| `ai/models/runs/<frozen run>/evaluation_report.json` | Held-out metrics and CV from the frozen reporting run; absent from the serving refit |
 | `ai/models/latest/config.json` | Training configuration |
 | `ai/models/runs/<ts>/` | Every training run, promoted or not |
 | `ai/models/registry.json` | Local model registry |
-| `ai/models/evaluation/evaluation_report.json` | Global evaluation report |
+| `ai/models/evaluation/evaluation_report.json` | Frozen reporting evaluation, preserved when promoting a serving refit |
 | `ai/explanations/global_summary.json` | Mean \|SHAP\| per feature across all matches |
 | `ai/explanations/local_explanations.json` | 10 per-sample SHAP explanations |
 | `ai/explanations/summary_plot.png` | Beeswarm feature impact plot |
@@ -320,7 +323,7 @@ After setup, verify the following:
 - [ ] `uv run ruff check .` — prints `All checks passed!`
 - [ ] `uv run black --check .` — prints `N files would be left unchanged.`
 - [ ] `uv run mypy .` — prints `Success: no issues found`
-- [ ] `uv run pytest` — all 1,373 tests pass (after training)
+- [ ] `uv run pytest` — review failures and artifact-related skips against the current checkout
 - [ ] The backfill produces `datasets/processed/football_data/match_results_top5_v<ts>.csv`
 - [ ] Feature engineering produces `datasets/features/top5/feature_matrix.parquet`
 - [ ] Training produces `ai/models/latest/model.joblib` and `ai/models/latest/model_card.md`

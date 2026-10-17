@@ -4,12 +4,12 @@ Pydantic schema definitions for all football datasets.
 
 ## Responsibility
 
-Defines the contract for every dataset the platform ingests and produces. Schemas are the single source of truth for field names, types, and constraints. Both validation and ingestion import from here.
+Defines canonical match and fixture row contracts. Both validation and ingestion import from here. Provider metadata, feature artifacts and model/evaluation outputs also have their own models in their owning packages.
 
 ## Contracts
 
-- Every dataset has exactly one schema class derived from `pydantic.BaseModel`.
-- Schemas use strict types. No `Any`. No optional fields without a documented reason.
+- Canonical rows are validated with Pydantic models and field constraints; default Pydantic coercion still applies where strict validation is not requested.
+- Optional fields represent source data that may be absent; callers must respect those contracts.
 - A schema change requires a new version. Old schemas are not deleted while data using them exists.
 
 ## Contents

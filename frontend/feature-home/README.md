@@ -9,7 +9,7 @@ Presentation layer. Depends on `core-common`, `core-model`, `core-network`, `cor
 ## Contents
 
 - `HomeViewModel` — upcoming fixtures for the selected league tab, grouped by day in the phone's time zone.
-- `HomeScreen` — league tabs (Premier League first) over the fixtures list, with team crests, pull to refresh and the offline banner. Tapping a fixture opens its prediction in the Predict tab.
+- `HomeScreen` — league tabs (favourite league first after onboarding) over the fixtures list, with team crests, pull to refresh and the offline banner. Tapping a fixture opens its prediction in the Predict tab.
 - `FixturesRepository` — reads `GET /v2/fixtures`.
 - `BackendStatusViewModel`, `BackendStatusSection` — the backend status card shown on the Settings screen.
 - `HealthRepository` — reads `GET /v2/health`.

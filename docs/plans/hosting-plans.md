@@ -1,10 +1,10 @@
 # Hosting Plans
 
-Status: Proposed. Reviewed 5 October 2026; production AI target added 8 October 2026. This document creates no cloud resources.
+Historical proposal reviewed 5 October 2026; production AI target added 8 October 2026. The baseline, prices and checklist below describe that planning snapshot. Cloud Run staging, provider adapters, probes, Firestore accounts, safety, telemetry and signed history have since shipped; production, automated release/eval gates, hosted scheduled refresh and recovery evidence remain work in the execution tracker. This document creates no cloud resources.
 Execution order and status: [hosting-execution-tracker.md](hosting-execution-tracker.md).
 Goal: cloud deployment, measured AI quality, cold-start evidence and operational recovery for a personal portfolio application.
 
-## Architecture and repository baseline
+## Historical architecture and repository baseline
 
 Use Cloud Run CPU serving, Cloudflare Workers AI hosted inference, and the existing NumPy retrieval store. Prepare model/data/index artifacts locally and publish an immutable serving snapshot. Preserve the local Ollama workflow. Do not add Qdrant, Kubernetes, GPUs or a relational database without a measured need.
 
@@ -43,7 +43,7 @@ The point of hosting is production experience with an AI system end to end: serv
 
 Not included, because they cost more than they teach here: Kubernetes, an always-on GPU, a managed vector database, a relational database, fine-tuning.
 
-The API holds no user data, so there is no database to connect. "Connecting storage" means a Cloud Storage bucket for versioned model, data and index snapshots, plus Secret Manager for the provider token; object storage needs its own ADR first (Phase 7).
+At the original baseline the API held no user data. ADRs 022/026 later added accounts in JSON locally or Firestore when hosted; ADR 034 adds opted-in question text. "Connecting storage" means a Cloud Storage bucket for versioned model, data and index snapshots, plus Secret Manager for the provider token; object storage needs its own ADR first (Phase 7).
 
 Interview evidence comes only from what is actually run: numbers, dashboards and incident write-ups from these phases, not from this plan.
 

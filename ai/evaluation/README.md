@@ -23,6 +23,7 @@ Metrics, cross-validation, plots, and structured report models for the XGBoost p
 | `assistant_season.py` | Checks season answers (tables, projections, results, derbies) name the team the season tools give and invent no numbers (CLI; ADR 021) |
 | `assistant_abstention.py` | Checks the assistant answers questions its knowledge base covers and says "I don't know" to ones it doesn't (CLI) |
 | `relevance_cutoff.py` | Measures where the retrieval cut-off belongs for an index's embedding model, from the abstention questions (CLI, ADR 025) |
+| `assistant_conversation.py` | Checks scripted follow-ups, signed/forged history and favourite-team context; optional safety case (CLI, ADR 030) |
 | `reports.py` | Frozen Pydantic models: `SplitMetrics`, `CVReport`, `EvaluationReport` |
 
 ## Matplotlib backend
@@ -38,4 +39,4 @@ display. This is safe on Windows, macOS, and headless CI environments.
 - Cross-validation summary: mean and std of accuracy, F1, log loss across folds.
 - Dataset metadata: class labels, feature count, split sizes.
 
-The report is serialised to JSON alongside every model run.
+Frozen-split training writes this report per run. Serving refits instead write refit metadata and a separate in-season backtest, because they have no held-out test split.

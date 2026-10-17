@@ -1,12 +1,12 @@
 # Cloud monitoring as code
 
-Log-based metrics and alert policies for the hosted API (ADR 024, telemetry contract section 5). Nothing here has been applied to a project yet; apply it once the Google Cloud project exists (hosting tracker step 0).
+Log-based metrics and alert policies for the hosted API (ADR 024, telemetry contract section 5). The v2.3.0 release records seven policies applied to staging on 14 October 2026. This is historical deployment evidence, not a fresh cloud-state check; see the [hosting tracker](../../docs/plans/hosting-execution-tracker.md).
 
 | Path | What it is |
 |---|---|
 | `metrics/*.yaml` | One Cloud Logging log-based metric per file, in the format `gcloud logging metrics create --config-from-file` reads. Each counts or measures one telemetry event from the `football-api` and `football-api-staging` Cloud Run services. |
 | `alerts/*.json` | One Cloud Monitoring alert policy per file. Each has a documentation block saying what it means and what to check first. |
-| `apply.sh` | Creates or updates every metric and policy. `--dry-run` prints the commands instead. |
+| `apply.sh` | Creates or updates metrics and recreates matching policies. `--dry-run` prints the commands instead. |
 | `remove.sh` | Deletes exactly what `apply.sh` creates. `--dry-run` prints the commands instead. |
 
 ## Apply

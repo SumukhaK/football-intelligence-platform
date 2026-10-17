@@ -119,3 +119,4 @@ ai/accounts/
 
 # Serving snapshots (ADR 025): built by `python -m scripts.build_snapshot`
 /snapshot/
+/docs/local-memory/

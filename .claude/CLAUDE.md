@@ -52,6 +52,8 @@ The system follows Clean Architecture with strict layer separation. Each layer h
 
 ## 5. AI Philosophy
 
+These are quality goals. Current behavior uses separate `/v2/predict` and `/v2/explain` requests, document retrieval plus live tools, numeric checks and bounded evaluations; it does not guarantee factual correctness. Assistant citations are logged rather than shown (ADR 029).
+
 - The assistant never invents facts. Every claim is grounded in retrieved data or model output.
 - SHAP values accompany every prediction so users can see which features drove the result.
 - Prompt templates are version-controlled in `ai/assistant/prompting/templates.py` (`playbook/` is reserved for future template docs). They are tested like code.
@@ -101,13 +103,13 @@ datasets/
 
 ## 8. Backend Standards
 
-**Stack:** FastAPI, Python 3.12+. Data is file-based (versioned CSV and Parquet files); there is no database.
+**Stack:** FastAPI, Python 3.12+. Football/ML data is file-based (versioned CSV and Parquet files). The older no-database baseline was extended by accepted ADRs 022/026: accounts use JSON locally or opt-in Firestore when hosted; ADR 034 adds opted-in question text. This is an explicit exception to that baseline, not a general database migration.
 
 - One router per domain area. Routers live in `ai/backend/app/routers/`.
 - Business logic lives in service classes in `ai/backend/app/services/`. Routes are thin.
 - Dependency injection via FastAPI's `Depends`. No global state.
 - All request and response bodies are Pydantic models with field-level validation.
-- Data access through explicit loaders over versioned files (pandas). If a database is ever added, use SQLAlchemy Core, not ORM magic.
+- Data access through explicit loaders over versioned files (pandas). Any future relational database needs a new ADR; the accepted Firestore account-store exception follows ADR 026.
 - Errors return structured JSON: `{ "error": "...", "detail": "..." }`.
 - All endpoints have OpenAPI docstrings. The auto-generated docs must be accurate.
 - Background tasks (e.g. pipeline runs) use FastAPI `BackgroundTasks` or a simple queue. No Celery in early stages.

@@ -1,5 +1,7 @@
 # Stage 7 — XGBoost Training & Evaluation Pipeline
 
+> Historical stage report record. Versions, commands, test totals and limitations below describe that milestone; use the [current quick start](../setup/quick-start.md) and [API reference](../api.md) for v2.6.0 setup and behavior.
+
 ## Status: Complete
 
 ## What was built

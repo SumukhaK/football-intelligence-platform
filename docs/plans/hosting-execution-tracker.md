@@ -1,6 +1,6 @@
 # Hosting Execution Tracker
 
-Status: In progress (staging is live with the assistant on; the app walkthrough, alerts and evals against staging are next). Created 8 October 2026; reordered and step 5a added 8 October 2026; statuses updated 14 October 2026.
+Status: In progress. The tracker records v2.6.0 deployed to staging on 17 October 2026 with the assistant on, and seven alert policies applied in the v2.3.0 release. App walkthroughs, metrics/dashboard evidence, staged eval automation and production work remain. Created 8 October 2026; status summary reconciled with the dated evidence below on 17 October 2026. This is a record, not a fresh cloud-state check.
 Design and detail: [hosting-plans.md](hosting-plans.md). This file is the order of work and its status.
 
 Work one step at a time, one PR into `develop` per step (or per sub-step when it grows). A step is done only when its "Done when" checks pass and its evidence is saved. Update the Status column and the date in the same PR.
@@ -18,8 +18,8 @@ Status values: `Not started`, `In progress`, `Blocked (reason)`, `Done (date)`.
 | 3a | Invite-only accounts and consent | [plan](accounts-and-consent-plan.md) | In progress (sign-in and consent checked on staging through the API on 14 October 2026; the app walkthrough to go) |
 | 3 | Connect the hosted LLM | 1 | In progress (on in staging since 14 October 2026 and quoting the API's numbers; evals against staging to go) |
 | 3b | Guardrails gateway: safety, scope router, cache, limits | [analysis](assistant-guardrails-analysis.md) | In progress (safety check and strikes done, ADR 027; cache, budgets and the rules sheet to go) |
-| 3c | Short-term chat memory | [plan](chat-memory-plan.md) | Done (15 October 2026, v2.5.0 on staging) |
-| 4 | Observability: logs, traces, metrics, alerts | 6 | In progress (request IDs, traces, local stack, and metrics and alerts as code done; apply and dashboard to go) |
+| 3c | Short-term chat memory | [plan](chat-memory-plan.md) | Done (15 October 2026; v2.6.0 staging update recorded 17 October) |
+| 4 | Observability: logs, traces, metrics, alerts | 6 | In progress (request IDs, traces, local stack, and metrics and alerts as code done, seven policies recorded applied; dashboard/metric evidence to go) |
 | 5 | CI/CD with the eval gate | 6 | Not started |
 | 5a | Security hardening | this tracker | Done (11 October 2026) |
 | 6 | Cold-start and idle-wake measurement | 4 | In progress (first cold boot on Cloud Run: 19 s to ready) |
@@ -39,7 +39,7 @@ Can land any time, before step 0.
 
 - [x] Chat route no longer blocks the event loop; raw message logging removed.
 
-Done when: the chat route runs the model call off the event loop and no question text is logged unless the user opted in ([accounts plan](accounts-and-consent-plan.md)).
+Done when: the chat route runs the model call off the event loop and no question text is logged; opted-in questions are stored separately under ADR 034 ([accounts plan](accounts-and-consent-plan.md)).
 Evidence: tests.
 
 ## 0. Baseline, accounts and budget guardrails
@@ -98,7 +98,7 @@ Evidence: integration tests and a staging walkthrough.
 - [x] Quota, timeout and 5xx return a structured 503; predictions keep working.
 - [ ] Grounding and abstention evals pass against staging.
 
-Done when: staging chat answers with citations and quotes the API's numbers, and both evals pass.
+Done when: staging chat records its citations in server logs (ADR 029), quotes the API's numbers, and both evals pass.
 Evidence: eval output saved under `docs/reports/`.
 
 ## 3b. Guardrails gateway: safety, scope router, cache, limits
@@ -132,10 +132,11 @@ Evidence: eval output in `docs/reports/hosted-assistant-evals.md` and staging lo
 
 Contract: [telemetry contract](../observability/telemetry-contract.md) and [ADR 024](../adr/024-structured-telemetry-and-opentelemetry.md).
 
-- [x] Request ID on every request and log line.
+- [x] Request ID on responses and request-scoped log lines.
 - [x] OpenTelemetry traces: retrieval, each tool call, generation, to Cloud Trace (#91).
 - [ ] Metrics: p50/p95 latency, tokens, cost per answer, tool-call rate, refusal rate, provider errors and 429s.
-- [ ] One dashboard; alerts on error rate, p95 latency and provider failures.
+- [x] Seven alert policies applied, recorded in [v2.3.0](../releases/v2.3.0.md); live alert delivery and dashboard evidence remain separate checks.
+- [ ] One dashboard with validated latency, errors, provider and usage metrics.
 
 Done when: one slow chat request can be explained from its trace alone.
 Evidence: dashboard screenshot and one annotated trace.
@@ -159,7 +160,7 @@ Lands before friends use the beta (step 6a).
 - [x] CORS and security headers reviewed for the hosted API. Decision: no CORS middleware, because the only client is the Android app and CORS only matters to browsers; every response sends `X-Content-Type-Options: nosniff`. HSTS is left to Cloud Run, which serves HTTPS only.
 - [x] The server refuses to start on Cloud Run (`K_REVISION` set) with `AUTH_REQUIRED` off or the development `TELEMETRY_SALT`.
 - [x] Dependency vulnerability scans in CI for Python and Gradle (`dependency-scan.yml`, on every PR, push and weekly: pip-audit over `uv.lock`, and OSV-Scanner over the app's release runtime dependencies).
-- [x] App: retry with exponential backoff and jitter for idempotent GET requests only, honouring `Retry-After` on 429 and 503; no retry on POST. Up to two retries on 429, 502, 503 and 504, waits capped at 8 s; connection failures are not retried, so the offline fallback stays fast.
+- [x] App: retry with exponential backoff and jitter for idempotent GET requests, honouring `Retry-After` on 429 and 503. Since v2.6.0, a non-JSON platform 429 may also retry a POST during Cloud Run cold start; backend JSON POST errors are not retried. Up to two retries on 429, 502, 503 and 504, waits capped at 8 s; connection failures are not retried, so the offline fallback stays fast.
 - [x] App: R8 resource shrinking on for release builds; release build checked for working Ktor and serialization keep rules. Checked 11 October 2026 on an emulator: sign-in, consent, teams, fixtures, predict, explain, insights and outlook all load in the shrunk build.
 - [x] Decision recorded: no SSL pinning (Cloud Run certificates rotate without notice; HTTPS plus no secrets in the APK covers the risk) and no Play Integrity for an invite-only app; revisit if the app goes public.
 

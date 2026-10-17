@@ -4,9 +4,7 @@ SHAP-based explainability pipeline for the XGBoost match outcome model.
 
 ## Overview
 
-This package computes SHAP values for every match prediction and persists structured
-explanations alongside visualisation plots. It is designed to be consumed directly by
-the FastAPI backend (Stage 4) via `ExplanationService`.
+The offline pipeline computes SHAP over a feature matrix and persists global and sampled local explanations with plots. The backend calls `ExplanationService` on demand through `/v2/explain`, separately from `/v2/predict`.
 
 ## Directory structure
 
@@ -34,7 +32,7 @@ explainability/
 Run from the `ai/` directory:
 
 ```bash
-uv run python -m explainability.pipeline
+uv run python -m explainability.pipeline --feature-matrix ../datasets/features/top5/feature_matrix.parquet
 ```
 
 Optional arguments:

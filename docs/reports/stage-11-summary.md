@@ -1,5 +1,7 @@
 # Stage 11 — Compose Multiplatform Android Application
 
+> Historical stage report record. Versions, commands, test totals and limitations below describe that milestone; use the [current quick start](../setup/quick-start.md) and [API reference](../api.md) for v2.6.0 setup and behavior.
+
 ## Summary
 
 Stage 11 delivers the Android client for the Football Intelligence Platform. The application is built with Compose Multiplatform (KMP) and connects to the FastAPI backend via Ktor HTTP client. It covers all five API endpoints and eight distinct screens.

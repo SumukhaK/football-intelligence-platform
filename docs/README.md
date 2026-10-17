@@ -24,7 +24,7 @@ Maintained by the project architect. The implementation engineer updates documen
 
 | Document | Description |
 |---|---|
-| [API Reference](api.md) | Both API versions, every endpoint, request fields, responses, errors and the rate limit |
+| [API Reference](api.md) | Endpoint index and data/prediction contract, with linked [auth/chat](api-auth-and-chat.md) and [season outlook](api-season-outlook.md) references |
 | [CLI Reference](reference/cli.md) | Every supported CLI command with options, examples, and expected output |
 | [Observability](observability/README.md) | Telemetry contract (log lines, request IDs, events, traces), the [local Grafana stack](observability/local-stack.md) and the cloud metrics and alerts |
 | [Repository Structure](repository-structure.md) | Every top-level directory: purpose, what belongs, what does not |
@@ -33,6 +33,7 @@ Maintained by the project architect. The implementation engineer updates documen
 
 | Document | Description |
 |---|---|
+| [Architecture and AI Pipelines](architecture.md) | Current training/serving, SHAP and assistant dataflow with dated evaluation evidence |
 | [Architecture Impact](architecture-impact.md) | How Stages 1–7 built the architecture and what each stage enabled downstream (historical view) |
 | [ADR Index](adr/README.md) | All Architectural Decision Records |
 
@@ -141,7 +142,8 @@ docs/
   setup/          # Installation and quick-start guides
   showcase/       # Recruiter-facing showcase: portfolio summary, timeline, interview guide, demo scripts, demo video
   README.md       # This index
-  api.md          # API reference
+  api.md          # API index; auth/chat and outlook contracts are linked subguides
+  architecture.md # Current architecture and AI pipelines
   architecture-impact.md   # How Stages 1–7 built on each other
   repository-structure.md  # Directory ownership guide
   troubleshooting.md       # Common issues and fixes
@@ -153,7 +155,7 @@ The directory also holds empty placeholder folders (`ai/`, `architecture/`, `bac
 
 ## Rules
 
-- Every document reflects the current state of the system. Outdated documents are updated, not left to drift.
+- Setup, API and current overview guides reflect the current source. ADR context, release notes, stage reports and experiment results retain their dated scope; mark historical records and link current guidance instead of rewriting old outcomes.
 - Documents that define a contract (API spec, data schema) are updated in the same commit as the implementation.
 - ADRs are never deleted. Superseded ADRs are marked Deprecated and a new ADR is written.
 - No design document should be written in isolation. Every document is associated with a stage or an ADR.

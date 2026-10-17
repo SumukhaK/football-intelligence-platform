@@ -6,7 +6,7 @@ Step-by-step walkthroughs of the Football Intelligence Platform for technical in
 
 ## Purpose
 
-These demos are designed for reviewers, recruiters, and interviewers who want to see the platform running end-to-end. Each demo covers one completed stage and can be run independently (given its prerequisites are met).
+These demos are designed for reviewers, recruiters, and interviewers who want to see the platform running end-to-end. Each stage demo preserves the commands and outputs from its original milestone. Use the [current showcase demo](../showcase/demo-script.md) and [quick start](../setup/quick-start.md) for v2.6.0; historical commands may train/promote different artifacts.
 
 ---
 
@@ -15,7 +15,7 @@ These demos are designed for reviewers, recruiters, and interviewers who want to
 | Demo | Stage | What you see | Time |
 |---|---|---|---|
 | [Stage 5 — Data Ingestion](stage-05-demo.md) | 5 | Live download, schema validation, versioned dataset | ~3 min |
-| [Stage 6 — Feature Engineering](stage-06-demo.md) | 6 | 9 feature generators, 42-column feature matrix, validation | ~3 min |
+| [Stage 6 — Feature Engineering](stage-06-demo.md) | 6 | 9 feature generators, 42 model features plus canonical columns, validation | ~3 min |
 | [Stage 7 — Model Training](stage-07-demo.md) | 7 | XGBoost training, evaluation, model card, registry | ~5 min |
 | [Stage 8 — SHAP Explainability](stage-08-demo.md) | 8 | Per-prediction SHAP contributions, plots, global summary | ~4 min |
 | [Stage 9 — Backend API](stage-09-demo.md) | 9 | FastAPI server, /predict, /explain, OpenAPI docs | ~5 min |

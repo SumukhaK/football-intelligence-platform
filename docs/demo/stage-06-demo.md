@@ -1,5 +1,7 @@
 # Demo: Stage 6 — Feature Engineering Pipeline
 
+> Historical stage demo record. Versions, commands, test totals and limitations below describe that milestone; use the [current quick start](../setup/quick-start.md) and [API reference](../api.md) for v2.6.0 setup and behavior.
+
 > Historical walkthrough of Stage 6 (v1.0.0 era). For the current system, use the root README Quick Start and [docs/demo/README.md](README.md).
 
 Demonstrate the composable feature engineering pipeline producing a validated 42-column feature matrix from raw match data.

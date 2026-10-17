@@ -6,9 +6,9 @@
 
 ## Project Overview
 
-The Football Intelligence Platform is a complete, working AI system for Europe's top five football leagues. It predicts match outcomes, explains every prediction in plain football language, estimates likely scores, lists upcoming fixtures, answers natural-language questions grounded in its own documents and data (including league tables, results and season projections), and serves all of this through a native Android app. One engineer built it end to end: 12 stages up to v1.0.0, then the v2 releases.
+The Football Intelligence Platform is a complete, working AI system for Europe's top five football leagues. It predicts match outcomes, offers SHAP explanations in plain football language, estimates likely scores, lists upcoming fixtures, answers natural-language questions grounded in its own documents and data (including league tables, results and season projections), and serves all of this through a native Android app. One engineer built it end to end: 12 stages up to v1.0.0, then the v2 releases.
 
-It is not a notebook or a prototype. It is a tested (1,580 tests), documented, reproducible system that runs entirely on a laptop with no cloud dependency, and is ready to host: a Python ML pipeline, a versioned FastAPI backend with structured logs and traces, a RAG assistant on Ollama locally or Cloudflare Workers AI when hosted, a container image for Cloud Run, and a Compose Multiplatform Android client. A [3-minute demo video](demo-video/README.md) shows it end to end.
+It is not a notebook or a prototype. It is a tested (1,580 tests), documented, reproducible system that runs entirely on a laptop with no cloud dependency, and has an invite-only staging deployment recorded in the [hosting tracker](../plans/hosting-execution-tracker.md): a Python ML pipeline, a versioned FastAPI backend with structured logs and traces, a RAG assistant on Ollama locally or Cloudflare Workers AI when hosted, a container image for Cloud Run, and a Compose Multiplatform Android client. A [2-minute demo video](demo-video/README.md) shows it end to end.
 
 **The goal was never "build a model." It was "ship a model as a trustworthy, explainable, usable product."**
 
@@ -19,18 +19,18 @@ It is not a notebook or a prototype. It is a tested (1,580 tests), documented, r
 | Challenge | Solution |
 |---|---|
 | Time-series leakage in rolling-window features | `.shift(1)` on every rolling feature and a whole-season train/validation/test split with holdout seasons |
-| Knowing whether a better score is real | Benchmarked against bookmaker odds, and promoted models only when a paired bootstrap interval excluded zero |
+| Knowing whether a better score is real | Benchmarked against bookmaker odds, and used paired bootstrap intervals when comparing frozen-split candidates; serving refits use a separate dated backtest |
 | Training/serving skew | The server builds all 42 features from match history with the training pipeline; clients send only team names |
-| Draws the model never picks | Showed the draw probability is calibrated but flat, and added a "draw possible" tag instead of forcing picks |
-| Preventing LLM hallucination without fine-tuning | Source-only system prompt, retrieval grounding, citations, a fixed "not enough information" reply, and tools that hand the model the API's own numbers |
+| Draws the model never picks | Showed the draw probability is calibrated but flat, and retained a `draw_possible` API field instead of forcing picks; the current app shows the probabilities |
+| Reducing unsupported answers without fine-tuning | Source-constrained prompts, retrieval, live tools, numeric checks and abstention evals; sources are logged, and these checks do not prove general faithfulness |
 | Keeping old clients working after a breaking change | Path-versioned API: `/v1` keeps the v1.0.0 contract and model, `/v2` serves five leagues |
-| A mobile app that stays useful offline | A caching decorator replays saved answers with an offline banner; server errors are still shown |
+| A mobile app that stays useful offline | A caching decorator replays supported saved data responses with an offline banner; server errors are still shown |
 
 ---
 
 ## Architecture Decisions
 
-Twenty-two ADRs record every structural decision (`docs/adr/`). The most important:
+Thirty-four ADRs record every structural decision (`docs/adr/`). The most important:
 
 1. **XGBoost** for prediction — strong tabular baseline with exact SHAP `TreeExplainer` support.
 2. **Five leagues, 26 seasons** — data mattered far more than tuning.
@@ -46,9 +46,9 @@ Beyond the ADRs: Clean Architecture with one-directional dependencies in both th
 
 ## AI Components
 
-- **XGBoost classifier** — `multi:softprob`, 42 pre-match features, 46,709 matches, tuned by season walk-forward CV. Test 2023/24: 52.5% accuracy and log loss 0.976 (random 33.3%; bookmakers 55.0% and 0.955). Live 2026/27 check: 52.4% against 51.6% for bookmaker favourites.
+- **XGBoost classifier** — `multi:softprob`, 42 pre-match features, 46,709 matches, tuned by season walk-forward CV. Test 2023/24: 52.5% accuracy and log loss 0.976 (random 33.3%; bookmakers 55.0% and 0.955). On 250 matches through 20 September 2026, the serving refit scored 52.0%, the frozen reporting model 52.4% and Bet365 51.6%; paired intervals include zero, so no superiority is established.
 - **SHAP explainability** — per-prediction attribution through `POST /v2/explain`, with fan-friendly labels for every feature.
-- **Dixon-Coles goals model** — likely scores, expected goals and goal markets through `POST /v2/insights`, refitted daily.
+- **Dixon-Coles goals model** — likely scores, expected goals and goal markets through `POST /v2/insights`, refitted at startup and after enabled local refresh; the hosted container serves a snapshot.
 - **Retrieval-Augmented Generation** — Ollama embeddings (`nomic-embed-text`) into a numpy vector store, cosine retrieval, and a source-constrained system prompt feeding `qwen2.5:7b-instruct`, which can also call the prediction, SHAP and fixtures services as tools. A rule-based router sends season questions (tables on any date, results, the next derby) to season tools, with a goals-model projection for future dates.
 - **Local-first, hosting-ready AI** — everything runs on the developer's machine, with no managed vector database. For hosting, one setting swaps Ollama for Cloudflare Workers AI; the hosted model was chosen by the same two evals (ADR 025).
 - **Observability and operations** — a versioned telemetry contract, request IDs, JSON logs, OpenTelemetry traces across retrieval, tool calls and generation, retries with backoff, and metrics and alerts kept as code (ADR 024).
@@ -68,7 +68,7 @@ Beyond the ADRs: Clean Architecture with one-directional dependencies in both th
 
 ## Engineering Practices
 
-- **1,580 tests** — 1,373 Python (including 37 against the real trained model) and 207 Android (ViewModels written test-first).
+- **v2.6.0 release test totals: 1,580** — 1,373 Python (37 marked integration, including real-model flows and a live download) and 207 Android (ViewModels written test-first).
 - **Strict typing** — MyPy on the Python codebase; Kotlin with `val`-by-default and exhaustive `when`.
 - **Conventional commits, ADRs and reports** — every structural decision is recorded; every experiment has a report with the command to reproduce it.
 - **One concern per pull request**, self-reviewed against a written checklist.

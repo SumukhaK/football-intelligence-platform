@@ -1,5 +1,7 @@
 # Draw Handling: What the Model Can and Cannot Do
 
+> Dated experiment/report snapshot. Metrics and observations apply to the data, models and environment recorded below; they are not a fresh measurement of the current deployment. See the [current overview](../../README.md) for v2.6.0 behavior.
+
 **Date:** 2026-09-28
 **Model:** `20260928_123224` (XGBoost, 42 features)
 **Plan:** [next-phase plan, W4](../plans/next-phase-plan.md)

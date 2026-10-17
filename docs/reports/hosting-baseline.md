@@ -1,5 +1,7 @@
 # Hosting baseline
 
+> Dated experiment/report snapshot. Metrics and observations apply to the data, models and environment recorded below; they are not a fresh measurement of the current deployment. See the [current overview](../../README.md) for v2.6.0 behavior.
+
 Measured 14 October 2026 on the developer PC (Windows, Docker Desktop 29.8.2, 16 CPUs, 7.5 GiB given to Docker), from `develop` at the commit that added this report. Hosting tracker step 0. Cloud numbers come later, from staging (step 6).
 
 ## Code checks

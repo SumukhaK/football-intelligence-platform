@@ -35,7 +35,7 @@ Every prompt template must document:
 
 ## Rules
 
-- Prompt templates are version-controlled here, not scattered in code.
+- Future documentation templates belong here. Executable assistant prompts are version-controlled and tested at `ai/assistant/prompting/templates.py`.
 - Templates are not modified without a review. Changes to prompts change system behaviour.
 - Each template has at least one documented test case showing expected input and output.
 - Templates that are retired are moved to an `archive/` subdirectory, not deleted.

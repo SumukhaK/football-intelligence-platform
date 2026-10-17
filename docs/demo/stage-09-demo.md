@@ -1,5 +1,7 @@
 # Stage 9 Demo — Prediction and Explainability API
 
+> Historical stage demo record. Versions, commands, test totals and limitations below describe that milestone; use the [current quick start](../setup/quick-start.md) and [API reference](../api.md) for v2.6.0 setup and behavior.
+
 > Historical walkthrough of Stage 9 (v1.0.0 era). For the current system, use the root README Quick Start and [docs/demo/README.md](README.md).
 >
 > Today `/v2/...` is the current API. `/v1/...` and the unversioned paths used below keep the frozen v1.0.0 contract and the original Premier League model (ADR 014). The prediction and explanation steps now use `/v2`, where requests need only team names. The full contract is in [docs/api.md](../api.md).

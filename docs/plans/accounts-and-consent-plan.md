@@ -1,6 +1,6 @@
 # Accounts and Consent Plan
 
-Status: In progress. Proposed 8 October 2026; the backend (ADR 022) and the Android screens (#84) are done. The Firestore store is still to do.
+Historical plan proposed 8 October 2026. Backend, Android sign-in/consent and the Firestore account store are implemented (ADRs 022 and 026). v2.6.0 adds short invite codes and opted-in question text (ADR 034); current behavior is in the [auth/chat API](../api-auth-and-chat.md). The original design/build checklist below is retained as planning history.
 Decisions behind it are recorded in the hosting plan's production AI target and in [hosting-execution-tracker.md](hosting-execution-tracker.md).
 
 ## Goal
@@ -17,7 +17,7 @@ Only invited people can use the app. Each person agrees to a short notice before
 | Sessions | Opaque random tokens, stored hashed, valid for 30 days, revocable. A ban or logout revokes them at once, which is simpler than JWTs for one service. |
 | Consent | Versioned notice text. The assistant answers 403 `Consent required` until the user has accepted the current version. Accepting stores the version and the time. Storing question text is a separate opt-in tick box. |
 | Strikes and bans | The user record holds a strike count and status (`active` or `banned`). Three strikes means banned for good (the guardrails step adds the strikes). A ban revokes all sessions. |
-| Storage | Firestore (free tier) in staging and prod, behind a repository interface. A JSON-file store for local development and tests. This is the project's first database, so it needs an ADR. |
+| Storage | Firestore (free tier) in staging and prod, behind a repository interface. A JSON-file store for local development and tests. Accepted as the project's first database in ADR 026. |
 | Switch | `AUTH_REQUIRED` setting: off locally (everything works as today), on in staging and prod. `/v1` and unversioned paths keep working unauthenticated locally only; in the cloud only `/v2` is exposed. |
 
 ## Data
@@ -44,9 +44,9 @@ Errors use the existing `{ "error", "detail" }` shape: 401 `Not signed in`, 403 
 
 - **Login guessing:** after 5 failed logins for an email within 15 minutes, that email is locked for 15 minutes. Wrong email and wrong password get the same message.
 - **Passwords:** minimum 10 characters, hashed with `hashlib.scrypt`, so no new dependency.
-- **Invite codes:** 128-bit random, single use, expire after 7 days.
+- **Invite codes:** the original plan used long random codes; v2.6.0 uses eight characters from a 30-character alphabet (about 39 bits), formatted `XXXX-XXXX`, single use, expiring after 7 days.
 - **Transport:** HTTPS in the cloud (Cloud Run provides it). The app keeps the token in its private SharedPreferences with app backup turned off, so it never leaves the device. It is not encrypted at rest yet: the repo has no encryption library, and adding one needs its own decision.
-- **Logs:** no passwords, codes, tokens or question text unless the user opted in.
+- **Logs:** no passwords, codes, tokens or question text. With opt-in, question text is stored separately for 90 days (ADR 034), not in telemetry.
 
 ## Owner tools
 
@@ -56,7 +56,7 @@ Errors use the existing `{ "error", "detail" }` shape: 401 `Not signed in`, 403 
 ## Build order (each a PR into develop)
 
 1. ADR 022: accounts, sessions and consent. Done; the Firestore store, with `google-cloud-firestore`, comes with the cloud storage step.
-2. Repository interface with JSON-file and Firestore implementations; tests against the file store. Done for the JSON-file store; Firestore to go.
+2. Repository interface with JSON-file and Firestore implementations; tests against the file store. Both JSON-file and Firestore stores are implemented (ADR 026).
 3. Account service: invites, password hashing, login lockout, sessions. Unit tests. Done.
 4. Auth routes, the `/me` routes and a FastAPI dependency on the `/v2` data routers. Integration tests with `TestClient`. `docs/api.md` updated. Done.
 5. Owner scripts. Done (`scripts.manage_accounts`).

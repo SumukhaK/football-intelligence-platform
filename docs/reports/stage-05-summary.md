@@ -1,5 +1,7 @@
 # Stage 05 — Real Dataset Ingestion & Canonical Schema: Summary
 
+> Historical stage report record. Versions, commands, test totals and limitations below describe that milestone; use the [current quick start](../setup/quick-start.md) and [API reference](../api.md) for v2.6.0 setup and behavior.
+
 **Date:** 2026-06-30
 **Branch:** `feature/ai-stage5-ingestion-pipeline`
 **Commit:** `feat(ai): implement football-data ingestion pipeline`

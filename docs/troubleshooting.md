@@ -134,14 +134,14 @@ uv run python -m feature_engineering.pipeline --input ../datasets/processed/foot
 
 ### Feature matrix has fewer than 42 columns
 
-**Cause:** A feature generator was not registered, or registration failed silently.
+**Cause:** The matrix may be from an older feature version or a custom registry. The pipeline raises registry and validation errors; inspect those before training.
 
 **Fix:**
 ```sh
 uv run pytest tests/feature_engineering/
 ```
 
-All 91 tests must pass. A failing test will indicate which feature generator has a problem.
+Review the failing test and feature metadata to identify the missing generator; test totals change across releases.
 
 ---
 
@@ -164,9 +164,9 @@ The same applies to `explainability.pipeline`: pass `--feature-matrix ../dataset
 
 ### Training completes with very low accuracy (below 0.40)
 
-**Cause:** Early stopping triggered too early, or the feature matrix contains data leakage from post-match statistics.
+**Cause:** Possible causes include mismatched data/features, a changed split, weak signal or early stopping. A score alone does not identify the cause; inspect per-split metrics, class counts and the feature list.
 
-**Fix:** Verify that `feature_matrix.parquet` contains only pre-match features. The 42-column matrix produced by the default pipeline excludes all post-match statistics. If you have added custom features, ensure they do not use `full_time_home_goals`, `full_time_away_goals`, `result`, or any other column that is only known after the match is played.
+**Fix:** Verify that `feature_matrix.parquet` contains only pre-match features. The full matrix retains canonical result columns for labels and evaluation, but the trainer selects only the 42 registered pre-match model features. If you have added custom features, ensure they do not use `full_time_home_goals`, `full_time_away_goals`, `result`, or any other column that is only known after the match is played.
 
 ---
 
@@ -174,9 +174,9 @@ The same applies to `explainability.pipeline`: pass `--feature-matrix ../dataset
 
 **Cause:** joblib 1.5.x + NumPy 2.5.x version interaction. This is a known upstream issue.
 
-**Impact:** Tests pass. The warning is cosmetic and does not affect correctness.
+**Impact:** This warning was recorded during earlier runs. Verify the installed versions and the load/prediction checks before treating a new occurrence as harmless.
 
-**Fix:** No action needed. Will be resolved by a future joblib release.
+**Fix:** Use the locked dependency set and inspect the full traceback if model loading fails; an upstream fix has not been verified here.
 
 ---
 
@@ -184,17 +184,17 @@ The same applies to `explainability.pipeline`: pass `--feature-matrix ../dataset
 
 **Cause:** The registry stores the `run_dir` as an absolute path on the machine that ran training.
 
-**Impact:** The `run_dir` field in `registry.json` is informational. The `models/latest/` directory always contains the correct relative artifacts.
+**Impact:** A recorded `run_dir` can refer to the training machine. Serving loads `MODEL_PATH`; inspect the registry and copied bundle rather than assuming that an old absolute path exists.
 
-**Fix:** When running on a different machine, re-run `uv run python -m training.pipeline` to generate a new registry entry with the correct local path.
+**Fix:** Rebuild the documented pipeline or transfer a verified serving snapshot, then set model and registry paths explicitly. Retraining promotes by default; use `--no-promote` for a candidate run.
 
 ---
 
 ## Pytest Issues
 
-### Fewer than 1,304 tests pass
+### Test collection or results differ from the release totals
 
-**Cause:** `uv sync --extra dev` was not run, or a test file has a syntax error.
+**Cause:** Release totals describe a recorded checkout. Missing dependencies, collection errors, markers or absent generated artifacts can change what runs.
 
 **Fix:**
 ```sh
@@ -311,133 +311,12 @@ Then restart the backend.
 
 ## Android / Gradle Issues
 
-### `SDK location not found`
-
-**Cause:** Gradle cannot find the Android SDK because `local.properties` is missing.
-
-**Fix:** Create `frontend/local.properties` with your SDK path:
-```
-# macOS
-sdk.dir=/Users/<username>/Library/Android/sdk
-
-# Windows
-sdk.dir=C\:\\Users\\<username>\\AppData\\Local\\Android\\Sdk
-
-# Linux
-sdk.dir=/home/<username>/Android/Sdk
-```
-
----
-
-### `Unsupported class file major version N`
-
-**Cause:** Gradle is running on a JDK that is too old. This project requires JDK 17+.
-
-**Fix:**
-1. Install JDK 17 or higher.
-2. Set `JAVA_HOME` to point to the new JDK.
-3. Verify: `java -version` should show `17.x` or higher.
-
----
-
-### `Deprecated Gradle features were used in this build`
-
-**Cause:** Some Gradle plugins use deprecated APIs. This is a known issue with the current Gradle 8.8 + Kotlin plugin combination.
-
-**Impact:** Build succeeds. The warning is informational.
-
-**Fix:** No action needed. The deprecations will be resolved in a future plugin update.
-
----
-
-### Build fails with `Could not resolve` dependency errors
-
-**Cause:** Gradle cannot reach Maven Central or Google's Maven repository.
-
-**Fix:** Check your internet connection. On corporate networks, you may need to configure a proxy in `gradle.properties`:
-```properties
-systemProp.http.proxyHost=proxy.example.com
-systemProp.http.proxyPort=8080
-```
-
----
-
-### `./gradlew: Permission denied` (macOS/Linux)
-
-**Cause:** The Gradle wrapper script is not executable.
-
-**Fix:**
-```sh
-chmod +x frontend/gradlew
-```
-
----
-
-### Android app shows the offline banner
-
-**Cause:** The app cannot reach the backend at `http://10.0.2.2:8000/v2` (the emulator's address for your computer), so it shows the data it saved last time.
-
-**Fix:** Start the backend from `ai/` with `uv run uvicorn backend.app.main:app --reload`, then pull down to refresh.
-
----
+See [Android / Gradle issues](troubleshooting-android.md#android--gradle-issues).
 
 ## CI Issues
 
-### Frontend checks did not run on a pull request
-
-**Cause:** The frontend workflows run only on pull requests into `develop` or `main` (and pushes to them) that change `frontend/`. Pull requests into other branches, such as a feature branch, skip them.
-
-**Fix:** Run the same checks locally from `frontend/`:
-```sh
-./gradlew detekt testDebugUnitTest assembleDebug spotlessCheck
-```
-
----
-
-### CI fails with `./gradlew: Permission denied`
-
-**Cause:** `frontend/gradlew` lost its executable bit in git, often after a commit from Windows.
-
-**Fix:**
-```sh
-git update-index --chmod=+x frontend/gradlew
-```
-
-Commit the change. `git ls-files -s frontend/gradlew` should show mode `100755`.
-
----
+See [CI issues](troubleshooting-android.md#ci-issues).
 
 ## Platform-Specific Issues
 
-### Windows: `uv run` command hangs in Git Bash
-
-**Cause:** Git Bash has known issues with interactive Python processes.
-
-**Fix:** Use PowerShell instead of Git Bash for all uv commands on Windows.
-
----
-
-### macOS: `SSL: CERTIFICATE_VERIFY_FAILED`
-
-**Cause:** Python's SSL certificates are not installed.
-
-**Fix:**
-```sh
-# Run the Install Certificates script included with Python
-/Applications/Python\ 3.12/Install\ Certificates.command
-```
-
----
-
-### Linux: `libgomp` not found when loading XGBoost model
-
-**Cause:** OpenMP runtime is missing on some minimal Linux installations.
-
-**Fix:**
-```sh
-# Ubuntu/Debian
-sudo apt-get install libgomp1
-
-# CentOS/RHEL
-sudo yum install libgomp
-```
+See [platform-specific issues](troubleshooting-android.md#platform-specific-issues).
