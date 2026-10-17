@@ -37,8 +37,9 @@ class AssistantViewModel(
     private var conversationId = newConversationId()
     private var lastActivity = now()
 
-    /** Starts a new conversation: the screen clears and the assistant forgets. */
+    /** Starts a new conversation unless an answer is still pending. */
     fun newChat() {
+        if (_isSending.value) return
         conversationHistory.clear()
         conversationId = newConversationId()
         _state.value = AssistantUiState.Idle

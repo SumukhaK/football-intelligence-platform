@@ -11,6 +11,17 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.6.1] — 2026-10-18
+
+Frontend patch only; the hosted API remains on 2.6.0.
+
+### Fixed
+- New chat is hidden while an assistant reply is pending, and reset attempts are ignored until it finishes, preserving the conversation and signed history.
+- Removed the refused "How does the app pick a winner?" starter. The next-match starter is also withheld until it has targeted staging evaluation with favourite-team context; the welcome copy reflects that answers can be unavailable.
+- Frontend CI now builds with the staging URL and uploads the actual staging APK, failing if the file is missing. Android is 2.6.1 (code 11).
+
+---
+
 ## [2.6.0] — 2026-10-17
 
 ### Added

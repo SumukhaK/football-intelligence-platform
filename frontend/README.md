@@ -58,8 +58,10 @@ My Team and Assistant; a settings icon at the top right of each opens Settings.
 The bar hides while the keyboard is open, so the chat gets the room, and the
 Assistant has no back arrow, like the other tabs.
 The Assistant remembers the chat (ADR 030): with each question it sends its
-last 4 signed exchanges, so "and the draw?" follows on. New chat in its top bar,
-or 30 minutes without a question, starts a fresh conversation.
+last 4 signed exchanges, so "and the draw?" follows on. New chat in its top bar
+is available after the reply completes; reset attempts while sending are ignored.
+New chat, or 30 minutes without a question, starts a fresh conversation.
+Starter suggestions are withheld pending evaluation on the staging model and index.
 My Team shows the favourite team's next match: kick-off, the win/draw/loss pick
 with its top three reasons, the three likeliest scores and the clean-sheet
 chance. A match leaves the card two hours after kick-off. Below it, Season outlook shows the projected

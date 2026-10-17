@@ -33,7 +33,14 @@ private fun AssistantWelcomePreview() = Assistant(AssistantUiState.Idle)
 
 @Preview
 @Composable
-private fun AssistantConversationPreview() = Assistant(AssistantUiState.Chatting(sampleConversation), isSending = true)
+private fun AssistantConversationPreview() = Assistant(AssistantUiState.Chatting(sampleConversation))
+
+@Preview
+@Composable
+private fun AssistantSendingPreview() = Assistant(
+    AssistantUiState.Chatting(sampleConversation.dropLast(1)),
+    isSending = true,
+)
 
 @Preview
 @Composable

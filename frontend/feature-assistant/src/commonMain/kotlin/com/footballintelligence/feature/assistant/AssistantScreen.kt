@@ -81,7 +81,7 @@ fun AssistantScreen(
                 colors = appBarColors(),
                 title = { Text(stringResource(Res.string.assistant_title)) },
                 actions = {
-                    if (uiState is AssistantUiState.Chatting) {
+                    if (uiState is AssistantUiState.Chatting && !isSending) {
                         TextButton(onClick = onNewChat) {
                             Text(
                                 stringResource(Res.string.new_chat),
@@ -142,7 +142,7 @@ private fun ChatContent(
         ) {
             if (messages.isEmpty()) {
                 item {
-                    WelcomeMessage(onAsk = onSend)
+                    WelcomeMessage()
                 }
             }
             items(messages) { message ->

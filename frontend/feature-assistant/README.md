@@ -18,3 +18,5 @@ Presentation layer. The AI-facing feature module.
 - Answers arrive whole (the backend does not stream); the screen stays in its `Chatting` state until the answer comes.
 - TDD: ViewModel tests written before implementation.
 - No hardcoded strings.
+- New chat is hidden and ignored while sending; it works again after success or failure.
+- No starter suggestions are offered until they pass targeted staging evaluation with favourite-team context.
