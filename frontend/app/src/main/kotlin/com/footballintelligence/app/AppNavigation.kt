@@ -42,7 +42,9 @@ import com.footballintelligence.feature.team.MyTeamSettingsSection
 import com.footballintelligence.feature.team.MyTeamViewModel
 import com.footballintelligence.feature.team.PickerFlow
 import com.footballintelligence.feature.team.ProjectedTableScreen
+import com.footballintelligence.feature.team.ProjectedTableViewModel
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 /**
  * Root of the app: the navigation graph, with a bottom bar on the top-level
@@ -188,9 +190,11 @@ private fun AppNavHost(
             val vm: MyTeamViewModel = koinViewModel(
                 viewModelStoreOwner = navController.getBackStackEntry(Screen.MyTeam.route),
             )
-            val outlook by vm.outlookState.collectAsState()
+            val table: ProjectedTableViewModel = koinViewModel(parameters = { parametersOf(vm.outlookState) })
+            val tableState by table.state.collectAsState()
             ProjectedTableScreen(
-                uiState = outlook,
+                uiState = tableState,
+                onSort = table::sortBy,
                 onRetry = vm::retry,
                 onBack = { navController.popBackStack() },
             )

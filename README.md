@@ -428,7 +428,7 @@ cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
 | [v0.2.0](docs/releases/v0.2.0.md) | 2026-06-30 | SHAP explainability, FastAPI backend, RAG assistant |
 | [v0.1.0](docs/releases/v0.1.0.md) | — | Data pipeline, feature engineering, XGBoost training |
 
-Build stages 1–12 (repository foundation through integration and production readiness) are complete; see the [stage reports](docs/reports/). The follow-on phase ([plan](docs/plans/next-phase-plan.md)) added the five leagues, server-side features, plain-language explanations, draw handling, scoreline predictions, a daily data refresh, API versions with a rate limit, upcoming fixtures and an offline-ready app. These shipped as [v2.0.0](docs/releases/v2.0.0.md). Android [2.6.1](docs/releases/frontend-2.6.1.md) fixes pending chat resets and withholds unvalidated starters; the hosted API remains on 2.6.0.
+Build stages 1–12 (repository foundation through integration and production readiness) are complete; see the [stage reports](docs/reports/). The follow-on phase ([plan](docs/plans/next-phase-plan.md)) added the five leagues, server-side features, plain-language explanations, draw handling, scoreline predictions, a daily data refresh, API versions with a rate limit, upcoming fixtures and an offline-ready app. These shipped as [v2.0.0](docs/releases/v2.0.0.md). Android [2.6.2](docs/releases/frontend-2.6.2.md) redesigns Projected Table and adds sorting to every column, retaining the [2.6.1](docs/releases/frontend-2.6.1.md) assistant fixes; the hosted API remains on 2.6.0.
 
 ---
 

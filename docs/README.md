@@ -115,6 +115,7 @@ Maintained by the project architect. The implementation engineer updates documen
 | [v2.5.0 Release Notes](releases/v2.5.0.md) | Chat memory with signed history; one top bar colour; no error flash |
 | [v2.5.1 Release Notes](releases/v2.5.1.md) | Staging live on v2.5.x; README and website updated |
 | [v2.6.0 Release Notes](releases/v2.6.0.md) | Beta fixes: cold starts, invite codes, favourite team in chat, opted-in question text, UI polish |
+| [Android 2.6.2](releases/frontend-2.6.2.md) | Projected Table redesign, consistent toolbar and sorting on every column |
 | [v2.0.1 Release Notes](releases/v2.0.1.md) | Faster offline fallback in the app, demo video |
 | [v2.0.0 Release Notes](releases/v2.0.0.md) | Five leagues, versioned API, fixtures, goals model, offline app |
 | [v1.0.0 Release Notes](releases/v1.0.0.md) | Full release notes for the complete platform (Stages 1–12) |

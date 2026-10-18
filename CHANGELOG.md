@@ -11,6 +11,21 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.6.2] — 2026-10-18
+
+Frontend patch only; the hosted API remains on 2.6.0.
+
+### Changed
+- Redesigned Projected Table with a sticky sortable header, fixed team identities, scrollable metrics, alternating rows and an explicit favourite-team highlight.
+- Every column sorts ascending on first selection and toggles direction on repeat taps, with visible arrows and accessible labels. Original projected ranks remain attached to their teams.
+
+### Fixed
+- Projected Table uses the shared green toolbar and consistent title capitalization.
+
+See [Android 2.6.2](docs/releases/frontend-2.6.2.md) for sorting semantics and staging build details.
+
+---
+
 ## [2.6.1] — 2026-10-18
 
 Frontend patch only; the hosted API remains on 2.6.0.
