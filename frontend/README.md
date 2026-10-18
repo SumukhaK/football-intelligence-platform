@@ -45,14 +45,17 @@ and sent as `Authorization: Bearer <token>` on every request. After sign-in the
 app calls `GET /v2/me`; if the current notice still needs accepting it shows
 the notice from the server with a "Store my question text" switch (off by
 default). Any request answered 401 forgets the token and returns to sign-in,
-and Settings has a Sign out entry. Without a connection the app skips the
-notice check and shows saved data.
+and Settings has a Sign out entry. After consent, the account preference check
+must succeed before entering the app; network and server failures offer retry.
 
-On first launch the app asks for a favourite league, then a team from it, on
+When the server confirms no favourite exists, the app asks for a league and team on
 one screen with two steps: a grid of league emblems, then the league's crests.
 The chosen emblem morphs into the team step's header (a shared element
-transition) and back. The choice is saved in SharedPreferences and the picker
-is not shown again. Fixtures opens on the favourite league's tab, listed first. A bottom bar
+transition) and back. The choice is saved to the existing account store through
+`/v2/me/preferences` before leaving the picker (ADR 035). It survives a new
+install or app upgrade because the server is authoritative. SharedPreferences
+caches only confirmed values under the signed-in account; old unscoped keys
+are discarded. Fixtures opens on the favourite league's tab, listed first. A bottom bar
 switches between Fixtures, Predict,
 My Team and Assistant; a settings icon at the top right of each opens Settings.
 The bar hides while the keyboard is open, so the chat gets the room, and the

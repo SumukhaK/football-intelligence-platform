@@ -68,6 +68,8 @@ Accounts are invite-only. The owner creates an invite with `uv run python -m scr
 | POST | `/v2/auth/logout` | none | 204; ends the session behind the token. |
 | GET | `/v2/me` | none | `email`, `consent_required`, `consent_version`, `consent_text`, `store_questions` |
 | POST | `/v2/me/consent` | `version`, `store_questions` (default false) | The updated `/v2/me` body. With `store_questions` true, each later chat question's text is kept for 90 days (not the answer, ADR 034); false stops it. |
+| GET | `/v2/me/preferences` | none | `email`, `favourite: null` or `{league, team}`; [account preference contract](api-account-preferences.md) |
+| PUT | `/v2/me/preferences` | `{favourite: {league, team}}` | Updated preferences for the authenticated account only (ADR 035) |
 
 Errors:
 

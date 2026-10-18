@@ -39,8 +39,12 @@ class DefaultAuthRepository(
         api.redeemInvite(RedeemInviteRequest(email.trim(), code.trim(), password)).startSession()
 
     override suspend fun signOut() {
-        api.logout()
-        session.signOut()
+        val token = session.token.value ?: return
+        try {
+            api.logout(token)
+        } finally {
+            if (session.token.value == token) session.signOut()
+        }
     }
 
     override suspend fun me(): NetworkResult<Me> = api.me()

@@ -6,6 +6,7 @@ import com.footballintelligence.core.model.FavouriteTeam
 import com.footballintelligence.core.model.FavouriteTeamStore
 import com.footballintelligence.core.model.NetworkResult
 import com.footballintelligence.core.model.SERVED_LEAGUES
+import com.footballintelligence.feature.team.repository.AccountPreferencesRepository
 import com.footballintelligence.feature.team.repository.TeamRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -23,7 +24,9 @@ class TeamPickerViewModel(
     private val flow: PickerFlow,
     private val repository: TeamRepository,
     private val store: FavouriteTeamStore,
+    private val preferences: AccountPreferencesRepository,
 ) : ViewModel() {
+    private val token = preferences.sessionToken
 
     private val saved = if (flow == PickerFlow.CHANGE) store.load() else null
     private val leagues = PickerStep.League(SERVED_LEAGUES, selected = saved?.league)
@@ -41,6 +44,7 @@ class TeamPickerViewModel(
 
     /** Moves to [league]'s teams. */
     fun selectLeague(league: String) {
+        if (saving) return
         val selected = saved?.team?.takeIf { saved.league == league }
         val loading = PickerStep.Team(league, TeamsUiState.Loading, selected)
         _step.value = loading
@@ -56,22 +60,46 @@ class TeamPickerViewModel(
     }
 
     fun retryTeams() {
-        (_step.value as? PickerStep.Team)?.let { selectLeague(it.league) }
+        (_step.value as? PickerStep.Team)?.let {
+            if (it.saveError != null && it.selected != null) selectTeam(it.selected) else selectLeague(it.league)
+        }
     }
 
     fun backToLeagues() {
+        if (saving) return
         _step.value = leagues
     }
 
     /** Checks [team] of the league on screen and saves it as the favourite. */
     fun selectTeam(team: String) {
         val step = _step.value as? PickerStep.Team ?: return
-        if (saving) return
+        val expected = token
+        val teams = (step.teams as? TeamsUiState.Success)?.teams.orEmpty()
+        if (saving || expected == null || team !in teams) return
         saving = true
-        _step.value = step.copy(selected = team)
-        store.save(FavouriteTeam(step.league, team))
-        outcomes.trySend(
-            if (flow == PickerFlow.ONBOARDING) PickerOutcome.ONBOARDING_FINISHED else PickerOutcome.RELAUNCH,
-        )
+        _step.value = step.copy(selected = team, isSaving = true, saveError = null)
+        viewModelScope.launch {
+            val result = preferences.save(expected, FavouriteTeam(step.league, team))
+            if (preferences.sessionToken != expected) return@launch
+            when (result) {
+                is NetworkResult.Success -> {
+                    _step.value = step.copy(selected = team)
+                    val outcome = if (flow == PickerFlow.ONBOARDING) {
+                        PickerOutcome.ONBOARDING_FINISHED
+                    } else {
+                        PickerOutcome.RELAUNCH
+                    }
+                    outcomes.send(outcome)
+                }
+                is NetworkResult.Error -> {
+                    saving = false
+                    _step.value = step.copy(
+                        selected = team,
+                        saveError = TeamsUiState.Error(result.message, result.kind),
+                    )
+                }
+                is NetworkResult.Loading -> Unit
+            }
+        }
     }
 }

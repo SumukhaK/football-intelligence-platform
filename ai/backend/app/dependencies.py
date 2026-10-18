@@ -21,8 +21,10 @@ from backend.app.exceptions import (
     ModelNotAvailableError,
     SeasonOutlookNotAvailableError,
 )
+from backend.app.services.account_preferences_service import PreferencesUnavailableError
 from backend.app.services.account_service import (
     AccountService,
+    AuthError,
     ConsentRequiredError,
 )
 from backend.app.services.account_store import User
@@ -208,7 +210,15 @@ def get_signed_in_user(
     authorization: Annotated[str | None, Header()] = None,
 ) -> User:
     """The user behind the bearer token; 401 or 403 when there is none."""
-    return accounts.authenticate(bearer_token(authorization))
+    try:
+        return accounts.authenticate(bearer_token(authorization))
+    except AuthError:
+        raise
+    except Exception as exc:
+        # An account provider failure cannot be interpreted as a missing favourite.
+        raise PreferencesUnavailableError(
+            "Could not load your account. Try again."
+        ) from exc
 
 
 SignedInUserDep = Annotated[User, Depends(get_signed_in_user)]

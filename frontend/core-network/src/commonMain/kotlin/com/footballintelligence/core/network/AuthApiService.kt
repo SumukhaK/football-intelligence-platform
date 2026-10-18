@@ -9,9 +9,11 @@ import com.footballintelligence.core.model.SessionResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.timeout
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 
@@ -45,9 +47,11 @@ class AuthApiService(
         guarded { postJson("$base/auth/redeem-invite", request, config.signInTimeoutMs).decode() }
 
     /** Ends the session behind the current token. */
-    suspend fun logout(): NetworkResult<Unit> =
+    suspend fun logout(token: String? = null): NetworkResult<Unit> =
         guarded {
-            val response = client.post("$base/auth/logout")
+            val response = client.post("$base/auth/logout") {
+                token?.let { header(HttpHeaders.Authorization, "Bearer $it") }
+            }
             if (response.status.isSuccess()) NetworkResult.Success(Unit) else response.toError()
         }
 

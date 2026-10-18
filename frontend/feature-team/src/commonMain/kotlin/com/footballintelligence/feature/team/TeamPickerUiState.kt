@@ -26,7 +26,13 @@ enum class PickerOutcome {
  */
 sealed class PickerStep {
     data class League(val leagues: List<String>, val selected: String? = null) : PickerStep()
-    data class Team(val league: String, val teams: TeamsUiState, val selected: String? = null) : PickerStep()
+    data class Team(
+        val league: String,
+        val teams: TeamsUiState,
+        val selected: String? = null,
+        val isSaving: Boolean = false,
+        val saveError: TeamsUiState.Error? = null,
+    ) : PickerStep()
 }
 
 /** One league's teams for the team step. */

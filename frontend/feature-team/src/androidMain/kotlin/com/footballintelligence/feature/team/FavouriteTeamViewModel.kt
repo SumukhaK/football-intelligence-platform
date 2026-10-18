@@ -5,13 +5,10 @@ import com.footballintelligence.core.model.FavouriteTeam
 import com.footballintelligence.core.model.FavouriteTeamStore
 
 /**
- * The saved favourite team, for the app's start screen and the Settings
- * section. Read once: saving a new team relaunches the app.
+ * The server-confirmed favourite for Settings. Read after the account gate;
+ * saving a new team relaunches the app.
  */
 class FavouriteTeamViewModel(store: FavouriteTeamStore) : ViewModel() {
-    /** Null until the fan has picked a team. */
+    /** Null when the server confirmed that this account has no favourite. */
     val favourite: FavouriteTeam? = store.load()
-
-    /** True on first launch only; onboarding is shown until a team is saved. */
-    val needsOnboarding: Boolean get() = favourite == null
 }

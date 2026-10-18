@@ -25,8 +25,15 @@ class FakeDocument:
     def get(self) -> FakeSnapshot:
         return FakeSnapshot(self._rows.get(self._key))
 
-    def set(self, data: dict[str, Any]) -> None:
-        self._rows[self._key] = copy.deepcopy(data)
+    def set(self, data: dict[str, Any], merge: bool = False) -> None:
+        previous = self._rows.get(self._key, {}) if merge else {}
+        self._rows[self._key] = {**previous, **copy.deepcopy(data)}
+
+    def update(self, data: dict[str, Any]) -> None:
+        """Match Firestore's field patch and missing-document behavior."""
+        if self._key not in self._rows:
+            raise KeyError(self._key)
+        self.set(data, merge=True)
 
 
 class FakeQuery:

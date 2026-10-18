@@ -18,6 +18,9 @@ sealed class Screen(val route: String) {
     /** Checks the signed-in user and shows the notice if it still needs accepting. */
     data object Consent : Screen("consent")
 
+    /** Server preference check; only confirmed empty accounts reach onboarding. */
+    data object AccountPreferences : Screen("account_preferences")
+
     /** First-launch favourite team picker, after sign-in. */
     data object Onboarding : Screen("onboarding")
 

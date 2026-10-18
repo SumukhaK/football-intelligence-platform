@@ -5,24 +5,21 @@ import com.footballintelligence.core.model.FavouriteTeamStore
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class FavouriteTeamViewModelTest {
     private val store = mockk<FavouriteTeamStore>()
 
     @Test
-    fun `onboarding is needed on first launch`() {
+    fun `settings has no team when the confirmed account is empty`() {
         every { store.load() } returns null
-        assertTrue(FavouriteTeamViewModel(store).needsOnboarding)
+        assertEquals(null, FavouriteTeamViewModel(store).favourite)
     }
 
     @Test
-    fun `onboarding is shown only once, until a team is saved`() {
+    fun `settings displays the server confirmed cached team`() {
         every { store.load() } returns FavouriteTeam("Bundesliga", "Dortmund")
         val vm = FavouriteTeamViewModel(store)
-        assertFalse(vm.needsOnboarding)
         assertEquals(FavouriteTeam("Bundesliga", "Dortmund"), vm.favourite)
     }
 }

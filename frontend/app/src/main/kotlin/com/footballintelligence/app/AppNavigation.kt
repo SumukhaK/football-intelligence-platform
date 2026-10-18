@@ -56,8 +56,6 @@ import org.koin.core.parameter.parametersOf
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AppNavigation(navController: NavHostController, signedIn: Boolean) {
-    val favourite: FavouriteTeamViewModel = koinViewModel()
-    val firstRoute = if (favourite.needsOnboarding) Screen.Onboarding.route else Screen.Home.route
     // Read once: NavHost rebuilds its graph if the start destination changes.
     val start = remember { if (signedIn) Screen.Consent.route else Screen.Auth.route }
     FollowSession(navController, signedIn)
@@ -76,7 +74,6 @@ fun AppNavigation(navController: NavHostController, signedIn: Boolean) {
         AppNavHost(
             navController,
             start,
-            firstRoute,
             if (route in FULL_SCREEN_ROUTES) Modifier else Modifier.padding(padding).consumeWindowInsets(padding),
         )
     }
@@ -117,7 +114,6 @@ private fun NavHostController.openFixture(league: String, homeTeam: String, away
 private fun AppNavHost(
     navController: NavHostController,
     startDestination: String,
-    firstRoute: String,
     modifier: Modifier,
 ) {
     val settingsAction: @Composable RowScope.() -> Unit = {
@@ -132,9 +128,11 @@ private fun AppNavHost(
         authRoutes(
             onReady = {
                 enableCrashReports(appContext)
-                navController.restartAt(firstRoute)
+                navController.restartAt(Screen.AccountPreferences.route)
             },
         )
+
+        accountPreferencesRoute(navController)
 
         composable(Screen.Onboarding.route) {
             TeamPickerRoute(
