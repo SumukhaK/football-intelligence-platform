@@ -5,6 +5,7 @@ import com.footballintelligence.core.model.FavouriteTeamStore
 import com.footballintelligence.feature.team.FavouriteTeamViewModel
 import com.footballintelligence.feature.team.MyTeamViewModel
 import com.footballintelligence.feature.team.PreferencesFavouriteTeamStore
+import com.footballintelligence.feature.team.ProjectedTableViewModel
 import com.footballintelligence.feature.team.TeamPickerViewModel
 import com.footballintelligence.feature.team.repository.DefaultTeamRepository
 import com.footballintelligence.feature.team.repository.TeamRepository
@@ -21,4 +22,5 @@ val teamModule = module {
     viewModel { FavouriteTeamViewModel(store = get()) }
     viewModel { params -> TeamPickerViewModel(flow = params.get(), repository = get(), store = get()) }
     viewModel { MyTeamViewModel(repository = get(), store = get()) }
+    viewModel { params -> ProjectedTableViewModel(outlook = params.get()) }
 }

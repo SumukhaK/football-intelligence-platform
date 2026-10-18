@@ -68,8 +68,12 @@ chance. A match leaves the card two hours after kick-off. Below it, Season outlo
 finish from `GET /v2/teams/{team}/outlook` (ADR 023): position and points,
 the title, top-four and relegation chances, a chart of those chances
 through the season (each point used only results known then) and attack and
-defence strengths. Tapping it opens the projected table with the team
-highlighted. Settings shows the
+defence strengths. Tapping it opens Projected Table with the favourite team
+highlighted, fixed team identities and horizontally scrollable metrics.
+Tap any heading to sort ascending, then tap it again to toggle direction.
+Now and Proj sort the displayed points; projected rank stays attached to
+each team. See [Android 2.6.2](../docs/releases/frontend-2.6.2.md).
+Settings shows the
 saved team in one My team row; it reopens the picker with the saved league and
 team checked and, once a team is saved, restarts the app so every screen loads
 the new team. Every

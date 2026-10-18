@@ -49,7 +49,22 @@
     <string name="outlook_retry">Try again</string>
 
     <!-- Projected table -->
-    <string name="table_title">Projected table</string>
+    <string name="table_title">Projected Table</string>
+    <string name="table_heading">The season ahead</string>
+    <string name="table_guide">Now: current points. Proj: expected final points. Chances: first, top four or bottom three.</string>
+    <string name="table_scroll_hint">Tap headings to sort · Swipe numbers for more</string>
+    <string name="table_your_team">Your team</string>
+    <string name="table_projected_rank">Projected rank</string>
+    <string name="table_current_points">Current points</string>
+    <string name="table_projected_points">Projected points</string>
+    <string name="table_title_probability">First-place chance</string>
+    <string name="table_top_four_chance">Top-four chance</string>
+    <string name="table_relegation_chance">Bottom-three chance</string>
+    <string name="sort_ascending">Ascending</string>
+    <string name="sort_descending">Descending</string>
+    <string name="sort_not_selected">Not selected for sorting</string>
+    <string name="table_sort_ascending">Sort %1$s ascending</string>
+    <string name="table_sort_descending">Sort %1$s descending</string>
     <string name="table_position">#</string>
     <string name="table_team">Team</string>
     <string name="table_points_now">Now</string>
@@ -57,7 +72,7 @@
     <string name="table_title_chance">Title</string>
     <string name="table_top_four">Top 4</string>
     <string name="table_relegation">Rel</string>
-    <string name="cd_table_row">%1$d, %2$s: %3$d points now, %4$d projected; title %5$d%, top four %6$d%, relegation %7$d%</string>
+    <string name="cd_table_row">Projected rank %1$d, %2$s: %3$d points now, %4$d projected; first place %5$d%, top four %6$d%, bottom three %7$d%</string>
 
     <!-- Settings -->
     <string name="settings_my_team_section">My Team</string>

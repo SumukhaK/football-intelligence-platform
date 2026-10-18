@@ -33,8 +33,8 @@ android {
 
     defaultConfig {
         applicationId = "com.footballintelligence.app"
-        versionCode = 11
-        versionName = "2.6.1"
+        versionCode = 12
+        versionName = "2.6.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
