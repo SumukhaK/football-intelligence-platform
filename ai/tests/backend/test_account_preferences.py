@@ -231,6 +231,7 @@ def test_json_preserves_unknown_account_fields(tmp_path: Path) -> None:
     data["users"][EMAIL]["future_field"] = {"keep": True}
     path.write_text(json.dumps(data))
     stale = store.get_user(EMAIL)
+    assert stale is not None
     store.set_favourite(EMAIL, FAVOURITE)
     store.save_user(stale)
     assert json.loads(path.read_text())["users"][EMAIL]["future_field"] == {
@@ -244,6 +245,7 @@ def test_firestore_preserves_unknown_account_fields() -> None:
     add_account(store)
     client.collections["users"][EMAIL]["future_field"] = {"keep": True}
     stale = store.get_user(EMAIL)
+    assert stale is not None
     store.set_favourite(EMAIL, FAVOURITE)
     store.save_user(stale)
     assert client.collections["users"][EMAIL]["future_field"] == {"keep": True}

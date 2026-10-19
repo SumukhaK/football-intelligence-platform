@@ -105,3 +105,22 @@ managed worktree test writes; tests remained local/offline.
 The original checkout stays on `develop` with its original untracked files.
 Unrelated worktrees, football-dashboard, D9 and PR #19 were not modified.
 Publication state is reported with the final result.
+
+## CI follow-up
+
+PR #157 initially showed 15/17 checks passing. Both failures were the full
+Python MyPy job, run for push and pull request. The browser exposed those job
+statuses; the CI connector still required a GitHub connection. There were no
+review comments. Reproducing `python -m mypy .` locally found two errors in the
+new storage regression tests: `get_user()` returns `User | None`, and the tests
+had not asserted that the created account exists before calling `save_user()`.
+
+Added two explicit existence assertions. No application behavior changed.
+The full `python -m mypy .` check then passed across 386 source files. Black and
+Ruff checks of the changed test file passed. The previous source-only type check
+did not cover these test errors; future verification should use the full CI
+command. The only MyPy output beyond success was an existing unused `numba.*`
+configuration note.
+
+After the fix, the same focused account/preference/authentication command listed
+above passed all 107 tests in 33.47 seconds (one existing Starlette warning).
