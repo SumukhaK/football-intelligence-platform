@@ -1,13 +1,16 @@
 package com.footballintelligence.core.model
 
-/** The fan's chosen league and team, saved on the device. */
+import kotlinx.serialization.Serializable
+
+/** The account's canonical favourite league and team. */
+@Serializable
 data class FavouriteTeam(val league: String, val team: String)
 
-/** Saves the favourite team on the device. */
+/** Server-confirmed account cache used by feature consumers. */
 interface FavouriteTeamStore {
-    /** The saved team, or null on first launch before the fan has picked one. */
+    /** The confirmed team's cached value, or null when empty or unavailable to this session. */
     fun load(): FavouriteTeam?
 
-    /** Replaces the saved team. */
+    /** Replaces the current account's cache after a confirmed server save. */
     fun save(favourite: FavouriteTeam)
 }

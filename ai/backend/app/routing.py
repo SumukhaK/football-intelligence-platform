@@ -6,6 +6,7 @@ from fastapi import Depends, FastAPI
 
 from backend.app.dependencies import require_consented_user
 from backend.app.routers import (
+    account_preferences,
     assistant,
     auth,
     competitions,
@@ -48,6 +49,7 @@ def include_routers(app: FastAPI, auth_required: bool) -> None:
     app.include_router(health.router, prefix="/v2")
     app.include_router(probes.router, prefix="/v2")
     app.include_router(auth.router, prefix="/v2")
+    app.include_router(account_preferences.router, prefix="/v2")
     app.include_router(crests.router, prefix="/v2")
     for router in _V2_DATA:
         app.include_router(router, prefix="/v2", dependencies=guard)

@@ -42,6 +42,10 @@ This project demonstrates AI engineering as a discipline: not just "can I train 
 
 ## Key Capabilities
 
+Account favourites now persist on the server across installs and upgrades
+(ADR 035). After sign-in, the Android app confirms preferences before choosing
+onboarding; a failed account read offers retry.
+
 | Capability | Description |
 |---|---|
 | **Match outcome prediction** | XGBoost classifier predicting Home Win / Draw / Away Win for all five leagues, with a `draw_possible` flag in the API for tight games (ADR 011) |

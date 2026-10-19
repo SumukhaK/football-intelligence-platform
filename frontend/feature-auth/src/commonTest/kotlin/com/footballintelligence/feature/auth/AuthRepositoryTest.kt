@@ -22,6 +22,10 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -115,6 +119,24 @@ class AuthRepositoryTest {
         session.signIn("tok-1")
         repository { throw java.io.IOException("Connection refused") }.signOut()
         assertNull(session.token.value)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `a delayed sign out for A never signs out B`() = runTest {
+        session.signIn("A")
+        val reply = CompletableDeferred<Unit>()
+        val repository = repository {
+            reply.await()
+            respond("", HttpStatusCode.NoContent)
+        }
+        val logout = async { repository.signOut() }
+        runCurrent()
+        session.signIn("B")
+        reply.complete(Unit)
+        logout.await()
+        assertEquals("B", session.token.value)
+        assertEquals("Bearer A", requests.single().headers[HttpHeaders.Authorization])
     }
 
     @Test

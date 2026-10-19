@@ -129,6 +129,8 @@ class KtorFootballApiService(
 internal suspend inline fun <T> guarded(call: () -> NetworkResult<T>): NetworkResult<T> =
     try {
         call()
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
     } catch (e: SerializationException) {
         NetworkResult.Error(message = e.message ?: "Malformed response", kind = ErrorKind.UNKNOWN)
     } catch (e: Exception) {

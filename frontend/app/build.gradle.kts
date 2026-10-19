@@ -108,6 +108,8 @@ dependencies {
     testRuntimeOnly(libs.junit5.engine)
 }
 
+tasks.withType<Test>().configureEach { useJUnitPlatform() }
+
 // A staging APK with no address would install and then fail every request,
 // so asking for one by name fails at once. `assembleDebug` and the like still
 // build it with an empty address, so a local build needs no staging URL.

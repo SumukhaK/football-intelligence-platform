@@ -18,7 +18,7 @@ import com.footballintelligence.feature.auth.ConsentViewModel
 import org.koin.androidx.compose.koinViewModel
 
 /** Routes drawn edge to edge, under the status bar, without the bottom bar. */
-val FULL_SCREEN_ROUTES = setOf(Screen.Auth.route, Screen.Consent.route)
+val FULL_SCREEN_ROUTES = setOf(Screen.Auth.route, Screen.Consent.route, Screen.AccountPreferences.route)
 
 /**
  * Sign-in and the notice (ADR 022). Signing in is noticed by [FollowSession];
@@ -69,7 +69,8 @@ fun FollowSession(navController: NavHostController, signedIn: Boolean) {
         val route = navController.currentDestination?.route
         when {
             !signedIn && route != Screen.Auth.route -> navController.restartAt(Screen.Auth.route)
-            signedIn && route == Screen.Auth.route -> navController.restartAt(Screen.Consent.route)
+            // Restored back stacks must pass the server account check after process recreation too.
+            signedIn && route != Screen.Consent.route -> navController.restartAt(Screen.Consent.route)
         }
     }
 }

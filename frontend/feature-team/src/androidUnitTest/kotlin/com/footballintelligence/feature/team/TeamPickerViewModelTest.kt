@@ -1,11 +1,13 @@
 package com.footballintelligence.feature.team
 
+import com.footballintelligence.core.model.AccountPreferences
 import com.footballintelligence.core.model.ErrorKind
 import com.footballintelligence.core.model.FavouriteTeam
 import com.footballintelligence.core.model.FavouriteTeamStore
 import com.footballintelligence.core.model.NetworkResult
 import com.footballintelligence.core.model.SERVED_LEAGUES
 import com.footballintelligence.core.model.TeamsResponse
+import com.footballintelligence.feature.team.repository.AccountPreferencesRepository
 import com.footballintelligence.feature.team.repository.TeamRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -30,16 +32,22 @@ import org.junit.jupiter.api.Test
 class TeamPickerViewModelTest {
     private val repository = mockk<TeamRepository>()
     private val store = mockk<FavouriteTeamStore>(relaxed = true)
+    private val preferences = mockk<AccountPreferencesRepository>()
     private val serieA = listOf("Inter", "Milan", "Napoli")
     private val serieATeams = NetworkResult.Success(TeamsResponse("Serie A", "2026/27", serieA))
 
-    private fun viewModel(flow: PickerFlow = PickerFlow.ONBOARDING) = TeamPickerViewModel(flow, repository, store)
+    private fun viewModel(flow: PickerFlow = PickerFlow.ONBOARDING) =
+        TeamPickerViewModel(flow, repository, store, preferences)
 
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         coEvery { repository.getTeams("Serie A") } returns serieATeams
         every { store.load() } returns null
+        every { preferences.sessionToken } returns "A"
+        coEvery { preferences.save("A", any()) } answers {
+            NetworkResult.Success(AccountPreferences("a@example.com", secondArg()))
+        }
     }
 
     @AfterEach
@@ -95,7 +103,8 @@ class TeamPickerViewModelTest {
         val vm = viewModel(PickerFlow.ONBOARDING)
         vm.selectLeague("Serie A")
         vm.selectTeam("Inter")
-        verify { store.save(FavouriteTeam("Serie A", "Inter")) }
+        coVerify { preferences.save("A", FavouriteTeam("Serie A", "Inter")) }
+        verify(exactly = 0) { store.save(any()) }
         assertEquals(PickerOutcome.ONBOARDING_FINISHED, vm.outcome.first())
     }
 
@@ -105,7 +114,7 @@ class TeamPickerViewModelTest {
         vm.selectLeague("Serie A")
         vm.selectTeam("Inter")
         vm.selectTeam("Milan")
-        verify(exactly = 1) { store.save(any()) }
+        coVerify(exactly = 1) { preferences.save("A", any()) }
         assertEquals(PickerOutcome.ONBOARDING_FINISHED, vm.outcome.first())
         assertEquals(null, withTimeoutOrNull(100) { vm.outcome.first() })
     }
@@ -151,8 +160,38 @@ class TeamPickerViewModelTest {
         val vm = viewModel(PickerFlow.CHANGE)
         vm.selectLeague("Serie A")
         vm.selectTeam("Napoli")
-        verify { store.save(FavouriteTeam("Serie A", "Napoli")) }
+        coVerify { preferences.save("A", FavouriteTeam("Serie A", "Napoli")) }
         assertEquals("Napoli", (vm.step.value as PickerStep.Team).selected)
         assertEquals(PickerOutcome.RELAUNCH, vm.outcome.first())
+    }
+
+    @Test
+    fun `save failures stay in the picker and can be retried`() = runTest {
+        coEvery { preferences.save("A", any()) } returns NetworkResult.Error("Try again")
+        val vm = viewModel()
+        vm.selectLeague("Serie A")
+        vm.selectTeam("Inter")
+        assertEquals("Try again", (vm.step.value as PickerStep.Team).saveError?.message)
+        assertEquals(null, withTimeoutOrNull(100) { vm.outcome.first() })
+        coEvery { preferences.save("A", any()) } returns
+            NetworkResult.Success(AccountPreferences("a@example.com", FavouriteTeam("Serie A", "Inter")))
+        vm.retryTeams()
+        assertEquals(PickerOutcome.ONBOARDING_FINISHED, vm.outcome.first())
+    }
+
+    @Test
+    fun `a slow save does not leave the picker or save twice`() = runTest {
+        val result = CompletableDeferred<NetworkResult<AccountPreferences>>()
+        coEvery { preferences.save("A", any()) } coAnswers { result.await() }
+        val vm = viewModel()
+        vm.selectLeague("Serie A")
+        vm.selectTeam("Inter")
+        vm.selectTeam("Milan")
+        assertEquals(true, (vm.step.value as PickerStep.Team).isSaving)
+        assertEquals(null, withTimeoutOrNull(100) { vm.outcome.first() })
+        every { preferences.sessionToken } returns "B"
+        result.complete(NetworkResult.Success(AccountPreferences("a@example.com", FavouriteTeam("Serie A", "Inter"))))
+        assertEquals(null, withTimeoutOrNull(100) { vm.outcome.first() })
+        coVerify(exactly = 1) { preferences.save("A", any()) }
     }
 }

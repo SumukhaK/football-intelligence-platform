@@ -11,7 +11,7 @@ import json
 import os
 import threading
 import uuid
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
@@ -34,6 +34,7 @@ class User:
     store_questions: bool = False
     failed_logins: list[str] = field(default_factory=list)
     locked_until: str | None = None
+    favourite: dict[str, str] | None = None
 
 
 @dataclass
@@ -78,7 +79,11 @@ class AccountStore(Protocol):
         ...
 
     def save_user(self, user: User) -> None:
-        """Create or replace a user."""
+        """Save account fields, preserving the separately updated favourite."""
+        ...
+
+    def set_favourite(self, email: str, favourite: dict[str, str]) -> None:
+        """Patch only the existing account's favourite."""
         ...
 
     def get_invite(self, email: str) -> Invite | None:
@@ -117,11 +122,15 @@ class JsonAccountStore:
     def get_user(self, email: str) -> User | None:
         """The user with ``email``, or None."""
         row = self._read()["users"].get(email)
-        return User(**row) if row else None
+        return _user(row)
 
     def save_user(self, user: User) -> None:
-        """Create or replace a user."""
-        self._write("users", user.email, asdict(user))
+        """Save account fields without overwriting a newer favourite."""
+        self._write("users", user.email, _account_fields(user), merge=True)
+
+    def set_favourite(self, email: str, favourite: dict[str, str]) -> None:
+        """Patch only the existing account's favourite under the write lock."""
+        self._write("users", email, {"favourite": favourite}, merge=True, existing=True)
 
     def get_invite(self, email: str) -> Invite | None:
         """The latest invite for ``email``, or None."""
@@ -158,9 +167,22 @@ class JsonAccountStore:
         )
         return data
 
-    def _write(self, table: str, key: str, row: dict[str, Any]) -> None:
+    def _write(
+        self,
+        table: str,
+        key: str,
+        row: dict[str, Any],
+        *,
+        merge: bool = False,
+        existing: bool = False,
+    ) -> None:
         with self._lock:
             data = self._read()
+            previous = data.setdefault(table, {}).get(key)
+            if existing and previous is None:
+                raise KeyError(key)
+            if merge:
+                row = {**(previous or {}), **row}
             data.setdefault(table, {})[key] = row
             self._path.parent.mkdir(parents=True, exist_ok=True)
             temporary = self._path.with_suffix(".tmp")
@@ -183,11 +205,19 @@ class FirestoreAccountStore:
     def get_user(self, email: str) -> User | None:
         """The user with ``email``, or None."""
         row = self._get("users", email)
-        return User(**row) if row else None
+        return _user(row)
 
     def save_user(self, user: User) -> None:
-        """Create or replace a user."""
-        self._set("users", user.email, asdict(user))
+        """Merge account fields without overwriting a newer favourite."""
+        self._collection("users").document(_document_id(user.email)).set(
+            _account_fields(user), merge=True
+        )
+
+    def set_favourite(self, email: str, favourite: dict[str, str]) -> None:
+        """Atomically patch one field without replacing the account document."""
+        self._collection("users").document(_document_id(email)).update(
+            {"favourite": favourite}
+        )
 
     def get_invite(self, email: str) -> Invite | None:
         """The latest invite for ``email``, or None."""
@@ -233,6 +263,22 @@ class FirestoreAccountStore:
 
     def _set(self, collection: str, key: str, row: dict[str, Any]) -> None:
         self._collection(collection).document(_document_id(key)).set(row)
+
+
+def _user(row: dict[str, Any] | None) -> User | None:
+    """Read known account fields while retaining unknown fields on future writes."""
+    if row is None:
+        return None
+    return User(
+        **{field.name: row[field.name] for field in fields(User) if field.name in row}
+    )
+
+
+def _account_fields(user: User) -> dict[str, Any]:
+    """Authentication writes never own the independently patched favourite."""
+    row = asdict(user)
+    row.pop("favourite")
+    return row
 
 
 def _document_id(key: str) -> str:
