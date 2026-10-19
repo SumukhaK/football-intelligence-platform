@@ -56,6 +56,7 @@ Maintained by the project architect. The implementation engineer updates documen
 |---|---|
 | [Hosting Plans](plans/hosting-plans.md) | Free-tier deployment, cold starts and step-by-step operations plan |
 | [Hosting Execution Tracker](plans/hosting-execution-tracker.md) | Ordered deployment steps with status, exit checks and the evidence each step produces |
+| [DeepSeek Dashboard Handoff](plans/deepseek-dashboard-d7-handoff.md) | Verified D7 cloud state, corrected backlog and implementation instructions for the dashboard |
 | [Accounts and Consent Plan](plans/accounts-and-consent-plan.md) | Invite-only accounts, sessions and consent for the assistant |
 | [Assistant Guardrails Analysis](plans/assistant-guardrails-analysis.md) | Safety, scope routing, caching and limits for the hosted assistant |
 | [Chat Memory Plan](plans/chat-memory-plan.md) | Short-term chat memory: signed history on the phone, limits, cost and safety rails |
