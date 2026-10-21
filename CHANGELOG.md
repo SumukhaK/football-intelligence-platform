@@ -9,6 +9,15 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- Parallel sign-in attempts and harmful questions are all counted, so the 5-try lockout and the 3-strike ban (ADR 027) can't be outpaced by simultaneous requests.
+- `/v2/live` and `/v2/ready` run on the event loop, so slow assistant calls can't delay them and get a healthy instance restarted.
+- A failed assistant call returns a fixed 503 message; the provider's error text, which can name local URLs, is logged on the server only.
+- The rate limiter forgets clients idle for a minute once it tracks 10,000, so its memory stays bounded.
+
+### Security
+- certifi 2026.10.19 and Pillow 13.0.0 fix the advisories that failed pip-audit.
+
 ---
 
 ## [2.6.3] — 2026-10-21

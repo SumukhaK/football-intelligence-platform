@@ -23,8 +23,12 @@ NOT_READY = "Not ready"
         "responding."
     ),
 )
-def live() -> LiveResponse:
-    """Report that the process is serving requests."""
+async def live() -> LiveResponse:
+    """Report that the process is serving requests.
+
+    Async on purpose: it runs on the event loop, so a thread pool busy with
+    slow assistant calls cannot make the platform restart a healthy instance.
+    """
     return LiveResponse(status="alive")
 
 
@@ -39,7 +43,7 @@ def live() -> LiveResponse:
     ),
     responses={503: {"model": ErrorResponse, "description": "Not ready."}},
 )
-def ready(request: Request) -> ReadyResponse | JSONResponse:
+async def ready(request: Request) -> ReadyResponse | JSONResponse:
     """Report whether every required component loaded."""
     missing = missing_components(request.app.state)
     if not missing:
