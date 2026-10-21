@@ -115,6 +115,14 @@ class AccountStore(Protocol):
         """Add one stored question."""
         ...
 
+    def usage(self, key: str) -> int:
+        """Assistant tokens counted under ``key`` (ADR 036)."""
+        ...
+
+    def add_usage(self, key: str, tokens: int, expires_at: datetime) -> None:
+        """Add ``tokens`` to ``key`` atomically; the row may go after ``expires_at``."""
+        ...
+
 
 class JsonAccountStore:
     """All accounts in one JSON file, rewritten atomically on every change."""
@@ -173,6 +181,17 @@ class JsonAccountStore:
     def save_question(self, record: QuestionRecord) -> None:
         """Add one stored question; the JSON store never expires them."""
         self._write("questions", uuid.uuid4().hex, asdict(record))
+
+    def usage(self, key: str) -> int:
+        """Assistant tokens counted under ``key``."""
+        row = self._read().get("usage", {}).get(key)
+        return int(row["tokens"]) if row else 0
+
+    def add_usage(self, key: str, tokens: int, expires_at: datetime) -> None:
+        """Add ``tokens`` under the write lock; old rows stay, the file is local."""
+        with self._lock:
+            total = self.usage(key) + tokens
+            self._write("usage", key, {"tokens": total})
 
     def _read(self) -> dict[str, dict[str, dict[str, Any]]]:
         if not self._path.exists():
@@ -287,6 +306,20 @@ class FirestoreAccountStore:
         # A TTL policy only deletes documents whose field is a timestamp.
         row["expires_at"] = datetime.fromisoformat(record.expires_at)
         self._set("questions", uuid.uuid4().hex, row)
+
+    def usage(self, key: str) -> int:
+        """Assistant tokens counted under ``key``."""
+        row = self._get("usage", key)
+        return int(row["tokens"]) if row else 0
+
+    def add_usage(self, key: str, tokens: int, expires_at: datetime) -> None:
+        """Increment on the server, so parallel answers all count; TTL deletes it."""
+        from google.cloud import firestore
+
+        self._collection("usage").document(_document_id(key)).set(
+            {"tokens": firestore.Increment(tokens), "expires_at": expires_at},
+            merge=True,
+        )
 
     def _collection(self, name: str) -> Any:
         return self._client.collection(self._prefix + name)

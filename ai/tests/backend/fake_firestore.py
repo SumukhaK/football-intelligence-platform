@@ -28,7 +28,13 @@ class FakeDocument:
 
     def set(self, data: dict[str, Any], merge: bool = False) -> None:
         previous = self._rows.get(self._key, {}) if merge else {}
-        self._rows[self._key] = {**previous, **copy.deepcopy(data)}
+        row = {**previous}
+        for name, value in data.items():
+            if type(value).__name__ == "Increment":  # firestore.Increment
+                row[name] = previous.get(name, 0) + value.value
+            else:
+                row[name] = copy.deepcopy(value)
+        self._rows[self._key] = row
 
     def update(self, data: dict[str, Any]) -> None:
         """Match Firestore's field patch and missing-document behavior."""

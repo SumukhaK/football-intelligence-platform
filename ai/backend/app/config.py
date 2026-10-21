@@ -103,6 +103,12 @@ class Settings(BaseSettings):
     assistant_vector_store_path: Path = Path("assistant/vector_store")
     assistant_knowledge_root: Path = Path(".")
     assistant_top_k: int = 5
+    # Daily token budgets for the assistant (ADR 036): per signed-in user and
+    # for everyone together. `off` turns one off; both are required on Cloud Run.
+    assistant_daily_tokens_per_user: int | None = Field(default=None, ge=1)
+    assistant_daily_tokens_total: int | None = Field(default=None, ge=1)
+    # What a typical answer costs: a question starts only if this still fits.
+    assistant_tokens_per_answer: int = Field(default=3_000, ge=1)
 
     # Invite-only sign-in for every /v2 data route (ADR 022); on in the cloud.
     auth_required: bool = False
@@ -133,6 +139,14 @@ class Settings(BaseSettings):
             and self.history_key.get_secret_value() == DEV_HISTORY_KEY
         ):
             raise ValueError("HISTORY_KEY must be a secret on Cloud Run (ADR 030).")
+        if self.assistant_provider is not None and (
+            self.assistant_daily_tokens_per_user is None
+            or self.assistant_daily_tokens_total is None
+        ):
+            raise ValueError(
+                "ASSISTANT_DAILY_TOKENS_PER_USER and ASSISTANT_DAILY_TOKENS_TOTAL "
+                "must be set on Cloud Run when the assistant is on (ADR 036)."
+            )
         return self
 
 

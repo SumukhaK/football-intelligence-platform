@@ -17,6 +17,7 @@ from model_registry.registry import ModelRegistry
 if TYPE_CHECKING:
     from assistant.retrieval.vector_store import IndexInfo
     from backend.app.config import Settings
+    from backend.app.services.assistant_budget import AssistantBudget
     from backend.app.services.chat_service import ChatService
     from backend.app.services.explanation_service import ExplanationService
     from backend.app.services.fixture_feature_service import FixtureFeatureService
@@ -169,7 +170,20 @@ def load_assistant(settings: Settings, state: Any) -> ChatService:
         safety,
         getattr(state, "account_service", None),
         ChatHistory(settings.history_key.get_secret_value()),
+        _assistant_budget(settings, state),
     )
+
+
+def _assistant_budget(settings: Settings, state: Any) -> AssistantBudget | None:
+    """The daily token budgets (ADR 036), or None when both are off."""
+    from backend.app.services.assistant_budget import AssistantBudget
+
+    store = getattr(state, "account_store", None)
+    per_user = settings.assistant_daily_tokens_per_user
+    total = settings.assistant_daily_tokens_total
+    if store is None or (per_user is None and total is None):
+        return None
+    return AssistantBudget(store, per_user, total, settings.assistant_tokens_per_answer)
 
 
 def require_matching_index(

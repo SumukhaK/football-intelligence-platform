@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import time
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date
 from typing import Any, TypeVar
 
@@ -53,6 +53,9 @@ class AssistantResponse:
     confidence: float
     model: str
     retrieved_count: int
+    # Prompt plus completion tokens, for the daily budget (ADR 036); None when
+    # the model did not report them.
+    tokens_used: int | None = None
 
 
 _EXCERPT_LENGTH = 200
@@ -173,7 +176,10 @@ class AssistantService:
         answer = self._answer(messages, turn)
         if history:
             answer = self._recheck(messages, answer, turn)
-        response = self._response(answer, retrieved)
+        response = replace(
+            self._response(answer, retrieved),
+            tokens_used=_plus(turn.prompt_tokens, turn.completion_tokens),
+        )
         self._log_answer(question, response, retrieved, turn, routed=False)
         return response
 
@@ -353,7 +359,12 @@ class VectorStoreEmptyError(RuntimeError):
 def _routed_reply(reply: str) -> AssistantResponse:
     """A fixed reply chosen by the router; no model or retrieval was used."""
     return AssistantResponse(
-        answer=reply, sources=[], confidence=0.0, model="router", retrieved_count=0
+        answer=reply,
+        sources=[],
+        confidence=0.0,
+        model="router",
+        retrieved_count=0,
+        tokens_used=0,
     )
 
 

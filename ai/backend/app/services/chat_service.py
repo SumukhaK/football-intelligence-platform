@@ -10,6 +10,8 @@ from backend.app.exceptions import AssistantNotAvailableError
 from backend.app.schemas.assistant import ChatRequest, ChatResponse
 from backend.app.services.account_service import MAX_STRIKES, AccountService
 from backend.app.services.account_store import User
+from backend.app.services.assistant_budget import AssistantBudget
+from backend.app.services.auth_errors import AuthError
 from backend.app.services.chat_history import ChatHistory, CheckedHistory
 from shared.telemetry.events import EventName, emit
 
@@ -30,18 +32,21 @@ class ChatService:
         safety: SafetyCheck | None = None,
         accounts: AccountService | None = None,
         history: ChatHistory | None = None,
+        budget: AssistantBudget | None = None,
     ) -> None:
         """Initialise with the AI service, the safety check, accounts and history.
 
         With ``safety``, each question is checked first, and a harmful one
         adds a strike to the signed-in user through ``accounts`` (ADR 027).
         With ``history``, answers are signed and the app's signed history is
-        passed to the model (ADR 030).
+        passed to the model (ADR 030). With ``budget``, a signed-in user's
+        question must fit today's token budgets (ADR 036).
         """
         self._service = assistant_service
         self._safety = safety
         self._accounts = accounts
         self._history = history
+        self._budget = budget
 
     def chat(self, request: ChatRequest, user: User | None = None) -> ChatResponse:
         """Answer the user's question and return a structured response.
@@ -68,10 +73,15 @@ class ChatService:
             )
             if harmful:
                 return self._refuse(harmful, user)
+            budget = self._budget if user is not None else None
+            if budget is not None:
+                budget.check(user.email)  # type: ignore[union-attr]
             result = self._service.chat(  # type: ignore[attr-defined]
                 with_favourite(request), earlier.messages
             )
-        except ValueError:
+            if budget is not None:
+                budget.charge(user.email, result.tokens_used)  # type: ignore[union-attr]
+        except (ValueError, AuthError):
             raise
         except Exception as exc:
             # Provider errors can name local URLs; log them, never return them.
@@ -89,6 +99,10 @@ class ChatService:
             model=result.model,
             retrieved_count=result.retrieved_count,
         )
+        allowance = budget.allowance(user.email) if budget and user else None
+        if allowance is not None:
+            response.questions_left = allowance.questions_left
+            response.resets_at = allowance.resets_at
         return response, "answered"
 
     def _save_question(
