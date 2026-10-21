@@ -6,6 +6,7 @@ import hashlib
 import hmac
 import logging
 import secrets
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -17,6 +18,18 @@ from backend.app.services.account_store import (
     QuestionRecord,
     Session,
     User,
+)
+from backend.app.services.auth_errors import (
+    AccountBlockedError,
+    AuthError,
+    ConsentRequiredError,
+    InvalidCredentialsError,
+    InvalidInviteError,
+    InviteAlreadyUsedError,
+    InviteExpiredError,
+    NotSignedInError,
+    TooManyAttemptsError,
+    WeakPasswordError,
 )
 from backend.app.services.invite_codes import new_invite_code, normalise_invite_code
 from shared.telemetry.context import set_user_ref
@@ -33,77 +46,6 @@ QUESTION_LIFETIME = timedelta(days=90)
 # Harmful questions before a permanent ban (ADR 027).
 MAX_STRIKES = 3
 _SCRYPT = {"n": 2**14, "r": 8, "p": 1, "dklen": 32}
-
-
-class AuthError(Exception):
-    """An account problem the API reports as ``{"error", "detail"}``."""
-
-    status_code = 400
-    error = "Bad request"
-    # The auth.event outcome this error is logged as (telemetry contract).
-    outcome = "failed"
-
-
-class NotSignedInError(AuthError):
-    """No valid session token was sent."""
-
-    status_code, error = 401, "Not signed in"
-    outcome = "not_signed_in"
-
-
-class InvalidCredentialsError(AuthError):
-    """Wrong email or password; the message never says which."""
-
-    status_code, error = 401, "Invalid credentials"
-
-
-class InvalidInviteError(AuthError):
-    """The invite code is wrong, used or expired."""
-
-    status_code, error = 400, "Invalid invite"
-    outcome = "invalid_invite"
-
-
-class InviteAlreadyUsedError(AuthError):
-    """The right code, already used: the account exists, so sign in instead."""
-
-    status_code, error = 409, "Invite already used"
-    outcome = "invite_used"
-
-
-class InviteExpiredError(AuthError):
-    """The right code, past its 7 days."""
-
-    status_code, error = 410, "Invite expired"
-    outcome = "invite_expired"
-
-
-class WeakPasswordError(AuthError):
-    """The chosen password is too short."""
-
-    status_code, error = 422, "Password too short"
-    outcome = "weak_password"
-
-
-class ConsentRequiredError(AuthError):
-    """The user has not accepted the current notice."""
-
-    status_code, error = 403, "Consent required"
-    outcome = "consent_required"
-
-
-class AccountBlockedError(AuthError):
-    """The user is banned."""
-
-    status_code, error = 403, "Account blocked"
-    outcome = "blocked"
-
-
-class TooManyAttemptsError(AuthError):
-    """Too many failed logins; try again later."""
-
-    status_code, error = 429, "Too many attempts"
-    outcome = "locked_out"
 
 
 @dataclass(frozen=True)
@@ -127,6 +69,10 @@ class AccountService:
         self._store = store
         self._clock = clock
         self._user_ref = user_ref
+        # Counters are read, changed and saved; parallel requests must not lose
+        # updates. ponytail: one in-process lock, fine while Cloud Run runs a single
+        # instance (ADR 025); use Firestore transactions before raising max instances.
+        self._counter_lock = threading.Lock()
 
     def _log(self, action: str, outcome: str, email: str | None) -> None:
         """Log ``auth.event``; ``email`` is given only when the account is known."""
@@ -308,11 +254,12 @@ class AccountService:
         Raises:
             KeyError: If there is no such user.
         """
-        user = self._store.get_user(_normalise(email))
-        if user is None:
-            raise KeyError(email)
-        user.strikes += 1
-        self._store.save_user(user)
+        with self._counter_lock:
+            user = self._store.get_user(_normalise(email))
+            if user is None:
+                raise KeyError(email)
+            user.strikes += 1
+            self._store.save_user(user)
         if user.strikes >= MAX_STRIKES:
             user = self.set_banned(user.email, True)
         self._log("strike", "blocked" if user.status == "banned" else "ok", user.email)
@@ -352,16 +299,19 @@ class AccountService:
         return NewSession(token, expires)
 
     def _record_failure(self, user: User, now: datetime) -> None:
-        recent = [
-            stamp
-            for stamp in user.failed_logins
-            if datetime.fromisoformat(stamp) > now - LOCKOUT
-        ]
-        recent.append(now.isoformat())
-        user.failed_logins = recent
-        if len(recent) >= MAX_FAILED_LOGINS:
-            user.locked_until = (now + LOCKOUT).isoformat()
-        self._store.save_user(user)
+        with self._counter_lock:
+            # Re-read so a parallel failure saved since this request began is kept.
+            user = self._store.get_user(user.email) or user
+            recent = [
+                stamp
+                for stamp in user.failed_logins
+                if datetime.fromisoformat(stamp) > now - LOCKOUT
+            ]
+            recent.append(now.isoformat())
+            user.failed_logins = recent
+            if len(recent) >= MAX_FAILED_LOGINS:
+                user.locked_until = (now + LOCKOUT).isoformat()
+            self._store.save_user(user)
 
 
 def _normalise(email: str) -> str:
