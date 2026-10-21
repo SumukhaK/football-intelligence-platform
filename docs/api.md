@@ -102,7 +102,7 @@ Service status.
   "matches_through": "2026-09-20",
   "last_refresh_at": "2026-09-29T07:01:31+05:30",
   "last_refresh_error": null,
-  "version": "2.6.0"
+  "version": "2.6.3"
 }
 ```
 
@@ -489,6 +489,23 @@ how many strikes they have. The third strike bans the account and ends its
 sessions, so the next request gets `403 Account blocked`. Swearing about
 football is not harmful. If the safety model can't be reached, chat returns
 `503` and no strike is added.
+
+**Daily token budgets (ADR 036).** With `ASSISTANT_DAILY_TOKENS_PER_USER` and
+`ASSISTANT_DAILY_TOKENS_TOTAL` set (both required on Cloud Run when the
+assistant is on), a signed-in user's question starts only if both today's
+budgets still cover a typical answer (`ASSISTANT_TOKENS_PER_ANSWER`, default
+3,000 tokens). The answer's actual prompt and completion tokens are charged
+afterwards; refusals and router replies are free. Budgets reset at midnight UTC.
+Answers then carry `"questions_left"` (about how many typical answers still
+fit) and `"resets_at"`; both are `null` when no budget applies. A question that
+no longer fits gets:
+
+```json
+{"error": "Daily limit reached", "detail": "You've used today's questions. Come back after midnight UTC."}
+```
+
+with status `429`. When the shared budget is used up, the detail says so and
+that predictions still work.
 
 ---
 

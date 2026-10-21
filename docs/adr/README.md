@@ -118,3 +118,4 @@ ADRs are never deleted.
 | [033](033-public-model-name-drishti.md) | A public name for the prediction model: Drishti | Accepted |
 | [034](034-storing-opted-in-question-text.md) | Storing question text for users who opted in | Accepted |
 | [035](035-server-account-favourites.md) | Server-owned account favourites | Accepted |
+| [036](036-assistant-daily-token-budgets.md) | Daily token budgets for the assistant | Accepted |

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -118,4 +119,15 @@ class ChatResponse(BaseModel):
         default=None,
         description="Signature to send back with this answer in the history "
         "(ADR 030); null when no conversation_id was sent.",
+    )
+    questions_left: int | None = Field(
+        default=None,
+        ge=0,
+        description="About how many more questions today's budgets allow "
+        "(ADR 036); null when no budget applies.",
+    )
+    resets_at: datetime | None = Field(
+        default=None,
+        description="When the daily budgets reset (midnight UTC); null when no "
+        "budget applies.",
     )

@@ -111,6 +111,21 @@ def test_chat_service_error_returns_503(
     assert response.status_code == 503
 
 
+def test_exhausted_budget_returns_a_structured_429(
+    client: TestClient, mock_chat_service: MagicMock
+) -> None:
+    """The app shows the detail, which says when the budget resets (ADR 036)."""
+    from backend.app.services.assistant_budget import BudgetExhaustedError
+
+    mock_chat_service.chat.side_effect = BudgetExhaustedError("Come back tomorrow.")
+    response = client.post("/assistant/chat", json={"message": "Tell me something."})
+    assert response.status_code == 429
+    assert response.json() == {
+        "error": "Daily limit reached",
+        "detail": "Come back tomorrow.",
+    }
+
+
 def test_chat_runs_off_the_event_loop(
     client: TestClient, mock_chat_service: MagicMock
 ) -> None:

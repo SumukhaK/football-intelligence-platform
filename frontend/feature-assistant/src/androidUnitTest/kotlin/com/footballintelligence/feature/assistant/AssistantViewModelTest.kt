@@ -72,6 +72,25 @@ class AssistantViewModelTest {
     }
 
     @Test
+    fun `the questions left come from the latest answer`() {
+        val vm = viewModel()
+        assertEquals(null, vm.questionsLeft.value)
+        coEvery { repository.chat(any(), any(), any(), any()) } returns
+            NetworkResult.Success(answer("A").copy(questionsLeft = 4))
+        vm.send("Everton v Chelsea?")
+        assertEquals(4, vm.questionsLeft.value)
+    }
+
+    @Test
+    fun `a used-up budget leaves no questions`() {
+        val vm = viewModel()
+        coEvery { repository.chat(any(), any(), any(), any()) } returns
+            NetworkResult.Error("Come back after midnight UTC.", 429, ErrorKind.REJECTED)
+        vm.send("One more?")
+        assertEquals(0, vm.questionsLeft.value)
+    }
+
+    @Test
     fun `the first question goes with no history`() {
         viewModel().send("Everton v Chelsea?")
         assertEquals(emptyList<HistoryTurn>(), sentHistory.single())

@@ -21,9 +21,9 @@ private val sampleConversation = listOf(
 )
 
 @Composable
-private fun Assistant(state: AssistantUiState, isSending: Boolean = false) {
+private fun Assistant(state: AssistantUiState, isSending: Boolean = false, questionsLeft: Int? = null) {
     PreviewSurface {
-        AssistantScreen(uiState = state, isSending = isSending, onSend = {})
+        AssistantScreen(uiState = state, isSending = isSending, onSend = {}, questionsLeft = questionsLeft)
     }
 }
 
@@ -34,6 +34,16 @@ private fun AssistantWelcomePreview() = Assistant(AssistantUiState.Idle)
 @Preview
 @Composable
 private fun AssistantConversationPreview() = Assistant(AssistantUiState.Chatting(sampleConversation))
+
+@Preview
+@Composable
+private fun AssistantQuestionsLeftPreview() =
+    Assistant(AssistantUiState.Chatting(sampleConversation), questionsLeft = 3)
+
+@Preview
+@Composable
+private fun AssistantBudgetUsedUpPreview() =
+    Assistant(AssistantUiState.Chatting(sampleConversation), questionsLeft = 0)
 
 @Preview
 @Composable

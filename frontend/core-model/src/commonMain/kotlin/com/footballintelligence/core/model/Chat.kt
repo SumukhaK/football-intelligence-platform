@@ -57,4 +57,6 @@ data class ChatResponse(
     @SerialName("retrieved_count") val retrievedCount: Int,
     /** Null from servers older than v2.5.0 or when no conversation ID was sent. */
     val signature: String? = null,
+    /** About how many questions today's budget allows (ADR 036); null when none applies. */
+    @SerialName("questions_left") val questionsLeft: Int? = null,
 )

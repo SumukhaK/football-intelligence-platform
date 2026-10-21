@@ -25,6 +25,9 @@ The changes come from the 21 October UX review:
 - **Dark mode.** Explain's factor colours use the theme's primary and error
   roles; the fixed greens were hard to read on the dark surface. Status chips
   use the design tokens instead of hex values.
+- **Questions left.** Under the chat, "About N questions left today" shows
+  what the daily token budget still allows (ADR 036). A used-up budget shows
+  the server's own message and "No questions left today".
 - **Wording.** Titles match their tabs (Fixtures, Predict, Assistant) and every
   title and label uses sentence case. Settings rows use the Android chevron,
   and Season outlook says Retry like every other screen.
