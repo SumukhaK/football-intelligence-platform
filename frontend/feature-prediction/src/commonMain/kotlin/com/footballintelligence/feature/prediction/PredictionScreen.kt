@@ -28,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.footballintelligence.core.ui.BackButton
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LeagueEmblem
 import com.footballintelligence.core.ui.LoadingView
@@ -62,7 +61,6 @@ fun PredictionScreen(
     onPredict: (homeTeam: String, awayTeam: String) -> Unit,
     onRetryTeams: () -> Unit,
     onNavigateToResult: () -> Unit,
-    onBack: () -> Unit,
     modifier: Modifier = Modifier,
     isRefreshing: Boolean = false,
     onRefresh: () -> Unit = {},
@@ -74,7 +72,6 @@ fun PredictionScreen(
             TopAppBar(
                 colors = appBarColors(),
                 title = { Text(stringResource(Res.string.prediction_title)) },
-                navigationIcon = { BackButton(onClick = onBack) },
                 actions = actions,
             )
         },

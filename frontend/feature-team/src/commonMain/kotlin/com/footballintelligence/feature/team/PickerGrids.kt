@@ -109,6 +109,14 @@ internal fun LeagueGrid(
 /** Team step: the chosen league's emblem as a header over a grid of crests. */
 @Composable
 internal fun TeamGrid(step: PickerStep.Team, scopes: PickerScopes, onSelect: (String) -> Unit, onRetry: () -> Unit) {
+    if (step.isSaving) {
+        LoadingView()
+        return
+    }
+    step.saveError?.let {
+        ErrorView(errorMessage(it.kind, it.message), onRetry)
+        return
+    }
     Column(Modifier.fillMaxSize()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

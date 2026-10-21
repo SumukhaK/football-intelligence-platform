@@ -4,10 +4,13 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -42,7 +45,9 @@ import com.footballintelligence.feature.team.MyTeamSettingsSection
 import com.footballintelligence.feature.team.MyTeamViewModel
 import com.footballintelligence.feature.team.PickerFlow
 import com.footballintelligence.feature.team.ProjectedTableScreen
+import com.footballintelligence.feature.team.ProjectedTableViewModel
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 /**
  * Root of the app: the navigation graph, with a bottom bar on the top-level
@@ -54,8 +59,6 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AppNavigation(navController: NavHostController, signedIn: Boolean) {
-    val favourite: FavouriteTeamViewModel = koinViewModel()
-    val firstRoute = if (favourite.needsOnboarding) Screen.Onboarding.route else Screen.Home.route
     // Read once: NavHost rebuilds its graph if the start destination changes.
     val start = remember { if (signedIn) Screen.Consent.route else Screen.Auth.route }
     FollowSession(navController, signedIn)
@@ -65,6 +68,10 @@ fun AppNavigation(navController: NavHostController, signedIn: Boolean) {
     // While typing, the keyboard needs the room more than the tabs do.
     val typing = WindowInsets.isImeVisible
     Scaffold(
+        // Each screen's green top bar draws behind the status bar itself.
+        contentWindowInsets = ScaffoldDefaults.contentWindowInsets.only(
+            WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom,
+        ),
         bottomBar = {
             if (current != null && !typing) {
                 BottomNavBar(current = current, onSelect = { navController.navigateTo(it) })
@@ -74,7 +81,6 @@ fun AppNavigation(navController: NavHostController, signedIn: Boolean) {
         AppNavHost(
             navController,
             start,
-            firstRoute,
             if (route in FULL_SCREEN_ROUTES) Modifier else Modifier.padding(padding).consumeWindowInsets(padding),
         )
     }
@@ -115,7 +121,6 @@ private fun NavHostController.openFixture(league: String, homeTeam: String, away
 private fun AppNavHost(
     navController: NavHostController,
     startDestination: String,
-    firstRoute: String,
     modifier: Modifier,
 ) {
     val settingsAction: @Composable RowScope.() -> Unit = {
@@ -130,9 +135,11 @@ private fun AppNavHost(
         authRoutes(
             onReady = {
                 enableCrashReports(appContext)
-                navController.restartAt(firstRoute)
+                navController.restartAt(Screen.AccountPreferences.route)
             },
         )
+
+        accountPreferencesRoute(navController)
 
         composable(Screen.Onboarding.route) {
             TeamPickerRoute(
@@ -188,9 +195,11 @@ private fun AppNavHost(
             val vm: MyTeamViewModel = koinViewModel(
                 viewModelStoreOwner = navController.getBackStackEntry(Screen.MyTeam.route),
             )
-            val outlook by vm.outlookState.collectAsState()
+            val table: ProjectedTableViewModel = koinViewModel(parameters = { parametersOf(vm.outlookState) })
+            val tableState by table.state.collectAsState()
             ProjectedTableScreen(
-                uiState = outlook,
+                uiState = tableState,
+                onSort = table::sortBy,
                 onRetry = vm::retry,
                 onBack = { navController.popBackStack() },
             )
@@ -218,7 +227,6 @@ private fun AppNavHost(
                 onNavigateToResult = {
                     navController.navigate(Screen.PredictionResult.route)
                 },
-                onBack = { navController.popBackStack() },
                 isRefreshing = isRefreshing,
                 onRefresh = vm::refreshTeams,
                 actions = settingsAction,
@@ -269,12 +277,14 @@ private fun AppNavHost(
             val vm: AssistantViewModel = koinViewModel()
             val state by vm.state.collectAsState()
             val isSending by vm.isSending.collectAsState()
+            val questionsLeft by vm.questionsLeft.collectAsState()
             AssistantScreen(
                 uiState = state,
                 isSending = isSending,
                 onSend = vm::send,
                 actions = settingsAction,
                 onNewChat = vm::newChat,
+                questionsLeft = questionsLeft,
             )
         }
 

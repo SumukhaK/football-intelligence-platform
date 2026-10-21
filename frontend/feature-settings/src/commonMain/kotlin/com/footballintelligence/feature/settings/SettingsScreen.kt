@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.QueryStats
@@ -92,7 +92,7 @@ fun SettingsScreen(
                         },
                         trailingContent = {
                             Icon(
-                                Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                 contentDescription = null,
                             )
                         },
@@ -109,7 +109,7 @@ fun SettingsScreen(
                         },
                         trailingContent = {
                             Icon(
-                                Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                 contentDescription = null,
                             )
                         },

@@ -45,29 +45,39 @@ and sent as `Authorization: Bearer <token>` on every request. After sign-in the
 app calls `GET /v2/me`; if the current notice still needs accepting it shows
 the notice from the server with a "Store my question text" switch (off by
 default). Any request answered 401 forgets the token and returns to sign-in,
-and Settings has a Sign out entry. Without a connection the app skips the
-notice check and shows saved data.
+and Settings has a Sign out entry. After consent, the account preference check
+must succeed before entering the app; network and server failures offer retry.
 
-On first launch the app asks for a favourite league, then a team from it, on
+When the server confirms no favourite exists, the app asks for a league and team on
 one screen with two steps: a grid of league emblems, then the league's crests.
 The chosen emblem morphs into the team step's header (a shared element
-transition) and back. The choice is saved in SharedPreferences and the picker
-is not shown again. Fixtures opens on the favourite league's tab, listed first. A bottom bar
+transition) and back. The choice is saved to the existing account store through
+`/v2/me/preferences` before leaving the picker (ADR 035). It survives a new
+install or app upgrade because the server is authoritative. SharedPreferences
+caches only confirmed values under the signed-in account; old unscoped keys
+are discarded. Fixtures opens on the favourite league's tab, listed first. A bottom bar
 switches between Fixtures, Predict,
 My Team and Assistant; a settings icon at the top right of each opens Settings.
 The bar hides while the keyboard is open, so the chat gets the room, and the
 Assistant has no back arrow, like the other tabs.
 The Assistant remembers the chat (ADR 030): with each question it sends its
-last 4 signed exchanges, so "and the draw?" follows on. New chat in its top bar,
-or 30 minutes without a question, starts a fresh conversation.
+last 4 signed exchanges, so "and the draw?" follows on. New chat in its top bar
+is available after the reply completes; reset attempts while sending are ignored.
+New chat, or 30 minutes without a question, starts a fresh conversation.
+Starter suggestions are withheld pending evaluation on the staging model and index.
 My Team shows the favourite team's next match: kick-off, the win/draw/loss pick
 with its top three reasons, the three likeliest scores and the clean-sheet
 chance. A match leaves the card two hours after kick-off. Below it, Season outlook shows the projected
 finish from `GET /v2/teams/{team}/outlook` (ADR 023): position and points,
 the title, top-four and relegation chances, a chart of those chances
 through the season (each point used only results known then) and attack and
-defence strengths. Tapping it opens the projected table with the team
-highlighted. Settings shows the
+defence strengths. Tapping it opens Projected Table with the favourite team
+highlighted, fixed team identities and horizontally scrollable metrics.
+Tap any heading to sort ascending, then tap it again to toggle direction.
+Now and Proj sort the displayed points; projected rank stays attached to
+each team. See [Android 2.6.2](../docs/releases/frontend-2.6.2.md) and
+[Android 2.6.3](../docs/releases/frontend-2.6.3.md).
+Settings shows the
 saved team in one My team row; it reopens the picker with the saved league and
 team checked and, once a team is saved, restarts the app so every screen loads
 the new team. Every

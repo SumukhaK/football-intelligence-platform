@@ -20,7 +20,7 @@ The Football Intelligence Platform ingests 26 seasons of match data from Europe'
 
 It is a complete, working system — not a notebook or a prototype. Twelve build stages take it from an empty repository to a tested, documented, end-to-end product: ingestion → validation → feature engineering → model training → explainability → a FastAPI backend → a locally-grounded RAG assistant → a Compose Multiplatform Android app → full integration testing.
 
-**1,580 tests: 1,373 Python and 207 Android. Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes results and fixtures daily without a restart, and the app keeps working offline with the last data it saw.** It is also hosted: since 14 October 2026 a private, invite-only staging service runs on Google Cloud Run, with the assistant on Cloudflare Workers AI, short-term chat memory, a safety check and alerts. Since v2.6.0 invite codes are short and easy to type, and question text is saved for 90 days only for users who opted in (ADR 034). The cloud features are all off by default, so the local setup is unchanged.
+**1,679 tests: 1,446 Python and 233 Android. Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes results and fixtures daily without a restart, and the app keeps working offline with the last data it saw.** It is also hosted: since 14 October 2026 a private, invite-only staging service runs on Google Cloud Run, with the assistant on Cloudflare Workers AI, short-term chat memory, a safety check and alerts. Since v2.6.0 invite codes are short and easy to type, and question text is saved for 90 days only for users who opted in (ADR 034). The cloud features are all off by default, so the local setup is unchanged.
 
 ---
 
@@ -41,6 +41,10 @@ This project demonstrates AI engineering as a discipline: not just "can I train 
 ---
 
 ## Key Capabilities
+
+Account favourites now persist on the server across installs and upgrades
+(ADR 035). After sign-in, the Android app confirms preferences before choosing
+onboarding; a failed account read offers retry.
 
 | Capability | Description |
 |---|---|
@@ -428,7 +432,7 @@ cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
 | [v0.2.0](docs/releases/v0.2.0.md) | 2026-06-30 | SHAP explainability, FastAPI backend, RAG assistant |
 | [v0.1.0](docs/releases/v0.1.0.md) | — | Data pipeline, feature engineering, XGBoost training |
 
-Build stages 1–12 (repository foundation through integration and production readiness) are complete; see the [stage reports](docs/reports/). The follow-on phase ([plan](docs/plans/next-phase-plan.md)) added the five leagues, server-side features, plain-language explanations, draw handling, scoreline predictions, a daily data refresh, API versions with a rate limit, upcoming fixtures and an offline-ready app. These shipped as [v2.0.0](docs/releases/v2.0.0.md).
+Build stages 1–12 (repository foundation through integration and production readiness) are complete; see the [stage reports](docs/reports/). The follow-on phase ([plan](docs/plans/next-phase-plan.md)) added the five leagues, server-side features, plain-language explanations, draw handling, scoreline predictions, a daily data refresh, API versions with a rate limit, upcoming fixtures and an offline-ready app. These shipped as [v2.0.0](docs/releases/v2.0.0.md). Android [2.6.2](docs/releases/frontend-2.6.2.md) redesigns Projected Table and adds sorting to every column, retaining the [2.6.1](docs/releases/frontend-2.6.1.md) assistant fixes, and [2.6.3](docs/releases/frontend-2.6.3.md) applies the UX review polish. [v2.6.3](docs/releases/v2.6.3.md) brings the API to the same version, adding server-saved favourites and account hardening.
 
 ---
 

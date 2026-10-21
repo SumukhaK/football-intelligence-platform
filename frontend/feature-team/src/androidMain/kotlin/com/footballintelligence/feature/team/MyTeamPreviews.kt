@@ -1,5 +1,6 @@
 package com.footballintelligence.feature.team
 
+import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.footballintelligence.core.model.FavouriteTeam
@@ -144,11 +145,14 @@ private fun SeasonOutlookErrorPreview() = Outlook(SeasonOutlookUiState.Error("Se
 @Composable
 private fun ChanceChartPreview() = PreviewSurface { ChanceChart(sampleOutlook.history) }
 
-@Preview
+@Preview(widthDp = 360, heightDp = 760)
+@Preview(widthDp = 800, heightDp = 360)
+@Preview(widthDp = 360, heightDp = 760, uiMode = Configuration.UI_MODE_NIGHT_YES, fontScale = 2f)
 @Composable
 private fun ProjectedTablePreview() = PreviewSurface {
     ProjectedTableScreen(
-        SeasonOutlookUiState.Success(sampleOutlook, savedAt = "8 Oct, 09:00"),
+        ProjectedTableUiState(SeasonOutlookUiState.Success(sampleOutlook, savedAt = "8 Oct, 09:00")),
+        onSort = {},
         onRetry = {},
         onBack = {},
     )

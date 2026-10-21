@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.footballintelligence.core.model.ChatFavouriteTeam
 import com.footballintelligence.core.model.ChatMessage
+import com.footballintelligence.core.model.ErrorKind
 import com.footballintelligence.core.model.FavouriteTeam
 import com.footballintelligence.core.model.MessageRole
 import com.footballintelligence.core.model.NetworkResult
@@ -33,12 +34,17 @@ class AssistantViewModel(
     private val _isSending = MutableStateFlow(false)
     val isSending: StateFlow<Boolean> = _isSending.asStateFlow()
 
+    /** About how many questions are left today (ADR 036); null until the server says. */
+    private val _questionsLeft = MutableStateFlow<Int?>(null)
+    val questionsLeft: StateFlow<Int?> = _questionsLeft.asStateFlow()
+
     private val conversationHistory = mutableListOf<ChatMessage>()
     private var conversationId = newConversationId()
     private var lastActivity = now()
 
-    /** Starts a new conversation: the screen clears and the assistant forgets. */
+    /** Starts a new conversation unless an answer is still pending. */
     fun newChat() {
+        if (_isSending.value) return
         conversationHistory.clear()
         conversationId = newConversationId()
         _state.value = AssistantUiState.Idle
@@ -75,9 +81,13 @@ class AssistantViewModel(
                     )
                     conversationHistory.add(assistantMessage)
                     _state.value = AssistantUiState.Chatting(conversationHistory.toList())
+                    _questionsLeft.value = response.questionsLeft
                 }
                 is NetworkResult.Error -> {
                     val errorCode = result.code
+                    if (errorCode == HTTP_TOO_MANY_REQUESTS && result.kind == ErrorKind.REJECTED) {
+                        _questionsLeft.value = 0
+                    }
                     if (errorCode == HTTP_SERVICE_UNAVAILABLE) {
                         _state.value = AssistantUiState.Unavailable(result.message)
                     } else {
@@ -99,6 +109,9 @@ class AssistantViewModel(
 
 /** The backend returns 503 when the assistant (Ollama or its index) is down. */
 private const val HTTP_SERVICE_UNAVAILABLE = 503
+
+/** The backend's own 429 here means today's assistant budget is used up (ADR 036). */
+private const val HTTP_TOO_MANY_REQUESTS = 429
 
 /** After this long without a question the next one starts a new conversation. */
 private const val IDLE_RESET_MILLIS = 30 * 60 * 1000L

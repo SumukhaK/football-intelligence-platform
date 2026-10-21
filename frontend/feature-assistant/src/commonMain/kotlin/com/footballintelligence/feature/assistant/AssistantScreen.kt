@@ -43,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.footballintelligence.core.designsystem.GreenOnPrimary
 import com.footballintelligence.core.model.ChatMessage
@@ -58,6 +59,8 @@ import com.footballintelligence.feature.assistant.resources.cd_send_message
 import com.footballintelligence.feature.assistant.resources.confidence
 import com.footballintelligence.feature.assistant.resources.input_placeholder
 import com.footballintelligence.feature.assistant.resources.new_chat
+import com.footballintelligence.feature.assistant.resources.questions_left
+import com.footballintelligence.feature.assistant.resources.questions_used_up
 import com.footballintelligence.feature.assistant.resources.source_item
 import com.footballintelligence.feature.assistant.resources.sources
 import com.footballintelligence.feature.assistant.resources.unavailable_body
@@ -74,6 +77,7 @@ fun AssistantScreen(
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {},
     onNewChat: () -> Unit = {},
+    questionsLeft: Int? = null,
 ) {
     Scaffold(
         topBar = {
@@ -81,7 +85,7 @@ fun AssistantScreen(
                 colors = appBarColors(),
                 title = { Text(stringResource(Res.string.assistant_title)) },
                 actions = {
-                    if (uiState is AssistantUiState.Chatting) {
+                    if (uiState is AssistantUiState.Chatting && !isSending) {
                         TextButton(onClick = onNewChat) {
                             Text(
                                 stringResource(Res.string.new_chat),
@@ -107,6 +111,7 @@ fun AssistantScreen(
                 },
                 isSending = isSending,
                 onSend = onSend,
+                questionsLeft = questionsLeft,
                 modifier = Modifier.padding(padding),
             )
         }
@@ -118,6 +123,7 @@ private fun ChatContent(
     messages: List<ChatMessage>,
     isSending: Boolean,
     onSend: (String) -> Unit,
+    questionsLeft: Int?,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
@@ -142,7 +148,7 @@ private fun ChatContent(
         ) {
             if (messages.isEmpty()) {
                 item {
-                    WelcomeMessage(onAsk = onSend)
+                    WelcomeMessage()
                 }
             }
             items(messages) { message ->
@@ -157,6 +163,7 @@ private fun ChatContent(
             }
         }
 
+        questionsLeft?.let { QuestionsLeft(it) }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -189,6 +196,22 @@ private fun ChatContent(
             }
         }
     }
+}
+
+/** Today's allowance (ADR 036), so a used-up budget is never a surprise. */
+@Composable
+private fun QuestionsLeft(count: Int) {
+    Text(
+        text = if (count > 0) {
+            stringResource(Res.string.questions_left, count)
+        } else {
+            stringResource(Res.string.questions_used_up)
+        },
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+    )
 }
 
 @Composable

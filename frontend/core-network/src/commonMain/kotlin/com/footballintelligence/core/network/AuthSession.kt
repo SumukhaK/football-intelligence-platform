@@ -38,7 +38,9 @@ class AuthSession(private val store: TokenStore) {
 fun bearerAuth(session: AuthSession): ClientPlugin<Unit> =
     createClientPlugin("BearerAuth") {
         onRequest { request, _ ->
-            session.token.value?.let { request.headers[HttpHeaders.Authorization] = bearer(it) }
+            if (!request.headers.contains(HttpHeaders.Authorization)) {
+                session.token.value?.let { request.headers[HttpHeaders.Authorization] = bearer(it) }
+            }
         }
         onResponse { response ->
             val sent = response.call.request.headers[HttpHeaders.Authorization]

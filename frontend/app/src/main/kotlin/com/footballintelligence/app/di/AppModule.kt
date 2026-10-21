@@ -1,6 +1,7 @@
 package com.footballintelligence.app.di
 
 import com.footballintelligence.app.BuildConfig
+import com.footballintelligence.core.network.AccountPreferencesApiService
 import com.footballintelligence.core.network.AuthApiService
 import com.footballintelligence.core.network.AuthSession
 import com.footballintelligence.core.network.CachingFootballApiService
@@ -27,6 +28,7 @@ val networkModule = module {
     single { AuthSession(store = get()) }
     single { HttpClientFactory.create(config = get(), session = get()) }
     single { AuthApiService(client = get(), config = get()) }
+    single { AccountPreferencesApiService(client = get(), config = get()) }
     single<ResponseCache> { FileResponseCache(File(androidContext().cacheDir, "api")) }
     single<FootballApiService> {
         CachingFootballApiService(

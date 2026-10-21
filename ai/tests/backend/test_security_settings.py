@@ -40,6 +40,8 @@ def test_cloud_starts_with_sign_in_and_a_secret_salt(
         telemetry_salt="a-real-secret",
         assistant_safety=True,
         history_key=SecretStr("a-real-history-key"),
+        assistant_daily_tokens_per_user=30_000,
+        assistant_daily_tokens_total=900_000,
     )
     assert settings.revision == "football-api-00001-abc"
 
@@ -50,6 +52,20 @@ def test_cloud_refuses_to_start_with_unguarded_chat(
     monkeypatch.setenv("K_REVISION", "football-api-00001-abc")
     with pytest.raises(ValidationError, match="ASSISTANT_SAFETY"):
         Settings(auth_required=True, telemetry_salt="a-real-secret")
+
+
+def test_cloud_refuses_to_start_chat_without_budgets(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A paid model on Cloud Run always has daily token budgets (ADR 036)."""
+    monkeypatch.setenv("K_REVISION", "football-api-00001-abc")
+    with pytest.raises(ValidationError, match="ASSISTANT_DAILY_TOKENS"):
+        Settings(
+            auth_required=True,
+            telemetry_salt="a-real-secret",
+            assistant_safety=True,
+            history_key=SecretStr("a-real-history-key"),
+        )
 
 
 def test_cloud_starts_with_the_assistant_off(monkeypatch: pytest.MonkeyPatch) -> None:

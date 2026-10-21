@@ -17,6 +17,18 @@ private val LightColorScheme = lightColorScheme(
     error = ErrorRed,
     errorContainer = ErrorRedContainer,
     surface = NeutralSurface,
+    onSurface = NeutralOnSurface,
+    background = NeutralSurface,
+    onBackground = NeutralOnSurface,
+    surfaceVariant = NeutralSurfaceVariant,
+    onSurfaceVariant = NeutralOnSurfaceVariant,
+    outline = NeutralOutline,
+    outlineVariant = NeutralOutlineVariant,
+    surfaceContainerLowest = NeutralContainerLowest,
+    surfaceContainerLow = NeutralContainerLow,
+    surfaceContainer = NeutralContainer,
+    surfaceContainerHigh = NeutralContainerHigh,
+    surfaceContainerHighest = NeutralContainerHighest,
 )
 
 private val DarkColorScheme = darkColorScheme(
@@ -30,6 +42,18 @@ private val DarkColorScheme = darkColorScheme(
     error = ErrorRedDark,
     errorContainer = ErrorRed,
     surface = NeutralSurfaceDark,
+    onSurface = NeutralOnSurfaceDark,
+    background = NeutralSurfaceDark,
+    onBackground = NeutralOnSurfaceDark,
+    surfaceVariant = NeutralSurfaceVariantDark,
+    onSurfaceVariant = NeutralOnSurfaceVariantDark,
+    outline = NeutralOutlineDark,
+    outlineVariant = NeutralSurfaceVariantDark,
+    surfaceContainerLowest = NeutralContainerLowestDark,
+    surfaceContainerLow = NeutralContainerLowDark,
+    surfaceContainer = NeutralContainerDark,
+    surfaceContainerHigh = NeutralContainerHighDark,
+    surfaceContainerHighest = NeutralContainerHighestDark,
 )
 
 /** Material 3 theme for Football Intelligence. */

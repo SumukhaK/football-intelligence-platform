@@ -17,7 +17,7 @@ Status values: `Not started`, `In progress`, `Blocked (reason)`, `Done (date)`.
 | 2 | Connect storage and secrets | 3, 7 | Not started |
 | 3a | Invite-only accounts and consent | [plan](accounts-and-consent-plan.md) | In progress (sign-in and consent checked on staging through the API on 14 October 2026; the app walkthrough to go) |
 | 3 | Connect the hosted LLM | 1 | In progress (on in staging since 14 October 2026 and quoting the API's numbers; evals against staging to go) |
-| 3b | Guardrails gateway: safety, scope router, cache, limits | [analysis](assistant-guardrails-analysis.md) | In progress (safety check and strikes done, ADR 027; cache, budgets and the rules sheet to go) |
+| 3b | Guardrails gateway: safety, scope router, cache, limits | [analysis](assistant-guardrails-analysis.md) | In progress (safety check and strikes done, ADR 027; daily token budgets done, ADR 036; cache and the rules sheet to go) |
 | 3c | Short-term chat memory | [plan](chat-memory-plan.md) | Done (15 October 2026, v2.5.0 on staging) |
 | 4 | Observability: logs, traces, metrics, alerts | 6 | In progress (request IDs, traces, local stack, and metrics and alerts as code done; apply and dashboard to go) |
 | 5 | CI/CD with the eval gate | 6 | Not started |
@@ -84,7 +84,9 @@ Backend first, then the Android screens. Details in [accounts-and-consent-plan.m
 - [x] `/v2/auth/*`, `/v2/me`, `/v2/me/consent`; every `/v2` data route needs a session and current consent when `AUTH_REQUIRED` is on.
 - [x] Owner script: invite (also resets a password), ban, unban.
 - [x] Android: redeem invite, sign in, consent screen, token storage, 401 and 403 handling (#84).
-- [ ] Ops, once per project: a Firestore TTL policy so opted-in questions are deleted after 90 days (ADR 034). With the collection prefix in use (for example `staging_`): `gcloud firestore fields ttls update expires_at --collection-group=<prefix>questions --enable-ttl --database=<FIRESTORE_DATABASE> --project=<GCP_PROJECT_ID>`. Check with `gcloud firestore fields ttls list --database=<FIRESTORE_DATABASE>`. Until it is set, records are kept.
+- [x] Ops, once per project: a Firestore TTL policy so opted-in questions are deleted after 90 days (ADR 034). With the collection prefix in use (for example `staging_`): `gcloud firestore fields ttls update expires_at --collection-group=<prefix>questions --enable-ttl --database=<FIRESTORE_DATABASE> --project=<GCP_PROJECT_ID>`. Check with `gcloud firestore fields ttls list --database=<FIRESTORE_DATABASE>`. Until it is set, records are kept. Staging: `staging_questions` set and ACTIVE on 17 October 2026.
+- [ ] Ops, before deploying v2.6.3: the same TTL policy on `<prefix>usage` (assistant token budgets, ADR 036), and set `ASSISTANT_DAILY_TOKENS_PER_USER=30000` and `ASSISTANT_DAILY_TOKENS_TOTAL=900000` on the service.
+- [ ] Ops, before deploying v2.6.3: the same TTL policy on sessions (`--collection-group=<prefix>sessions`), so ended sessions are deleted. v2.6.3 stores session `expires_at` as a timestamp; sessions saved earlier keep a string and are only removed by the policy once re-saved.
 
 Done when: an invited friend can redeem an invite, agree to the notice and use the app, and nobody else can.
 Evidence: integration tests and a staging walkthrough.
@@ -123,6 +125,7 @@ Plan: [chat-memory-plan.md](chat-memory-plan.md). Decision: [ADR 030](../adr/030
 - [x] `evaluation/assistant_conversation.py` passes on Workers AI (8/8), and abstention (20/20), grounding (11/11) and season (7/7) still pass (15 October 2026).
 - [x] App: keeps the signed window, New chat, 30-minute idle reset (ViewModel tests first; checked on the emulator 15 October 2026).
 - [x] Staging: `history-key` secret mounted; v2.5.0 deployed 15 October 2026 (built with Cloud Build). Checked through the public URL: sign-in, consent, predict, a signed follow-up ("and the draw?" got 24.7%) and a forged history ignored.
+- [x] Staging: v2.6.0 deployed 17 October 2026 (image `da8a236`, revision 00005, built with Cloud Build); `/v2/ready` ready and `/v2/health` version 2.6.0 with the assistant on. The first image (14 October) was deleted from Artifact Registry; `da8a236`, `a2afef3` and `ec72966` remain.
 
 Done when: a follow-up such as "and the draw?" is answered from the conversation on staging, a forged turn is ignored, and all four evals pass.
 Evidence: eval output in `docs/reports/hosted-assistant-evals.md` and staging logs.
@@ -240,3 +243,27 @@ Evidence: `docs/reports/incidents/`.
 
 Done when: the operations report is published.
 Evidence: `docs/reports/hosting-operations.md`.
+
+## Deferred application backlog
+
+### A1. Restore the favourite team after reinstall
+
+Status: Built in #157 (ADR 035) and released in v2.6.3; the reinstall walkthrough on staging waits for the v2.6.3 deploy.
+
+The owner uninstalled v2.5.1 before installing v2.6.0. The choice currently
+stores only league/team in device SharedPreferences; backup is disabled, so
+uninstall removes it. Onboarding correctly opens when that local choice is
+absent. The account's `User` and `MeResponse` have no favourite, and ADR 031
+uses favourite context per chat without storing it on the server.
+
+- [x] Write an ADR and API extension for account-backed preferences using the existing Firestore and local JSON account stores.
+- [x] Add authenticated save/read of league/team; restore before deciding whether onboarding is needed.
+- [x] Scope the local cache to the signed-in account and migrate an existing local choice safely.
+- [x] Distinguish a failed read (retry) from a truly absent preference (onboarding); an account's existence alone must never skip onboarding.
+- [x] Test both stores, authenticated API access, account switching, migration, failed reads, reinstall restoration and truly absent preferences.
+- [ ] Staging: reinstall walkthrough with Android 2.6.3-stg against API 2.6.3.
+
+Done when: a saved team returns after reinstall and sign-in, while a new
+account still completes onboarding. This patch implements none of it and
+changes no account schema or consent.
+Evidence: future ADR, API documentation, tests and reinstall walkthrough.

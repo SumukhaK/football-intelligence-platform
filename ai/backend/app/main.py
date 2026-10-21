@@ -267,8 +267,9 @@ def create_app() -> FastAPI:
 
     _add_exception_handlers(app)
 
+    app.state.account_store = make_account_store(settings)
     app.state.account_service = AccountService(
-        make_account_store(settings),
+        app.state.account_store,
         user_ref=partial(hash_ref, salt=settings.telemetry_salt),
     )
     include_routers(app, settings.auth_required)

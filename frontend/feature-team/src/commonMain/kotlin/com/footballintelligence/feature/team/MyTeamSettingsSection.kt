@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -38,7 +38,7 @@ fun MyTeamSettingsSection(favourite: FavouriteTeam, onChange: () -> Unit, modifi
                     Text(stringResource(Res.string.settings_my_team_value, favourite.team, favourite.league))
                 },
                 leadingContent = { TeamCrest(favourite.team, size = 40.dp) },
-                trailingContent = { Icon(Icons.AutoMirrored.Filled.ArrowForwardIos, contentDescription = null) },
+                trailingContent = { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
                 modifier = Modifier
                     .clickable(onClick = onChange)
                     .semantics { contentDescription = description },

@@ -11,7 +11,8 @@ import json
 import os
 import threading
 import uuid
-from dataclasses import asdict, dataclass, field
+from collections.abc import Callable
+from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
@@ -34,6 +35,7 @@ class User:
     store_questions: bool = False
     failed_logins: list[str] = field(default_factory=list)
     locked_until: str | None = None
+    favourite: dict[str, str] | None = None
 
 
 @dataclass
@@ -78,7 +80,15 @@ class AccountStore(Protocol):
         ...
 
     def save_user(self, user: User) -> None:
-        """Create or replace a user."""
+        """Save account fields, preserving the separately updated favourite."""
+        ...
+
+    def set_favourite(self, email: str, favourite: dict[str, str]) -> None:
+        """Patch only the existing account's favourite."""
+        ...
+
+    def update_user(self, email: str, change: Callable[[User], None]) -> User | None:
+        """Apply ``change`` to a fresh read and save it atomically; None if absent."""
         ...
 
     def get_invite(self, email: str) -> Invite | None:
@@ -105,6 +115,14 @@ class AccountStore(Protocol):
         """Add one stored question."""
         ...
 
+    def usage(self, key: str) -> int:
+        """Assistant tokens counted under ``key`` (ADR 036)."""
+        ...
+
+    def add_usage(self, key: str, tokens: int, expires_at: datetime) -> None:
+        """Add ``tokens`` to ``key`` atomically; the row may go after ``expires_at``."""
+        ...
+
 
 class JsonAccountStore:
     """All accounts in one JSON file, rewritten atomically on every change."""
@@ -112,16 +130,30 @@ class JsonAccountStore:
     def __init__(self, path: Path) -> None:
         """Use ``path``; the file is created on the first write."""
         self._path = path
-        self._lock = threading.Lock()
+        # Re-entrant: update_user holds it across a read and the write it makes.
+        self._lock = threading.RLock()
 
     def get_user(self, email: str) -> User | None:
         """The user with ``email``, or None."""
         row = self._read()["users"].get(email)
-        return User(**row) if row else None
+        return _user(row)
 
     def save_user(self, user: User) -> None:
-        """Create or replace a user."""
-        self._write("users", user.email, asdict(user))
+        """Save account fields without overwriting a newer favourite."""
+        self._write("users", user.email, _account_fields(user), merge=True)
+
+    def set_favourite(self, email: str, favourite: dict[str, str]) -> None:
+        """Patch only the existing account's favourite under the write lock."""
+        self._write("users", email, {"favourite": favourite}, merge=True, existing=True)
+
+    def update_user(self, email: str, change: Callable[[User], None]) -> User | None:
+        """Read, change and save ``email`` under the write lock."""
+        with self._lock:
+            user = self.get_user(email)
+            if user is not None:
+                change(user)
+                self.save_user(user)
+            return user
 
     def get_invite(self, email: str) -> Invite | None:
         """The latest invite for ``email``, or None."""
@@ -150,6 +182,17 @@ class JsonAccountStore:
         """Add one stored question; the JSON store never expires them."""
         self._write("questions", uuid.uuid4().hex, asdict(record))
 
+    def usage(self, key: str) -> int:
+        """Assistant tokens counted under ``key``."""
+        row = self._read().get("usage", {}).get(key)
+        return int(row["tokens"]) if row else 0
+
+    def add_usage(self, key: str, tokens: int, expires_at: datetime) -> None:
+        """Add ``tokens`` under the write lock; old rows stay, the file is local."""
+        with self._lock:
+            total = self.usage(key) + tokens
+            self._write("usage", key, {"tokens": total})
+
     def _read(self) -> dict[str, dict[str, dict[str, Any]]]:
         if not self._path.exists():
             return {"users": {}, "invites": {}, "sessions": {}, "questions": {}}
@@ -158,9 +201,22 @@ class JsonAccountStore:
         )
         return data
 
-    def _write(self, table: str, key: str, row: dict[str, Any]) -> None:
+    def _write(
+        self,
+        table: str,
+        key: str,
+        row: dict[str, Any],
+        *,
+        merge: bool = False,
+        existing: bool = False,
+    ) -> None:
         with self._lock:
             data = self._read()
+            previous = data.setdefault(table, {}).get(key)
+            if existing and previous is None:
+                raise KeyError(key)
+            if merge:
+                row = {**(previous or {}), **row}
             data.setdefault(table, {})[key] = row
             self._path.parent.mkdir(parents=True, exist_ok=True)
             temporary = self._path.with_suffix(".tmp")
@@ -183,11 +239,36 @@ class FirestoreAccountStore:
     def get_user(self, email: str) -> User | None:
         """The user with ``email``, or None."""
         row = self._get("users", email)
-        return User(**row) if row else None
+        return _user(row)
 
     def save_user(self, user: User) -> None:
-        """Create or replace a user."""
-        self._set("users", user.email, asdict(user))
+        """Merge account fields without overwriting a newer favourite."""
+        self._collection("users").document(_document_id(user.email)).set(
+            _account_fields(user), merge=True
+        )
+
+    def set_favourite(self, email: str, favourite: dict[str, str]) -> None:
+        """Atomically patch one field without replacing the account document."""
+        self._collection("users").document(_document_id(email)).update(
+            {"favourite": favourite}
+        )
+
+    def update_user(self, email: str, change: Callable[[User], None]) -> User | None:
+        """Read, change and save ``email`` in a transaction, retried on conflict."""
+        from google.cloud import firestore
+
+        ref = self._collection("users").document(_document_id(email))
+
+        def apply(transaction: Any) -> User | None:
+            snapshot = ref.get(transaction=transaction)
+            user = _user(snapshot.to_dict() if snapshot.exists else None)
+            if user is not None:
+                change(user)
+                transaction.set(ref, _account_fields(user), merge=True)
+            return user
+
+        result: User | None = firestore.transactional(apply)(self._client.transaction())
+        return result
 
     def get_invite(self, email: str) -> Invite | None:
         """The latest invite for ``email``, or None."""
@@ -201,11 +282,14 @@ class FirestoreAccountStore:
     def get_session(self, token_hash: str) -> Session | None:
         """The session with ``token_hash``, or None."""
         row = self._get("sessions", token_hash)
-        return Session(**row) if row else None
+        return _session(row) if row else None
 
     def save_session(self, session: Session) -> None:
         """Create or replace a session."""
-        self._set("sessions", session.token_hash, asdict(session))
+        row: dict[str, Any] = asdict(session)
+        # A timestamp, so a TTL policy on expires_at deletes ended sessions.
+        row["expires_at"] = datetime.fromisoformat(session.expires_at)
+        self._set("sessions", session.token_hash, row)
 
     def sessions_for(self, email: str) -> list[Session]:
         """Every session of ``email``."""
@@ -214,7 +298,7 @@ class FirestoreAccountStore:
         query = self._collection("sessions").where(
             filter=FieldFilter("email", "==", email)
         )
-        return [Session(**doc.to_dict()) for doc in query.stream()]
+        return [_session(doc.to_dict()) for doc in query.stream()]
 
     def save_question(self, record: QuestionRecord) -> None:
         """Add one stored question under a random ID."""
@@ -222,6 +306,20 @@ class FirestoreAccountStore:
         # A TTL policy only deletes documents whose field is a timestamp.
         row["expires_at"] = datetime.fromisoformat(record.expires_at)
         self._set("questions", uuid.uuid4().hex, row)
+
+    def usage(self, key: str) -> int:
+        """Assistant tokens counted under ``key``."""
+        row = self._get("usage", key)
+        return int(row["tokens"]) if row else 0
+
+    def add_usage(self, key: str, tokens: int, expires_at: datetime) -> None:
+        """Increment on the server, so parallel answers all count; TTL deletes it."""
+        from google.cloud import firestore
+
+        self._collection("usage").document(_document_id(key)).set(
+            {"tokens": firestore.Increment(tokens), "expires_at": expires_at},
+            merge=True,
+        )
 
     def _collection(self, name: str) -> Any:
         return self._client.collection(self._prefix + name)
@@ -233,6 +331,30 @@ class FirestoreAccountStore:
 
     def _set(self, collection: str, key: str, row: dict[str, Any]) -> None:
         self._collection(collection).document(_document_id(key)).set(row)
+
+
+def _user(row: dict[str, Any] | None) -> User | None:
+    """Read known account fields while retaining unknown fields on future writes."""
+    if row is None:
+        return None
+    return User(
+        **{field.name: row[field.name] for field in fields(User) if field.name in row}
+    )
+
+
+def _session(row: dict[str, Any]) -> Session:
+    """Read a session whose expiry may be a Firestore timestamp or an older string."""
+    expires = row["expires_at"]
+    if isinstance(expires, datetime):
+        row = {**row, "expires_at": expires.isoformat()}
+    return Session(**row)
+
+
+def _account_fields(user: User) -> dict[str, Any]:
+    """Authentication writes never own the independently patched favourite."""
+    row = asdict(user)
+    row.pop("favourite")
+    return row
 
 
 def _document_id(key: str) -> str:

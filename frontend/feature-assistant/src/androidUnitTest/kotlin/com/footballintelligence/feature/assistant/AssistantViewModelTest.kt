@@ -12,6 +12,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.slot
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -22,6 +23,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AssistantViewModelTest {
@@ -66,6 +69,25 @@ class AssistantViewModelTest {
     @AfterEach
     fun tearDown() {
         Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `the questions left come from the latest answer`() {
+        val vm = viewModel()
+        assertEquals(null, vm.questionsLeft.value)
+        coEvery { repository.chat(any(), any(), any(), any()) } returns
+            NetworkResult.Success(answer("A").copy(questionsLeft = 4))
+        vm.send("Everton v Chelsea?")
+        assertEquals(4, vm.questionsLeft.value)
+    }
+
+    @Test
+    fun `a used-up budget leaves no questions`() {
+        val vm = viewModel()
+        coEvery { repository.chat(any(), any(), any(), any()) } returns
+            NetworkResult.Error("Come back after midnight UTC.", 429, ErrorKind.REJECTED)
+        vm.send("One more?")
+        assertEquals(0, vm.questionsLeft.value)
     }
 
     @Test
@@ -129,6 +151,60 @@ class AssistantViewModelTest {
         vm.send("Hello?")
         assertEquals(emptyList<HistoryTurn>(), sentHistory.last())
         assertNotEquals(sentIds.first(), sentIds.last())
+    }
+
+    @Test
+    fun `new chat while sending preserves the conversation until the answer arrives`() {
+        val vm = viewModel()
+        vm.send("First?")
+        val pending = CompletableDeferred<NetworkResult<ChatResponse>>()
+        coEvery { repository.chat("Pending?", any(), any(), any()) } coAnswers {
+            sentIds += arg<String>(1)
+            sentHistory += arg<List<HistoryTurn>>(2)
+            pending.await()
+        }
+        vm.send("Pending?")
+        val busyState = vm.state.value
+        vm.newChat()
+        vm.send("Duplicate?")
+        assertEquals(busyState, vm.state.value)
+        assertEquals(true, vm.isSending.value)
+        assertEquals(1, ids)
+        assertEquals(listOf("conv-1", "conv-1"), sentIds)
+        assertEquals(2, sentHistory.last().size)
+
+        pending.complete(NetworkResult.Success(answer("Pending answer")))
+        val messages = (vm.state.value as AssistantUiState.Chatting).messages
+        assertEquals(listOf("First?", "A to First?", "Pending?", "Pending answer"), messages.map { it.text })
+        assertEquals(false, vm.isSending.value)
+        vm.send("Follow-up?")
+        assertEquals("conv-1", sentIds.last())
+        assertEquals(HistoryTurn("assistant", "Pending answer", "sig-Pending answer"), sentHistory.last().last())
+        vm.newChat()
+        assertEquals(AssistantUiState.Idle, vm.state.value)
+        vm.send("Fresh?")
+        assertEquals("conv-2", sentIds.last())
+        assertEquals(emptyList<HistoryTurn>(), sentHistory.last())
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = [500, 503])
+    fun `new chat works after a pending request fails`(code: Int) {
+        val pending = CompletableDeferred<NetworkResult<ChatResponse>>()
+        coEvery { repository.chat("Pending?", any(), any(), any()) } coAnswers { pending.await() }
+        val vm = viewModel()
+        vm.send("Pending?")
+        val busyState = vm.state.value
+        vm.newChat()
+        assertEquals(busyState, vm.state.value)
+        assertEquals(1, ids)
+        pending.complete(NetworkResult.Error("Unavailable", code))
+        assertEquals(false, vm.isSending.value)
+        vm.newChat()
+        assertEquals(AssistantUiState.Idle, vm.state.value)
+        vm.send("Fresh?")
+        assertEquals("conv-2", sentIds.last())
+        assertEquals(emptyList<HistoryTurn>(), sentHistory.last())
     }
 
     @Test

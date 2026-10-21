@@ -11,6 +11,65 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.6.3] — 2026-10-21
+
+API and app both move to 2.6.3. Deploying the API needs owner steps: Firestore TTL policies on the sessions and usage collections' `expires_at`, as for questions (ADR 034), and the two assistant budget settings, without which the server won't start with the assistant on.
+
+### Added
+- `GET` and `PUT /v2/me/preferences` keep the favourite team on the account (ADR 035, #157).
+- Daily token budgets for the assistant, one per user and one for everyone (ADR 036). A question starts only if a typical answer still fits; refusals and router replies are free. Answers carry `questions_left` and `resets_at`, a used-up budget answers `429 Daily limit reached`, and the app shows "About N questions left today".
+- Your favourite team is saved to your account and restored after a reinstall (ADR 035, #157).
+- The account check screen offers Sign out when the server cannot be reached, instead of only Retry.
+
+### Changed
+- One colour scheme throughout: the green top bar now reaches under the status bar (with light status icons), and backgrounds, cards and the bottom bar use grey-green neutrals instead of Material's default lavender.
+- The Predict tab has no back arrow, like the other tabs.
+- Screen titles match their tabs (Fixtures, Predict, Assistant) and every title and label uses sentence case ("Prediction result", "Man United win").
+- Settings rows use the Android chevron, and Season outlook says Retry like every other screen.
+
+### Fixed
+- Parallel sign-in attempts and harmful questions are all counted, so the 5-try lockout and the 3-strike ban (ADR 027) can't be outpaced by simultaneous requests.
+- `/v2/live` and `/v2/ready` run on the event loop, so slow assistant calls can't delay them and get a healthy instance restarted.
+- A failed assistant call returns a fixed 503 message; the provider's error text, which can name local URLs, is logged on the server only.
+- The rate limiter forgets clients idle for a minute once it tracks 10,000, so its memory stays bounded.
+- Sign-in failures and strikes are changed in a Firestore transaction (a lock in the JSON store), so they stay correct with more than one instance.
+- Sessions store `expires_at` as a timestamp, so a TTL policy deletes ended ones; older string expiries still read.
+- Settings > My Team and the first-launch team picker use the green top bar; it was black in dark mode and grey in light mode.
+- Explain's factor colours follow the theme, so they stay readable in dark mode.
+
+### Security
+- certifi 2026.10.19 and Pillow 13.0.0 fix the advisories that failed pip-audit.
+
+See [v2.6.3](docs/releases/v2.6.3.md) and [Android 2.6.3](docs/releases/frontend-2.6.3.md).
+
+---
+
+## [2.6.2] — 2026-10-18
+
+Frontend patch only; the hosted API remains on 2.6.0.
+
+### Changed
+- Redesigned Projected Table with a sticky sortable header, fixed team identities, scrollable metrics, alternating rows and an explicit favourite-team highlight.
+- Every column sorts ascending on first selection and toggles direction on repeat taps, with visible arrows and accessible labels. Original projected ranks remain attached to their teams.
+
+### Fixed
+- Projected Table uses the shared green toolbar and consistent title capitalization.
+
+See [Android 2.6.2](docs/releases/frontend-2.6.2.md) for sorting semantics and staging build details.
+
+---
+
+## [2.6.1] — 2026-10-18
+
+Frontend patch only; the hosted API remains on 2.6.0.
+
+### Fixed
+- New chat is hidden while an assistant reply is pending, and reset attempts are ignored until it finishes, preserving the conversation and signed history.
+- Removed the refused "How does the app pick a winner?" starter. The next-match starter is also withheld until it has targeted staging evaluation with favourite-team context; the welcome copy reflects that answers can be unavailable.
+- Frontend CI now builds with the staging URL and uploads the actual staging APK, failing if the file is missing. Android is 2.6.1 (code 11).
+
+---
+
 ## [2.6.0] — 2026-10-17
 
 ### Added

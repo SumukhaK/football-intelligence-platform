@@ -33,8 +33,8 @@ android {
 
     defaultConfig {
         applicationId = "com.footballintelligence.app"
-        versionCode = 10
-        versionName = "2.6.0"
+        versionCode = 13
+        versionName = "2.6.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -107,6 +107,8 @@ dependencies {
     testImplementation(libs.junit5.api)
     testRuntimeOnly(libs.junit5.engine)
 }
+
+tasks.withType<Test>().configureEach { useJUnitPlatform() }
 
 // A staging APK with no address would install and then fail every request,
 // so asking for one by name fails at once. `assembleDebug` and the like still

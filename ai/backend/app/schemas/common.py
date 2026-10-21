@@ -55,7 +55,7 @@ class HealthResponse(BaseModel):
         default=None,
         description="Why the last refresh failed; null when it succeeded.",
     )
-    version: str = Field(..., description="API version string.", examples=["2.6.0"])
+    version: str = Field(..., description="API version string.", examples=["2.6.3"])
 
 
 class LiveResponse(BaseModel):
