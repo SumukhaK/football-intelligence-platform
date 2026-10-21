@@ -5,6 +5,7 @@ from __future__ import annotations
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -14,7 +15,12 @@ from backend.app.services.account_service import (
     InvalidCredentialsError,
     TooManyAttemptsError,
 )
-from backend.app.services.account_store import JsonAccountStore, User
+from backend.app.services.account_store import (
+    FirestoreAccountStore,
+    JsonAccountStore,
+    User,
+)
+from tests.backend.fake_firestore import FakeFirestore
 
 EMAIL = "sam@example.com"
 PASSWORD = "correct horse battery"
@@ -69,3 +75,29 @@ def test_parallel_strikes_all_count(accounts: AccountService) -> None:
     assert user is not None
     assert user.strikes == 3
     assert user.status == "banned"
+
+
+def test_firestore_counters_use_transactions() -> None:
+    """Strikes and failures go through Firestore transactions, not a local lock."""
+    client = FakeFirestore()
+    service = AccountService(FirestoreAccountStore(client))
+    code = service.create_invite(EMAIL)
+    service.redeem_invite(EMAIL, code, PASSWORD)
+    _in_parallel(3, lambda: service.add_strike(EMAIL))
+    _in_parallel(
+        5, lambda: pytest.raises(InvalidCredentialsError, service.login, EMAIL, "x")
+    )
+    user = client.collections["users"][EMAIL]
+    assert user["strikes"] == 3
+    assert len(user["failed_logins"]) == 5
+
+
+def test_firestore_sessions_expire_as_timestamps() -> None:
+    """A TTL policy only deletes documents whose field is a timestamp."""
+    client = FakeFirestore()
+    service = AccountService(FirestoreAccountStore(client))
+    code = service.create_invite(EMAIL)
+    token = service.redeem_invite(EMAIL, code, PASSWORD).token
+    (row,) = client.collections["sessions"].values()
+    assert isinstance(row["expires_at"], datetime)
+    assert service.authenticate(token).email == EMAIL

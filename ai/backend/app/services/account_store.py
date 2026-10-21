@@ -11,6 +11,7 @@ import json
 import os
 import threading
 import uuid
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime
 from pathlib import Path
@@ -86,6 +87,10 @@ class AccountStore(Protocol):
         """Patch only the existing account's favourite."""
         ...
 
+    def update_user(self, email: str, change: Callable[[User], None]) -> User | None:
+        """Apply ``change`` to a fresh read and save it atomically; None if absent."""
+        ...
+
     def get_invite(self, email: str) -> Invite | None:
         """The latest invite for ``email``, or None."""
         ...
@@ -117,7 +122,8 @@ class JsonAccountStore:
     def __init__(self, path: Path) -> None:
         """Use ``path``; the file is created on the first write."""
         self._path = path
-        self._lock = threading.Lock()
+        # Re-entrant: update_user holds it across a read and the write it makes.
+        self._lock = threading.RLock()
 
     def get_user(self, email: str) -> User | None:
         """The user with ``email``, or None."""
@@ -131,6 +137,15 @@ class JsonAccountStore:
     def set_favourite(self, email: str, favourite: dict[str, str]) -> None:
         """Patch only the existing account's favourite under the write lock."""
         self._write("users", email, {"favourite": favourite}, merge=True, existing=True)
+
+    def update_user(self, email: str, change: Callable[[User], None]) -> User | None:
+        """Read, change and save ``email`` under the write lock."""
+        with self._lock:
+            user = self.get_user(email)
+            if user is not None:
+                change(user)
+                self.save_user(user)
+            return user
 
     def get_invite(self, email: str) -> Invite | None:
         """The latest invite for ``email``, or None."""
@@ -219,6 +234,23 @@ class FirestoreAccountStore:
             {"favourite": favourite}
         )
 
+    def update_user(self, email: str, change: Callable[[User], None]) -> User | None:
+        """Read, change and save ``email`` in a transaction, retried on conflict."""
+        from google.cloud import firestore
+
+        ref = self._collection("users").document(_document_id(email))
+
+        def apply(transaction: Any) -> User | None:
+            snapshot = ref.get(transaction=transaction)
+            user = _user(snapshot.to_dict() if snapshot.exists else None)
+            if user is not None:
+                change(user)
+                transaction.set(ref, _account_fields(user), merge=True)
+            return user
+
+        result: User | None = firestore.transactional(apply)(self._client.transaction())
+        return result
+
     def get_invite(self, email: str) -> Invite | None:
         """The latest invite for ``email``, or None."""
         row = self._get("invites", email)
@@ -231,11 +263,14 @@ class FirestoreAccountStore:
     def get_session(self, token_hash: str) -> Session | None:
         """The session with ``token_hash``, or None."""
         row = self._get("sessions", token_hash)
-        return Session(**row) if row else None
+        return _session(row) if row else None
 
     def save_session(self, session: Session) -> None:
         """Create or replace a session."""
-        self._set("sessions", session.token_hash, asdict(session))
+        row: dict[str, Any] = asdict(session)
+        # A timestamp, so a TTL policy on expires_at deletes ended sessions.
+        row["expires_at"] = datetime.fromisoformat(session.expires_at)
+        self._set("sessions", session.token_hash, row)
 
     def sessions_for(self, email: str) -> list[Session]:
         """Every session of ``email``."""
@@ -244,7 +279,7 @@ class FirestoreAccountStore:
         query = self._collection("sessions").where(
             filter=FieldFilter("email", "==", email)
         )
-        return [Session(**doc.to_dict()) for doc in query.stream()]
+        return [_session(doc.to_dict()) for doc in query.stream()]
 
     def save_question(self, record: QuestionRecord) -> None:
         """Add one stored question under a random ID."""
@@ -272,6 +307,14 @@ def _user(row: dict[str, Any] | None) -> User | None:
     return User(
         **{field.name: row[field.name] for field in fields(User) if field.name in row}
     )
+
+
+def _session(row: dict[str, Any]) -> Session:
+    """Read a session whose expiry may be a Firestore timestamp or an older string."""
+    expires = row["expires_at"]
+    if isinstance(expires, datetime):
+        row = {**row, "expires_at": expires.isoformat()}
+    return Session(**row)
 
 
 def _account_fields(user: User) -> dict[str, Any]:

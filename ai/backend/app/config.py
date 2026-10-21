@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     ]
     default_competition: str = "Premier League"
     draw_possible_threshold: float = DEFAULT_DRAW_POSSIBLE_THRESHOLD
-    api_version: str = "2.6.0"
+    api_version: str = "2.6.3"
     log_level: str = "INFO"
     # `json` writes the telemetry contract's log lines (ADR 024); `text` is for
     # reading logs by eye locally.

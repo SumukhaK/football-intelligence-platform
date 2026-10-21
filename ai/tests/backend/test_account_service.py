@@ -199,7 +199,7 @@ def test_secrets_are_never_stored_in_plain_text(
     token = accounts.redeem_invite(EMAIL, code, PASSWORD).token
     store = accounts._store
     stored = (
-        json.dumps(store._client.collections)
+        json.dumps(store._client.collections, default=str)
         if isinstance(store, FirestoreAccountStore)
         else (tmp_path / "accounts.json").read_text(encoding="utf-8")
     )

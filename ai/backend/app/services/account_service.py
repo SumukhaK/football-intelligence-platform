@@ -6,7 +6,6 @@ import hashlib
 import hmac
 import logging
 import secrets
-import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -92,10 +91,6 @@ class AccountService:
         self._store = store
         self._clock = clock
         self._user_ref = user_ref
-        # Counters are read, changed and saved; parallel requests must not lose
-        # updates. One in-process lock is enough while Cloud Run runs a single
-        # instance (ADR 025); use Firestore transactions before raising max instances.
-        self._counter_lock = threading.Lock()
 
     def _log(self, action: str, outcome: str, email: str | None) -> None:
         """Log ``auth.event``; ``email`` is given only when the account is known."""
@@ -192,8 +187,7 @@ class AccountService:
             raise InvalidCredentialsError("Wrong email or password.")
         if user.status == "banned":
             raise AccountBlockedError("This account is blocked.")
-        user.failed_logins, user.locked_until = [], None
-        self._store.save_user(user)
+        self._store.update_user(user.email, _clear_failures)
         return self._new_session(user)
 
     def logout(self, token: str | None) -> None:
@@ -277,12 +271,10 @@ class AccountService:
         Raises:
             KeyError: If there is no such user.
         """
-        with self._counter_lock:
-            user = self._store.get_user(_normalise(email))
-            if user is None:
-                raise KeyError(email)
-            user.strikes += 1
-            self._store.save_user(user)
+        # Counters change atomically in the store, so parallel strikes all count.
+        user = self._store.update_user(_normalise(email), _add_strike)
+        if user is None:
+            raise KeyError(email)
         if user.strikes >= MAX_STRIKES:
             user = self.set_banned(user.email, True)
         self._log("strike", "blocked" if user.status == "banned" else "ok", user.email)
@@ -322,19 +314,27 @@ class AccountService:
         return NewSession(token, expires)
 
     def _record_failure(self, user: User, now: datetime) -> None:
-        with self._counter_lock:
-            # Re-read so a parallel failure saved since this request began is kept.
-            user = self._store.get_user(user.email) or user
+        def add_failure(fresh: User) -> None:
             recent = [
                 stamp
-                for stamp in user.failed_logins
+                for stamp in fresh.failed_logins
                 if datetime.fromisoformat(stamp) > now - LOCKOUT
             ]
             recent.append(now.isoformat())
-            user.failed_logins = recent
+            fresh.failed_logins = recent
             if len(recent) >= MAX_FAILED_LOGINS:
-                user.locked_until = (now + LOCKOUT).isoformat()
-            self._store.save_user(user)
+                fresh.locked_until = (now + LOCKOUT).isoformat()
+
+        # Atomic in the store, so parallel wrong passwords all count.
+        self._store.update_user(user.email, add_failure)
+
+
+def _add_strike(user: User) -> None:
+    user.strikes += 1
+
+
+def _clear_failures(user: User) -> None:
+    user.failed_logins, user.locked_until = [], None
 
 
 def _normalise(email: str) -> str:
