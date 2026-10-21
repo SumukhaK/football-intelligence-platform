@@ -18,6 +18,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.footballintelligence.core.ui.BackButton
+import com.footballintelligence.core.ui.appBarColors
 import com.footballintelligence.feature.team.resources.Res
 import com.footballintelligence.feature.team.resources.picker_change_title
 import com.footballintelligence.feature.team.resources.picker_welcome_title
@@ -53,6 +54,7 @@ fun TeamPickerScreen(
                         !isOnboarding -> BackButton(onClick = onLeave)
                     }
                 },
+                colors = appBarColors(),
             )
         },
         modifier = modifier,

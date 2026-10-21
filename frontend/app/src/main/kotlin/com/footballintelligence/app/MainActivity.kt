@@ -1,7 +1,9 @@
 package com.footballintelligence.app
 
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.CompositionLocalProvider
@@ -32,7 +34,8 @@ class MainActivity : ComponentActivity() {
         // Must run before super.onCreate so the Kick-off launch screen hands over cleanly.
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        // Every screen has a green bar under the status bar, so its icons stay light.
+        enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT))
         setContent {
             FootballTheme {
                 CompositionLocalProvider(

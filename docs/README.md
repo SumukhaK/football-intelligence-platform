@@ -116,6 +116,7 @@ Maintained by the project architect. The implementation engineer updates documen
 | [v2.5.1 Release Notes](releases/v2.5.1.md) | Staging live on v2.5.x; README and website updated |
 | [v2.6.0 Release Notes](releases/v2.6.0.md) | Beta fixes: cold starts, invite codes, favourite team in chat, opted-in question text, UI polish |
 | [Android 2.6.2](releases/frontend-2.6.2.md) | Projected Table redesign, consistent toolbar and sorting on every column |
+| [Android 2.6.3](releases/frontend-2.6.3.md) | UX review polish: one colour scheme, green status bar, sentence case, sign out on the account check |
 | [v2.0.1 Release Notes](releases/v2.0.1.md) | Faster offline fallback in the app, demo video |
 | [v2.0.0 Release Notes](releases/v2.0.0.md) | Five leagues, versioned API, fixtures, goals model, offline app |
 | [v1.0.0 Release Notes](releases/v1.0.0.md) | Full release notes for the complete platform (Stages 1–12) |

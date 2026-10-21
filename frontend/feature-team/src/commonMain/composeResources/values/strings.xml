@@ -46,10 +46,10 @@
     <string name="outlook_times">%1$s×</string>
     <string name="outlook_open_table">See projected table</string>
     <string name="cd_open_table">Open the projected league table</string>
-    <string name="outlook_retry">Try again</string>
+    <string name="outlook_retry">Retry</string>
 
     <!-- Projected table -->
-    <string name="table_title">Projected Table</string>
+    <string name="table_title">Projected table</string>
     <string name="table_heading">The season ahead</string>
     <string name="table_guide">Now: current points. Proj: expected final points. Chances: first, top four or bottom three.</string>
     <string name="table_scroll_hint">Tap headings to sort · Swipe numbers for more</string>
@@ -75,8 +75,9 @@
     <string name="cd_table_row">Projected rank %1$d, %2$s: %3$d points now, %4$d projected; first place %5$d%, top four %6$d%, bottom three %7$d%</string>
 
     <!-- Settings -->
-    <string name="settings_my_team_section">My Team</string>
+    <string name="settings_my_team_section">Favourite team</string>
     <string name="settings_my_team">My team</string>
     <string name="settings_my_team_value">%1$s, %2$s</string>
     <string name="cd_change_my_team">Change favourite team, currently %1$s in %2$s</string>
+    <string name="account_sign_out">Sign out</string>
 </resources>

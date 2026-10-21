@@ -23,7 +23,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.footballintelligence.core.model.ExplanationResult
 import com.footballintelligence.core.model.FeatureContribution
@@ -206,7 +205,8 @@ private fun FeatureSection(
 
 @Composable
 private fun FeatureRow(feature: FeatureContribution, strongest: Double, isPositive: Boolean) {
-    val color = if (isPositive) Color(0xFF2E7D32) else Color(0xFFC62828)
+    // Theme roles, not fixed hex: the fixed greens were too dark to read in dark mode.
+    val color = if (isPositive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,

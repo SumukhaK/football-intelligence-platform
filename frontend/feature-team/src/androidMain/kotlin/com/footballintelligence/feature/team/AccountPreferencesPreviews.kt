@@ -8,11 +8,15 @@ import com.footballintelligence.core.ui.PreviewSurface
 @Preview
 @Composable
 private fun PreferencesLoadingPreview() = PreviewSurface {
-    AccountPreferencesScreen(AccountPreferencesUiState.Loading, onRetry = {})
+    AccountPreferencesScreen(AccountPreferencesUiState.Loading, onRetry = {}, onSignOut = {})
 }
 
 @Preview
 @Composable
 private fun PreferencesErrorPreview() = PreviewSurface {
-    AccountPreferencesScreen(AccountPreferencesUiState.Error("Unavailable", ErrorKind.OFFLINE), onRetry = {})
+    AccountPreferencesScreen(
+        AccountPreferencesUiState.Error("Unavailable", ErrorKind.OFFLINE),
+        onRetry = {},
+        onSignOut = {},
+    )
 }
