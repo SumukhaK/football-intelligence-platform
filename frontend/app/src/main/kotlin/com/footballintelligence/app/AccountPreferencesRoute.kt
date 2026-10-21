@@ -7,6 +7,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import com.footballintelligence.core.navigation.Screen
+import com.footballintelligence.feature.auth.SignOutViewModel
 import com.footballintelligence.feature.team.AccountPreferencesScreen
 import com.footballintelligence.feature.team.AccountPreferencesUiState
 import com.footballintelligence.feature.team.AccountPreferencesViewModel
@@ -20,7 +21,8 @@ fun NavGraphBuilder.accountPreferencesRoute(navController: NavHostController) {
         LaunchedEffect(state) {
             state.destination()?.let { navController.restartAt(it.route) }
         }
-        AccountPreferencesScreen(state, onRetry = vm::retry)
+        val account: SignOutViewModel = koinViewModel()
+        AccountPreferencesScreen(state, onRetry = vm::retry, onSignOut = account::signOut)
     }
 }
 

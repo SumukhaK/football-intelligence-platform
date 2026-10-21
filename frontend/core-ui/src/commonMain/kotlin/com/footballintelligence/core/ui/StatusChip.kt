@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.footballintelligence.core.designsystem.ErrorRed
+import com.footballintelligence.core.designsystem.PositiveGreen
 import com.footballintelligence.core.ui.resources.Res
 import com.footballintelligence.core.ui.resources.status_offline
 import com.footballintelligence.core.ui.resources.status_online
@@ -22,7 +24,7 @@ fun StatusChip(
     available: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val background = if (available) Color(0xFF2E7D32) else Color(0xFFB71C1C)
+    val background = if (available) PositiveGreen else ErrorRed
     val text = stringResource(if (available) Res.string.status_online else Res.string.status_offline, label)
     Text(
         text = text,

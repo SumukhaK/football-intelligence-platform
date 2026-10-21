@@ -4,10 +4,13 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -65,6 +68,10 @@ fun AppNavigation(navController: NavHostController, signedIn: Boolean) {
     // While typing, the keyboard needs the room more than the tabs do.
     val typing = WindowInsets.isImeVisible
     Scaffold(
+        // Each screen's green top bar draws behind the status bar itself.
+        contentWindowInsets = ScaffoldDefaults.contentWindowInsets.only(
+            WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom,
+        ),
         bottomBar = {
             if (current != null && !typing) {
                 BottomNavBar(current = current, onSelect = { navController.navigateTo(it) })
@@ -220,7 +227,6 @@ private fun AppNavHost(
                 onNavigateToResult = {
                     navController.navigate(Screen.PredictionResult.route)
                 },
-                onBack = { navController.popBackStack() },
                 isRefreshing = isRefreshing,
                 onRefresh = vm::refreshTeams,
                 actions = settingsAction,

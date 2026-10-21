@@ -24,17 +24,15 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.footballintelligence.core.designsystem.GreenOnPrimary
-import com.footballintelligence.core.designsystem.GreenPrimary
 import com.footballintelligence.core.ui.ErrorView
 import com.footballintelligence.core.ui.LoadingView
+import com.footballintelligence.core.ui.appBarColors
 import com.footballintelligence.core.ui.errorMessage
 import com.footballintelligence.feature.auth.resources.Res
 import com.footballintelligence.feature.auth.resources.action_accept
@@ -62,10 +60,7 @@ fun ConsentScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(Res.string.consent_title)) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = GreenPrimary,
-                    titleContentColor = GreenOnPrimary,
-                ),
+                colors = appBarColors(),
             )
         },
         modifier = modifier,

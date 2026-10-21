@@ -20,6 +20,28 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.6.3] — 2026-10-21
+
+Frontend patch. It also ships the app side of server-saved favourites (#157), so this build needs an API with `GET /v2/me/preferences`; staging's 2.6.0 API does not have it yet.
+
+### Added
+- Your favourite team is saved to your account and restored after a reinstall (ADR 035, #157).
+- The account check screen offers Sign out when the server cannot be reached, instead of only Retry.
+
+### Changed
+- One colour scheme throughout: the green top bar now reaches under the status bar (with light status icons), and backgrounds, cards and the bottom bar use grey-green neutrals instead of Material's default lavender.
+- The Predict tab has no back arrow, like the other tabs.
+- Screen titles match their tabs (Fixtures, Predict, Assistant) and every title and label uses sentence case ("Prediction result", "Man United win").
+- Settings rows use the Android chevron, and Season outlook says Retry like every other screen.
+
+### Fixed
+- Settings > My Team and the first-launch team picker use the green top bar; it was black in dark mode and grey in light mode.
+- Explain's factor colours follow the theme, so they stay readable in dark mode.
+
+See [Android 2.6.3](docs/releases/frontend-2.6.3.md).
+
+---
+
 ## [2.6.2] — 2026-10-18
 
 Frontend patch only; the hosted API remains on 2.6.0.

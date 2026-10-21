@@ -82,7 +82,6 @@ private fun TeamSelection(teams: TeamsUiState, input: PredictionInputUiState = P
             onPredict = { _, _ -> },
             onRetryTeams = {},
             onNavigateToResult = {},
-            onBack = {},
         )
     }
 }

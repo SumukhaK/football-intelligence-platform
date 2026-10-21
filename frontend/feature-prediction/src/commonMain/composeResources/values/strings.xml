@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Team selection -->
-    <string name="prediction_title">Match Prediction</string>
-    <string name="select_teams">Select Teams</string>
+    <string name="prediction_title">Predict</string>
+    <string name="select_teams">Select teams</string>
     <string name="season_note">%1$s %2$s. Predictions use every result played so far.</string>
     <string name="league">League</string>
-    <string name="home_team">Home Team</string>
-    <string name="away_team">Away Team</string>
+    <string name="home_team">Home team</string>
+    <string name="away_team">Away team</string>
     <string name="swap_teams">Swap home and away</string>
-    <string name="action_predict">Predict Match Outcome</string>
+    <string name="action_predict">Predict</string>
     <string name="cd_predict">Predict match outcome</string>
     <string name="cd_team_dropdown">%1$s dropdown: %2$s</string>
     <string name="teams_must_differ">Home and away teams must be different.</string>
 
     <!-- Result -->
-    <string name="result_title">Prediction Result</string>
+    <string name="result_title">Prediction result</string>
     <string name="fixture">%1$s vs %2$s</string>
-    <string name="outcome_team_win">%1$s Win</string>
+    <string name="outcome_team_win">%1$s win</string>
     <string name="outcome_draw">Draw</string>
     <string name="your_team">Your team: %1$s</string>
     <string name="show_all">Show all %1$d</string>

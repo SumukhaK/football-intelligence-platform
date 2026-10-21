@@ -75,7 +75,8 @@ defence strengths. Tapping it opens Projected Table with the favourite team
 highlighted, fixed team identities and horizontally scrollable metrics.
 Tap any heading to sort ascending, then tap it again to toggle direction.
 Now and Proj sort the displayed points; projected rank stays attached to
-each team. See [Android 2.6.2](../docs/releases/frontend-2.6.2.md).
+each team. See [Android 2.6.2](../docs/releases/frontend-2.6.2.md) and
+[Android 2.6.3](../docs/releases/frontend-2.6.3.md).
 Settings shows the
 saved team in one My team row; it reopens the picker with the saved league and
 team checked and, once a team is saved, restarts the app so every screen loads
