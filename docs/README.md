@@ -115,6 +115,7 @@ Maintained by the project architect. The implementation engineer updates documen
 | [v2.5.0 Release Notes](releases/v2.5.0.md) | Chat memory with signed history; one top bar colour; no error flash |
 | [v2.5.1 Release Notes](releases/v2.5.1.md) | Staging live on v2.5.x; README and website updated |
 | [v2.6.0 Release Notes](releases/v2.6.0.md) | Beta fixes: cold starts, invite codes, favourite team in chat, opted-in question text, UI polish |
+| [v2.6.3 Release Notes](releases/v2.6.3.md) | API and app 2.6.3: server-saved favourites, account hardening, session TTL, UX review polish |
 | [Android 2.6.2](releases/frontend-2.6.2.md) | Projected Table redesign, consistent toolbar and sorting on every column |
 | [Android 2.6.3](releases/frontend-2.6.3.md) | UX review polish: one colour scheme, green status bar, sentence case, sign out on the account check |
 | [v2.0.1 Release Notes](releases/v2.0.1.md) | Faster offline fallback in the app, demo video |

@@ -9,22 +9,14 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Fixed
-- Parallel sign-in attempts and harmful questions are all counted, so the 5-try lockout and the 3-strike ban (ADR 027) can't be outpaced by simultaneous requests.
-- `/v2/live` and `/v2/ready` run on the event loop, so slow assistant calls can't delay them and get a healthy instance restarted.
-- A failed assistant call returns a fixed 503 message; the provider's error text, which can name local URLs, is logged on the server only.
-- The rate limiter forgets clients idle for a minute once it tracks 10,000, so its memory stays bounded.
-
-### Security
-- certifi 2026.10.19 and Pillow 13.0.0 fix the advisories that failed pip-audit.
-
 ---
 
 ## [2.6.3] — 2026-10-21
 
-Frontend patch. It also ships the app side of server-saved favourites (#157), so this build needs an API with `GET /v2/me/preferences`; staging's 2.6.0 API does not have it yet.
+API and app both move to 2.6.3. Deploying the API needs one owner step: a Firestore TTL policy on the sessions collection's `expires_at`, as for questions (ADR 034).
 
 ### Added
+- `GET` and `PUT /v2/me/preferences` keep the favourite team on the account (ADR 035, #157).
 - Your favourite team is saved to your account and restored after a reinstall (ADR 035, #157).
 - The account check screen offers Sign out when the server cannot be reached, instead of only Retry.
 
@@ -35,10 +27,19 @@ Frontend patch. It also ships the app side of server-saved favourites (#157), so
 - Settings rows use the Android chevron, and Season outlook says Retry like every other screen.
 
 ### Fixed
+- Parallel sign-in attempts and harmful questions are all counted, so the 5-try lockout and the 3-strike ban (ADR 027) can't be outpaced by simultaneous requests.
+- `/v2/live` and `/v2/ready` run on the event loop, so slow assistant calls can't delay them and get a healthy instance restarted.
+- A failed assistant call returns a fixed 503 message; the provider's error text, which can name local URLs, is logged on the server only.
+- The rate limiter forgets clients idle for a minute once it tracks 10,000, so its memory stays bounded.
+- Sign-in failures and strikes are changed in a Firestore transaction (a lock in the JSON store), so they stay correct with more than one instance.
+- Sessions store `expires_at` as a timestamp, so a TTL policy deletes ended ones; older string expiries still read.
 - Settings > My Team and the first-launch team picker use the green top bar; it was black in dark mode and grey in light mode.
 - Explain's factor colours follow the theme, so they stay readable in dark mode.
 
-See [Android 2.6.3](docs/releases/frontend-2.6.3.md).
+### Security
+- certifi 2026.10.19 and Pillow 13.0.0 fix the advisories that failed pip-audit.
+
+See [v2.6.3](docs/releases/v2.6.3.md) and [Android 2.6.3](docs/releases/frontend-2.6.3.md).
 
 ---
 

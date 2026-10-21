@@ -85,6 +85,7 @@ Backend first, then the Android screens. Details in [accounts-and-consent-plan.m
 - [x] Owner script: invite (also resets a password), ban, unban.
 - [x] Android: redeem invite, sign in, consent screen, token storage, 401 and 403 handling (#84).
 - [x] Ops, once per project: a Firestore TTL policy so opted-in questions are deleted after 90 days (ADR 034). With the collection prefix in use (for example `staging_`): `gcloud firestore fields ttls update expires_at --collection-group=<prefix>questions --enable-ttl --database=<FIRESTORE_DATABASE> --project=<GCP_PROJECT_ID>`. Check with `gcloud firestore fields ttls list --database=<FIRESTORE_DATABASE>`. Until it is set, records are kept. Staging: `staging_questions` set and ACTIVE on 17 October 2026.
+- [ ] Ops, before deploying v2.6.3: the same TTL policy on sessions (`--collection-group=<prefix>sessions`), so ended sessions are deleted. v2.6.3 stores session `expires_at` as a timestamp; sessions saved earlier keep a string and are only removed by the policy once re-saved.
 
 Done when: an invited friend can redeem an invite, agree to the notice and use the app, and nobody else can.
 Evidence: integration tests and a staging walkthrough.
@@ -246,7 +247,7 @@ Evidence: `docs/reports/hosting-operations.md`.
 
 ### A1. Restore the favourite team after reinstall
 
-Status: Not started (explicitly deferred on 18 October 2026).
+Status: Built in #157 (ADR 035) and released in v2.6.3; the reinstall walkthrough on staging waits for the v2.6.3 deploy.
 
 The owner uninstalled v2.5.1 before installing v2.6.0. The choice currently
 stores only league/team in device SharedPreferences; backup is disabled, so
@@ -254,11 +255,12 @@ uninstall removes it. Onboarding correctly opens when that local choice is
 absent. The account's `User` and `MeResponse` have no favourite, and ADR 031
 uses favourite context per chat without storing it on the server.
 
-- [ ] Write an ADR and API extension for account-backed preferences using the existing Firestore and local JSON account stores.
-- [ ] Add authenticated save/read of league/team; restore before deciding whether onboarding is needed.
-- [ ] Scope the local cache to the signed-in account and migrate an existing local choice safely.
-- [ ] Distinguish a failed read (retry) from a truly absent preference (onboarding); an account's existence alone must never skip onboarding.
-- [ ] Test both stores, authenticated API access, account switching, migration, failed reads, reinstall restoration and truly absent preferences.
+- [x] Write an ADR and API extension for account-backed preferences using the existing Firestore and local JSON account stores.
+- [x] Add authenticated save/read of league/team; restore before deciding whether onboarding is needed.
+- [x] Scope the local cache to the signed-in account and migrate an existing local choice safely.
+- [x] Distinguish a failed read (retry) from a truly absent preference (onboarding); an account's existence alone must never skip onboarding.
+- [x] Test both stores, authenticated API access, account switching, migration, failed reads, reinstall restoration and truly absent preferences.
+- [ ] Staging: reinstall walkthrough with Android 2.6.3-stg against API 2.6.3.
 
 Done when: a saved team returns after reinstall and sign-in, while a new
 account still completes onboarding. This patch implements none of it and
