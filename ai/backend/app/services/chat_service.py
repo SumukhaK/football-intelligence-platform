@@ -79,8 +79,6 @@ class ChatService:
             result = self._service.chat(  # type: ignore[attr-defined]
                 with_favourite(request), earlier.messages
             )
-            if budget is not None:
-                budget.charge(user.email, result.tokens_used)  # type: ignore[union-attr]
         except (ValueError, AuthError):
             raise
         except Exception as exc:
@@ -99,11 +97,27 @@ class ChatService:
             model=result.model,
             retrieved_count=result.retrieved_count,
         )
-        allowance = budget.allowance(user.email) if budget and user else None
+        if budget is not None and user is not None:
+            self._settle(budget, user.email, result.tokens_used, response)
+        return response, "answered"
+
+    def _settle(
+        self,
+        budget: AssistantBudget,
+        email: str,
+        tokens: int | None,
+        response: ChatResponse,
+    ) -> None:
+        """Charge the answer and add what is left; a store error never loses it."""
+        try:
+            budget.charge(email, tokens)
+            allowance = budget.allowance(email)
+        except Exception as exc:  # noqa: BLE001 — any store failure is logged
+            logger.warning("Budget update failed: %s", type(exc).__name__, exc_info=exc)
+            return
         if allowance is not None:
             response.questions_left = allowance.questions_left
             response.resets_at = allowance.resets_at
-        return response, "answered"
 
     def _save_question(
         self, user: User | None, request: ChatRequest, outcome: str, model: str

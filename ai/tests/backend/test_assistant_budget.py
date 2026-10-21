@@ -128,3 +128,17 @@ def test_router_replies_and_refusals_are_free(store: AccountStore) -> None:
     refusing, user = _chat(store, MagicMock(), ["S1"])
     refusing.chat(ChatRequest(message="How do I hurt the referee?"), user)
     assert store.usage(f"{NOW.date().isoformat()}_{EMAIL}") == 0
+
+
+def test_a_failed_charge_never_loses_the_answer(store: AccountStore) -> None:
+    """The answer is already paid for; a usage write error is only logged."""
+    assistant = MagicMock()
+    assistant.chat.return_value = _answer(3_000)
+    service, user = _chat(store, assistant, [])
+    service._budget._store = MagicMock(usage=MagicMock(return_value=0))  # noqa: SLF001
+    service._budget._store.add_usage.side_effect = RuntimeError(
+        "Firestore down"
+    )  # noqa: SLF001
+    response = service.chat(ChatRequest(message="Who wins?"), user)
+    assert response.answer == "Arsenal win."
+    assert response.questions_left is None
