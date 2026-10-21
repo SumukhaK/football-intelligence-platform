@@ -326,7 +326,7 @@ Those are the counts at v1.0.0.
 
 ## Release v2.6.3 (2026-10-21)
 
-**Deliverables (PRs #155–#161, ADR 035):** the favourite team is saved to the account and restored after a reinstall. Sign-in failures and strikes are counted in Firestore transactions, sessions expire through a TTL policy, health probes no longer queue behind the assistant, and provider errors stay in the logs. The app gets the UX review polish: one colour scheme, a green status bar, sentence case and a way out of the account check. API and app are both 2.6.3.
+**Deliverables (PRs #155–#162, ADRs 035–036):** the favourite team is saved to the account and restored after a reinstall, and daily token budgets cap what the assistant can cost. Sign-in failures and strikes are counted in Firestore transactions, sessions expire through a TTL policy, health probes no longer queue behind the assistant, and provider errors stay in the logs. The app gets the UX review polish: one colour scheme, a green status bar, sentence case and a way out of the account check. API and app are both 2.6.3.
 
 **Git Tag:** v2.6.3
 
@@ -338,4 +338,4 @@ The closed beta with invited friends on the staging app.
 
 ---
 
-**Today: 13 releases, 35 ADRs, 1,662 tests (1,431 Python, 231 Android). One engineer.**
+**Today: 13 releases, 36 ADRs, 1,678 tests (1,445 Python, 233 Android). One engineer.**

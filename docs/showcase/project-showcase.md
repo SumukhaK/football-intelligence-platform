@@ -263,7 +263,7 @@ Semantic versioning, six releases to date:
 | v2.4.0 | A conversational assistant; its sources are logged, not shown |
 | v2.5.0 | Short-term chat memory with signed history, a conversation eval |
 | v2.6.0 | Fixes from the staging beta, easy invite codes, the favourite team in chat, opted-in question text, the Drishti model name |
-| v2.6.3 | Favourite team saved to the account, account hardening, session cleanup, UX review polish in the app |
+| v2.6.3 | Favourite team saved to the account, daily assistant token budgets, account hardening, session cleanup, UX review polish in the app |
 
 Each release follows the same gate: full test suite green, all quality checks clean, release notes written, before the version is tagged.
 

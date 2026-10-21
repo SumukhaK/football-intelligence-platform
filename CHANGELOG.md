@@ -13,10 +13,11 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [2.6.3] — 2026-10-21
 
-API and app both move to 2.6.3. Deploying the API needs one owner step: a Firestore TTL policy on the sessions collection's `expires_at`, as for questions (ADR 034).
+API and app both move to 2.6.3. Deploying the API needs owner steps: Firestore TTL policies on the sessions and usage collections' `expires_at`, as for questions (ADR 034), and the two assistant budget settings, without which the server won't start with the assistant on.
 
 ### Added
 - `GET` and `PUT /v2/me/preferences` keep the favourite team on the account (ADR 035, #157).
+- Daily token budgets for the assistant, one per user and one for everyone (ADR 036). A question starts only if a typical answer still fits; refusals and router replies are free. Answers carry `questions_left` and `resets_at`, a used-up budget answers `429 Daily limit reached`, and the app shows "About N questions left today".
 - Your favourite team is saved to your account and restored after a reinstall (ADR 035, #157).
 - The account check screen offers Sign out when the server cannot be reached, instead of only Retry.
 
