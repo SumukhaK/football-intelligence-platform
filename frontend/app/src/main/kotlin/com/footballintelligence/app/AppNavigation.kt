@@ -277,12 +277,14 @@ private fun AppNavHost(
             val vm: AssistantViewModel = koinViewModel()
             val state by vm.state.collectAsState()
             val isSending by vm.isSending.collectAsState()
+            val questionsLeft by vm.questionsLeft.collectAsState()
             AssistantScreen(
                 uiState = state,
                 isSending = isSending,
                 onSend = vm::send,
                 actions = settingsAction,
                 onNewChat = vm::newChat,
+                questionsLeft = questionsLeft,
             )
         }
 
