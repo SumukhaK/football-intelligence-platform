@@ -70,7 +70,7 @@ class AccountService:
         self._clock = clock
         self._user_ref = user_ref
         # Counters are read, changed and saved; parallel requests must not lose
-        # updates. ponytail: one in-process lock, fine while Cloud Run runs a single
+        # updates. One in-process lock is enough while Cloud Run runs a single
         # instance (ADR 025); use Firestore transactions before raising max instances.
         self._counter_lock = threading.Lock()
 
