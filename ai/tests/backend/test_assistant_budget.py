@@ -135,10 +135,11 @@ def test_a_failed_charge_never_loses_the_answer(store: AccountStore) -> None:
     assistant = MagicMock()
     assistant.chat.return_value = _answer(3_000)
     service, user = _chat(store, assistant, [])
-    service._budget._store = MagicMock(usage=MagicMock(return_value=0))  # noqa: SLF001
-    service._budget._store.add_usage.side_effect = RuntimeError(
-        "Firestore down"
-    )  # noqa: SLF001
+    broken = MagicMock(usage=MagicMock(return_value=0))
+    broken.add_usage.side_effect = RuntimeError("Firestore down")
+    budget = service._budget  # noqa: SLF001
+    assert budget is not None
+    budget._store = broken  # noqa: SLF001
     response = service.chat(ChatRequest(message="Who wins?"), user)
     assert response.answer == "Arsenal win."
     assert response.questions_left is None
