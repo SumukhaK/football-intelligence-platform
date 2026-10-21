@@ -85,8 +85,8 @@ Backend first, then the Android screens. Details in [accounts-and-consent-plan.m
 - [x] Owner script: invite (also resets a password), ban, unban.
 - [x] Android: redeem invite, sign in, consent screen, token storage, 401 and 403 handling (#84).
 - [x] Ops, once per project: a Firestore TTL policy so opted-in questions are deleted after 90 days (ADR 034). With the collection prefix in use (for example `staging_`): `gcloud firestore fields ttls update expires_at --collection-group=<prefix>questions --enable-ttl --database=<FIRESTORE_DATABASE> --project=<GCP_PROJECT_ID>`. Check with `gcloud firestore fields ttls list --database=<FIRESTORE_DATABASE>`. Until it is set, records are kept. Staging: `staging_questions` set and ACTIVE on 17 October 2026.
-- [ ] Ops, before deploying v2.6.3: the same TTL policy on `<prefix>usage` (assistant token budgets, ADR 036), and set `ASSISTANT_DAILY_TOKENS_PER_USER=30000` and `ASSISTANT_DAILY_TOKENS_TOTAL=900000` on the service.
-- [ ] Ops, before deploying v2.6.3: the same TTL policy on sessions (`--collection-group=<prefix>sessions`), so ended sessions are deleted. v2.6.3 stores session `expires_at` as a timestamp; sessions saved earlier keep a string and are only removed by the policy once re-saved.
+- [x] Ops, before deploying v2.6.3: the same TTL policy on `<prefix>usage` (assistant token budgets, ADR 036), and set `ASSISTANT_DAILY_TOKENS_PER_USER=30000` and `ASSISTANT_DAILY_TOKENS_TOTAL=900000` on the service.
+- [x] Ops, before deploying v2.6.3: the same TTL policy on sessions (`--collection-group=<prefix>sessions`), so ended sessions are deleted. v2.6.3 stores session `expires_at` as a timestamp; sessions saved earlier keep a string and are only removed by the policy once re-saved.
 
 Done when: an invited friend can redeem an invite, agree to the notice and use the app, and nobody else can.
 Evidence: integration tests and a staging walkthrough.
@@ -126,6 +126,7 @@ Plan: [chat-memory-plan.md](chat-memory-plan.md). Decision: [ADR 030](../adr/030
 - [x] App: keeps the signed window, New chat, 30-minute idle reset (ViewModel tests first; checked on the emulator 15 October 2026).
 - [x] Staging: `history-key` secret mounted; v2.5.0 deployed 15 October 2026 (built with Cloud Build). Checked through the public URL: sign-in, consent, predict, a signed follow-up ("and the draw?" got 24.7%) and a forged history ignored.
 - [x] Staging: v2.6.0 deployed 17 October 2026 (image `da8a236`, revision 00005, built with Cloud Build); `/v2/ready` ready and `/v2/health` version 2.6.0 with the assistant on. The first image (14 October) was deleted from Artifact Registry; `da8a236`, `a2afef3` and `ec72966` remain.
+- [x] Staging: v2.6.3 deployed 21 October 2026 (image `4935218`, digest `sha256:d0a8a345…`, revision 00006, built with Cloud Build, snapshot `be2c380e46d17176` with results through 19 October). Backup first in `backup/2026-10-21_21-00-52`. Budgets set to 30,000 tokens per user and 900,000 in total; `/v2/ready` ready and `/v2/health` 2.6.3. Smoke test with a throwaway account (banned afterwards): favourites saved and read back, predict, chat with `questions_left` 9, safety refusal. The oldest image (`ec72966`) was deleted after the checks; `da8a236` stays for rollback.
 
 Done when: a follow-up such as "and the draw?" is answered from the conversation on staging, a forged turn is ignored, and all four evals pass.
 Evidence: eval output in `docs/reports/hosted-assistant-evals.md` and staging logs.
