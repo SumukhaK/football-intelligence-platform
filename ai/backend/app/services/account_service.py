@@ -35,6 +35,29 @@ from backend.app.services.invite_codes import new_invite_code, normalise_invite_
 from shared.telemetry.context import set_user_ref
 from shared.telemetry.events import EventName, emit
 
+# Errors moved to auth_errors.py stay importable from here.
+__all__ = [
+    "AccountBlockedError",
+    "AccountService",
+    "AuthError",
+    "ConsentRequiredError",
+    "INVITE_LIFETIME",
+    "InvalidCredentialsError",
+    "InvalidInviteError",
+    "InviteAlreadyUsedError",
+    "InviteExpiredError",
+    "LOCKOUT",
+    "MAX_FAILED_LOGINS",
+    "MAX_STRIKES",
+    "MIN_PASSWORD_LENGTH",
+    "NewSession",
+    "NotSignedInError",
+    "QUESTION_LIFETIME",
+    "SESSION_LIFETIME",
+    "TooManyAttemptsError",
+    "WeakPasswordError",
+]
+
 logger = logging.getLogger(__name__)
 
 MIN_PASSWORD_LENGTH = 10
