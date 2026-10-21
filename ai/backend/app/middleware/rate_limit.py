@@ -3,7 +3,8 @@
 A sliding one-minute window per client address. Requests over the limit get a
 structured 429 with ``Retry-After``. Health, the probes and the docs are never
 limited, so monitoring keeps working. State is in memory, which is enough for
-the single-process local server this project runs.
+the single-process local server this project runs; idle clients are dropped so
+memory stays bounded. Shared state is needed before Cloud Run scales past one instance.
 """
 
 from __future__ import annotations
@@ -40,6 +41,10 @@ EXEMPT_PATHS = frozenset(
 )
 
 
+# Clients tracked before idle ones are dropped (an O(n) sweep).
+SWEEP_AT = 10_000
+
+
 class SlidingWindowLimiter:
     """Counts each key's requests over the last minute."""
 
@@ -54,6 +59,8 @@ class SlidingWindowLimiter:
     def check(self, key: str) -> float | None:
         """Record a request; return seconds to wait if it is over the limit."""
         now = self._clock()
+        if len(self._hits) >= SWEEP_AT:
+            self._forget_idle(now)
         hits = self._hits.setdefault(key, deque())
         while hits and now - hits[0] >= WINDOW_SECONDS:
             hits.popleft()
@@ -61,6 +68,12 @@ class SlidingWindowLimiter:
             return WINDOW_SECONDS - (now - hits[0])
         hits.append(now)
         return None
+
+    def _forget_idle(self, now: float) -> None:
+        """Drop keys with no request in the last minute, so memory stays bounded."""
+        idle = [k for k, hits in self._hits.items() if now - hits[-1] >= WINDOW_SECONDS]
+        for key in idle:
+            del self._hits[key]
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):

@@ -18,6 +18,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+ASSISTANT_FAILED = "The assistant could not answer just now. Try again."
+
 
 class ChatService:
     """Wraps the AI AssistantService for use in FastAPI route handlers."""
@@ -69,10 +71,14 @@ class ChatService:
             result = self._service.chat(  # type: ignore[attr-defined]
                 with_favourite(request), earlier.messages
             )
-        except ValueError as exc:
-            raise ValueError(str(exc)) from exc
+        except ValueError:
+            raise
         except Exception as exc:
-            raise AssistantNotAvailableError(str(exc)) from exc
+            # Provider errors can name local URLs; log them, never return them.
+            logger.warning(
+                "Assistant call failed: %s", type(exc).__name__, exc_info=exc
+            )
+            raise AssistantNotAvailableError(ASSISTANT_FAILED) from exc
 
         # Sources and citations go to the logs (assistant.answer), not to
         # users (ADR 029).
