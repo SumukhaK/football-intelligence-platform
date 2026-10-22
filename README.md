@@ -371,6 +371,27 @@ Android patches between releases have their own notes: [2.6.1](docs/releases/fro
 
 ---
 
+## Release metrics
+
+Staging (`football-api-staging`, Cloud Run, asia-south1). Read on **22 October 2026 at 02:23 UTC** from Cloud Logging.
+
+| Metric | v2.6.0 (previous) | v2.6.3 (current) |
+|---|---:|---:|
+| Time on staging (UTC) | 16 Oct 20:16 – 21 Oct 13:07 | 21 Oct 15:43 – 19:59 |
+| Requests (excluding health probes) | 217 | 71 |
+| p95 latency (excluding health probes) | 3,731 ms | 9,086 ms |
+| p50 latency (excluding health probes) | 11 ms | 48 ms |
+| Server errors (5xx) | 0 | 0 |
+| Server crashes | 0 | 0 |
+| Assistant time to first answer, p50 / p95 (answers) | 1,503 / 2,303 ms (2) | 2,835 / 6,064 ms (7) |
+| Workers AI call time, p95 (calls) | 4,823 ms (4) | 9,235 ms (20) |
+
+Workers AI time to first token: **p50 486 ms, p95 1,280 ms** (18 streamed calls on 22 October 2026, same model for both versions).
+
+Samples are small, so p95 moves a lot between versions. v2.6.3's higher p95 comes mostly from traffic mix: assistant chats were 11% of its requests against 1% on v2.6.0, and the p95 request is itself a chat. Health probes (`/v2/live`, `/v2/ready`, `/v2/health`) are left out; with them, requests are 687 and 218. Crashes count unhandled 500s (`app.crash`) and container restarts. The app doesn't stream answers yet (see [future improvements](docs/roadmap/future-improvements.md)), so time to first answer is the full answer time. Time to first token comes from a separate streaming benchmark against the same model (`gemma-4-26b-a4b-it`, thinking off), sent from a PC in India rather than from Cloud Run, with short prompts, so it is a best case.
+
+---
+
 ## License
 
 The code is under the MIT License; see [LICENSE](LICENSE).
