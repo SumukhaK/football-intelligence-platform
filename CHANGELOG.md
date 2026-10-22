@@ -9,6 +9,10 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- The demo video is re-recorded for v2.6.3: the assistant now follows the favourite team and the conversation, shows the questions left today, and Settings names the Drishti model. The README thumbnail and the website poster show the assistant chat.
+
 ---
 
 ## [2.6.3] — 2026-10-21

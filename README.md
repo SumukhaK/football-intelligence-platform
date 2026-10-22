@@ -10,7 +10,7 @@ Licensed under the [MIT License](LICENSE). Match data, fixtures and crests come 
 
 [![Watch the demo](docs/showcase/demo-video/thumbnail.png)](https://fip-ai.dev/demo.mp4)
 
-**▶ [Watch the 2-minute end-to-end demo](https://fip-ai.dev/demo.mp4)** (recorded October 2026): narrated, with English subtitles. Scenes and the subtitle file are in [docs/showcase/demo-video](docs/showcase/demo-video/README.md).
+**▶ [Watch the 2½-minute walkthrough of v2.6.3](https://fip-ai.dev/demo.mp4)** (recorded 22 October 2026): narrated, with English subtitles. It shows the assistant following your favourite team and the conversation, its daily question budget, and the Drishti prediction model. Scenes and the subtitle file are in [docs/showcase/demo-video](docs/showcase/demo-video/README.md).
 
 ---
 
