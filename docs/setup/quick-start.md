@@ -70,10 +70,10 @@ Confirm the AI workspace is clean before running any pipelines:
 uv run ruff check .          # Linting — should print: All checks passed!
 uv run black --check .       # Formatting — should print: N files would be left unchanged.
 uv run mypy .                # Type checking — should print: Success: no issues found in N source files
-uv run pytest                # Tests — 1,373 tests
+uv run pytest                # Tests — 1,446 tests
 ```
 
-`uv run pytest` runs all 1,373 tests, including the 37 integration tests. The integration tests need a trained model in `ai/models/latest/` (and one needs network access), so on a clean checkout run `uv run pytest -m "not integration"` (1,336 tests) until you have trained the model below.
+`uv run pytest` runs all 1,446 tests, including the 36 integration tests. The integration tests need a trained model in `ai/models/latest/` (and one needs network access), so on a clean checkout run `uv run pytest -m "not integration"` (1,410 tests) until you have trained the model below.
 
 ---
 
@@ -135,7 +135,14 @@ The pipeline prints the version, best iteration, features used, test accuracy, F
 
 For reference, the frozen-split model this command produced (version `20260928_123224`) reached test accuracy 0.5245 and log loss 0.9762 on 2023/24, with best iteration 167. See `ai/models/latest/model_card.md` after training.
 
-The live API serves a refit of that model on every season through 2025/26 (`20261007_154105`, 168 trees, ADR 017). To build and serve one, see `training.refit` and `training.promote_refit` in the [root README](../../README.md#running-the-ai-pipeline).
+The live API serves a refit of that model on every season through 2025/26 (`20261007_154105`, 168 trees, ADR 017). To build and serve one, refit it, backtest it on the season so far and promote it (`<v>` is the run the refit prints, `<in-season run>` the folder `in_season_cli` writes):
+
+```sh
+uv run python -m training.refit --source-run models/runs/<frozen run> --last-season 2025/26
+uv run python -m evaluation.in_season_cli --season 2627 --model models/runs/<frozen run>/model.joblib --confirm
+uv run python -m evaluation.refit_backtest --rows models/backtests/<in-season run>/features/feature_matrix.parquet --frozen-run models/runs/<frozen run> --refit-run models/runs/<v>
+uv run python -m training.promote_refit --run models/runs/<v> --backtest models/backtests/refit_<v>/report.json
+```
 
 ### Step 4 — Generate SHAP Explanations
 
@@ -230,6 +237,35 @@ The app calls the backend at `http://10.0.2.2:8000/v2`, which is the Android emu
 
 > The first run downloads all Gradle and Kotlin dependencies (~500 MB). Subsequent runs use the Gradle cache and complete in seconds.
 
+### Sign in to the app
+
+The app opens on invite-only sign-in (ADR 022), whether or not the backend has `AUTH_REQUIRED` on. Create an invite, then enter the printed code (such as `K7QM-3XWD`; case, spaces and dashes don't matter) on the Invite code tab with a password of at least 10 characters:
+
+```sh
+cd ai
+uv run python -m scripts.manage_accounts invite --email you@example.com
+```
+
+---
+
+## Run the Backend in a Container (optional)
+
+The cloud image (ADR 025) serves from a snapshot of your local artifacts:
+
+```sh
+cd ai && uv run python -m scripts.build_snapshot --out ../snapshot && cd ..
+docker build --platform linux/amd64 -t football-api .
+docker run --rm -p 8080:8080 -e TELEMETRY_SALT=any-local-value football-api
+```
+
+`GET /v2/ready` answers 200 once every artifact loaded. The image runs as a non-root user with read-only files, the daily refresh off and the assistant off.
+
+---
+
+## Local Traces and Dashboards (optional)
+
+`docker compose -f docker-compose.observability.yml up -d` starts Grafana with a trace store on your machine. Set `TRACE_EXPORTER=otlp` and `LOG_FORMAT=json` in `ai/.env` to send the API's traces there; [the local stack guide](../observability/local-stack.md) shows how to follow one request from its log line to its trace. The cloud metrics and alerts are defined in [`infrastructure/monitoring/`](../../infrastructure/monitoring/README.md). For the hosted service, the [Football Dashboard Console](https://github.com/SumukhaK/football-dashboard) reads the same telemetry from Google Cloud.
+
 ---
 
 ## Expected Artifacts
@@ -320,7 +356,7 @@ After setup, verify the following:
 - [ ] `uv run ruff check .` — prints `All checks passed!`
 - [ ] `uv run black --check .` — prints `N files would be left unchanged.`
 - [ ] `uv run mypy .` — prints `Success: no issues found`
-- [ ] `uv run pytest` — all 1,373 tests pass (after training)
+- [ ] `uv run pytest` — all 1,446 tests pass (after training)
 - [ ] The backfill produces `datasets/processed/football_data/match_results_top5_v<ts>.csv`
 - [ ] Feature engineering produces `datasets/features/top5/feature_matrix.parquet`
 - [ ] Training produces `ai/models/latest/model.joblib` and `ai/models/latest/model_card.md`

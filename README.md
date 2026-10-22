@@ -4,7 +4,7 @@
 
 **An AI-first football analytics platform — from raw match data to an explainable, grounded, mobile-native prediction experience.**
 
-[![CI](https://img.shields.io/badge/CI-passing-brightgreen)](.github/workflows) [![Tests](https://img.shields.io/badge/tests-1580-brightgreen)](docs/reports/) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Python](https://img.shields.io/badge/python-3.12-blue)](ai/pyproject.toml) [![Kotlin](https://img.shields.io/badge/kotlin-Compose%20Multiplatform-purple)](frontend/)
+[![CI](https://img.shields.io/badge/CI-passing-brightgreen)](.github/workflows) [![Tests](https://img.shields.io/badge/tests-1679-brightgreen)](docs/reports/) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Python](https://img.shields.io/badge/python-3.12-blue)](ai/pyproject.toml) [![Kotlin](https://img.shields.io/badge/kotlin-Compose%20Multiplatform-purple)](frontend/)
 
 Licensed under the [MIT License](LICENSE). Match data, fixtures and crests come from third parties under their own terms; see [Data sources and licences](#data-sources-and-licences).
 
@@ -20,7 +20,7 @@ The Football Intelligence Platform ingests 26 seasons of match data from Europe'
 
 It is a complete, working system — not a notebook or a prototype. Twelve build stages take it from an empty repository to a tested, documented, end-to-end product: ingestion → validation → feature engineering → model training → explainability → a FastAPI backend → a locally-grounded RAG assistant → a Compose Multiplatform Android app → full integration testing.
 
-**1,679 tests: 1,446 Python and 233 Android. Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes results and fixtures daily without a restart, and the app keeps working offline with the last data it saw.** It is also hosted: since 14 October 2026 a private, invite-only staging service runs on Google Cloud Run, with the assistant on Cloudflare Workers AI, short-term chat memory, a safety check and alerts. Since v2.6.0 invite codes are short and easy to type, and question text is saved for 90 days only for users who opted in (ADR 034). The cloud features are all off by default, so the local setup is unchanged.
+**1,679 tests: 1,446 Python and 233 Android. Every prediction carries a SHAP explanation. The assistant never invents facts. The server refreshes results and fixtures daily without a restart, and the app keeps working offline with the last data it saw.** It is also hosted: since 14 October 2026 a private, invite-only staging service runs on Google Cloud Run, with the assistant on Cloudflare Workers AI, short-term chat memory, a safety check and alerts. Since v2.6.3 the favourite team is saved to the account (ADR 035) and daily token budgets cap what the assistant can cost (ADR 036). The cloud features are all off by default, so the local setup is unchanged.
 
 ---
 
@@ -42,22 +42,18 @@ This project demonstrates AI engineering as a discipline: not just "can I train 
 
 ## Key Capabilities
 
-Account favourites now persist on the server across installs and upgrades
-(ADR 035). After sign-in, the Android app confirms preferences before choosing
-onboarding; a failed account read offers retry.
-
 | Capability | Description |
 |---|---|
 | **Match outcome prediction** | XGBoost classifier predicting Home Win / Draw / Away Win for all five leagues, with a `draw_possible` flag in the API for tight games (ADR 011) |
 | **Scorelines and goal markets** | Time-weighted Dixon-Coles goals model per league: five most likely scores, expected goals, both teams to score, over/under lines and clean sheets (ADR 009) |
 | **Per-prediction explainability** | SHAP `TreeExplainer` attaches feature-level attribution to every prediction, shown in plain football language ("Arsenal win rate at home · 68%") |
 | **Grounded AI assistant** | RAG pipeline (numpy vector store; Ollama locally, Cloudflare Workers AI when hosted, ADR 025) answers football questions using only retrieved platform data, with source citations, and calls the API's own prediction, explanation and fixtures services as tools for match questions (ADR 018); season questions (tables on any date with a goals-model projection, results, the next derby) go through a rule-based router to internal season tools (ADR 021), and "we" means the user's favourite team (ADR 031) |
-| **Production-shaped backend** | Versioned FastAPI (`/v1` frozen, `/v2` current, ADR 014), server-side match features, upcoming fixtures, a daily in-process data refresh (ADR 013), a per-client rate limit that reads the real client address behind a proxy, request size limits, invite-only sign-in with consent for hosted deployments (ADR 022) using `XXXX-XXXX` invite codes without look-alike characters, opted-in question text kept for 90 days (ADR 034), liveness and readiness probes, structured errors, OpenAPI docs. The chat route runs the model call in a worker thread, so a slow answer never blocks other requests |
+| **Production-shaped backend** | Versioned FastAPI (`/v1` frozen, `/v2` current, ADR 014), server-side match features, upcoming fixtures, a daily in-process data refresh (ADR 013), a per-client rate limit that reads the real client address behind a proxy, request size limits, invite-only sign-in with consent for hosted deployments (ADR 022) using `XXXX-XXXX` invite codes without look-alike characters, opted-in question text kept for 90 days (ADR 034), the favourite team kept on the account (ADR 035), daily per-user and global token budgets for the assistant (ADR 036), liveness and readiness probes, structured errors, OpenAPI docs. The chat route runs the model call in a worker thread, so a slow answer never blocks other requests |
 | **Native Android client** | Compose Multiplatform app with invite-only sign-in and a consent notice, that opens on upcoming fixtures by league (tap one to predict it), with team crests, bottom navigation, a league picker, offline mode with saved data, pull to refresh, MVVM, StateFlow, Koin DI and previews for every screen |
 | **Full reproducibility** | Entire pipeline (ingest → features → train → explain) runs in under 15 seconds from one CLI command |
-| **Observability** | JSON logs to one versioned telemetry contract (1.1.0), a request ID on every request and log line, a hashed `user_ref` (never the email) on requests and assistant turns of signed-in users, OpenTelemetry traces across retrieval, tool calls and generation, retries with backoff on every outbound download, a local Grafana stack, and Cloud Monitoring metrics and alerts kept as code (ADR 024) |
+| **Observability** | JSON logs to one versioned telemetry contract (1.1.0), a request ID on every request and log line, a hashed `user_ref` (never the email) on requests and assistant turns of signed-in users, OpenTelemetry traces across retrieval, tool calls and generation, retries with backoff on every outbound download, a local Grafana stack, Cloud Monitoring metrics and alerts kept as code (ADR 024), and a separate [observability console](#observability-console) |
 | **Hosting-ready** | A non-root container image built from a verified artifact snapshot, `/v2/live` and `/v2/ready` probes, a Firestore account store, and a server that refuses unsafe cloud defaults (ADR 025, ADR 026). CI builds and probes the image and scans Python and Gradle dependencies |
-| **End-to-end test coverage** | 1,373 Python tests (including 37 integration tests against the real model, most of which skip on a machine without one) and 207 Android tests (ViewModels written test-first, repositories, network, cache, retries, loader) |
+| **End-to-end test coverage** | 1,446 Python tests (including 36 integration tests against the real model, most of which skip on a machine without one) and 233 Android tests (ViewModels written test-first, repositories, network, cache, retries, loader) |
 | **No cloud needed locally** | Runs entirely on a laptop: no managed database, no cloud LLM, no hosted vector store. The cloud pieces are opt-in settings |
 
 ---
@@ -113,10 +109,10 @@ flowchart TD
 | **Explainability** | SHAP 0.52 (`TreeExplainer`), Matplotlib |
 | **AI Assistant** | Ollama locally (`qwen2.5:7b-instruct`, `nomic-embed-text`); Cloudflare Workers AI hosted (`gemma-4-26b-a4b-it`, `qwen3-embedding-0.6b`); numpy vector store, custom RAG pipeline |
 | **Backend** | FastAPI, Pydantic v2, `pydantic-settings`, uvicorn, OpenTelemetry |
-| **Hosting** | Docker, Cloud Build, Google Cloud Run, Firestore, Secret Manager, Cloud Logging, Trace and Monitoring (invite-only staging live since 14 October 2026, v2.5.0) |
+| **Hosting** | Docker, Cloud Build, Google Cloud Run, Firestore, Secret Manager, Cloud Logging, Trace and Monitoring (invite-only staging live since 14 October 2026, now on v2.6.3) |
 | **Mobile** | Kotlin, Compose Multiplatform, Ktor client, Koin DI, AndroidX Navigation Compose, Material 3 |
 | **Tooling** | uv (Python dependency management), Gradle 8.8, Ruff, Black, MyPy, Detekt, Spotless, ShellCheck |
-| **Testing** | pytest (1,373 tests), JUnit 5, MockK, Ktor MockEngine (207 tests) |
+| **Testing** | pytest (1,446 tests), JUnit 5, MockK, Ktor MockEngine (233 tests) |
 | **CI/CD** | GitHub Actions: lint, types, tests, container build and probe, pip-audit and OSV-Scanner |
 
 ---
@@ -309,91 +305,22 @@ Every response carries an `X-Request-ID`, and with `LOG_FORMAT=json` every log l
 
 ---
 
-## Quick Start
+## Getting Started
 
-### Running the AI Pipeline
-
-```sh
-cd ai
-uv sync --extra dev
-
-uv run python -m scripts.backfill_football_data --base-dir ../datasets --confirm
-uv run python -m feature_engineering.pipeline --input ../datasets/processed/football_data/match_results_top5_v<ts>.csv --output-dir ../datasets/features/top5
-uv run python -m training.pipeline --feature-matrix ../datasets/features/top5/feature_matrix.parquet --split-strategy season --val-seasons 2022/23 --test-seasons 2023/24 --holdout-seasons 2024/25 2025/26 --max-depth 3 --learning-rate 0.03 --n-estimators 400
-uv run python -m explainability.pipeline --feature-matrix ../datasets/features/top5/feature_matrix.parquet
-```
-
-The training command above serves the frozen-split model. To serve a refit on every completed season, as the live API does (ADR 017), refit it, backtest it on the season so far and promote it (`<v>` is the run the refit prints, `<in-season run>` the folder `in_season_cli` writes):
+Everything runs on a laptop with Python 3.12 ([uv](https://github.com/astral-sh/uv)) and JDK 17:
 
 ```sh
-uv run python -m training.refit --source-run models/runs/<frozen run> --last-season 2025/26
-uv run python -m evaluation.in_season_cli --season 2627 --model models/runs/<frozen run>/model.joblib --confirm
-uv run python -m evaluation.refit_backtest --rows models/backtests/<in-season run>/features/feature_matrix.parquet --frozen-run models/runs/<frozen run> --refit-run models/runs/<v>
-uv run python -m training.promote_refit --run models/runs/<v> --backtest models/backtests/refit_<v>/report.json
+cd ai && uv sync --extra dev && uv run uvicorn backend.app.main:app --reload   # API on :8000
+cd frontend && ./gradlew assembleLocalDebug                                     # Android app
 ```
 
-### Running the Backend
+The [Quick Start Guide](docs/setup/quick-start.md) covers the rest: downloading the five leagues, training and refitting the model, building the assistant index (Ollama or Workers AI), the container image, local traces, signing in to the app and running the tests.
 
-```sh
-cd ai
-cp .env.example .env   # optional: every value in it is already the default
-uv run uvicorn backend.app.main:app --reload
-```
+---
 
-Visit `http://127.0.0.1:8000/docs` for interactive OpenAPI documentation. At startup the server loads the newest match and fixtures datasets and fits a goals model per league, downloading fixtures straight away if it has none. From then on it downloads the latest results and fixtures every day at 06:00 local time. Set `LIVE_REFRESH_HOUR=off` in `.env` to work offline. Every setting is listed in [`ai/.env.example`](ai/.env.example).
+## Observability Console
 
-To enable the AI assistant locally (optional, requires [Ollama](https://ollama.com)):
-
-```sh
-ollama pull nomic-embed-text
-ollama pull qwen2.5:7b-instruct
-uv run python -m assistant.pipeline --rebuild
-```
-
-To use Cloudflare Workers AI instead, put `WORKERS_AI_ACCOUNT_ID` and `WORKERS_AI_API_TOKEN` in `ai/.env`, build its own index and point the server at it ([report](docs/reports/hosted-assistant-evals.md) has the commands), then set `ASSISTANT_PROVIDER=workers_ai`.
-
-### Running the Backend in a Container
-
-The cloud image (ADR 025) serves from a snapshot of your local artifacts:
-
-```sh
-cd ai && uv run python -m scripts.build_snapshot --out ../snapshot && cd ..
-docker build --platform linux/amd64 -t football-api .
-docker run --rm -p 8080:8080 -e TELEMETRY_SALT=any-local-value football-api
-```
-
-`GET /v2/ready` answers 200 once every artifact loaded. The image runs as a non-root user with read-only files, the daily refresh off and the assistant off.
-
-### Local Traces and Dashboards
-
-`docker compose -f docker-compose.observability.yml up -d` starts Grafana with a trace store on your machine. Set `TRACE_EXPORTER=otlp` and `LOG_FORMAT=json` in `ai/.env` to send the API's traces there; [docs/observability/local-stack.md](docs/observability/local-stack.md) shows how to follow one request from its log line to its trace. The cloud metrics and alerts are defined in [`infrastructure/monitoring/`](infrastructure/monitoring/README.md).
-
-### Running Android
-
-```sh
-cd frontend
-./gradlew assembleLocalDebug
-adb install app/build/outputs/apk/local/debug/app-local-debug.apk
-```
-
-The `local` build calls API v2 at `http://10.0.2.2:8000/v2` (the Android emulator's alias for the host machine's localhost). The `staging` build installs beside it as Football Intelligence -stg and calls the hosted staging API, whose address goes in `frontend/local.properties` as `staging.baseUrl` ([frontend README](frontend/README.md#backend-base-url)).
-
-The app opens on invite-only sign-in (ADR 022), whether or not the backend has `AUTH_REQUIRED` on. Create an invite, then enter the printed code (such as `K7QM-3XWD`; case, spaces and dashes don't matter) on the Invite code tab with a password of at least 10 characters:
-
-```sh
-cd ai
-uv run python -m scripts.manage_accounts invite --email you@example.com
-```
-
-### Running Tests
-
-```sh
-# Python: 1,373 tests (the 37 integration tests need a trained model)
-cd ai && uv run pytest
-
-# Android: unit tests, lint and formatting (207 tests)
-cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
-```
+The [Football Dashboard Console](https://github.com/SumukhaK/football-dashboard) is a separate, read-only web console for the hosted backend. It reads the telemetry this API already sends to Google Cloud (the [telemetry contract](docs/observability/telemetry-contract.md)) and shows traffic, latency and errors, a span waterfall per request, the assistant's answer paths, tool calls, tokens and cost, data freshness, sign-ins and lockouts, and the Android app's crashes. It also runs locally against sample data or the backend's own log file, with no Google Cloud account.
 
 ---
 
@@ -402,7 +329,7 @@ cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
 | Document | Purpose |
 |---|---|
 | [Documentation Index](docs/README.md) | Full documentation map |
-| [ADR Index](docs/adr/README.md) | All 34 architectural decision records |
+| [ADR Index](docs/adr/README.md) | All 36 architectural decision records |
 | [Stage Reports](docs/reports/) | Detailed report for every build stage (1–12) |
 | [Demo Scripts](docs/demo/README.md) | Per-stage manual verification guides |
 | [Showcase Demo](docs/showcase/demo-script.md) | 5, 10 and 20-minute demo scripts and a [screenshot checklist](docs/showcase/screenshots/README.md) |
@@ -418,6 +345,7 @@ cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
 | [Interview Guide](docs/showcase/interview-guide.md) | 50 likely interview questions with answers |
 | [Hosting Plan](docs/plans/hosting-plans.md) and [Tracker](docs/plans/hosting-execution-tracker.md) | How the API is being hosted, and what is done |
 | [Observability](docs/observability/README.md) | Telemetry contract, local stack, metrics and alerts |
+| [Football Dashboard Console](https://github.com/SumukhaK/football-dashboard) | Separate repository: the read-only observability console for the hosted backend |
 
 ---
 
@@ -425,14 +353,21 @@ cd frontend && ./gradlew testDebugUnitTest detekt spotlessCheck
 
 | Version | Date | Highlights |
 |---|---|---|
+| [v2.6.3](docs/releases/v2.6.3.md) | 2026-10-21 | Favourite team saved to the account, daily assistant token budgets, account hardening, session cleanup, UX review polish in the app |
+| [v2.6.0](docs/releases/v2.6.0.md) | 2026-10-17 | Fixes from the staging beta, easy invite codes, the favourite team in chat, opted-in question text, the Drishti model name |
+| [v2.5.1](docs/releases/v2.5.1.md) | 2026-10-15 | Staging live on v2.5.x; README and website updated |
+| [v2.5.0](docs/releases/v2.5.0.md) | 2026-10-15 | Short-term chat memory with signed history, a conversation eval |
+| [v2.4.0](docs/releases/v2.4.0.md) | 2026-10-15 | A conversational assistant; its sources are logged, not shown |
+| [v2.3.0](docs/releases/v2.3.0.md) | 2026-10-15 | Staging live on Cloud Run, crash reports from the staging app, consent notice version 2 |
+| [v2.2.0](docs/releases/v2.2.0.md) | 2026-10-14 | Assistant tools and season router, crests, accounts and consent, telemetry, Cloud Run hosting, a safety check |
 | [v2.1.0](docs/releases/v2.1.0.md) | 2026-09-29 | App icon, Kick-off launch screen and loader, develop and main branch flow |
 | [v2.0.1](docs/releases/v2.0.1.md) | 2026-09-29 | Offline fallback within seconds, demo video |
 | [v2.0.0](docs/releases/v2.0.0.md) | 2026-09-29 | Five leagues, versioned API, fixtures, goals model, offline app, daily refresh |
 | [v1.0.0](docs/releases/v1.0.0.md) | 2026-07-01 | Android app, end-to-end integration tests, performance benchmarks, production readiness |
 | [v0.2.0](docs/releases/v0.2.0.md) | 2026-06-30 | SHAP explainability, FastAPI backend, RAG assistant |
-| [v0.1.0](docs/releases/v0.1.0.md) | — | Data pipeline, feature engineering, XGBoost training |
+| [v0.1.0](docs/releases/v0.1.0.md) | 2026-06-30 | Data pipeline, feature engineering, XGBoost training |
 
-Build stages 1–12 (repository foundation through integration and production readiness) are complete; see the [stage reports](docs/reports/). The follow-on phase ([plan](docs/plans/next-phase-plan.md)) added the five leagues, server-side features, plain-language explanations, draw handling, scoreline predictions, a daily data refresh, API versions with a rate limit, upcoming fixtures and an offline-ready app. These shipped as [v2.0.0](docs/releases/v2.0.0.md). Android [2.6.2](docs/releases/frontend-2.6.2.md) redesigns Projected Table and adds sorting to every column, retaining the [2.6.1](docs/releases/frontend-2.6.1.md) assistant fixes, and [2.6.3](docs/releases/frontend-2.6.3.md) applies the UX review polish. [v2.6.3](docs/releases/v2.6.3.md) brings the API to the same version, adding server-saved favourites and account hardening.
+Android patches between releases have their own notes: [2.6.1](docs/releases/frontend-2.6.1.md), [2.6.2](docs/releases/frontend-2.6.2.md) and [2.6.3](docs/releases/frontend-2.6.3.md). The [changelog](CHANGELOG.md) lists every change.
 
 ---
 
