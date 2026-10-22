@@ -1,6 +1,6 @@
 # Demo Script — Football Intelligence Platform
 
-Three ready-to-run demo scripts, scaled to the time available. If you only need to show it, the [2-minute narrated demo video](demo-video/README.md) covers the whole system. For setup from scratch, follow the [Quick Start Guide](../setup/quick-start.md).
+Three ready-to-run demo scripts, scaled to the time available. If you only need to show it, the [2½-minute narrated demo video](demo-video/README.md) covers the whole system. For setup from scratch, follow the [Quick Start Guide](../setup/quick-start.md).
 
 ---
 

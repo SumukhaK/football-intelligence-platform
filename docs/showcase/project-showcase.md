@@ -240,7 +240,7 @@ Documentation is treated as a deliverable, not an afterthought:
 - **A stage report for every build stage** (`docs/reports/stage-NN-summary.md`), plus experiment reports (draws, goals model, Kaggle extras, in-season accuracy).
 - **A demo script for every stage** (`docs/demo/stage-NN-demo.md`).
 - **Release notes** (`docs/releases/`) for each tagged version.
-- **A 2-minute narrated demo video** ([`docs/showcase/demo-video/`](demo-video/README.md)).
+- **A 2½-minute narrated demo video** ([`docs/showcase/demo-video/`](demo-video/README.md)).
 
 This showcase document set (`docs/showcase/`) is written for an audience that wasn't present for the build.
 
