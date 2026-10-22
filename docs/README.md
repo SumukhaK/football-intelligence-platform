@@ -141,6 +141,7 @@ docs/
   reference/      # CLI command reference
   releases/       # Release notes and readiness reports
   reports/        # Stage summaries, model/data experiment reports and hosting measurements
+  roadmap/        # Future improvements that are agreed but not scheduled
   setup/          # Installation and quick-start guides
   showcase/       # Recruiter-facing showcase: portfolio summary, timeline, interview guide, demo scripts, demo video
   README.md       # This index
@@ -150,7 +151,7 @@ docs/
   troubleshooting.md       # Common issues and fixes
 ```
 
-The directory also holds empty placeholder folders (`ai/`, `architecture/`, `backend/`, `constitution/`, `decisions/`, `frontend/`, `prompts/`, `roadmap/`, `testing/`) that contain only a `.gitkeep`.
+The directory also holds empty placeholder folders (`ai/`, `architecture/`, `backend/`, `constitution/`, `decisions/`, `frontend/`, `prompts/`, `testing/`) that contain only a `.gitkeep`.
 
 ---
 
