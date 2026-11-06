@@ -17,6 +17,14 @@ a Claude integration, customers or guaranteed hallucination prevention.
 The serving dataset figures come from the refit report in docs/reports.
 The demo video (`demo.mp4`, recorded October 2026) and its poster are served from this folder, clearly dated; the subtitles are burned in, and the transcript is `docs/showcase/demo-video/demo.srt`.
 
+## Model explainer
+
+`how-the-model-predicts.html` explains the match model in simple English, with
+inline SVG diagrams and a dark theme. It is self-contained (no external CSS,
+fonts or scripts) and is linked from the main navigation. Its numbers come from
+the served model (`20261007_154105`), the 2026/27 backtest rows and the reports
+it lists under "Where the facts come from"; re-check them when the model changes.
+
 ## Preview and verify
 
 From the repository root:

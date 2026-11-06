@@ -9,6 +9,10 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- The website has a dark-mode explainer, "How our model predicts a football match" (`docs/site/how-the-model-predicts.html`), linked from the main navigation. In simple English it covers the 42 features and which matter most, how the trees turn them into home, draw and away chances, how draws are handled, and Dixon-Coles score predictions, using real Arsenal v Chelsea and Leeds v Brentford examples from 2026/27.
+
 ### Changed
 
 - The demo video is re-recorded for v2.6.3: the assistant now follows the favourite team and the conversation, shows the questions left today, and Settings names the Drishti model. The README thumbnail and the website poster show the assistant chat.
