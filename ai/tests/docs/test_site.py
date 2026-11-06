@@ -47,3 +47,18 @@ def test_custom_domain_matches_canonical_url() -> None:
     domain = (site / "CNAME").read_text(encoding="utf-8").strip()
     page = (site / "index.html").read_text(encoding="utf-8")
     assert f'rel="canonical" href="https://{domain}/"' in page
+
+
+def test_model_explainer_is_linked_and_has_no_broken_references(
+    tmp_path: Path,
+) -> None:
+    """The explainer page is reachable from the landing page and self-contained."""
+    site = ROOT / "docs" / "site"
+    explainer = site / "how-the-model-predicts.html"
+    page = (site / "index.html").read_text(encoding="utf-8")
+    assert 'href="how-the-model-predicts.html"' in page
+    (tmp_path / "favicon.svg").write_bytes((site / "favicon.svg").read_bytes())
+    (tmp_path / "index.html").write_text(
+        explainer.read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    assert CHECK(tmp_path) == []
