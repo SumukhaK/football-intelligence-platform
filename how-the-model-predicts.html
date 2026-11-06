@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="dark">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How our match predictor works · Football Intelligence</title>
+<meta name="description" content="A simple-English explainer of the Football Intelligence match model: its 42 features, how a prediction is made, how draws are handled, and Dixon-Coles score predictions.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+  :root {
+    color-scheme: dark;
+    --ink: #e6e9ef; --muted: #9aa4b5; --line: #2a3140; --bg: #0f131a; --card: #161b24;
+    --accent: #6ea8fe; --home: #3fa34d; --draw: #e0a100; --away: #3b82d6;
+    --elo: #5c7cfa; --record: #22b8cf; --goals: #ff8a3d; --h2h: #cc5de8;
+    --table: #51cf66; --form: #f06595; --rest: #9aa4b5; --sos: #fcc419;
+    --note-bg: #2a2412; --note-line: #c99a1e; --key-bg: #17233b;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font: 17px/1.65 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink); background: var(--bg); }
+  .layout { display: grid; grid-template-columns: 270px minmax(0, 1fr); max-width: 1220px; margin: 0 auto; }
+  nav.toc { position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 28px 18px 28px 24px; border-right: 1px solid var(--line); background: var(--card); }
+  .brand { font-weight: 700; font-size: 14px; letter-spacing: .02em; color: var(--accent); margin-bottom: 18px; }
+  .label { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 6px 0 8px; }
+  nav.toc ol { margin: 0; padding-left: 20px; font-size: 14.5px; }
+  nav.toc li { margin: 6px 0; }
+  nav.toc a { color: var(--ink); text-decoration: none; }
+  nav.toc a:hover { color: var(--accent); }
+  main { padding: 36px 48px 80px; min-width: 0; }
+  header.page { margin-bottom: 28px; }
+  .eyebrow { display: inline-block; font-size: 12.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); background: var(--key-bg); padding: 3px 10px; border-radius: 999px; }
+  h1 { font-size: 34px; line-height: 1.2; margin: 12px 0 10px; }
+  .lede { font-size: 19px; color: var(--muted); margin: 0; }
+  h2 { font-size: 26px; margin: 56px 0 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+  h3 { font-size: 20px; margin: 30px 0 8px; }
+  p { margin: 0 0 14px; }
+  a { color: var(--accent); }
+  code { font: 14px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: #262c38; padding: 1px 6px; border-radius: 5px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; margin: 18px 0; }
+  .define { background: var(--key-bg); border-left: 5px solid var(--accent); border-radius: 10px; padding: 14px 18px; margin: 16px 0; font-weight: 600; }
+  .note { background: var(--note-bg); border-left: 5px solid var(--note-line); border-radius: 10px; padding: 12px 18px; margin: 16px 0; }
+  .note strong:first-child { color: #8a6100; }
+  .cover { columns: 2; column-gap: 32px; padding-left: 20px; }
+  .cover li { margin: 4px 0; break-inside: avoid; }
+  figure { margin: 20px 0; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+  figure svg { width: 100%; height: auto; display: block; }
+  figcaption { font-size: 14.5px; color: var(--muted); margin-top: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 15.5px; margin: 12px 0 18px; background: var(--card); }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: #1e2430; font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .families { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin: 18px 0; }
+  .fam { background: var(--card); border: 1px solid var(--line); border-top: 6px solid var(--c); border-radius: 12px; padding: 14px 16px; }
+  .fam .n { float: right; font-weight: 700; color: var(--c); font-size: 22px; line-height: 1; }
+  .fam h4 { margin: 0 0 6px; font-size: 16px; }
+  .fam p { font-size: 14.5px; margin: 0; color: var(--muted); }
+  .steps { counter-reset: s; list-style: none; padding: 0; }
+  .steps > li { counter-increment: s; position: relative; padding: 4px 0 10px 46px; }
+  .steps > li::before { content: counter(s); position: absolute; left: 0; top: 2px; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #0f131a; font-weight: 700; display: grid; place-items: center; font-size: 15px; }
+  .pill { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 14px; font-weight: 600; color: #fff; }
+  .pill.h { background: var(--home); } .pill.d { background: var(--draw); } .pill.a { background: var(--away); }
+  details.qa { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin: 10px 0; }
+  details.qa summary { cursor: pointer; padding: 14px 18px; font-weight: 600; }
+  details.qa .a { padding: 0 18px 8px; }
+  .sources { font-size: 14.5px; color: var(--muted); }
+  .sources li { margin: 4px 0; }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    nav.toc { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+    main { padding: 24px 18px 60px; }
+    .cover { columns: 1; }
+    h1 { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="toc" aria-label="Sections">
+  <div class="brand"><a href="index.html" style="color: inherit; text-decoration: none;">← Football Intelligence</a></div>
+  <div class="label">Sections</div>
+  <ol>
+    <li><a href="#big-picture">The big picture</a></li>
+    <li><a href="#features">The 42 features</a></li>
+    <li><a href="#important">Which features matter most</a></li>
+    <li><a href="#elo">What is an Elo rating?</a></li>
+    <li><a href="#trees">How one tree decides</a></li>
+    <li><a href="#prediction">How a prediction is made</a></li>
+    <li><a href="#why">Why this prediction? (SHAP)</a></li>
+    <li><a href="#draws">How we handled draws</a></li>
+    <li><a href="#results">How good is it?</a></li>
+    <li><a href="#dixon-coles">Bonus: Dixon-Coles scores</a></li>
+    <li><a href="#faq">Quick questions</a></li>
+    <li><a href="#sources">Where the facts come from</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="page">
+  <span class="eyebrow">Explainer · simple English</span>
+  <h1>How our model predicts a football match</h1>
+  <p class="lede">In this article, we will learn how the Football Intelligence model looks at two teams, asks a few hundred tiny questions, and gives a chance for a home win, a draw and an away win. Every number here comes from our own code, our trained model and our project reports.</p>
+</header>
+
+<p>We will cover the following:</p>
+<ul class="cover">
+  <li>What the model does, in one picture</li>
+  <li>The 42 features, and what each family means</li>
+  <li>Which features matter most</li>
+  <li>What an Elo rating is</li>
+  <li>How one small tree makes a decision</li>
+  <li>How 504 small trees make one prediction</li>
+  <li>How we explain each prediction</li>
+  <li>Why the model never picks a draw, and what we did about it</li>
+  <li>How good the model is</li>
+  <li>Bonus: predicting the score with Dixon-Coles</li>
+</ul>
+
+<p>Let's get started.</p>
+
+<!-- ============================================================ -->
+<h2 id="big-picture">The big picture</h2>
+
+<p>Let's say Arsenal are playing Chelsea at home. Before the match, a football fan would ask some simple questions. How strong is each team? How have they been playing at home and away? Who usually wins when these two meet?</p>
+
+<p>Our model does exactly this. It just asks the questions with numbers, and it asks a lot of them.</p>
+
+<div class="define">Our match model is an XGBoost model. It takes 42 numbers about the two teams, all known before kick-off, and gives three chances: home win, draw and away win. The three chances always add up to 100%.</div>
+
+<figure>
+<svg viewBox="0 0 960 230" role="img" aria-label="Flow: match history, 42 features, XGBoost model with 504 small trees, three percentages, and a SHAP explanation">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7d879a"/></marker>
+  </defs>
+  <g font-family="Segoe UI, Roboto, Arial, sans-serif">
+    <rect x="10" y="40" width="190" height="110" rx="14" fill="#1c2a4a" stroke="#5c7cfa"/>
+    <text x="105" y="78" text-anchor="middle" font-size="17" font-weight="700" fill="#e6e9ef">Match history</text>
+    <text x="105" y="102" text-anchor="middle" font-size="14" fill="#9aa4b5">46,709 matches, 5 leagues</text>
+    <text x="105" y="122" text-anchor="middle" font-size="14" fill="#9aa4b5">2000/01 to 2025/26</text>
+    <line x1="200" y1="95" x2="245" y2="95" stroke="#7d879a" stroke-width="2.5" marker-end="url(#arr)"/>
+    <rect x="250" y="40" width="190" height="110" rx="14" fill="#3a2614" stroke="#f76707"/>
+    <text x="345" y="78" text-anchor="middle" font-size="17" font-weight="700" fill="#e6e9ef">42 features</text>
+    <text x="345" y="102" text-anchor="middle" font-size="14" fill="#9aa4b5">numbers known</text>
+    <text x="345" y="122" text-anchor="middle" font-size="14" fill="#9aa4b5">before kick-off</text>
+    <line x1="440" y1="95" x2="485" y2="95" stroke="#7d879a" stroke-width="2.5" marker-end="url(#arr)"/>
+    <rect x="490" y="40" width="200" height="110" rx="14" fill="#2f1f3a" stroke="#ae3ec9"/>
+    <text x="590" y="78" text-anchor="middle" font-size="17" font-weight="700" fill="#e6e9ef">XGBoost model</text>
+    <text x="590" y="102" text-anchor="middle" font-size="14" fill="#9aa4b5">504 small trees</text>
+    <text x="590" y="122" text-anchor="middle" font-size="14" fill="#9aa4b5">0.60 MB file</text>
+    <line x1="690" y1="95" x2="735" y2="95" stroke="#7d879a" stroke-width="2.5" marker-end="url(#arr)"/>
+    <rect x="740" y="22" width="210" height="146" rx="14" fill="#1a1f2b" stroke="#3a4252"/>
+    <text x="845" y="50" text-anchor="middle" font-size="15" font-weight="700" fill="#e6e9ef">Arsenal v Chelsea</text>
+    <rect x="758" y="64" width="109" height="22" rx="4" fill="#3fa34d"/><text x="764" y="80" font-size="13" fill="#fff" font-weight="600">Home 62.3%</text>
+    <rect x="758" y="94" width="35" height="22" rx="4" fill="#e0a100"/><text x="800" y="110" font-size="13" fill="#e6e9ef" font-weight="600">Draw 20.2%</text>
+    <rect x="758" y="124" width="31" height="22" rx="4" fill="#3b82d6"/><text x="796" y="140" font-size="13" fill="#e6e9ef" font-weight="600">Away 17.5%</text>
+    <path d="M590 150 L590 200 L845 200 L845 172" fill="none" stroke="#51cf66" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arr)"/>
+    <text x="700" y="222" text-anchor="middle" font-size="14" fill="#51cf66" font-weight="600">SHAP: which features pushed which way</text>
+  </g>
+</svg>
+<figcaption>The whole journey. The Arsenal v Chelsea numbers are the real output of our served model for their match on 6 September 2026. Arsenal won 2–1.</figcaption>
+</figure>
+
+<p>Here, we can see four simple steps. We collect past results. We turn them into 42 numbers for the match. The model turns the 42 numbers into three chances. Then SHAP tells us which numbers pushed the answer up or down.</p>
+
+<div class="note"><strong>Note:</strong> The model only sees results, dates and team names from the past. It does not see betting odds, injuries, line-ups or anything from the match itself. Odds are used only to compare our model with the bookmakers.</div>
+
+<!-- ============================================================ -->
+<h2 id="features">The 42 features</h2>
+
+<p>A <strong>feature</strong> is one number that describes the match before it is played. For example, "Arsenal's points from their last 5 games" is one feature. It was 15 out of 15 before the Chelsea match.</p>
+
+<p>So, is it 42 features or more? It is exactly <strong>42</strong>. The list is pinned in the code (<code>MODEL_FEATURES</code> in <code>ai/training/configuration.py</code>). If one of the 42 is missing, training stops with an error. If a new number sneaks into the data, training also stops, so nothing can leak in by accident.</p>
+
+<p>The 42 features fall into eight families. Most families have one number for the home team and one for the away team.</p>
+
+<div class="families">
+  <div class="fam" style="--c: var(--elo)"><span class="n">2</span><h4>Elo strength rating</h4><p>One rating per team that goes up after wins and down after losses. Arsenal 1621, Chelsea 1498.</p></div>
+  <div class="fam" style="--c: var(--record)"><span class="n">4</span><h4>Long-term home / away record</h4><p>Home team's win % and points per game in all its past home games; the same for the away team's away games. Arsenal at home: 68% wins, 2.24 points per game.</p></div>
+  <div class="fam" style="--c: var(--goals)"><span class="n">12</span><h4>Goals</h4><p>Goals scored, conceded and goal difference per game, over the last 5 and last 10 games, for both teams.</p></div>
+  <div class="fam" style="--c: var(--form)"><span class="n">8</span><h4>Recent form</h4><p>Wins and points in the last 5 and last 10 games, for both teams.</p></div>
+  <div class="fam" style="--c: var(--table)"><span class="n">6</span><h4>League table</h4><p>League position, points and games played this season, for both teams.</p></div>
+  <div class="fam" style="--c: var(--h2h)"><span class="n">4</span><h4>Head-to-head</h4><p>Past meetings between the two clubs: total, wins for each side, and draws. Arsenal v Chelsea: 52 meetings, 18 Arsenal wins, 17 Chelsea wins, 17 draws.</p></div>
+  <div class="fam" style="--c: var(--sos)"><span class="n">4</span><h4>Strength of schedule</h4><p>The average Elo rating of each team's last 5 and last 10 opponents. Did they beat strong teams or weak ones?</p></div>
+  <div class="fam" style="--c: var(--rest)"><span class="n">2</span><h4>Rest days</h4><p>Days since each team's last match in the same season. Arsenal 6, Chelsea 7.</p></div>
+</div>
+
+<p>2 + 4 + 12 + 8 + 6 + 4 + 4 + 2 = 42.</p>
+
+<h3>One golden rule: only the past</h3>
+
+<p>Every feature is built only from matches <em>before</em> the one we are predicting. In the code, each rolling number is shifted by one match, so a match can never see its own result. There are tests that check this.</p>
+
+<p>Why does this matter? Suppose we let the model see the final score inside its features. It would look like a genius in testing and be useless in real life. This mistake is called <strong>data leakage</strong>, and the golden rule prevents it.</p>
+
+<div class="note"><strong>Note:</strong> Early in a season, some numbers have no history yet (for example, a promoted team's first home game). The model fills these gaps with the middle value (the median) from its training data.</div>
+
+<!-- ============================================================ -->
+<h2 id="important">Which features matter most?</h2>
+
+<p>Now, the next big question is: does the model treat all 42 numbers the same? No. A few numbers do most of the work.</p>
+
+<p>To measure this, we used SHAP (more on SHAP <a href="#why">below</a>). For every match, SHAP tells us how much each feature moved the prediction. We averaged this over the 3,504 matches of the 2024/25 and 2025/26 seasons. The chart shows each feature's share of the total.</p>
+
+<figure>
+<svg viewBox="0 0 960 470" role="img" aria-label="Bar chart of the top 10 features by share of influence">
+  <g font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="15">
+    <g transform="translate(330,20)">
+      <rect x="0" y="0"   width="419" height="30" rx="5" fill="#5c7cfa"/><text x="-12" y="20" text-anchor="end" fill="#e6e9ef">Home team's Elo rating</text><text x="429" y="20" fill="#e6e9ef" font-weight="700">28.9%</text>
+      <rect x="0" y="42"  width="363" height="30" rx="5" fill="#5c7cfa"/><text x="-12" y="62" text-anchor="end" fill="#e6e9ef">Away team's Elo rating</text><text x="373" y="62" fill="#e6e9ef" font-weight="700">25.0%</text>
+      <rect x="0" y="84"  width="139" height="30" rx="5" fill="#1c9fb3"/><text x="-12" y="104" text-anchor="end" fill="#e6e9ef">Away team's points per away game</text><text x="149" y="104" fill="#e6e9ef" font-weight="700">9.6%</text>
+      <rect x="0" y="126" width="112" height="30" rx="5" fill="#1c9fb3"/><text x="-12" y="146" text-anchor="end" fill="#e6e9ef">Home team's points per home game</text><text x="122" y="146" fill="#e6e9ef" font-weight="700">7.7%</text>
+      <rect x="0" y="168" width="83"  height="30" rx="5" fill="#1c9fb3"/><text x="-12" y="188" text-anchor="end" fill="#e6e9ef">Home team's home win %</text><text x="93" y="188" fill="#e6e9ef" font-weight="700">5.7%</text>
+      <rect x="0" y="210" width="48"  height="30" rx="5" fill="#1c9fb3"/><text x="-12" y="230" text-anchor="end" fill="#e6e9ef">Away team's away win %</text><text x="58" y="230" fill="#e6e9ef" font-weight="700">3.3%</text>
+      <rect x="0" y="252" width="35"  height="30" rx="5" fill="#f76707"/><text x="-12" y="272" text-anchor="end" fill="#e6e9ef">Home goals scored per game, last 10</text><text x="45" y="272" fill="#e6e9ef" font-weight="700">2.4%</text>
+      <rect x="0" y="294" width="26"  height="30" rx="5" fill="#ae3ec9"/><text x="-12" y="314" text-anchor="end" fill="#e6e9ef">Head-to-head wins for away team</text><text x="36" y="314" fill="#e6e9ef" font-weight="700">1.8%</text>
+      <rect x="0" y="336" width="26"  height="30" rx="5" fill="#f76707"/><text x="-12" y="356" text-anchor="end" fill="#e6e9ef">Home goal difference per game, last 10</text><text x="36" y="356" fill="#e6e9ef" font-weight="700">1.8%</text>
+      <rect x="0" y="378" width="22"  height="30" rx="5" fill="#f76707"/><text x="-12" y="398" text-anchor="end" fill="#e6e9ef">Away goal difference per game, last 10</text><text x="32" y="398" fill="#e6e9ef" font-weight="700">1.5%</text>
+      <text x="0" y="440" fill="#9aa4b5" font-size="14">The other 32 features share the remaining 12.3%.</text>
+    </g>
+  </g>
+</svg>
+<figcaption>Top 10 of 42 features for the served model, by average SHAP size over 3,504 matches (2024/25 and 2025/26). On the 250 played matches of 2026/27 the top six are in the same order.</figcaption>
+</figure>
+
+<p>Now, let's add the features up by family.</p>
+
+<figure>
+<svg viewBox="0 0 960 380" role="img" aria-label="Bar chart of influence by feature family">
+  <g font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="15">
+    <g transform="translate(330,16)">
+      <rect x="0" y="0"   width="420" height="32" rx="5" fill="#5c7cfa"/><text x="-12" y="21" text-anchor="end" fill="#e6e9ef">Elo strength rating (2)</text><text x="430" y="21" font-weight="700" fill="#e6e9ef">54.0%</text>
+      <rect x="0" y="44"  width="205" height="32" rx="5" fill="#1c9fb3"/><text x="-12" y="65" text-anchor="end" fill="#e6e9ef">Long-term home / away record (4)</text><text x="215" y="65" font-weight="700" fill="#e6e9ef">26.4%</text>
+      <rect x="0" y="88"  width="82"  height="32" rx="5" fill="#f76707"/><text x="-12" y="109" text-anchor="end" fill="#e6e9ef">Goals (12)</text><text x="92" y="109" font-weight="700" fill="#e6e9ef">10.5%</text>
+      <rect x="0" y="132" width="29"  height="32" rx="5" fill="#ae3ec9"/><text x="-12" y="153" text-anchor="end" fill="#e6e9ef">Head-to-head (4)</text><text x="39" y="153" font-weight="700" fill="#e6e9ef">3.7%</text>
+      <rect x="0" y="176" width="22"  height="32" rx="5" fill="#51cf66"/><text x="-12" y="197" text-anchor="end" fill="#e6e9ef">League table (6)</text><text x="32" y="197" font-weight="700" fill="#e6e9ef">2.8%</text>
+      <rect x="0" y="220" width="10"  height="32" rx="5" fill="#f59f00"/><text x="-12" y="241" text-anchor="end" fill="#e6e9ef">Strength of schedule (4)</text><text x="20" y="241" font-weight="700" fill="#e6e9ef">1.3%</text>
+      <rect x="0" y="264" width="9"   height="32" rx="5" fill="#e64980"/><text x="-12" y="285" text-anchor="end" fill="#e6e9ef">Recent form (8)</text><text x="19" y="285" font-weight="700" fill="#e6e9ef">1.1%</text>
+      <rect x="0" y="308" width="3"   height="32" rx="2" fill="#6c7584"/><text x="-12" y="329" text-anchor="end" fill="#e6e9ef">Rest days (2)</text><text x="13" y="329" font-weight="700" fill="#e6e9ef">0.3%</text>
+    </g>
+  </g>
+</svg>
+<figcaption>Share of influence by family. The number in brackets is how many features are in the family.</figcaption>
+</figure>
+
+<p>Here, we can see three clear lessons:</p>
+<ul>
+  <li><strong>The two Elo ratings do more than half the work.</strong> One number per team carries 54% of the model's attention.</li>
+  <li><strong>Long-term home and away records come next</strong>, with 26%. Some teams are much stronger at home than away, and the model uses that.</li>
+  <li><strong>Recent form features barely matter on their own</strong> (1.1% for all eight). A likely reason is that the Elo rating already moves after every result, so it already contains recent form. The model does not need to count the same thing twice.</li>
+</ul>
+
+<p>Do the other 40 features help at all? Yes. On the first 250 matches of 2026/27, a simple model that uses <em>only</em> the Elo gap got 48.8% right. Our full model (the earlier version, trained to 2021/22) got 52.4%. That is 3.7 points better, and the 95% range (+0.8 to +6.8) stays above zero. So the other features add real information.</p>
+
+<!-- ============================================================ -->
+<h2 id="elo">What is an Elo rating?</h2>
+
+<p>Since Elo does most of the work, let's understand it properly.</p>
+
+<p>Think of a school chess club. Everyone starts with the same score. When you beat a strong player, your score goes up a lot. When you beat a weak player, it goes up only a little, because you were expected to win. Elo works exactly like this.</p>
+
+<div class="define">An Elo rating is a single strength number for a team. It goes up after a win and down after a loss. How much it moves depends on how surprising the result was.</div>
+
+<p>In our code (<code>ai/feature_engineering/features/elo_rating.py</code>):</p>
+<ul>
+  <li>Every team starts at <strong>1500</strong>.</li>
+  <li>After each match, the rating moves by <strong>K = 32</strong> times "what happened minus what was expected". A win counts as 1, a draw as 0.5 and a loss as 0.</li>
+  <li>Each league is its own pool, because clubs from different leagues never meet in our data.</li>
+  <li>At the start of a new season, a team's rating moves <strong>a third of the way back to 1500</strong>. A promoted team starts at the average of the previous season's three lowest-rated teams.</li>
+</ul>
+
+<h3>A small worked example</h3>
+<p>Suppose Team A is rated 1600 and Team B is rated 1500. The standard Elo formula says Team A is expected to score 0.64 (a 100-point gap gives 1 / (1 + 10<sup>−100/400</sup>) ≈ 0.64).</p>
+
+<table>
+  <tr><th>What happens</th><th>Team A's change</th><th>Why</th></tr>
+  <tr><td>Team A wins</td><td class="num">32 × (1 − 0.64) = <strong>+11.5</strong></td><td>Expected, so a small reward</td></tr>
+  <tr><td>Draw</td><td class="num">32 × (0.5 − 0.64) = <strong>−4.5</strong></td><td>The stronger team dropped points</td></tr>
+  <tr><td>Team A loses</td><td class="num">32 × (0 − 0.64) = <strong>−20.5</strong></td><td>A surprise, so a big penalty</td></tr>
+</table>
+<p>Team B always moves by the same amount in the other direction.</p>
+
+<!-- ============================================================ -->
+<h2 id="trees">How one tree decides</h2>
+
+<p>We all have played the game of 20 questions. Is it an animal? Yes. Does it fly? No. Each question cuts down the possible answers.</p>
+
+<p>A decision tree is the same game. It asks yes-or-no questions about the numbers, one after another, until it reaches an answer at the bottom (a <strong>leaf</strong>).</p>
+
+<p>Our trees are tiny: each one asks <strong>at most 3 questions</strong> (depth 3). And here is the twist: a leaf does not say "home win". It gives a small number, a <strong>nudge</strong>. A plus nudge makes that outcome a little more likely. A minus nudge makes it a little less likely.</p>
+
+<p>Below is the real first "home win" tree from our served model. Let's follow Arsenal v Chelsea through it.</p>
+
+<figure>
+<svg viewBox="0 0 960 380" role="img" aria-label="The first home-win tree of the served model, with the Arsenal v Chelsea path highlighted">
+  <g font-family="Segoe UI, Roboto, Arial, sans-serif">
+    <!-- edges -->
+    <g stroke="#3a4252" stroke-width="2" fill="none">
+      <path d="M480 66 L240 128"/><path d="M240 168 L120 230"/><path d="M240 168 L360 230"/>
+      <path d="M480 66 L720 128"/>
+      <path d="M720 168 L840 230"/>
+      <path d="M120 270 L60 318"/><path d="M120 270 L180 318"/><path d="M360 270 L300 318"/><path d="M360 270 L420 318"/>
+      <path d="M600 270 L540 318"/><path d="M840 270 L780 318"/><path d="M840 270 L900 318"/>
+    </g>
+    <g stroke="#3fa34d" stroke-width="5" fill="none">
+      <path d="M480 66 L720 128"/><path d="M720 168 L600 230"/><path d="M600 270 L660 318"/>
+    </g>
+    <!-- edge labels -->
+    <g font-size="12.5" font-weight="700">
+      <text x="340" y="92" fill="#7d879a">yes</text><text x="610" y="92" fill="#3fa34d">no</text>
+      <text x="160" y="196" fill="#7d879a">yes</text><text x="310" y="196" fill="#7d879a">no</text>
+      <text x="640" y="196" fill="#3fa34d">yes</text><text x="792" y="196" fill="#7d879a">no</text>
+      <text x="62" y="300" fill="#7d879a">yes</text><text x="160" y="300" fill="#7d879a">no</text>
+      <text x="300" y="300" fill="#7d879a">yes</text><text x="398" y="300" fill="#7d879a">no</text>
+      <text x="540" y="300" fill="#7d879a">yes</text><text x="640" y="300" fill="#3fa34d">no</text>
+      <text x="780" y="300" fill="#7d879a">yes</text><text x="880" y="300" fill="#7d879a">no</text>
+    </g>
+    <!-- question nodes -->
+    <g font-size="13.5" text-anchor="middle">
+      <rect x="350" y="14" width="260" height="52" rx="10" fill="#123236" stroke="#3fa34d" stroke-width="2.5"/>
+      <text x="480" y="36" fill="#e6e9ef" font-weight="700">Home team's home win %</text><text x="480" y="55" fill="#e6e9ef">below 51.9%?</text>
+      <rect x="125" y="128" width="230" height="40" rx="10" fill="#1e2547" stroke="#5c7cfa"/>
+      <text x="240" y="153" fill="#e6e9ef">Away rating below 1543?</text>
+      <rect x="605" y="128" width="230" height="40" rx="10" fill="#1e2547" stroke="#3fa34d" stroke-width="2.5"/>
+      <text x="720" y="153" fill="#e6e9ef" font-weight="700">Away rating below 1506?</text>
+      <rect x="40" y="230" width="160" height="40" rx="10" fill="#1e2547" stroke="#5c7cfa"/><text x="120" y="255" fill="#e6e9ef">Away below 1460?</text>
+      <rect x="280" y="230" width="160" height="40" rx="10" fill="#1e2547" stroke="#5c7cfa"/><text x="360" y="255" fill="#e6e9ef">Away below 1608?</text>
+      <rect x="495" y="230" width="210" height="40" rx="10" fill="#3a2416" stroke="#3fa34d" stroke-width="2.5"/><text x="600" y="249" fill="#e6e9ef" font-weight="700">Home goal diff, last 10,</text><text x="600" y="264" fill="#e6e9ef" font-weight="700">below +0.56?</text>
+      <rect x="760" y="230" width="160" height="40" rx="10" fill="#1e2547" stroke="#5c7cfa"/><text x="840" y="255" fill="#e6e9ef">Away below 1627?</text>
+    </g>
+    <!-- leaves -->
+    <g font-size="13.5" text-anchor="middle" font-weight="700">
+      <rect x="22" y="318" width="76" height="34" rx="17" fill="#262c38"/><text x="60" y="340" fill="#3fa34d">+0.001</text>
+      <rect x="142" y="318" width="76" height="34" rx="17" fill="#262c38"/><text x="180" y="340" fill="#ff6b6b">−0.004</text>
+      <rect x="262" y="318" width="76" height="34" rx="17" fill="#262c38"/><text x="300" y="340" fill="#ff6b6b">−0.012</text>
+      <rect x="382" y="318" width="76" height="34" rx="17" fill="#262c38"/><text x="420" y="340" fill="#ff6b6b">−0.018</text>
+      <rect x="502" y="318" width="76" height="34" rx="17" fill="#262c38"/><text x="540" y="340" fill="#3fa34d">+0.008</text>
+      <rect x="618" y="314" width="84" height="42" rx="21" fill="#3fa34d"/><text x="660" y="340" fill="#ffffff">+0.017</text>
+      <rect x="742" y="318" width="76" height="34" rx="17" fill="#262c38"/><text x="780" y="340" fill="#3fa34d">+0.002</text>
+      <rect x="862" y="318" width="76" height="34" rx="17" fill="#262c38"/><text x="900" y="340" fill="#ff6b6b">−0.011</text>
+    </g>
+    <text x="480" y="374" text-anchor="middle" font-size="13" fill="#9aa4b5">Leaves are nudges to the home-win score (rounded to 3 decimals).</text>
+  </g>
+</svg>
+<figcaption>The first of 168 home-win trees in the served model, exactly as stored in the model file. "Away rating" means the away team's Elo rating.</figcaption>
+</figure>
+
+<ol class="steps">
+  <li>Is Arsenal's home win % below 51.9%? It is 68.1%, so <strong>no</strong>. Go right.</li>
+  <li>Is Chelsea's rating below 1506? It is 1498, so <strong>yes</strong>. Go left.</li>
+  <li>Is Arsenal's goal difference per game over the last 10 below +0.56? It is +1.1, so <strong>no</strong>. Go right.</li>
+  <li>We reach the leaf: <strong>+0.017</strong>. This tree nudges "home win" up a little.</li>
+</ol>
+
+<p>That nudge is very small. One tree on its own knows almost nothing. The power comes from many trees working together.</p>
+
+<!-- ============================================================ -->
+<h2 id="prediction">How a prediction is made</h2>
+
+<p>A Random Forest builds many trees side by side and lets them vote. XGBoost works differently. It builds trees <strong>one after another</strong>, and each new tree tries to fix the mistakes the earlier trees still make.</p>
+
+<p>Think of a team of beginners. The first makes a rough guess. The second studies only where the first went wrong and suggests a small fix. The third fixes what is still wrong, and so on. Add up hundreds of small fixes, and you get a strong answer.</p>
+
+<div class="define">XGBoost (gradient boosting) adds up many small trees, built one after another. Each new tree corrects a little of what the earlier trees still get wrong.</div>
+
+<h3>Our model in numbers</h3>
+<table>
+  <tr><th>Setting</th><th>Value</th><th>In simple words</th></tr>
+  <tr><td>Rounds</td><td class="num">168</td><td>168 rounds of "fix the mistakes"</td></tr>
+  <tr><td>Trees</td><td class="num">504</td><td>Each round builds 3 trees: one for home win, one for draw, one for away win (168 × 3)</td></tr>
+  <tr><td>Depth</td><td class="num">3</td><td>Each tree asks at most 3 questions</td></tr>
+  <tr><td>Learning rate</td><td class="num">0.03</td><td>Each tree's nudge is kept small, so no single tree can take over</td></tr>
+  <tr><td>Training data</td><td class="num">46,709</td><td>Matches from 2000/01 to 2025/26 in the five leagues</td></tr>
+</table>
+
+<h3>Step by step, for Arsenal v Chelsea</h3>
+
+<ol class="steps">
+  <li><strong>Build the 42 numbers.</strong> The server takes the match history up to the match day and computes the 42 features, with the same code used in training.</li>
+  <li><strong>Start from a base score</strong> for each outcome. Home teams win more often than away teams, so home starts highest.</li>
+  <li><strong>Walk all 504 trees.</strong> Each home tree adds its nudge to the home score, each draw tree to the draw score, and each away tree to the away score.</li>
+  <li><strong>Turn the three scores into chances.</strong> A standard formula called softmax turns them into three percentages that add up to 100%. The higher the score, the bigger its share.</li>
+  <li><strong>Pick the biggest.</strong> The outcome with the highest chance is the prediction.</li>
+</ol>
+
+<figure>
+<svg viewBox="0 0 960 300" role="img" aria-label="Final scores turned into percentages: home 0.720 to 62.3 percent, draw minus 0.405 to 20.2 percent, away minus 0.552 to 17.5 percent">
+  <defs><marker id="arr2" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7d879a"/></marker></defs>
+  <g font-family="Segoe UI, Roboto, Arial, sans-serif">
+    <text x="170" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="#e6e9ef">Score after 504 trees</text>
+    <text x="760" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="#e6e9ef">Chance (softmax)</text>
+    <!-- zero line for scores -->
+    <line x1="170" y1="44" x2="170" y2="270" stroke="#4a5263" stroke-dasharray="4 4"/>
+    <text x="170" y="288" text-anchor="middle" font-size="12" fill="#9aa4b5">0</text>
+    <g font-size="14" font-weight="600">
+      <rect x="170" y="60" width="144" height="40" rx="5" fill="#3fa34d"/><text x="60" y="85" fill="#e6e9ef">Home</text><text x="322" y="85" fill="#e6e9ef">+0.720</text>
+      <rect x="89" y="135" width="81" height="40" rx="5" fill="#e0a100"/><text x="20" y="160" fill="#e6e9ef">Draw</text><text x="180" y="160" fill="#e6e9ef">−0.405</text>
+      <rect x="60" y="210" width="110" height="40" rx="5" fill="#3b82d6"/><text x="10" y="235" fill="#e6e9ef">Away</text><text x="180" y="235" fill="#e6e9ef">−0.552</text>
+    </g>
+    <line x1="420" y1="155" x2="520" y2="155" stroke="#7d879a" stroke-width="3" marker-end="url(#arr2)"/>
+    <text x="470" y="140" text-anchor="middle" font-size="13" fill="#9aa4b5">softmax</text>
+    <g font-size="14" font-weight="600">
+      <rect x="560" y="60" width="249" height="40" rx="5" fill="#3fa34d"/><text x="818" y="85" fill="#e6e9ef">62.3%  ← pick</text>
+      <rect x="560" y="135" width="81" height="40" rx="5" fill="#e0a100"/><text x="650" y="160" fill="#e6e9ef">20.2%</text>
+      <rect x="560" y="210" width="70" height="40" rx="5" fill="#3b82d6"/><text x="639" y="235" fill="#e6e9ef">17.5%</text>
+    </g>
+  </g>
+</svg>
+<figcaption>Real numbers from the served model for Arsenal v Chelsea, 6 September 2026. The pick is a home win; Arsenal won 2–1. This match was not in the model's training data.</figcaption>
+</figure>
+
+<div class="note"><strong>Note:</strong> Softmax, for the curious: each chance is e<sup>score</sup> divided by the sum of e<sup>score</sup> for all three. So e<sup>0.720</sup> ÷ (e<sup>0.720</sup> + e<sup>−0.405</sup> + e<sup>−0.552</sup>) = 0.623, which is 62.3%.</div>
+
+<!-- ============================================================ -->
+<h2 id="why">Why this prediction? (SHAP)</h2>
+
+<p>A prediction without a reason is hard to trust. So every prediction comes with an explanation.</p>
+
+<p>Imagine five friends share a taxi and want to split the fare fairly. SHAP does the same with a prediction. It splits the final score fairly between the 42 features, so we can see who added what.</p>
+
+<div class="define">SHAP gives each feature a share of the prediction. A plus share pushed the outcome up, a minus share pushed it down, and all shares add up exactly to the final score.</div>
+
+<p>Here is the home-win score for Arsenal v Chelsea, split by SHAP. The average match starts at +0.337.</p>
+
+<figure>
+<svg viewBox="0 0 960 360" role="img" aria-label="SHAP contributions to the home-win score for Arsenal v Chelsea">
+  <g font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="14.5">
+    <line x1="560" y1="10" x2="560" y2="300" stroke="#4a5263"/>
+    <g>
+      <text x="466" y="34" text-anchor="end" fill="#e6e9ef">Arsenal's Elo rating is 1621</text>
+      <rect x="560" y="16" width="341" height="28" rx="4" fill="#3fa34d"/><text x="868" y="35" text-anchor="end" fill="#fff" font-weight="700">+0.341</text>
+      <text x="466" y="74" text-anchor="end" fill="#e6e9ef">Arsenal win 68% of home games</text>
+      <rect x="560" y="56" width="89" height="28" rx="4" fill="#3fa34d"/><text x="657" y="75" fill="#e6e9ef" font-weight="700">+0.089</text>
+      <text x="466" y="114" text-anchor="end" fill="#e6e9ef">Arsenal get 2.24 points per home game</text>
+      <rect x="560" y="96" width="73" height="28" rx="4" fill="#3fa34d"/><text x="641" y="115" fill="#e6e9ef" font-weight="700">+0.073</text>
+      <text x="466" y="154" text-anchor="end" fill="#e6e9ef">Arsenal goal difference +1.1 per game, last 10</text>
+      <rect x="560" y="136" width="25" height="28" rx="4" fill="#3fa34d"/><text x="593" y="155" fill="#e6e9ef" font-weight="700">+0.025</text>
+      <text x="466" y="194" text-anchor="end" fill="#e6e9ef">Chelsea win 50% of away games</text>
+      <rect x="532" y="176" width="28" height="28" rx="4" fill="#ff6b6b"/><text x="570" y="195" fill="#e6e9ef" font-weight="700">−0.028</text>
+      <text x="466" y="234" text-anchor="end" fill="#e6e9ef">Chelsea get 1.72 points per away game</text>
+      <rect x="481" y="216" width="79" height="28" rx="4" fill="#ff6b6b"/><text x="570" y="235" fill="#e6e9ef" font-weight="700">−0.079</text>
+      <text x="466" y="274" text-anchor="end" fill="#e6e9ef">The other 36 features together</text>
+      <rect x="522" y="256" width="38" height="28" rx="4" fill="#ff6b6b"/><text x="570" y="275" fill="#e6e9ef" font-weight="700">−0.038</text>
+    </g>
+    <text x="480" y="330" text-anchor="middle" fill="#e6e9ef" font-weight="700">0.337 (average start) + 0.341 + 0.089 + 0.073 + 0.025 − 0.028 − 0.079 − 0.038 = 0.720</text>
+    <text x="480" y="352" text-anchor="middle" fill="#9aa4b5" font-size="13">That 0.720 is the home score from the chart above, which became 62.3%.</text>
+  </g>
+</svg>
+<figcaption>Green pushes towards a home win, red pushes away from it. Values from SHAP's TreeExplainer on the served model.</figcaption>
+</figure>
+
+<p>Here, we can see the story in plain words: Arsenal are rated much higher than Chelsea and are very strong at home. Chelsea's good away record pulls the home chance down a bit, but not enough to change the pick.</p>
+
+<p>The app shows these reasons in fan-friendly words, such as "Arsenal team strength rating: 1621" (the wording comes from <code>ai/explainability/feature_labels.py</code>).</p>
+
+<!-- ============================================================ -->
+<h2 id="draws">How we handled draws</h2>
+
+<p>This is the most interesting part of the project. About a quarter of all matches end in a draw (25.9% in our 46,709 matches). Yet our model <strong>never</strong> picks a draw as the most likely result. Why?</p>
+
+<h3>The weather forecast example</h3>
+
+<p>Suppose the forecast says 30% rain every day this week. It is honest: it really rains on about 3 days in 10. But rain is never the "most likely" weather, because 70% says dry. Our draw chances work the same way.</p>
+
+<p>Our draw report found two things:</p>
+<ul>
+  <li><strong>The draw chances are honest (well calibrated).</strong> When the model says about 28% draw, about 28% of those matches really end level.</li>
+  <li><strong>But they are flat.</strong> The draw chance stays between about 0.20 and 0.33 for almost every match, and it never went above 0.36 in any season. On the 250 played matches of 2026/27, the served model's highest draw chance was 0.315.</li>
+</ul>
+
+<figure>
+<svg viewBox="0 0 960 330" role="img" aria-label="Calibration of draw chances: predicted versus actual draw rate in five groups">
+  <g font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="14">
+    <line x1="80" y1="260" x2="900" y2="260" stroke="#4a5263"/>
+    <g fill="#9aa4b5" font-size="12.5" text-anchor="end">
+      <text x="72" y="264">0%</text><text x="72" y="184">10%</text><text x="72" y="104">20%</text><text x="72" y="24">30%</text>
+    </g>
+    <g stroke="#262c38"><line x1="80" y1="180" x2="900" y2="180"/><line x1="80" y1="100" x2="900" y2="100"/><line x1="80" y1="20" x2="900" y2="20"/></g>
+    <!-- scale: 8 px per percentage point, base y=260 -->
+    <g>
+      <rect x="120" y="132" width="50" height="128" fill="#e0a100"/><rect x="175" y="124" width="50" height="136" fill="#8a94a6"/>
+      <text x="172" y="284" text-anchor="middle" fill="#e6e9ef">up to 0.20</text><text x="172" y="302" text-anchor="middle" fill="#9aa4b5" font-size="12">482 matches</text>
+      <rect x="280" y="84" width="50" height="176" fill="#e0a100"/><rect x="335" y="76" width="50" height="184" fill="#8a94a6"/>
+      <text x="332" y="284" text-anchor="middle" fill="#e6e9ef">0.20–0.24</text><text x="332" y="302" text-anchor="middle" fill="#9aa4b5" font-size="12">570</text>
+      <rect x="440" y="52" width="50" height="208" fill="#e0a100"/><rect x="495" y="52" width="50" height="208" fill="#8a94a6"/>
+      <text x="492" y="284" text-anchor="middle" fill="#e6e9ef">0.24–0.27</text><text x="492" y="302" text-anchor="middle" fill="#9aa4b5" font-size="12">952</text>
+      <rect x="600" y="36" width="50" height="224" fill="#e0a100"/><rect x="655" y="36" width="50" height="224" fill="#8a94a6"/>
+      <text x="652" y="284" text-anchor="middle" fill="#e6e9ef">0.27–0.30</text><text x="652" y="302" text-anchor="middle" fill="#9aa4b5" font-size="12">1,273</text>
+      <rect x="760" y="12" width="50" height="248" fill="#e0a100"/><rect x="815" y="28" width="50" height="232" fill="#8a94a6"/>
+      <text x="812" y="284" text-anchor="middle" fill="#e6e9ef">0.30–0.33</text><text x="812" y="302" text-anchor="middle" fill="#9aa4b5" font-size="12">216</text>
+    </g>
+    <g font-size="13.5"><rect x="600" y="316" width="14" height="14" fill="#e0a100"/><text x="620" y="328" fill="#e6e9ef">Model said</text>
+    <rect x="720" y="316" width="14" height="14" fill="#8a94a6"/><text x="740" y="328" fill="#e6e9ef">Actually drew</text></g>
+  </g>
+</svg>
+<figcaption>Draw chance grouped into bands, on the 2024/25 and 2025/26 seasons (from <code>docs/reports/draw-handling.md</code>). The pairs match closely: honest, but no band gets near "most likely".</figcaption>
+</figure>
+
+<p>Why can't 30% ever win? There are three outcomes. For a draw to be the pick, it must beat both the home chance and the away chance. With a draw at 30%, the other two share 70%, so at least one of them is 35% or more. A draw needs well over 33% to have a chance, and our model's draw chance almost never gets there.</p>
+
+<div class="note"><strong>Note:</strong> This is not a bug. Draws are hard to call from pre-match information. Even the bookmakers never made a draw their favourite in our 2026/27 sample.</div>
+
+<h3>What we tried</h3>
+
+<p><strong>Try 1: a "close game" rule.</strong> Pick a draw when its chance is within a margin of the favourite's. Here is what happened on 2024/25 and 2025/26:</p>
+
+<table>
+  <tr><th>Margin</th><th class="num">Accuracy</th><th class="num">Draws caught</th></tr>
+  <tr><td>0 (today: never pick a draw)</td><td class="num">51.6%</td><td class="num">0%</td></tr>
+  <tr><td>0.09</td><td class="num">50.8%</td><td class="num">8%</td></tr>
+  <tr><td>0.10</td><td class="num">50.6%</td><td class="num">13%</td></tr>
+  <tr><td>0.15</td><td class="num">48.1%</td><td class="num">32%</td></tr>
+  <tr><td>0.20</td><td class="num">45.6%</td><td class="num">49%</td></tr>
+</table>
+
+<p>Catching a third of draws costs about 4 to 5 points of accuracy. Each draw pick was right only 27–30% of the time, barely above the 25% base rate, so each extra draw caught cost about two correct home or away picks. Not worth it.</p>
+
+<p><strong>Try 2: six new draw features.</strong> Each team's draw rate over its last 10 games (2 features), average total goals in each team's last 10 games (2), the absolute Elo gap (1), and the league's draw rate over about two seasons (1). Result: log loss changed by only −0.0002 and −0.0001, and both 95% ranges included zero. No real gain, so they were not added.</p>
+
+<p><strong>Try 3: the Dixon-Coles goals model</strong> (see the <a href="#dixon-coles">bonus section</a>). It models low scores directly, so it was the best hope. But its draw chances were just as flat (never above 0.36).</p>
+
+<h3>What we decided: keep the pick, flag the tight games</h3>
+
+<p>On 28 September 2026 we chose "tag only" (ADR 011). The pick stays the same, and the API adds a flag, <code>draw_possible</code>, when the draw chance is at least <strong>0.28</strong>. This costs no accuracy.</p>
+
+<figure>
+<svg viewBox="0 0 960 220" role="img" aria-label="Flagged matches drew 34 percent of the time against 19 percent for the rest">
+  <g font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="15">
+    <text x="20" y="30" font-weight="700" fill="#e6e9ef">2026/27 so far, served model (draw chance ≥ 0.28 flagged on 40% of matches)</text>
+    <text x="260" y="88" text-anchor="end" fill="#e6e9ef">Flagged "draw possible"</text>
+    <rect x="280" y="66" width="408" height="34" rx="5" fill="#e0a100"/><text x="698" y="89" font-weight="700" fill="#e6e9ef">34% ended in a draw</text>
+    <text x="260" y="148" text-anchor="end" fill="#e6e9ef">Not flagged</text>
+    <rect x="280" y="126" width="228" height="34" rx="5" fill="#4a5263"/><text x="518" y="149" font-weight="700" fill="#e6e9ef">19% ended in a draw</text>
+    <text x="20" y="200" fill="#9aa4b5" font-size="13.5">The flag picks out games that really are more likely to be drawn. But 2 in 3 flagged games still have a winner, so it is a nudge, not a prediction.</text>
+  </g>
+</svg>
+<figcaption>From <code>docs/reports/refit-all-seasons.md</code>. On earlier seasons the gap was smaller but the same way round (for example 28% against 24% on 2024/25–2025/26).</figcaption>
+</figure>
+
+<p><strong>A real example:</strong> Leeds v Brentford, 30 August 2026. The model said home 35.8%, draw 29.8%, away 34.4%. The pick was a home win, and the draw flag was on. It finished 1–1.</p>
+
+<div class="note"><strong>Note:</strong> In October 2026 the app stopped showing the "Draw possible" label. Next to a picked win, fans read it as two answers at once. The single win/draw/loss bar already shows when a game is tight. The API still returns <code>draw_possible</code>, and the assistant still uses it.</div>
+
+<!-- ============================================================ -->
+<h2 id="results">How good is it?</h2>
+
+<p>Football is noisy. There are three outcomes and plenty of upsets. So let's compare with sensible baselines.</p>
+
+<table>
+  <tr><th>Who</th><th class="num">Accuracy</th><th>Where</th></tr>
+  <tr><td>Random guess</td><td class="num">33.3%</td><td>Any season</td></tr>
+  <tr><td>Always pick the home team</td><td class="num">43.1%</td><td>2023/24 test season (home win share)</td></tr>
+  <tr><td>Our model (reporting version)</td><td class="num"><strong>52.5%</strong></td><td>2023/24 test season, 1,752 matches</td></tr>
+  <tr><td>Bookmakers</td><td class="num">55.0%</td><td>2023/24 test season</td></tr>
+  <tr><td>Our served model</td><td class="num"><strong>52.0%</strong></td><td>First 250 matches of 2026/27</td></tr>
+  <tr><td>Bet365 (margin removed)</td><td class="num">51.6%</td><td>Same 250 matches</td></tr>
+</table>
+
+<p>On the 250 live matches, the 95% range for "our model minus Bet365" runs from 2.8 points lower to 3.6 points higher. So the honest summary is: <strong>level with the bookmaker, not ahead</strong>.</p>
+
+<!-- ============================================================ -->
+<h2 id="dixon-coles">Bonus: predicting the score with Dixon-Coles</h2>
+
+<p>Our XGBoost model predicts home, draw or away. It never thinks about goals. So for likely scores, expected goals and "both teams to score", we use a second, separate model: <strong>Dixon-Coles</strong> (ADR 009).</p>
+
+<p>Think of every team as having two dials. An <strong>attack dial</strong>: how many goals do they score compared with an average team? A <strong>defence dial</strong>: how many do they let in compared with an average team? Turn the dials, and you can guess how many goals each side will score.</p>
+
+<div class="define">Dixon-Coles predicts how many goals each team will score using attack and defence strengths and a home advantage. It turns those into the chance of every possible score, and gives a small fix for low scores like 0–0 and 1–1.</div>
+
+<p>Let's walk through Arsenal v Chelsea again, with the real Premier League fit from the day of the match.</p>
+
+<h3>Step 1: read the dials</h3>
+
+<table>
+  <tr><th>Dial</th><th class="num">Value</th><th>Meaning</th></tr>
+  <tr><td>Goals for an average side against an average side</td><td class="num">1.24</td><td>The league's starting point</td></tr>
+  <tr><td>Home advantage</td><td class="num">× 1.20</td><td>Home teams score 20% more</td></tr>
+  <tr><td>Arsenal attack</td><td class="num">× 1.26</td><td>Arsenal score 26% more than average</td></tr>
+  <tr><td>Arsenal defence (goals let in)</td><td class="num">× 0.67</td><td>Arsenal concede 33% fewer than average</td></tr>
+  <tr><td>Chelsea attack</td><td class="num">× 1.15</td><td>Chelsea score 15% more than average</td></tr>
+  <tr><td>Chelsea defence (goals let in)</td><td class="num">× 1.03</td><td>Chelsea concede about average</td></tr>
+</table>
+
+<h3>Step 2: expected goals</h3>
+
+<figure>
+<svg viewBox="0 0 960 170" role="img" aria-label="Expected goals: Arsenal 1.93, Chelsea 0.96">
+  <g font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="17">
+    <rect x="20" y="16" width="920" height="60" rx="12" fill="#16301c" stroke="#3fa34d"/>
+    <text x="40" y="54" fill="#e6e9ef"><tspan font-weight="700">Arsenal</tspan>  =  1.24  ×  1.20 (home)  ×  1.26 (Arsenal attack)  ×  1.03 (Chelsea let in)  =  <tspan font-weight="700" fill="#3fa34d">1.93 goals</tspan></text>
+    <rect x="20" y="92" width="920" height="60" rx="12" fill="#14263f" stroke="#3b82d6"/>
+    <text x="40" y="130" fill="#e6e9ef"><tspan font-weight="700">Chelsea</tspan>  =  1.24  ×  1.15 (Chelsea attack)  ×  0.67 (Arsenal let in)  =  <tspan font-weight="700" fill="#3b82d6">0.96 goals</tspan></text>
+  </g>
+</svg>
+<figcaption>Expected goals are averages. Arsenal cannot score 1.93 goals in one match, but over many such matches they would average about that.</figcaption>
+</figure>
+
+<h3>Step 3: from an average to the chance of each goal count</h3>
+
+<p>If a team averages 1.93 goals, how likely is 0, 1, 2 or 3? A standard formula called the <strong>Poisson distribution</strong> answers this. It is the usual formula for counting rare events, like goals in a match.</p>
+
+<figure>
+<svg viewBox="0 0 960 250" role="img" aria-label="Poisson chances of 0 to 4 goals for Arsenal and Chelsea">
+  <g font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="14">
+    <text x="230" y="22" text-anchor="middle" font-weight="700" fill="#3fa34d">Arsenal (average 1.93)</text>
+    <text x="720" y="22" text-anchor="middle" font-weight="700" fill="#3b82d6">Chelsea (average 0.96)</text>
+    <line x1="40" y1="200" x2="430" y2="200" stroke="#4a5263"/><line x1="530" y1="200" x2="920" y2="200" stroke="#4a5263"/>
+    <!-- scale 400 px per 1.0 probability -->
+    <g fill="#3fa34d">
+      <rect x="55" y="142" width="56" height="58"/><rect x="130" y="88" width="56" height="112"/><rect x="205" y="92" width="56" height="108"/><rect x="280" y="130" width="56" height="70"/><rect x="355" y="166" width="56" height="34"/>
+    </g>
+    <g fill="#e6e9ef" text-anchor="middle" font-weight="600">
+      <text x="83" y="136">14.6%</text><text x="158" y="82">28.1%</text><text x="233" y="86">27.0%</text><text x="308" y="124">17.4%</text><text x="383" y="160">8.4%</text>
+    </g>
+    <g fill="#3b82d6">
+      <rect x="545" y="46" width="56" height="154"/><rect x="620" y="53" width="56" height="147"/><rect x="695" y="130" width="56" height="70"/><rect x="770" y="178" width="56" height="22"/><rect x="845" y="195" width="56" height="5"/>
+    </g>
+    <g fill="#e6e9ef" text-anchor="middle" font-weight="600">
+      <text x="573" y="40">38.4%</text><text x="648" y="47">36.8%</text><text x="723" y="124">17.6%</text><text x="798" y="172">5.6%</text><text x="873" y="189">1.3%</text>
+    </g>
+    <g fill="#9aa4b5" text-anchor="middle">
+      <text x="83" y="220">0</text><text x="158" y="220">1</text><text x="233" y="220">2</text><text x="308" y="220">3</text><text x="383" y="220">4</text>
+      <text x="573" y="220">0</text><text x="648" y="220">1</text><text x="723" y="220">2</text><text x="798" y="220">3</text><text x="873" y="220">4</text>
+      <text x="233" y="242">goals</text><text x="723" y="242">goals</text>
+    </g>
+  </g>
+</svg>
+<figcaption>Chance of each goal count for each team, from the Poisson distribution with the expected goals above.</figcaption>
+</figure>
+
+<h3>Step 4: build the score grid</h3>
+
+<p>Now we multiply. The chance of Arsenal 1, Chelsea 0 is "Arsenal score exactly 1" × "Chelsea score exactly 0" = 28.1% × 38.4% ≈ 10.8%. Do this for every pair and we get a grid of every possible score. Our code builds an 11 × 11 grid (0 to 10 goals each).</p>
+
+<h3>Step 5: the Dixon-Coles fix for low scores</h3>
+
+<p>Plain multiplying assumes the two teams' goals have nothing to do with each other. In real football, results like 0–0 and 1–1 happen a bit more often than that, and 1–0 and 0–1 a bit less. Dixon and Coles added one small number, <strong>ρ (rho)</strong>, learned from the data, that adjusts only these four scores. For the Premier League on that day, ρ = −0.099.</p>
+
+<figure>
+<svg viewBox="0 0 960 330" role="img" aria-label="Score grid before and after the Dixon-Coles correction">
+  <g font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="14" text-anchor="middle">
+    <text x="240" y="20" font-weight="700" fill="#e6e9ef">Plain Poisson</text>
+    <text x="720" y="20" font-weight="700" fill="#e6e9ef">After the Dixon-Coles fix</text>
+    <g fill="#9aa4b5" font-size="12.5">
+      <text x="240" y="44">Chelsea goals →</text><text x="720" y="44">Chelsea goals →</text>
+      <text x="40" y="190" transform="rotate(-90 40 190)">Arsenal goals →</text><text x="520" y="190" transform="rotate(-90 520 190)">Arsenal goals →</text>
+    </g>
+    <g font-size="13" fill="#9aa4b5">
+      <text x="120" y="66">0</text><text x="200" y="66">1</text><text x="280" y="66">2</text><text x="360" y="66">3</text>
+      <text x="68" y="100">0</text><text x="68" y="160">1</text><text x="68" y="220">2</text><text x="68" y="280">3</text>
+      <text x="600" y="66">0</text><text x="680" y="66">1</text><text x="760" y="66">2</text><text x="840" y="66">3</text>
+      <text x="548" y="100">0</text><text x="548" y="160">1</text><text x="548" y="220">2</text><text x="548" y="280">3</text>
+    </g>
+    <!-- left grid: x0=80 cell 80x60 -->
+    <g font-weight="600" fill="#e6e9ef">
+      <rect x="82" y="72" width="76" height="56" rx="6" fill="#5c4510"/><text x="120" y="105">5.6%</text>
+      <rect x="162" y="72" width="76" height="56" rx="6" fill="#1d3a5f"/><text x="200" y="105">5.4%</text>
+      <rect x="242" y="72" width="76" height="56" rx="6" fill="#1a2c45"/><text x="280" y="105">2.6%</text>
+      <rect x="322" y="72" width="76" height="56" rx="6" fill="#18202e"/><text x="360" y="105">0.8%</text>
+      <rect x="82" y="132" width="76" height="56" rx="6" fill="#1f5a2b"/><text x="120" y="165">10.8%</text>
+      <rect x="162" y="132" width="76" height="56" rx="6" fill="#5c4510"/><text x="200" y="165">10.3%</text>
+      <rect x="242" y="132" width="76" height="56" rx="6" fill="#1d3a5f"/><text x="280" y="165">4.9%</text>
+      <rect x="322" y="132" width="76" height="56" rx="6" fill="#1a2c45"/><text x="360" y="165">1.6%</text>
+      <rect x="82" y="192" width="76" height="56" rx="6" fill="#1f5a2b"/><text x="120" y="225">10.4%</text>
+      <rect x="162" y="192" width="76" height="56" rx="6" fill="#1f5a2b"/><text x="200" y="225">9.9%</text>
+      <rect x="242" y="192" width="76" height="56" rx="6" fill="#4a3a12"/><text x="280" y="225">4.8%</text>
+      <rect x="322" y="192" width="76" height="56" rx="6" fill="#1a2c45"/><text x="360" y="225">1.5%</text>
+      <rect x="82" y="252" width="76" height="56" rx="6" fill="#1c4425"/><text x="120" y="285">6.7%</text>
+      <rect x="162" y="252" width="76" height="56" rx="6" fill="#1c4425"/><text x="200" y="285">6.4%</text>
+      <rect x="242" y="252" width="76" height="56" rx="6" fill="#173520"/><text x="280" y="285">3.1%</text>
+      <rect x="322" y="252" width="76" height="56" rx="6" fill="#3a3014"/><text x="360" y="285">1.0%</text>
+    </g>
+    <!-- right grid -->
+    <g font-weight="600" fill="#e6e9ef">
+      <rect x="562" y="72" width="76" height="56" rx="6" fill="#5c4510" stroke="#3fa34d" stroke-width="3"/><text x="600" y="100">6.6%</text><text x="600" y="118" font-size="11.5" fill="#3fa34d">▲ up</text>
+      <rect x="642" y="72" width="76" height="56" rx="6" fill="#1d3a5f" stroke="#ff6b6b" stroke-width="3"/><text x="680" y="100">4.3%</text><text x="680" y="118" font-size="11.5" fill="#ff6b6b">▼ down</text>
+      <rect x="722" y="72" width="76" height="56" rx="6" fill="#1a2c45"/><text x="760" y="105">2.6%</text>
+      <rect x="802" y="72" width="76" height="56" rx="6" fill="#18202e"/><text x="840" y="105">0.8%</text>
+      <rect x="562" y="132" width="76" height="56" rx="6" fill="#1f5a2b" stroke="#ff6b6b" stroke-width="3"/><text x="600" y="160">9.7%</text><text x="600" y="178" font-size="11.5" fill="#ff6b6b">▼ down</text>
+      <rect x="642" y="132" width="76" height="56" rx="6" fill="#5c4510" stroke="#3fa34d" stroke-width="3"/><text x="680" y="160">11.3%</text><text x="680" y="178" font-size="11.5" fill="#3fa34d">▲ up</text>
+      <rect x="722" y="132" width="76" height="56" rx="6" fill="#1d3a5f"/><text x="760" y="165">4.9%</text>
+      <rect x="802" y="132" width="76" height="56" rx="6" fill="#1a2c45"/><text x="840" y="165">1.6%</text>
+      <rect x="562" y="192" width="76" height="56" rx="6" fill="#1f5a2b"/><text x="600" y="225">10.4%</text>
+      <rect x="642" y="192" width="76" height="56" rx="6" fill="#1f5a2b"/><text x="680" y="225">9.9%</text>
+      <rect x="722" y="192" width="76" height="56" rx="6" fill="#4a3a12"/><text x="760" y="225">4.8%</text>
+      <rect x="802" y="192" width="76" height="56" rx="6" fill="#1a2c45"/><text x="840" y="225">1.5%</text>
+      <rect x="562" y="252" width="76" height="56" rx="6" fill="#1c4425"/><text x="600" y="285">6.7%</text>
+      <rect x="642" y="252" width="76" height="56" rx="6" fill="#1c4425"/><text x="680" y="285">6.4%</text>
+      <rect x="722" y="252" width="76" height="56" rx="6" fill="#173520"/><text x="760" y="285">3.1%</text>
+      <rect x="802" y="252" width="76" height="56" rx="6" fill="#3a3014"/><text x="840" y="285">1.0%</text>
+    </g>
+  </g>
+</svg>
+<figcaption>Top-left corner of the 11 × 11 grid. Green cells are Arsenal wins, yellow are draws, blue are Chelsea wins. The fix moves only the four outlined cells: 0–0 and 1–1 go up, 1–0 and 0–1 go down.</figcaption>
+</figure>
+
+<h3>Step 6: read the answers off the grid</h3>
+
+<p>Every answer is just a sum of cells:</p>
+<ul>
+  <li><strong>Most likely scores:</strong> 1–1 (11.3%), 2–0 (10.4%), 2–1 (9.9%), 1–0 (9.7%), 3–0 (6.7%).</li>
+  <li><strong>Home win / draw / away win:</strong> add the green, yellow and blue cells: 59.0%, 23.8% and 17.2%.</li>
+  <li><strong>Over 2.5 goals:</strong> 55%. <strong>Both teams to score:</strong> 54%.</li>
+</ul>
+
+<p>The real score was 2–1, the third most likely score.</p>
+
+<div class="note"><strong>Note:</strong> Look closely. The single most likely <em>score</em> is a draw (1–1), but the most likely <em>result</em> is a home win (59%). There is no contradiction. The home-win chance is spread over many scores (2–0, 2–1, 1–0, 3–0 …), while the draw chance sits in just a few. This is also why "most likely score" is right only about 12–14% of the time.</div>
+
+<h3>Two more details</h3>
+<ul>
+  <li><strong>Recent matches count more.</strong> Each past match gets a weight that halves about every 7½ months (ξ = 0.003 per day), and only the last four years are used.</li>
+  <li><strong>It is always fresh.</strong> The server fits one Dixon-Coles model per league at every start, from all matches before that day. A fit takes under a second.</li>
+</ul>
+
+<h3>How well does it work?</h3>
+<ul>
+  <li>The most likely score is right <strong>12–14%</strong> of the time, and the real score is in the top three about <strong>a third</strong> of the time.</li>
+  <li>Goal totals are honest: on 2024/25–2025/26 it forecast 2.81 goals per match, and there were 2.80.</li>
+  <li>For home/draw/away it was worse than XGBoost on 2023/24 and 2026/27 so far, so <strong>XGBoost keeps the headline pick</strong>. Each model does what it is best at.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="faq">Quick questions</h2>
+
+<details class="qa"><summary>Does the model use betting odds?</summary><div class="a">
+<p>No. Odds are excluded from the features on purpose. They are used only as a benchmark to compare against.</p>
+</div></details>
+
+<details class="qa"><summary>Does it know about injuries or line-ups?</summary><div class="a">
+<p>No. It only uses past results. There is no reliable free source of player-level history for all five leagues.</p>
+</div></details>
+
+<details class="qa"><summary>Can it compare a Premier League team with a La Liga team?</summary><div class="a">
+<p>Not fairly. Elo ratings are kept per league, because the clubs never play each other in our data, so a 1600 in one league is not the same as a 1600 in another.</p>
+</div></details>
+
+<details class="qa"><summary>Is XGBoost a Random Forest?</summary><div class="a">
+<p>No. Both use many trees. A Random Forest builds them side by side and takes a vote. XGBoost builds them one after another, each fixing the earlier ones' mistakes, and adds up their nudges.</p>
+</div></details>
+
+<details class="qa"><summary>Why is the served model trained on every season?</summary><div class="a">
+<p>We keep two roles (ADR 017). A reporting model, trained up to 2021/22, gives the honest test numbers. The served model copies its exact recipe (same 42 features, settings and 168 rounds) and trains on every season up to 2025/26, so it has seen the latest football. On 250 matches of 2026/27, the two were level, and only 3 picks differed.</p>
+</div></details>
+
+<!-- ============================================================ -->
+<h2 id="sources">Where the facts come from</h2>
+<ul class="sources">
+  <li>Feature list and settings: <code>ai/training/configuration.py</code>, <code>ai/models/latest/</code> (served model <code>20261007_154105</code>), <code>docs/reports/refit-all-seasons.md</code>.</li>
+  <li>Feature definitions: <code>ai/feature_engineering/features/</code> (Elo, home and away record, head-to-head and others).</li>
+  <li>Feature importance and the real tree: computed for this article from the served model file with SHAP's TreeExplainer and the model's own tree dump.</li>
+  <li>Arsenal v Chelsea and Leeds v Brentford: the 2026/27 backtest feature rows in <code>ai/models/backtests/</code>.</li>
+  <li>Draws: <code>docs/reports/draw-handling.md</code>, <code>docs/adr/011-draw-possible-tag.md</code>.</li>
+  <li>Results: <code>README.md</code>, <code>docs/reports/in-season-2026-27.md</code>, the reporting model card.</li>
+  <li>Dixon-Coles: <code>ai/goals/</code>, <code>docs/adr/009-dixon-coles-goals-model.md</code>, <code>docs/reports/goals-model.md</code>. The Arsenal v Chelsea fit uses Premier League matches before 6 September 2026.</li>
+</ul>
+<p class="sources">Written 6 November 2026.</p>
+</main>
+</div>
+</body>
+</html>
