@@ -1,0 +1,6 @@
+event: delta
+data: {"text":"I can't help with that question."}
+
+event: done
+data: {"answer":"I can't help with that question.","sources":[],"confidence":0.0,"model":"safety","retrieved_count":0,"signature":null,"questions_left":null,"resets_at":null}
+

@@ -1,0 +1,6 @@
+event: delta
+data: {"text":"Arsenal are"}
+
+event: error
+data: {"error":"Assistant not available","detail":"The assistant could not answer just now. Try again."}
+

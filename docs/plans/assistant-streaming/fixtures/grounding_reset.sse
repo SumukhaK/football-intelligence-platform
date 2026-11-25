@@ -1,0 +1,15 @@
+event: delta
+data: {"text":"Their chance is"}
+
+event: reset
+data: {"reason":"grounding"}
+
+event: delta
+data: {"text":"Their chance is 31%"}
+
+event: delta
+data: {"text":", from the latest prediction."}
+
+event: done
+data: {"answer":"Their chance is 31%, from the latest prediction.","sources":[],"confidence":0.0,"model":"qwen2.5:7b-instruct","retrieved_count":0,"signature":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","questions_left":10,"resets_at":"2026-11-26T00:00:00Z"}
+

@@ -1,0 +1,15 @@
+event: delta
+data: {"text":"Let me check the latest prediction."}
+
+event: reset
+data: {"reason":"tool_call"}
+
+event: delta
+data: {"text":"The model gives Leeds a 38% chance"}
+
+event: delta
+data: {"text":" against Brentford."}
+
+event: done
+data: {"answer":"The model gives Leeds a 38% chance against Brentford.","sources":[],"confidence":0.0,"model":"qwen2.5:7b-instruct","retrieved_count":0,"signature":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","questions_left":11,"resets_at":"2026-11-26T00:00:00Z"}
+
