@@ -1,0 +1,6 @@
+event: delta
+data: {"text":"I answer questions about the Premier League, Bundesliga, La Liga, Serie A and Ligue 1."}
+
+event: done
+data: {"answer":"I answer questions about the Premier League, Bundesliga, La Liga, Serie A and Ligue 1.","sources":[],"confidence":0.0,"model":"router","retrieved_count":0,"signature":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","questions_left":9,"resets_at":"2026-11-26T00:00:00Z"}
+

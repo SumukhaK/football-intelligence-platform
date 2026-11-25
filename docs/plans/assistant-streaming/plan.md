@@ -1,10 +1,11 @@
 # Assistant streaming plan
 
 **Status:** Proposed 25 November 2026. Not started. Needs ADR 037 before any code.
-**Roadmap entry:** [Stream assistant answers token by token](../roadmap/future-improvements.md#stream-assistant-answers-token-by-token)
+**Roadmap entry:** [Stream assistant answers token by token](../../roadmap/future-improvements.md#stream-assistant-answers-token-by-token)
 **Ships in:** a minor release of its own (backend and app together).
+**Work:** 12 steps in [tracker.md](tracker.md), each with a self-contained prompt in [steps/](steps/); the exact API is in [contract.md](contract.md). Start with [README.md](README.md).
 
-Today the assistant writes the whole answer before the app shows anything. On staging (v2.6.3) the first text appears after p50 2,835 ms and p95 6,064 ms, while the model's own time to first token, streamed, is p50 486 ms and p95 1,280 ms ([Release metrics](../../README.md#release-metrics)). Streaming sends the answer to the phone as it is written, so the user starts reading sooner. The answer itself, and every guardrail, stay the same.
+Today the assistant writes the whole answer before the app shows anything. On staging (v2.6.3) the first text appears after p50 2,835 ms and p95 6,064 ms, while the model's own time to first token, streamed, is p50 486 ms and p95 1,280 ms ([Release metrics](../../../README.md#release-metrics)). Streaming sends the answer to the phone as it is written, so the user starts reading sooner. The answer itself, and every guardrail, stay the same.
 
 ## 1. What does not change
 
@@ -73,7 +74,7 @@ The app needs code changes in four modules. Ktor stays at 2.3.13: the stream is 
 
 | Module | Change |
 |---|---|
-| `core-model` | `ChatStreamEvent` sealed class: `Delta`, `Reset`, `Done(ChatResponse)`, `Failed`. `ChatMessage` gains `isStreaming`. |
+| `core-model` | `ChatStreamEvent` sealed type: `Delta`, `Reset`, `Done(ChatResponse)`, `Failed`, `NotSupported`. `ChatMessage` gains `isStreaming`. |
 | `core-network` | `FootballApiService.chatStream(request): Flow<ChatStreamEvent>`, reading the server-sent events. Never retried (it is a POST). A 404 tells the caller to fall back. `CachingFootballApiService` passes it through. |
 | `feature-assistant` repository | `AssistantRepository.chatStream(...)`; falls back to `chat(...)` when the stream endpoint is missing or the setting is off. |
 | `feature-assistant` ViewModel | Adds an empty assistant bubble, appends each `Delta`, clears it on `Reset`, and on `Done` replaces it with the final signed answer and updates questions left. An error mid-answer turns the bubble into the error message. Leaving the screen cancels the stream. |
@@ -85,27 +86,14 @@ Tests are written first (ViewModel and repository TDD): text building up, `reset
 
 ## 4. Effort
 
-Days are focused working days for one engineer, including tests and docs.
-
-| # | Pull request | Area | Days |
-|---|---|---|---|
-| 0 | Spike: check Workers AI streams tool calls and usage for the hosted model, and that Cloud Run passes events through unbuffered | Backend | 0.5 |
-| 1 | ADR 037, `docs/api.md`, telemetry contract bump | Docs | 0.5 |
-| 2 | Streaming in the Ollama and Workers AI adapters | Backend | 1–1.5 |
-| 3 | `StreamGate`, streaming in `AssistantService`, the endpoint, budget, signature and disconnect handling, evals | Backend | 3–4 |
-| 4 | Network reader, repository and ViewModel (TDD) | Android | 1.5–2 |
-| 5 | Chat screen, strings, previews, accessibility, fallback | Android | 1.5–2 |
-| 6 | Staging check (time to first word on real traffic), README metrics, changelog | Release | 0.5 |
-| | **Total** | | **about 9–11 days** |
-
-Backend is about 5–6.5 days, Android about 3–4 days. Each row is one pull request into `develop`, in this order; the app work (rows 4–5) can start once row 1 fixes the event format.
+About 10–12.5 focused days for one engineer, including tests and docs: backend about 5.5–7 days, Android about 3–4 days, spike, contract and end-to-end check about 2 days. The 12 steps, their order and which can run in parallel are in [tracker.md](tracker.md). Each step is one pull request into `develop`; the Android lane starts as soon as the contract step (ST01) merges, because both lanes test against the same sample streams in [fixtures/](fixtures/).
 
 ## 5. Risks
 
 | Risk | What we do |
 |---|---|
-| The hosted model may not stream tool calls well | The spike (row 0) checks it first. Fallback: run tool rounds without streaming and stream only the final answer call. |
-| Safety check, retrieval and tool rounds still come before the first word | Expect a smaller gain on tool questions than the 486 ms model figure. Row 6 measures the real time to first word. |
+| The hosted model may not stream tool calls well | The spike (ST00) checks it first. Fallback: run tool rounds without streaming and stream only the final answer call. |
+| Safety check, retrieval and tool rounds still come before the first word | Expect a smaller gain on tool questions than the 486 ms model figure. ST11 measures the real time to first word. |
 | A `reset` looks jumpy | Rare: it happens only on a late tool call or a failed grounding check. `assistant.answer` logs how often. |
 | Text arriving many times a second makes the screen redraw too often | The ViewModel batches updates (about every 50 ms). |
 | Old app versions | They keep calling `POST /v2/assistant/chat`, which does not change. |

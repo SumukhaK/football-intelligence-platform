@@ -1,0 +1,6 @@
+event: delta
+data: {"text":"Arsenal are"}
+
+event: delta
+data: {"text":" favourites"}
+
