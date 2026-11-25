@@ -20,6 +20,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Security
 
 - black 26.10.1, filelock 4.2.9 and pyasn1 0.6.5 fix the advisories that failed pip-audit.
+- opentelemetry-api 1.45.2 fixes GHSA-mf5v-w3w3-f6cg; the SDK and FastAPI instrumentation move with it.
 
 ---
 
