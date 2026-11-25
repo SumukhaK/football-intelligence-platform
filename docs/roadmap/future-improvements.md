@@ -4,6 +4,8 @@ Ideas that are agreed in principle but not scheduled. Each one needs its own tas
 
 ## Stream assistant answers token by token
 
+**Status:** planned 25 November 2026; see the [assistant streaming plan](../plans/assistant-streaming-plan.md) for the design, the work order and the effort (about 9–11 days).
+
 **Why:** the assistant waits for Workers AI (or Ollama locally) to finish the whole answer before it replies, so the first text a user sees is the complete answer. On staging that was p50 2,835 ms and p95 6,064 ms on v2.6.3, while the model's own time to first token is p50 486 ms and p95 1,280 ms when streamed (benchmark, 22 October 2026). Streaming would let the app show the answer as it is written, and would let us measure real time to first token on staging; today it can only be benchmarked separately (see [Release metrics](../../README.md#release-metrics)).
 
 **What it involves:**

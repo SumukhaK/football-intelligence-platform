@@ -59,6 +59,7 @@ Maintained by the project architect. The implementation engineer updates documen
 | [Accounts and Consent Plan](plans/accounts-and-consent-plan.md) | Invite-only accounts, sessions and consent for the assistant |
 | [Assistant Guardrails Analysis](plans/assistant-guardrails-analysis.md) | Safety, scope routing, caching and limits for the hosted assistant |
 | [Chat Memory Plan](plans/chat-memory-plan.md) | Short-term chat memory: signed history on the phone, limits, cost and safety rails |
+| [Assistant Streaming Plan](plans/assistant-streaming-plan.md) | Streaming assistant answers to the app: guardrails kept, endpoint, app changes, effort |
 | [Next Phase Plan](plans/next-phase-plan.md) | Testing gaps, draw handling, scoreline predictions: order, design, impact analysis |
 | [Five Leagues Plan](plans/five-leagues-plan.md) | Serving all five leagues in the API and app |
 | [Multi-League Retraining Plan](plans/multi-league-retraining-plan.md) | Goal, data profile and phased plan for retraining on top-5 league data |
@@ -137,7 +138,7 @@ docs/
   demo/           # Stage-by-stage demo scripts for technical interviews
   design/         # Design concepts (app icon and launch screen, ADR 016)
   observability/  # Telemetry contract, event catalogue and local stack guide (ADR 024)
-  plans/          # Plans for the work after Stage 12 (leagues, hosting, accounts, guardrails, chat memory)
+  plans/          # Plans for the work after Stage 12 (leagues, hosting, accounts, guardrails, chat memory, streaming)
   reference/      # CLI command reference
   releases/       # Release notes and readiness reports
   reports/        # Stage summaries, model/data experiment reports and hosting measurements
